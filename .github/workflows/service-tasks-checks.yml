@@ -1,0 +1,16 @@
+name: Service tasks and tickets checks
+on:
+  push:
+    branches: [main]
+    paths: ['service-tasks.mjs', 'service-tasks.test.mjs', '.github/workflows/service-tasks-checks.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test service-tasks.test.mjs
