@@ -3,7 +3,10 @@ on:
   push:
     branches: [camera-beta]
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: camera-beta
+  cancel-in-progress: false
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -14,6 +17,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node camera-beta.test.mjs
-      - run: |
+      - name: Structural and syntax checks
+        run: |
+          node camera-beta.test.mjs
           for f in camera-beta.js gamefeel.js player.js netplayer.js balance.js game.js; do node --experimental-default-type=module --check "$f"; done
+      - name: Run existing regression suite
+        run: |
+          node --experimental-default-type=module smoke.test.mjs
+          node social-model.test.mjs
+          node --experimental-default-type=module career.test.mjs
+          node progression.test.mjs
+          node market.test.mjs
+          node service-v24.test.mjs
+      - name: Create deployment marker
+        run: |
+          echo "camera-beta ready $(date -u +%FT%TZ) commit ${GITHUB_SHA}" > camera-beta-ready.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add camera-beta-ready.txt
+          git diff --cached --quiet || git commit -m "camera-beta: verificación completa superada"
+          git push origin HEAD:camera-beta
