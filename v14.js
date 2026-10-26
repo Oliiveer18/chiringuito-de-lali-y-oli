@@ -1,4 +1,4 @@
-/* v14: clima cambiante, nuevos productos, reservas, misiones, Chiringo por stock real, shows con público e informe del día. */
+/* v14: clima cambiante, nuevos productos, reservas, misiones, Chiringo por stock real, shows con público e informe del día. v20: los cambios de seguidores pasan por el balance. */
 import { Game, setTimeoutGame, weatherToday } from './state.js';
 import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js';
 import { rnd, clamp } from './util.js';
@@ -41,6 +41,9 @@ let lastDay=Game.day, reservaSize=0, showLastSpawn=0, lastT=null;
 const MISSIONS=[{id:'rep4',txt:'Alcanza 4,0 de valoración hoy',check:s=>(Game.rep>=4),reward:200},{id:'rev1500',txt:'Gana 1.500 € hoy',check:s=>s.revenue>=1500,reward:250},{id:'served40',txt:'Sirve 40 clientes hoy',check:s=>s.served>=40,reward:200}];
 /* los seguidores de Chiringo atraen clientes: 1 % por cada 200 seguidores, hasta un 12 % */
 function followerBonus(){return Math.min(0.12,(Game.upgrades[FOL]||0)/2000);}
+/* cambios de seguidores ajenos al cierre de v12 (misión, publicar sin stock, grupos): se aplican y se anotan en el balance */
+function flushAdj(){const U=Game.upgrades,R=U.socialReport,A=U.socialAdj;if(!R||!Array.isArray(A)||!A.length)return;const keep=[];for(const a of A){if(a.dia===R.dia){if(a.n>0){R.gains.push({k:a.k,n:a.n});R.gainSum+=a.n;}else{R.losses.push({k:a.k,n:-a.n});R.lossSum+=-a.n;}R.net+=a.n;}else if(a.dia>R.dia)keep.push(a);}U.socialAdj=keep;}
+function bump(k,n){const U=Game.upgrades;U[FOL]=Math.max(0,(U[FOL]||0)+n);if(!Array.isArray(U.socialAdj))U.socialAdj=[];U.socialAdj.push({k,n,dia:Game.day-1});flushAdj();}
 function missionToast(){const U=Game.upgrades;if(U.mision&&!U.misionHecha)toast('Misión activa',U.misionTxt+' · +'+(U.misionReward||0)+' € y 10 seguidores.','');}
 function setMission(){const idx=Math.floor((Game.day-1)/5)%MISSIONS.length;const m=MISSIONS[idx];Game.upgrades.mision=m.id;Game.upgrades.misionTxt=m.txt;Game.upgrades.misionReward=m.reward;Game.upgrades.misionHecha=0;}
 function migrate(){
@@ -54,7 +57,7 @@ function newDay(){
  lastDay=Game.day;
  const U=Game.upgrades, s=Game.day>1?Game.dayStats:null;
  // misión del día anterior
- if(s&&U.mision&&!U.misionHecha){const m=MISSIONS.find(x=>x.id===U.mision);if(m&&m.check(s)){U.misionHecha=1;Game.money+=m.reward;U[FOL]=(U[FOL]||0)+10;toast('Misión cumplida',m.txt+' · +'+m.reward+' € y +10 seguidores.','good');}else if(m){toast('Misión','No cumplisteis: '+U.misionTxt,'');}}
+ if(s&&U.mision&&!U.misionHecha){const m=MISSIONS.find(x=>x.id===U.mision);if(m&&m.check(s)){U.misionHecha=1;Game.money+=m.reward;bump('Misión cumplida',10);toast('Misión cumplida',m.txt+' · +'+m.reward+' € y +10 seguidores.','good');}else if(m){toast('Misión','No cumplisteis: '+U.misionTxt,'');}}
  // informe del día anterior
  if(s){U.lastReport=JSON.stringify({day:Game.day-1,revenue:s.revenue||0,served:s.served||0,lost:s.lost||0,tips:(s.tips||0)+(s.tipsP||0),fines:s.fines||0,hamacas:s.hamacas||0,top:topProduct(s),mission:U.misionTxt||'',missionOk:U.misionHecha===1});}
  if(Game.day%5===1)setMission();
@@ -65,9 +68,9 @@ function newDay(){
  delete U.reservaHora;if(rnd()<0.35){U.reservaHora=Math.round((17+rnd()*2)*10)/10;reservaSize=3+Math.floor(rnd()*3);}
  // fallo de publicación por stock real
  const p=U.socialPost, sold=(s&&s.sold)||{};
- if(s&&p&&U.socialPostDia===Game.day-1&&!NOPROD.includes(p)&&(sold[p]||0)===0){U[FOL]=Math.max(0,(U[FOL]||0)-3);U.socialComments=['Promocionasteis '+(ITEMS[p]?ITEMS[p].name.toLowerCase():'eso')+' y no había…',...(U.socialComments||[])].slice(0,6);U[RAT]=clamp((U[RAT]||3)-0.1,1,5);}
+ if(s&&p&&U.socialPostDia===Game.day-1&&!NOPROD.includes(p)&&(sold[p]||0)===0){bump('Publicasteis algo que no había',-3);U.socialComments=['Promocionasteis '+(ITEMS[p]?ITEMS[p].name.toLowerCase():'eso')+' y no había…',...(U.socialComments||[])].slice(0,6);U[RAT]=clamp((U[RAT]||3)-0.1,1,5);}
  // reseña de grupo
- if(s&&U.grupoDia===Game.day-1){if((s.served||0)>=10){U.socialComments=['Fuimos en grupo y nos atendieron genial.',...(U.socialComments||[])].slice(0,6);U[FOL]=(U[FOL]||0)+3;}else{U.socialComments=['Vinimos en grupo y tardaron muchísimo.',...(U.socialComments||[])].slice(0,6);U[FOL]=Math.max(0,(U[FOL]||0)-2);}}
+ if(s&&U.grupoDia===Game.day-1){if((s.served||0)>=10){U.socialComments=['Fuimos en grupo y nos atendieron genial.',...(U.socialComments||[])].slice(0,6);bump('Reseña de grupo',3);}else{U.socialComments=['Vinimos en grupo y tardaron muchisímo.',...(U.socialComments||[])].slice(0,6);bump('Grupo mal atendido',-2);}}
  delete U.grupoDia;
  netDirty();
 }
@@ -75,6 +78,7 @@ function runWeather(){const cur=Game.forecast[Game.day-1];const opts=['sol','pan
 function runReserva(){const free=Game.tables.filter(t=>t.state==='free').length;const n=reservaSize;for(let i=0;i<n;i++)setTimeoutGame(()=>{if(Game.mode==='service')spawnCustomer(rnd()<0.6?'turista':'local');},i*1.2);if(free>=1){Game.money+=30;Game.rep=clamp(Game.rep+0.1,0,5);toast('Reserva atendida','Grupo de '+n+' con mesa libre: +30 € de propina.','good');}else{Game.rep=clamp(Game.rep-0.15,0,5);toast('Reserva perdida','No había mesa para el grupo de '+n+'.','bad');}Game.upgrades.grupoDia=Game.day;netDirty();}
 function tick(){
  migrate();
+ flushAdj();
  if(Game.mode==='title'){lastDay=Game.day;lastT=null;return;}
  if(Game.mode==='plan'&&Game.day!==lastDay)newDay();
  if(Game.mode!=='service'){lastT=null;return;}
@@ -96,8 +100,10 @@ function renderInforme(){const b=document.querySelector('#tab-body');if(!b||Plan
  const U=Game.upgrades, n=v=>Number(v)||0;
  const misionHtml=U.misionTxt?'<div class="row"><div class="name">Misión activa</div><div class="sub">'+U.misionTxt+' · recompensa '+n(U.misionReward)+' € y 10 seguidores · '+(U.misionHecha===1?'Cumplida':'En curso')+'</div></div>':'';
  const segHtml='<div class="row"><div class="name">Chiringo</div><div class="sub">'+n(U[FOL])+' seguidores · +'+Math.round(followerBonus()*100)+'% de afluencia</div></div>';
- if(!rep){paint(b,misionHtml+segHtml+'<p class="muted">Aún no hay un informe del día anterior.</p>');return;}
- paint(b,misionHtml+segHtml+'<h3 style="margin:4px 0">Día '+rep.day+'</h3>'+
+ const R=U.socialReport, lst=(a,sg)=>(a||[]).map(x=>x.k+' '+sg+x.n).join(', ')||'nada';
+ const balHtml=R?'<div class="row"><div class="name">Seguidores del último cierre</div><div class="sub">'+(n(R.net)>=0?'+':'')+n(R.net)+' · Ganados: '+lst(R.gains,'+')+' · Perdidos: '+lst(R.losses,'−')+'</div></div>':'';
+ if(!rep){paint(b,misionHtml+segHtml+balHtml+'<p class="muted">Aún no hay un informe del día anterior.</p>');return;}
+ paint(b,misionHtml+segHtml+balHtml+'<h3 style="margin:4px 0">Día '+rep.day+'</h3>'+
  '<div class="row"><div class="name">Caja</div><div class="sub">Ingresos: '+n(rep.revenue).toFixed(2)+' € · Propinas: '+n(rep.tips).toFixed(2)+' € · Multas: '+n(rep.fines)+' € · Hamacas: '+n(rep.hamacas).toFixed(2)+' €</div></div>'+
  '<div class="row"><div class="name">Clientes</div><div class="sub">Servidos: '+n(rep.served)+' · Perdidos: '+n(rep.lost)+'</div></div>'+
  '<div class="row"><div class="name">Producto estrella</div><div class="sub">'+(rep.top||'—')+'</div></div>'+
