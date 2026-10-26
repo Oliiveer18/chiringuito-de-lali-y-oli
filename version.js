@@ -1,5 +1,5 @@
-export const VERSION='v12';
-export const LABEL='v12 · grupos, repartidor y Chiringo';
+export const VERSION='v13';
+export const LABEL='v13 · Chiringo: tendencias, influencers y reseñas';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
