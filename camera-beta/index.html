@@ -16,14 +16,10 @@
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=chillax@500,600,700&display=swap">
 <link rel="stylesheet" href="../style.css?v=11">
+<link rel="stylesheet" href="beta.css?v=5">
 <style id="tabs-fix">
   #plan .tabs{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   #plan .tabs .tab{touch-action:pan-x}
-</style>
-<style>
-  #cam-bar{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:6px;background:rgba(20,30,32,.82);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px;backdrop-filter:blur(6px)}
-  #cam-bar button{appearance:none;border:0;background:transparent;color:#e9f4f4;font:700 12px Satoshi,sans-serif;padding:8px 12px;border-radius:999px}
-  #cam-bar button.on{background:#0f8b8d;color:#fff}
 </style>
 </head>
 <body>
@@ -50,7 +46,7 @@
 <div id="stockbar" class="stockbar hidden"></div>
 <div id="toasts" class="toasts"></div>
 <div id="rotate" class="rotate-pill"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M20.5 9.5a8.5 8.5 0 00-5-4.5M3.5 14.5a8.5 8.5 0 005 4.5"/></svg>Gira el móvil para ver todo el chiringuito</div>
-<section id="title" class="overlay show"><div class="screen center"><div class="title-card"><p class="eyebrow">Copia beta · camera-beta</p><h1>Chiringuito de Lali y Oli</h1><p class="lead">Cámara por zonas, toque ampliado y personaje del jugador. El juego principal no cambia.</p><div class="title-actions"><button id="btn-start" class="btn primary big">Jugar en solitario</button><button id="btn-coop" class="btn big ghost">Jugar online con tu pareja</button></div><p class="fine">Copia para probar · el juego principal sigue en la versión anterior</p><p class="fine ver-line" id="ver-title">camera-beta · cargando…</p></div></div></section>
+<section id="title" class="overlay show"><div class="screen center"><div class="title-card"><p class="eyebrow">Copia beta · camera-beta</p><h1>Chiringuito de Lali y Oli</h1><p class="lead">Cámara por zonas, mando para mover al personaje y efectos. El juego principal no cambia.</p><div class="title-actions"><button id="btn-start" class="btn primary big">Jugar en solitario</button><button id="btn-coop" class="btn big ghost">Jugar online con tu pareja</button></div><p class="fine">Copia para probar · el juego principal sigue en la versión anterior</p><p class="fine ver-line" id="ver-title">camera-beta · cargando…</p></div></div></section>
 <section id="lobby" class="overlay"><div class="screen center"><div class="panel lobby-card"><p class="eyebrow">Cooperativo online</p><h2>Sala de juego</h2><div class="field"><label for="lobby-name">Tu nombre</label><input id="lobby-name" type="text" maxlength="14" placeholder="Cómo te llamas"></div><div id="lobby-choose" class="lobby-step"><button id="btn-create" class="btn primary big block">Crear partida</button><div class="or"><span>o únete a la de tu pareja</span></div><div class="join-row"><input id="lobby-join-code" type="text" inputmode="text" maxlength="4" placeholder="CÓDIGO"><button id="btn-join" class="btn big">Unirme</button></div></div><div id="lobby-host" class="lobby-step hidden"><p class="muted center-text">Pásale este código a tu pareja</p><div id="lobby-code" class="code-box">····</div><p id="lobby-peer" class="peer-status"></p><div id="role-pick" class="seg"><button data-role="barra">Barra</button><button data-role="cocina">Cocina</button></div><p id="role-note" class="muted center-text"></p><button id="btn-lobby-go" class="btn primary big block" disabled>Empezar la temporada</button></div><div id="lobby-guest" class="lobby-step hidden"><p id="guest-info" class="guest-info"></p></div><p id="lobby-status" class="lobby-status"></p><button id="btn-lobby-back" class="btn text">← Volver</button></div></div></section>
 <section id="plan" class="overlay"><div class="screen"><div class="panel sheet"><div class="sheet-head"><div><p id="plan-eyebrow" class="eyebrow"></p><h2 id="plan-title"></h2></div><div class="cash"><span class="k">En caja</span><b id="plan-money" class="v"></b><p id="plan-costs" class="cash-note"></p></div></div><div id="forecast" class="forecast"></div><nav class="tabs" role="tablist"><button class="tab on" data-tab="compras">Compras</button><button class="tab" data-tab="carta">Carta</button><button class="tab" data-tab="mejoras">Mejoras</button><button class="tab" data-tab="personal">Personal</button><button class="tab" data-tab="show">Show</button><button class="tab" data-tab="red">Red</button><button class="tab" data-tab="informe">Informe</button></nav><div id="tab-body" class="tab-body"></div><div class="sheet-foot"><button id="btn-open" class="btn primary big">Abrir el chiringuito</button></div></div></div></section>
 <section id="report" class="overlay"><div class="screen"><div class="panel sheet"><div class="sheet-head"><div><p id="rep-eyebrow" class="eyebrow"></p><h2 id="rep-title"></h2></div></div><div id="rep-body" class="rep-body"></div><div class="sheet-foot"><span id="rep-status" class="rep-status"></span><button id="btn-next" class="btn primary big">Siguiente día</button></div></div></div></section>
@@ -91,6 +87,6 @@
     try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
   });
 </script>
-<script type="module" src="game.js?v=4"></script>
+<script type="module" src="game.js?v=5"></script>
 </body>
 </html>
