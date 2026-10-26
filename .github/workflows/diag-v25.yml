@@ -1,0 +1,29 @@
+name: Diagnostico v25 (solo lectura de codigo)
+on:
+  push:
+    branches: [feature/reputacion-historial-social]
+    paths: [.github/workflows/diag-v25.yml]
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Extraer el final de report.js
+        run: |
+          mkdir -p diagnostics
+          total=$(wc -l < report.js)
+          n=$(grep -n 'function buildRevModel' report.js | head -1 | cut -d: -f1)
+          if [ -z "$n" ]; then n=$((total-150)); fi
+          { echo "report.js: desde la linea $n de $total"; tail -n +"$n" report.js; } > diagnostics/report-tail.txt
+      - name: Guardar en la rama de trabajo
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/report-tail.txt
+          git diff --cached --quiet && exit 0
+          git commit -m "Diagnostico: final de report.js (solo lectura)"
+          git push origin HEAD:feature/reputacion-historial-social
