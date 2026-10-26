@@ -21,7 +21,7 @@ export const ITEMS = {
   batido:    {name:'Batido de plátano',  cost:0.9, ref:4.5,  prep:1.3, spoil:0.5,  spoilF:0.1,  unlock:null},
   papas:     {name:'Papas con mojo',     cost:1.3, ref:6.5,  prep:2.1, spoil:0.15, spoilF:0.05, unlock:null},
   queso:     {name:'Queso asado con mojo',cost:2.2,ref:8.5,  prep:2.3, spoil:0.25, spoilF:0.05, unlock:'plancha'},
-  pescado:   {name:'Pescado fresco',     cost:4.5, ref:16,   prep:3.2, spoil:0.75, spoilF:0.25,  unlock:'cocina'},
+  pescado:   {name:'Pescado fresco',     cost:6.5, ref:14,   prep:3.2, spoil:0.75, spoilF:0.25,  unlock:'cocina'},
 };
 export const ITEM_IDS = Object.keys(ITEMS);
 export const DRINKS = ['cerveza','barraquito','batido'];
@@ -45,8 +45,8 @@ export const PERSONALITIES = {
   generoso:  {label:'Generoso',   hint:'Buena propina · si todo va bien',patMul:0.9, stages:[0.55,0.35,0.18], flex:true,  takeaway:'ok',      grace:4.5, tipP:0.10},
 };
 export const PKEYS = Object.keys(PERSONALITIES);
-export const ANGER_MIN_STAGE = 1.6;   // cada aviso dura lo suficiente para verse
-export const WAIT_TABLE_MAX = 7;      // segundos de espera de mesa antes de llevarse
+export const ANGER_MIN_STAGE = 1.6;
+export const WAIT_TABLE_MAX = 7;
 
 // ---------- Clientes habituales ----------
 export const REGULARS = [
@@ -61,7 +61,7 @@ export const REGULARS = [
   {id:'kike',   name:'Kike',        type:'surfista', personality:'tranquilo', fav:'cerveza',
    look:{shirt:'#3f8a3a', skin:'#e0a97e', hair:{style:'rastas',  color:'#2a211c'}, acc:['collar'],    build:1.00, height:1.02, walk:{stride:0.80, bob:0.9, sway:true}}},
   {id:'hannah', name:'Hannah',     type:'turista',  personality:'generoso',  fav:'queso',
-   look:{shirt:'#e8603c', skin:'#f7d6bd', hair:{style:'largo',   color:'#d9b35a'}, acc:['gafasSol'],  build:1.00, height:1.04, walk:{stride:1.00, bob:1.0, sway:false}}},
+   look:{shirt:'#e8603c', skin:'#f7d6bd', hair:{style:'largo',  color:'#d9b35a'}, acc:['gafasSol'],  build:1.00, height:1.04, walk:{stride:1.00, bob:1.0, sway:false}}},
 ];
 
 export const WEATHER = {
@@ -93,7 +93,7 @@ export const UPGRADES = [
 export const STAFF = [
   {id:'camarero', name:'Yeray, camarero',          desc:'Atiende la cola él solo, en paralelo contigo.', wage:55},
   {id:'cocinero', name:'Carmela, cocinera',        desc:'Todo se prepara un 40% más rápido.', wage:65},
-  {id:'limpiador',name:'Acaymo, ayudante',         desc:'Recoge las mesas sucias sin que se lo pidas.', wage:30},
+  {id:'limpiador',name:'Acaymo, ayudante',         desc:'Recoge las mesas sucias sin que se lo pidan.', wage:30},
 ];
 
 export const HOUR_CURVE = {10:0.55,11:0.75,12:0.95,13:1.15,14:1.2,15:1.0,16:0.85,17:0.8,18:0.85,19:0.75,20:0.95,21:0.65};

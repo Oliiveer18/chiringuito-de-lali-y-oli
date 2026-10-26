@@ -14,7 +14,7 @@ import { endDay, recordVisit } from './report.js';
 import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js';
 
 export function newSeason(){
-  Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}});
+  Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
   for(const id of ITEM_IDS){ Game.stock[id]= ITEMS[id].unlock?0:15; Game.prices[id]=ITEMS[id].ref; Game.enabled[id]=true; }
   Game.forecast=[];
   Game.regulars={}; Game.regVisited={}; Game.buzz=0;
@@ -278,7 +278,9 @@ export function completeOrder(c){
   if(c.personality==='exigente' && s>0.85) pTip=total*P.tipP;
   if(pTip>0.01){ total+=pTip; Game.dayStats.tipsP=(Game.dayStats.tipsP||0)+pTip; Game.floaters.push({x:c.x,y:c.y-190,text:'Propina +'+eur2(pTip),t:0,color:'#ffd36b'}); }
   c.syncTip=sync; c.tipped = sync || pTip>0.01; c.tipAmt = syncTip + Math.max(0,pTip);
-  const free = Game.tables.find(t=>t.state==='free');
+  // Mesa libre al azar: reparte a los clientes por la terraza en vez de acumularlos en la primera
+  const freeTables = Game.tables.filter(t=>t.state==='free');
+  const free = freeTables.length ? freeTables[Math.floor(rnd()*freeTables.length)] : null;
   if(free){ payAndSeat(c,total,s,free); return; }
   if(P.takeaway==='mesa'){
     c.totalDue=total; c.sat=clamp(s,0,1); c.state='waitTable'; c.waitT=0;
@@ -315,6 +317,9 @@ export function startDay(){
   if(Game.staff.camarero) Game.slots.push(mk('yeray','all'));
   Game.dayStats={revenue:0,served:0,lost:0,lostPrice:0,lostQueue:0,lostPatience:0,lostStock:0,partial:0,noTable:0,satSum:0,satN:0,sold:{},stockOuts:{},hamacas:0,fines:0,urgent:0,purchases:0,repStart:Game.rep,cleaned:0,tips:0,combos:0,tipsP:0,regVisits:0,visits:[],usedNames:new Set(),
     by:{p1:{items:0,rev:0,clean:0},p2:{items:0,rev:0,clean:0},yeray:{items:0,rev:0,clean:0}}};
+  // Las compras hechas en el plan de la mañana se imputan al día que empieza
+  Game.dayStats.purchases = Game.pendingPurchases||0;
+  Game.pendingPurchases = 0;
   startBeach();
   scheduleRegulars();
   Net.ready={p1:false,p2:false};
@@ -465,7 +470,10 @@ export function beginClosing(){
 export function buyStock(id,n,mult=1){
   const cost = ITEMS[id].cost*n*mult;
   if(Game.money < cost) { Audio.bad(); flashMoney(); return false; }
-  Game.money -= cost; Game.stock[id]+=n; Audio.click(); return cost;
+  Game.money -= cost;
+  // Contabilidad: la compra se imputa al día que está planificándose
+  Game.pendingPurchases = (Game.pendingPurchases||0) + cost;
+  Audio.click(); return cost;
 }
 export function tryServe(c, who='p1'){
   const slot=slotOf(who); if(!slot || !servable(c)) return false;
