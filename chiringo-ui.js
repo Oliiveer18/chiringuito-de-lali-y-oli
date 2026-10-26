@@ -198,10 +198,10 @@ function render(force) {
   const c = ctxOf(u);
   let h = '';
   if (status) h += '<div class="rd-status ' + status.kind + '" role="status" aria-live="polite">' + status.msg + '</div>';
-  h += header(u) + todayCard(u, posted) + ledger(u);
+  h += '<div class="cs-cover"><span>CHIRINGO</span><strong>La vida junto al mar</strong><small>Tu comunidad · Tenerife</small></div>' + header(u) + '<p class="cs-rating">Valoración pública: ' + Number(u.socialRating || 3).toFixed(1) + '/5 · Una publicación por jornada</p>' + todayCard(u, posted) + ledger(u);
   h += '<div class="rd-h">Publicar en Chiringo' + (posted ? ' <span class="rd-mut">· ya has publicado hoy, vuelve mañana</span>' : '') + '</div><div class="rd-grid">';
   for (const [id, P] of Object.entries(POSTS)) h += postCard(id, P, posted, Game.money, c);
-  h += '</div>' + previewPanel(u, posted, c) + feed(u);
+  h += '</div>' + previewPanel(u, posted, c) + archiveHtml(u) + feed(u);
   h = '<div class="rd">' + h + '</div>';
   if (!force && b.__rd === h && b.firstChild) return;
   b.__rd = h; b.innerHTML = h;
@@ -348,3 +348,52 @@ const css = `
 @media (max-width:640px){.rd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rd-aff{margin-left:0}.rd-ledger{grid-template-columns:1fr}}
 `;
 const st = document.createElement('style'); st.id = 'rd-style'; st.textContent = css; document.head.append(st);
+
+function archiveHtml(u) {
+  const records = Array.isArray(u.chiringoArchive) ? u.chiringoArchive : [];
+  let h = '<section class="cs-timeline" aria-label="Historial de publicaciones"><h3>Tu perfil · Publicaciones</h3><p class="rd-mut">Historial de las últimas 60 publicaciones, registrado desde esta actualización. Las métricas son resultados calculados por el juego.</p>';
+  if (!records.length) h += '<p class="cs-empty">Tu próxima publicación aparecerá aquí. Elige una de las opciones de arriba para prepararla.</p>';
+  for (const r of [...records].reverse()) {
+    const P = POSTS[r.post]; if (!P) continue;
+    const label = escapeHtml(P.name), business = escapeHtml(u.kioskName || 'El Charco Azul');
+    const m = r.metrics;
+    h += '<article class="cs-post"><header><div class="cs-avatar">🏝️</div><div><b>' + business + '</b><small>Temporada ' + r.season + ' · Día ' + r.day + ' · ' + (r.cost ? 'Campaña' : 'Orgánica') + '</small></div></header>';
+    h += '<div class="cs-art cs-art-' + r.post + '"><span>' + postIcon(r.post) + '</span><strong>' + label + '</strong><small>Tenerife · Ilustración de la publicación</small></div>';
+    h += '<div class="cs-post-body"><p>' + escapeHtml(P.desc) + '</p><p class="cs-metrics">' + (m ? '♡ ' + m.likes + ' me gusta · ' + m.comments + ' comentarios estimados · Alcance ' + m.reach : 'Resultados pendientes del cierre') + '</p>';
+    h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Previsión de afluencia: +' + Math.round(r.arr * 100) + '%') + '</p></div></article>';
+  }
+  return h + '</section>';
+}
+function captureArchive() {
+  if (Net.role === 'guest' || !['plan','service','report'].includes(Game.mode)) return;
+  const u = Game.upgrades;
+  if (!u || !POSTS[u.socialPost] || u.socialPostDia !== Game.day) return;
+  const season = Number(u.career && u.career.season) || 1;
+  const id = season + ':' + Game.day;
+  const old = Array.isArray(u.chiringoArchive) ? u.chiringoArchive : [];
+  const existing = old.find(r => r.id === id);
+  const stats = u.socialStats && u.socialStats.dia === Game.day ? u.socialStats : null;
+  const metrics = stats ? Object.fromEntries(['reach','interactions','likes','comments'].map(k => [k, Math.max(0, Number(stats[k]) || 0)])) : null;
+  const entry = existing ? {...existing} : {id,season,day:Game.day,post:u.socialPost,cost:POSTS[u.socialPost].cost,arr:Number(u.socialArr)||0,metrics:null};
+  if (metrics) entry.metrics = metrics;
+  if (existing && JSON.stringify(entry) === JSON.stringify(existing)) return;
+  u.chiringoArchive = [...old.filter(r => r.id !== id),entry].slice(-60);
+  netDirty();
+  if (Plan.tab === TAB && Game.mode === 'plan') render(true);
+}
+setInterval(captureArchive, 500);
+const csStyle = document.createElement('style');
+csStyle.textContent = `
+.rd{max-width:940px;margin:auto;color:#263c40}.rd .rd-h{letter-spacing:.06em;font-size:12px}
+.cs-cover{display:flex;flex-direction:column;justify-content:end;min-height:150px;padding:22px;border-radius:20px 20px 0 0;color:white;background:radial-gradient(ellipse at 80% 10%,#f3c77c 0,transparent 35%),linear-gradient(145deg,#126971,#073f48)}
+.cs-cover>span{font-size:11px;letter-spacing:.22em;font-weight:800}.cs-cover strong{font:600 clamp(22px,5vw,32px)/1.2 var(--font-d);margin:8px 0}.cs-cover small{opacity:.9}
+.rd .rd-head{border-radius:0 0 18px 18px;background:#fff;color:#164e55;border:1px solid var(--line);border-top:0;padding:16px}.rd .rd-aff{background:#e5f2ef}.rd .rd-logo{background:#edf5f1}.cs-rating{font-size:12px;color:#52686b;margin:10px 0}
+.rd .rd-card{border-width:1px;background:white;padding:14px}.rd .rd-card.sel{border:2px solid var(--teal)}.rd .rd-meta{gap:6px}.rd .rd-meta span{background:#edf4f2;color:#244f54}.rd .rd-today{background:#f1f6f4}
+.rd button{min-height:44px}.rd .rd-card:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.cs-timeline{margin:24px 0}.cs-timeline>h3{font-size:20px}.cs-empty{border:1px dashed #b2c8c7;padding:20px;border-radius:14px}
+.cs-post{max-width:620px;margin:16px auto;background:#fff;border:1px solid #dce6e2;border-radius:18px;overflow:hidden}.cs-post header{display:flex;gap:10px;align-items:center;padding:14px}.cs-avatar{width:42px;height:42px;border-radius:50%;background:#e5f1ec;display:grid;place-items:center;font-size:22px;flex:none}.cs-post header b{overflow-wrap:anywhere}.cs-post header small{display:block;color:#607477;font-size:11px;margin-top:3px}
+.cs-art{min-height:180px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:#fff;background:linear-gradient(145deg,#136e73,#0b4049)}.cs-art-atardecer{background:linear-gradient(160deg,#eebc76,#ce7964 40%,#216e7a)}.cs-art-show,.cs-art-viral{background:linear-gradient(140deg,#493978,#176e7a)}.cs-art>span{font-size:48px}.cs-art img{width:64px;height:64px;object-fit:contain}.cs-art strong{font:600 24px var(--font-d)}.cs-art small{font-size:10px;opacity:.9}
+.cs-post-body{padding:0 16px 12px}.cs-post-body p{font-size:13px;line-height:1.5}.cs-metrics{font-weight:700;color:#225a60}.rd .rd-feed{max-width:620px;margin:auto}.rd .rd-rev{background:#fff;border-color:#dce6e2}.rd .rd-reply{background:#eaf4ef}
+@media(max-width:440px){.rd .rd-grid{gap:8px}.rd .rd-card{padding:10px}.rd .rd-pn{font-size:13px}.rd .rd-meta span{font-size:11px;padding:3px 6px}.cs-cover{min-height:120px;padding:18px}.cs-art{min-height:160px}.rd .rd-sub{gap:5px 10px}.rd .rd-aff{font-size:18px}}
+`;
+document.head.append(csStyle);
