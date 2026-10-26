@@ -1,5 +1,5 @@
-export const VERSION='v14';
-export const LABEL='v14 · clima, carta, reservas y misiones';
+export const VERSION='v25.7';
+export const LABEL='v25.7 · clima, carta, reservas y misiones';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

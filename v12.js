@@ -1,14 +1,14 @@
 /* v13: incidentes, grupos, repartidor y Chiringo ampliado (perfil, tendencias, influencers, reseñas y respuestas). v19: seguidores con modelo (social-model.js). */
-import { Game, Net, hostLive, isCoop, itemUnlocked, lvl, setTimeoutGame } from './state.js';
-import { ITEMS } from './config.js';
-import { rnd, clamp } from './util.js';
-import { Plan, toast, updateStockbar } from './ui.js';
-import { netDirty } from './net.js';
-import { spawnCustomer } from './sim.js';
-import { guestSend, onGuestAction } from './coopbridge.js';
-import { postEffect, influEffect, settle, postMetrics, reachFactor, engagement } from './social-model.js';
-import { openDelivery } from './delivery-panel.js';
-import { influCost } from './influencer-model.mjs';
+import { Game, Net, hostLive, isCoop, itemUnlocked, lvl, setTimeoutGame } from './state.js?v=25.7';
+import { ITEMS } from './config.js?v=25.7';
+import { rnd, clamp } from './util.js?v=25.7';
+import { Plan, toast, updateStockbar } from './ui.js?v=25.7';
+import { netDirty } from './net.js?v=25.7';
+import { spawnCustomer } from './sim.js?v=25.7';
+import { guestSend, onGuestAction } from './coopbridge.js?v=25.7';
+import { postEffect, influEffect, settle, postMetrics, reachFactor, engagement } from './social-model.js?v=25.7';
+import { openDelivery } from './delivery-panel.js?v=25.7';
+import { influCost } from './influencer-model.mjs?v=25.7';
 
 const FOL='socialFollowers', RAT='socialRating';
 let lastDay=Game.day, puntaEnd=0, vipIds=[], vipBase=0, vipDone=false, lastT=null;

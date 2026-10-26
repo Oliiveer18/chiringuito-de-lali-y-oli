@@ -1,17 +1,17 @@
 /* v19: Chiringo (cabecera, tarjeta «Hoy», publicaciones en tarjetas, balance de seguidores, feed de reseñas y respuesta inmediata).
    Sustituye la pestaña «Red» de v12.js por «Chiringo». Reutiliza las acciones de v12 (data-post, data-influ, data-resp).
    Los efectos mostrados salen de social-model.js, el mismo cálculo que aplica v12.js. */
-import { Game, Net } from './state.js';
-import { ITEMS } from './config.js';
-import { Plan, toast, estimateCustomers } from './ui.js';
-import { Audio } from './audio.js';
-import { ICON_URL } from './icons.js';
-import { drawPerson } from './render.js';
-import { netDirty } from './net.js';
-import { escapeHtml, eur, stars } from './util.js';
-import { postEffect, influEffect, postMetrics } from './social-model.js';
+import { Game, Net } from './state.js?v=25.7';
+import { ITEMS } from './config.js?v=25.7';
+import { Plan, toast, estimateCustomers } from './ui.js?v=25.7';
+import { Audio } from './audio.js?v=25.7';
+import { ICON_URL } from './icons.js?v=25.7';
+import { drawPerson } from './render.js?v=25.7';
+import { netDirty } from './net.js?v=25.7';
+import { escapeHtml, eur, stars } from './util.js?v=25.7';
+import { postEffect, influEffect, postMetrics } from './social-model.js?v=25.7';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=27';
+import { POSTS, INFLU } from './v12.js?v=25.7';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';

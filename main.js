@@ -2,16 +2,16 @@
    main.js
    Arranque: bucle principal, exposición de pruebas (window.__api/__test) y arranque inicial.
    ========================================================= */
-import { ITEMS, UPGRADES } from './config.js';
-import { buildIcons } from './icons.js';
-import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js';
-import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js';
-import { endDay } from './report.js';
-import { Plan, pressReady, showPlan, toggleReady } from './ui.js';
-import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js';
-import { render } from './render.js';
-import { ctx } from './canvas.js';
-import './variety.js';
+import { ITEMS, UPGRADES } from './config.js?v=25.7';
+import { buildIcons } from './icons.js?v=25.7';
+import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=25.7';
+import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=25.7';
+import { endDay } from './report.js?v=25.7';
+import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=25.7';
+import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=25.7';
+import { render } from './render.js?v=25.7';
+import { ctx } from './canvas.js?v=25.7';
+import './variety.js?v=25.7';
 
 // ---------- Bucle ----------
 let last=performance.now(), acc=0; const STEP=1/60;

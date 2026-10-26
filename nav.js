@@ -2,9 +2,9 @@
    nav.js
    Navegación A* por cuadrícula: rutas de clientes que no atraviesan mesas.
    ========================================================= */
-import { H, W } from './config.js';
-import { clamp, lerp } from './util.js';
-import { Game } from './state.js';
+import { H, W } from './config.js?v=25.7';
+import { clamp, lerp } from './util.js?v=25.7';
+import { Game } from './state.js?v=25.7';
 
 // ---------- Navegación (mejora 1): rutas que no atraviesan mesas ----------
 export const NAV = {cs:10, gw:0, gh:0, blocked:null, cx:0, cy:0};

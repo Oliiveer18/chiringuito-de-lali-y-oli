@@ -3,15 +3,15 @@
    Informe de fin de día y reseñas: el modelo se genera una vez y el render es puro.
    v25.7: voz por tipo de cliente, intensidad por estrellas y firma con pueblo.
    ========================================================= */
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES, who } from './config.js';
-import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js';
-import { rr } from './icons.js';
-import { Audio } from './audio.js';
-import { visitStars, experienceSummary, reputation } from './ratings-model.mjs';
-import { decideAll, opinionCounts } from './opinions-model.mjs';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, weatherToday } from './state.js';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js';
-import { netAct, netDirty } from './net.js';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES, who } from './config.js?v=25.7';
+import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js?v=25.7';
+import { rr } from './icons.js?v=25.7';
+import { Audio } from './audio.js?v=25.7';
+import { visitStars, experienceSummary, reputation } from './ratings-model.mjs?v=25.7';
+import { decideAll, opinionCounts } from './opinions-model.mjs?v=25.7';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, weatherToday } from './state.js?v=25.7';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=25.7';
+import { netAct, netDirty } from './net.js?v=25.7';
 
 export function endDay(){
   Game.mode='report';

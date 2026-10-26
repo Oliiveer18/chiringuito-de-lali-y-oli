@@ -6,8 +6,8 @@
    requieren tocar el generador de reseñas (report.js); aquí se amplían
    los bancos compartidos con frases de voz e intensidad variadas.
    ========================================================= */
-import { NAMES } from './config.js';
-import { REVIEW_BANK, PRAISE, DETAIL } from './report.js';
+import { NAMES } from './config.js?v=25.7';
+import { REVIEW_BANK, PRAISE, DETAIL } from './report.js?v=25.7';
 
 const add = (arr, items) => { for (const it of items) if (!arr.includes(it)) arr.push(it); };
 

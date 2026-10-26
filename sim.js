@@ -2,16 +2,16 @@
    sim.js
    Simulación autoritativa (anfitrión): dificultad, clientes, pedidos, ciclo del día y economía.
    ========================================================= */
-import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js';
-import { $, clamp, eur2, pickW, rand, rnd } from './util.js';
-import { Audio } from './audio.js';
-import { satisfaction } from './ratings-model.mjs';
-import { startBeach, updateBeach } from './beach.js';
-import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js';
-import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js';
-import { navSetTarget, navStep } from './nav.js';
-import { endDay, recordVisit } from './report.js';
-import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js';
+import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=25.7';
+import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=25.7';
+import { Audio } from './audio.js?v=25.7';
+import { satisfaction } from './ratings-model.mjs?v=25.7';
+import { startBeach, updateBeach } from './beach.js?v=25.7';
+import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=25.7';
+import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=25.7';
+import { navSetTarget, navStep } from './nav.js?v=25.7';
+import { endDay, recordVisit } from './report.js?v=25.7';
+import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=25.7';
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -472,7 +472,8 @@ export function buyStock(id,n,mult=1){
   if(Game.money < cost) { Audio.bad(); flashMoney(); return false; }
   Game.money -= cost;
   // Contabilidad: la compra se imputa al día que está planificándose
-  Game.pendingPurchases = (Game.pendingPurchases||0) + cost;
+  Game.stock[id] = (Game.stock[id]||0) + n;
+  if(Game.mode==='plan') Game.pendingPurchases = (Game.pendingPurchases||0) + cost;
   Audio.click(); return cost;
 }
 export function tryServe(c, who='p1'){

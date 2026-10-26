@@ -1,8 +1,8 @@
-import {Game,Net,itemUnlocked} from './state.js';
-import {ITEMS} from './config.js';
-import {ICON_URL} from './icons.js';
-import {escapeHtml,eur2} from './util.js';
-import {guestSend} from './coopbridge.js';
+import {Game,Net,itemUnlocked} from './state.js?v=25.7';
+import {ITEMS} from './config.js?v=25.7';
+import {ICON_URL} from './icons.js?v=25.7';
+import {escapeHtml,eur2} from './util.js?v=25.7';
+import {guestSend} from './coopbridge.js?v=25.7';
 let root=null,send=null,waiting=false,until=0,last='';
 function paint(){if(!root)return;if(Game.mode!=='service'){root.remove();root=null;return;}if(Game.upgrades.deliveryItem)waiting=false;if(waiting&&Date.now()>until)waiting=false;
 const h='<h3>Reparto</h3><p>El servicio continúa. Entrega en 10–15 segundos de juego.</p><button class="btn sm" data-del-close="1">Cerrar</button>'+(Game.upgrades.deliveryItem?'<p>Pedido en camino. Esperad a su llegada.</p>':waiting?'<p>Solicitud enviada al anfitrión. Esperando confirmación…</p>':Object.entries(ITEMS).filter(([id])=>itemUnlocked(id)).map(([id,p])=>'<article><div><img width="32" height="32" alt="" src="'+(ICON_URL[id]||'')+'"> '+escapeHtml(p.name)+' · quedan '+(Game.stock[id]||0)+'</div><div>'+[5,10,20].map(q=>'<button class="btn sm" data-del-id="'+id+'" data-del-q="'+q+'" '+(Game.money<p.cost*q?'disabled':'')+'>'+q+' · '+eur2(p.cost*q)+'</button>').join('')+'</div></article>').join(''));

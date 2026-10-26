@@ -2,13 +2,13 @@
    render.js
    Dibujo de la escena: cielo, kiosco, clientes, burbujas e indicadores de red.
    ========================================================= */
-import { H, PERSONALITIES, STATION_COLOR, STATION_LABEL, W, WHO_COLOR, stationOf } from './config.js';
-import { $, clamp, lerp, mixColor } from './util.js';
-import { drawIcon, rr } from './icons.js';
-import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js';
-import { COUNTER, HAMACA_POS, SKINS } from './world.js';
-import { canvas, ctx, view } from './canvas.js';
-import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js';
+import { H, PERSONALITIES, STATION_COLOR, STATION_LABEL, W, WHO_COLOR, stationOf } from './config.js?v=25.7';
+import { $, clamp, lerp, mixColor } from './util.js?v=25.7';
+import { drawIcon, rr } from './icons.js?v=25.7';
+import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js?v=25.7';
+import { COUNTER, HAMACA_POS, SKINS } from './world.js?v=25.7';
+import { canvas, ctx, view } from './canvas.js?v=25.7';
+import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js?v=25.7';
 
 // ---------- Dibujo ----------
 export const SKY_KEYS=[

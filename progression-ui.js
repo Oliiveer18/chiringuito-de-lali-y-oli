@@ -1,12 +1,12 @@
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net} from './state.js';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js';
-import {Plan,toast} from './ui.js';
-import {refreshReportUI} from './report.js';
-import {netDirty} from './net.js';
-import {guestSend,onGuestAction} from './coopbridge.js';
-import {escapeHtml as E,eur} from './util.js';
-import * as M from './progression-model.mjs';
+import {Game,Net} from './state.js?v=25.7';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=25.7';
+import {Plan,toast} from './ui.js?v=25.7';
+import {refreshReportUI} from './report.js?v=25.7';
+import {netDirty} from './net.js?v=25.7';
+import {guestSend,onGuestAction} from './coopbridge.js?v=25.7';
+import {escapeHtml as E,eur} from './util.js?v=25.7';
+import * as M from './progression-model.mjs?v=25.7';
 const day=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 const pget=()=>Game.upgrades.progression;
 let current=null,selectedArea=0,selectedTier=0,metric='cash',windowSize=30;
