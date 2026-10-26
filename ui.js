@@ -1,18 +1,17 @@
 /* =========================================================
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
-   v25.8: pestaña «Hoy», navegación envolvente y resumen de preparación.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=25.8';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=25.8';
-import { ICON_URL } from './icons.js?v=25.8';
-import { Audio } from './audio.js?v=25.8';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=25.8';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=25.8';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=25.8';
-import { canvas, toWorld } from './canvas.js?v=25.8';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=25.8';
-import { drawPerson } from './render.js?v=25.8';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=25.7';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=25.7';
+import { ICON_URL } from './icons.js?v=25.7';
+import { Audio } from './audio.js?v=25.7';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=25.7';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=25.7';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=25.7';
+import { canvas, toWorld } from './canvas.js?v=25.7';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=25.7';
+import { drawPerson } from './render.js?v=25.7';
 
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
@@ -27,7 +26,7 @@ export function showServiceUI(){
 
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
-export const Plan={tab:'hoy'}; let planPurchases=0;
+export const Plan={tab:'compras'}; let planPurchases=0;
 export function showPlan(){
   Game.mode='plan'; planPurchases=0; Net.ready={p1:false,p2:false};
   showPlanUI(); netDirty();
@@ -86,30 +85,8 @@ export function renderTab(){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   const b=$('#tab-body'); let h='';
   // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
-  if(!['hoy','compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
-  if(Plan.tab==='hoy'){
-    const low=ITEM_IDS.filter(id=>itemUnlocked(id)&&Game.stock[id]<6);
-    const out=ITEM_IDS.filter(id=>itemUnlocked(id)&&Game.stock[id]===0);
-    const availUp=UPGRADES.filter(u=>{const l=lvl(u.id);return l<u.levels.length&&(!u.req||lvl(u.req));});
-    const hired=STAFF.filter(s=>Game.staff[s.id]);
-    const visits=Math.round(estimateCustomers());
-    h+=`<div class="prep-grid">`;
-    h+=`<div class="prep-card"><h4>Previsión <span class="tag">${visits} visitas</span></h4><ul><li><span>Clima</span><b>${WEATHER[weatherToday()].label}</b></li><li><span>Evento</span><b>${SPECIAL_DAYS[Game.day]?SPECIAL_DAYS[Game.day].title:'Ninguno'}</b></li><li><span>Gastos al cierre</span><b>${eur(RENT+wages())}</b></li></ul><div class="prep-actions"><button class="btn sm" data-goto="compras">Revisar compras</button><button class="btn sm" data-goto="carta">Revisar carta</button></div></div>`;
-    h+=`<div class="prep-card"><h4>Existencias ${out.length?'<span class="tag bad">Agotados</span>':low.length?'<span class="tag mid">Bajos</span>':'<span class="tag good">OK</span>'}</h4><ul>`;
-    if(out.length||low.length){
-      for(const id of [...out,...low].slice(0,6)){ h+=`<li><span>${ITEMS[id].name}</span><b>${Game.stock[id]} uds.</b></li>`; }
-    } else h+=`<li class="empty">Todo el género desbloqueado tiene existencias.</li>`;
-    h+=`</ul><div class="prep-actions"><button class="btn sm primary" data-goto="compras">Ir a compras</button></div></div>`;
-    h+=`<div class="prep-card"><h4>Equipo <span class="tag">${hired.length} contratado${hired.length===1?'':'s'}</span></h4><ul>`;
-    if(hired.length){ for(const s of hired){ h+=`<li><span>${s.name}</span><b>${eur(s.wage)}/día</b></li>`; } }
-    else h+=`<li class="empty">No hay personal contratado.</li>`;
-    h+=`</ul><div class="prep-actions"><button class="btn sm" data-goto="personal">Gestionar personal</button></div></div>`;
-    h+=`<div class="prep-card"><h4>Negocio <span class="tag">${availUp.length} mejora${availUp.length===1?'':'s'} disponible${availUp.length===1?'':'s'}</span></h4><ul>`;
-    if(availUp.length){ for(const u of availUp.slice(0,4)){ const l=lvl(u.id), cost=u.levels[l]; h+=`<li><span>${u.name}</span><b>${eur(cost)}</b></li>`; } }
-    else h+=`<li class="empty">No hay mejoras disponibles ahora.</li>`;
-    h+=`</ul><div class="prep-actions"><button class="btn sm" data-goto="mejoras">Ver mejoras</button><button class="btn sm" data-goto="red">Chiringo</button></div></div>`;
-    h+=`</div>`;
-  } else if(Plan.tab==='compras'){
+  if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
+  if(Plan.tab==='compras'){
     h += `<p class="muted" style="margin:0 0 6px">Calcula unas ${Math.round(estimateCustomers())} visitas hoy. Lo fresco se estropea por la noche${lvl('nevera')?' (poco, gracias a la nevera)':''}.</p>`;
     for(const id of ITEM_IDS){
       const it=ITEMS[id], un=itemUnlocked(id);
@@ -186,7 +163,6 @@ $('#rep-body').addEventListener('click',e=>{
 $('#tab-body').addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t || t.disabled) return;
   const d={...t.dataset}; Audio.click();
-  if(d.goto){ Plan.tab=d.goto; renderTab(); return; }
   if(isGuest()) netAct({a:'plan', d}); else applyPlanAction('p1', d);
 });
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ Plan.tab=t.dataset.tab; Audio.click(); renderTab(); }));
@@ -207,7 +183,7 @@ export function toggleReady(who){
   } else updateReadyUI();
   netDirty();
 }
-$('#btn-start').addEventListener('click',()=>{ Audio.init(); Audio.good(); Net.role='solo'; Net.me='p1'; newSeason(); Plan.tab='hoy'; showPlan(); });
+$('#btn-start').addEventListener('click',()=>{ Audio.init(); Audio.good(); Net.role='solo'; Net.me='p1'; newSeason(); Plan.tab='compras'; showPlan(); });
 
 export function showFinal(bankrupt){
   Game.mode='final';
@@ -232,7 +208,7 @@ export function showFinalUI(){
   hideAll(); $('#hud').classList.add('hidden'); $('#stockbar').classList.add('hidden');
   $('#final-card').innerHTML = Net.ui.card;
   $('#final').classList.add('show');
-  $('#btn-again').onclick=()=>{ Audio.click(); if(isGuest()) netAct({a:'again'}); else { newSeason(); Plan.tab='hoy'; showPlan(); } };
+  $('#btn-again').onclick=()=>{ Audio.click(); if(isGuest()) netAct({a:'again'}); else { newSeason(); Plan.tab='compras'; showPlan(); } };
 }
 
 // ---------- Urgente ----------
