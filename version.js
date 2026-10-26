@@ -1,5 +1,5 @@
-export const VERSION='v9';
-export const LABEL='v9 · interfaz vertical y horizontal';
+export const VERSION='v10';
+export const LABEL='v10 · vista vertical y sonido';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
