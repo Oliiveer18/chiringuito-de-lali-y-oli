@@ -84,6 +84,8 @@ export function demandHint(id){
 export function renderTab(){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   const b=$('#tab-body'); let h='';
+  // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
+  if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
   if(Plan.tab==='compras'){
     h += `<p class="muted" style="margin:0 0 6px">Calcula unas ${Math.round(estimateCustomers())} visitas hoy. Lo fresco se estropea por la noche${lvl('nevera')?' (poco, gracias a la nevera)':''}.</p>`;
     for(const id of ITEM_IDS){
