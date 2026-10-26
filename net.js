@@ -1,6 +1,7 @@
 /* =========================================================
    net.js
-   Red: WebSocket, sala compartida, sincronización anfitrión→invitado y acciones pendientes del invitado.
+   Red: WebRTC con PeerJS (sin servidor propio), sala compartida,
+   sincronización anfitrión→invitado y acciones pendientes del invitado.
    ========================================================= */
 import { STATION_LABEL, who } from './config.js';
 import { $, clamp, escapeHtml } from './util.js';
@@ -11,9 +12,6 @@ import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryS
 import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js';
 import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js';
 
-// --- Acciones del invitado: se envían al anfitrión y quedan marcadas hasta su confirmación ---
-// El anfitrión responde con un ack explícito (ok/rechazo) en la siguiente instantánea;
-// nada se deduce del estado: la mesa no se limpia ni el pedido empieza en local.
 export const REJECT_MSG = {
   busy:'Tu puesto ya estaba ocupado con otro pedido.',
   gone:'Ese cliente ya no esperaba el pedido.',
@@ -21,7 +19,7 @@ export const REJECT_MSG = {
 };
 export function pendHas(kind,key){ for(const p of Net.pend.values()) if(p.kind===kind && p.key===key) return true; return false; }
 export function guestServe(cu){
-  if(!cu || pendHas('serve', cu.id)) return; // ya enviada: no se reenvía mientras espera confirmación
+  if(!cu || pendHas('serve', cu.id)) return;
   const q=++Net.seq;
   netAct({a:'serve', id:cu.id, q});
   Net.pend.set(q, {kind:'serve', key:cu.id, t0:performance.now(), expired:false});
@@ -32,39 +30,53 @@ export function guestClean(i){
   netAct({a:'clean', i, q});
   Net.pend.set(q, {kind:'clean', key:i, t0:performance.now(), expired:false});
 }
-// caducidad y limpieza de pendientes (en el invitado, cada fotograma)
 export function guestPendTick(){
   const now=performance.now();
   for(const [q,p] of Net.pend){
     const age=now-p.t0;
-    if(!p.expired && age>Net.pendTimeout) p.expired=true;   // sin confirmación: se avisa, no se esconde
-    if(age>Net.pendDrop) Net.pend.delete(q);                // demasiado vieja: manda el estado recibido
+    if(!p.expired && age>Net.pendTimeout) p.expired=true;
+    if(age>Net.pendDrop) Net.pend.delete(q);
   }
-  // el pendiente solo lo quita el ack explícito del anfitrión (o la caducidad):
-  // nada de inferir por el estado recibido, o un rechazo tardío se perdería.
 }
-// ---------- Red: conexión, sala y sincronización ----------
-export function wsURL(){
-  const raw = window.__WS_BASE__ || 'port/8000';
-  const local = ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-  if(raw.startsWith('__PORT_')){ if(!local) throw new Error('Proxy sin configurar'); return 'ws://'+location.hostname+':8000/ws'; }
-  const pageDir = location.href.split('#')[0].split('?')[0].replace(/\/[^/]*$/,'/');
-  const u = /^https?:/.test(raw) ? new URL(raw.replace(/\/$/,'')+'/ws') : new URL(raw.replace(/^\//,'').replace(/\/$/,'')+'/ws', pageDir);
-  return u.href.replace(/^http/,'ws');
-}
+// ---------- Red: PeerJS (WebRTC) ----------
+let peer=null, conn=null;
+const PREFIX='chiringuito-lali-oli-';
+const LETTERS='ABCDEFGHJKLMNPQRSTUVWXYZ';
+function newCode(){ let c=''; for(let i=0;i<4;i++) c+=LETTERS[Math.floor(Math.random()*LETTERS.length)]; return c; }
 export function netOpen(onOpen){
-  if(Net.ws && Net.ws.readyState<=1){ onOpen(); return; }
-  let ws; try{ ws=new WebSocket(wsURL()); }catch(e){ lobbyError('No se puede conectar con el servidor de partidas.'); return; }
-  Net.ws=ws; lobbyStatus('Conectando…');
-  const to=setTimeout(()=>{ if(ws.readyState!==1){ try{ws.close();}catch(e){} lobbyError('El servidor de partidas no responde. Inténtalo de nuevo en unos segundos.'); } }, 9000);
-  ws.onopen=()=>{ clearTimeout(to); onOpen(); };
-  ws.onmessage=e=>{ let m; try{ m=JSON.parse(e.data); }catch(_){ return; }
-    const d=netSimDelay('down'); // recepción retrasada: el estado llega tarde, como en la red real
-    if(d>0) setTimeout(()=>onNet(m), d); else onNet(m); };
-  ws.onclose=()=>{ clearTimeout(to); if(Net.ws!==ws) return; Net.ws=null;
-    if(Net.role==='guest' && Net.code) netLost('Se ha perdido la conexión con la partida.');
-    else if(Net.role==='host') netLost('Se ha cortado la conexión con el servidor. Podéis seguir en solitario o crear otra partida.', true);
-  };
+  if(peer && !peer.destroyed){ onOpen(); return; }
+  if(!window.Peer){ lobbyError('No se ha podido cargar el módulo de conexión.'); return; }
+  lobbyStatus('Conectando…');
+  peer=new Peer();
+  peer.on('open',()=>{ onOpen(); });
+  peer.on('error',e=>{ lobbyError('No se ha podido conectar. Inténtalo de nuevo.'); });
+  peer.on('disconnected',()=>{ try{peer.reconnect();}catch(e){} });
+}
+function hostStart(){
+  const code=newCode();
+  Net.role='host'; Net.me='p1'; Net.code=code;
+  if(peer) peer.destroy();
+  peer=new Peer(PREFIX+code);
+  peer.on('open',()=>{ renderLobby(); lobbyStatus(''); });
+  peer.on('connection',c=>{
+    conn=c;
+    c.on('open',()=>{ Net.peer=true; onNet({t:'peer',on:true}); });
+    c.on('data',d=>{ try{ onNet(typeof d==='string'?JSON.parse(d):d); }catch(e){} });
+    c.on('close',()=>{ conn=null; Net.peer=false; onNet({t:'peer',on:false}); });
+  });
+  peer.on('error',()=>{ lobbyError('No se ha podido crear la sala.'); });
+}
+function guestJoin(code){
+  Net.role='guest'; Net.me='p2'; Net.code=code;
+  if(peer) peer.destroy();
+  peer=new Peer();
+  peer.on('open',()=>{
+    conn=peer.connect(PREFIX+code);
+    conn.on('open',()=>{ Net.peer=true; renderLobby(); lobbyStatus(''); netSend({t:'hello', name:Net.names.p2}); onNet({t:'peer',on:true}); });
+    conn.on('data',d=>{ try{ onNet(typeof d==='string'?JSON.parse(d):d); }catch(e){} });
+    conn.on('close',()=>{ conn=null; Net.peer=false; onNet({t:'peer',on:false}); });
+  });
+  peer.on('error',()=>{ lobbyError('No existe ninguna partida con ese código.'); });
 }
 export function netSimDelay(dir){
   if(!NET_SIM.on) return 0;
@@ -77,8 +89,9 @@ export function netSimDelay(dir){
   return at - now;
 }
 export function netSend(o){
-  const s=JSON.stringify(o), sock=Net.ws;
-  const fire=()=>{ if(sock && sock.readyState===1 && Net.ws===sock) sock.send(s); };
+  if(o.t==='create'){ hostStart(); return; }
+  if(o.t==='join'){ guestJoin(o.code); return; }
+  const fire=()=>{ if(conn && conn.open) conn.send(o); };
   const d=netSimDelay('up');
   if(d>0) setTimeout(fire, d); else fire();
 }
@@ -103,7 +116,7 @@ export function onNet(m){
 export function applyAct(m){
   const who='p2';
   switch(m.a){
-    case 'serve': { // confirma al invitado si su acción se aceptó o por qué no
+    case 'serve': {
       const c=Game.customers.find(o=>o.id===m.id);
       const slot=slotOf(who);
       let ok=false, why='gone';
@@ -137,9 +150,7 @@ export function applyAct(m){
   }
   netDirty();
 }
-// el anfitrión acusa recibo de cada acción del invitado: viaja en la siguiente instantánea
 export function pushAck(q, ok, why){ if(q==null) return; Net.acks.push({q, ok:!!ok, why:why||''}); }
-// --- Instantánea que envía el anfitrión ---
 export function snapshot(){
   const o = { t:'state', mode:Game.mode, day:Game.day, money:Game.money, rep:Game.rep, hour:Game.hour, speed:Game.speed, closing:Game.closing,
     stock:Game.stock, prices:Game.prices, enabled:Game.enabled, upgrades:Game.upgrades, staff:Game.staff, forecast:Game.forecast, season:Game.season, buzz:Game.buzz,
@@ -156,7 +167,6 @@ export function snapshot(){
   if(Game.mode==='report'||Game.mode==='final') o.ui=Net.ui;
   if(Game.mode==='report'){
     o.revSig=revSigOf(Game.revModel);
-    // el modelo solo viaja cuando cambia (respuestas): las reseñas se pintan en local
     if(Net.revDirty){ o.rev=Game.revModel; o.log=Game.starsLog; Net.revDirty=false; }
   }
   if(Game.mode==='lobby') o.lobby=true;
@@ -174,7 +184,6 @@ export function applyState(m){
   Object.assign(Game,{day:m.day, money:m.money, rep:m.rep, hour:m.hour, speed:m.speed, closing:m.closing, stock:m.stock, prices:m.prices, enabled:m.enabled,
     upgrades:m.upgrades, staff:m.staff, forecast:m.forecast, season:m.season, buzz:m.buzz});
   Net.names=m.names; Net.roles=m.roles; Net.ready=m.ready;
-  // confirmaciones del anfitrión: quitan el indicador y miden la latencia real de la acción
   for(const a of (m.acks||[])){
     const p=Net.pend.get(a.q);
     if(!p) continue;
@@ -209,9 +218,8 @@ export function applyState(m){
     else if(e.e==='ping') showPing(e.from, e.k);
   }
   if(m.ui) Net.ui=m.ui;
-  if(m.rev) Game.revModel=m.rev;    // modelo del informe: el invitado pinta las reseñas en local
-  if(m.log) Game.starsLog=m.log;    // tendencia semanal sincronizada
-  // cambios de pantalla
+  if(m.rev) Game.revModel=m.rev;
+  if(m.log) Game.starsLog=m.log;
   if(m.mode!==prevMode){
     Net.lastMode=m.mode; Net.planSig='';
     Net.pend.clear(); Net.readySent=false;
@@ -226,8 +234,6 @@ export function applyState(m){
     if(sig!==Net.planSig){ Net.planSig=sig; renderTab(); refreshPlanMoney(); renderForecast(); updateReadyUI(); }
   }
   if(m.mode==='report'){
-    // el informe se actualiza en caliente (respuestas del propietario): repintar
-    // sin perder scroll ni "Ver más", si cambió el cuerpo o alguna reseña fue respondida
     if(m.ui && (m.ui.body!==Net.lastBody || (m.revSig||'')!==Net.lastRevSig)) refreshReportUI();
     else updateReadyUI();
   }
@@ -240,7 +246,6 @@ export function guestTick(dt){
     if(c.gx==null) continue;
     const dx=c.gx-c.x, dy=c.gy-c.y; const moving = Math.abs(dx)+Math.abs(dy) > 1.5;
     c.x += dx*k; c.y += dy*k;
-    // las animaciones avanzan con el tiempo escalado del anfitrión (nada aleatorio local)
     if(moving){ c.bob += dt*8; c.stridePh=(c.stridePh||0)+dt*10*(c.look&&c.look.walk?c.look.walk.stride||1:1); }
     c.actT=(c.actT||0)+dt*(Game.speed||0);
     if(c.moodT>0) c.moodT-=dt;
@@ -249,7 +254,6 @@ export function guestTick(dt){
   for(const p of Game.particles){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=200*dt; } Game.particles=Game.particles.filter(p=>p.t<p.life);
   hud.tick+=dt; if(Game.mode==='service' && hud.tick>0.25){ hud.tick=0; updateHud(); }
 }
-// --- Avisos rápidos entre jugadores ---
 export const PINGS = { ayuda:'¡Échame una mano!', mesas:'Hay mesas sucias', genero:'Se acaba el género', bien:'¡Buen trabajo!' };
 export function sendPing(k){
   $('#ping-menu').classList.add('hidden');
@@ -259,7 +263,6 @@ export function sendPing(k){
 export function showPing(from,k){ toastLocal(escapeHtml(Net.names[from]||'Tu pareja'), PINGS[k]||'', k==='bien'?'good':'bad'); Audio._raw.start(); if(navigator.vibrate) try{ navigator.vibrate(120); }catch(e){} }
 $('#btn-ping').addEventListener('click',e=>{ e.stopPropagation(); $('#ping-menu').classList.toggle('hidden'); });
 document.querySelectorAll('#ping-menu button').forEach(b=>b.addEventListener('click',()=>sendPing(b.dataset.ping)));
-// --- Sala ---
 export function showLobby(){
   Game.mode='lobby'; hideAll(); $('#lobby').classList.add('show'); renderLobby();
 }
@@ -294,7 +297,8 @@ $('#lobby-join-code').addEventListener('input',e=>{ e.target.value=e.target.valu
 document.querySelectorAll('#role-pick button').forEach(b=>b.addEventListener('click',()=>{ Audio.click(); Net.roles.p1=b.dataset.role; Net.roles.p2 = b.dataset.role==='barra'?'cocina':'barra'; renderLobby(); netDirty(); }));
 $('#btn-lobby-go').addEventListener('click',()=>{ if(!Net.peer) return; Audio.good(); newSeason(); Plan.tab='compras'; showPlan(); });
 $('#btn-lobby-back').addEventListener('click',()=>{ Audio.click(); leaveCoop(); });
-export function leaveCoop(){ const ws=Net.ws; Net.ws=null; Net.role='solo'; Net.me='p1'; Net.code=null; Net.peer=false; Net.lastMode=null; if(ws) try{ ws.close(); }catch(e){}
+export function leaveCoop(){ if(conn){ try{conn.close();}catch(e){} conn=null; } if(peer){ try{peer.destroy();}catch(e){} peer=null; }
+  Net.role='solo'; Net.me='p1'; Net.code=null; Net.peer=false; Net.lastMode=null;
   hideAll(); Game.mode='title'; $('#title').classList.add('show'); }
 export function netLost(html, canSolo){
   $('#netmsg-text').innerHTML = html;
@@ -306,7 +310,7 @@ $('#btn-net-home').addEventListener('click',()=>{ hideNetMsg(); location.reload(
 $('#btn-net-solo').addEventListener('click',()=>{ hideNetMsg(); goSolo(); });
 $('#btn-net-wait').addEventListener('click',()=>{ hideNetMsg(); });
 export function goSolo(){
-  const ws=Net.ws; Net.ws=null; if(ws) try{ ws.close(); }catch(e){}
+  if(conn){ try{conn.close();}catch(e){} conn=null; } if(peer){ try{peer.destroy();}catch(e){} peer=null; }
   Net.role='solo'; Net.me='p1'; Net.peer=false;
   if(Game.mode==='service'){ Game.slots = Game.slots.filter(s=>s.who!=='p2'); const p1=slotOf('p1'); if(p1) p1.station='all'; Game.slots.forEach(s=>{ if(s.cust && s.who==='p2') s.cust=null; }); for(const c of Game.customers) if(c.state==='prep' && !c.inPrep && pendingIdx(c).length) {} setSpeed(1); showServiceUI(); }
   else if(Game.mode==='plan') showPlanUI();
