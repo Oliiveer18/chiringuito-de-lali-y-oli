@@ -1,17 +1,18 @@
+import {trackCost} from './bookkeeping.js?v=27.1';
 /* =========================================================
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.0';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.0';
-import { ICON_URL } from './icons.js?v=27.0';
-import { Audio } from './audio.js?v=27.0';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.0';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.0';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.0';
-import { canvas, toWorld } from './canvas.js?v=27.0';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.0';
-import { drawPerson } from './render.js?v=27.0';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.1';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.1';
+import { ICON_URL } from './icons.js?v=27.1';
+import { Audio } from './audio.js?v=27.1';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.1';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.1';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.1';
+import { canvas, toWorld } from './canvas.js?v=27.1';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.1';
+import { drawPerson } from './render.js?v=27.1';
 
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
@@ -26,9 +27,9 @@ export function showServiceUI(){
 
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
-export const Plan={tab:'compras'}; let planPurchases=0;
+export const Plan={tab:'compras'};
 export function showPlan(){
-  Game.mode='plan'; planPurchases=0; Net.ready={p1:false,p2:false};
+  Game.mode='plan'; Net.ready={p1:false,p2:false};
   showPlanUI(); netDirty();
 }
 export function showPlanUI(){
@@ -144,11 +145,11 @@ export function staffAvatar(id){
 export function applyPlanAction(who, d){
   if(Game.mode!=='plan') return;
   const by = isCoop() ? Net.names[who] : null;
-  if(d.buy){ const c=buyStock(d.buy,+d.n); if(c!==false){ planPurchases+=c; } }
+  if(d.buy){ buyStock(d.buy,+d.n); }
   else if(d.price){ const id=d.price; Game.prices[id]=Math.round(clamp(Game.prices[id]+ (+d.d)*(ITEMS[id].ref>8?5:1), 0.5, ITEMS[id].ref*3)*10)/10; }
   else if(d.toggle){ const id=d.toggle; Game.enabled[id]=!Game.enabled[id]; if(!activeItems().length) Game.enabled[id]=true; }
   else if(d.up){ const u=UPGRADES.find(x=>x.id===d.up), l=lvl(u.id), cost=u.levels[l]; const locked=u.req && !lvl(u.req);
-    if(cost!=null && !locked && Game.money>=cost){ Game.money-=cost; Game.upgrades[u.id]=l+1; Audio.good(); toast(u.name,(by?by+' lo ha instalado. ':'Instalado. ')+u.desc,'good'); } }
+    if(cost!=null && !locked && Game.money>=cost){ Game.money-=cost;trackCost(cost,'upgrades',true); Game.upgrades[u.id]=l+1; Audio.good(); toast(u.name,(by?by+' lo ha instalado. ':'Instalado. ')+u.desc,'good'); } }
   else if(d.staff){ const id=d.staff; Game.staff[id]=!Game.staff[id]; if(by) toast(STAFF.find(x=>x.id===id).name, `${by} ${Game.staff[id]?'lo ha contratado':'lo ha despedido'}.`, ''); }
   if(Net.ready.p1||Net.ready.p2){ if(d.up||d.staff||d.buy){ /* cambios: se mantiene el listo */ } }
   renderTab(); refreshPlanMoney(); netDirty();
@@ -167,7 +168,7 @@ $('#tab-body').addEventListener('click',e=>{
 });
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ Plan.tab=t.dataset.tab; Audio.click(); renderTab(); }));
 $('#btn-open').addEventListener('click',()=>{ Audio.init(); Audio.click();
-  if(!isCoop()){ startDay(); Game.dayStats.purchases=planPurchases; return; }
+  if(!isCoop()){ startDay(); return; }
   pressReady(); });
 $('#btn-next').addEventListener('click',()=>{ Audio.click();
   if(!isCoop()){ advanceFromReport(); return; }
@@ -178,7 +179,7 @@ export function toggleReady(who){
   Net.ready[who]=!Net.ready[who];
   if(Net.ready.p1 && Net.ready.p2){
     Net.ready={p1:false,p2:false};
-    if(Game.mode==='plan'){ const pp=planPurchases; startDay(); Game.dayStats.purchases=pp; }
+    if(Game.mode==='plan'){ startDay(); }
     else advanceFromReport();
   } else updateReadyUI();
   netDirty();

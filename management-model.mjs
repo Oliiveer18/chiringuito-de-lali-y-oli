@@ -56,7 +56,7 @@ export function hireCandidate(team,applicants,id,day) {
   return {team:{...team,[c.role]:{...c,hiredDay:day}},applicants:applicants.filter(a=>a.id!==id)};
 }
 export function trainEmployee(employee,cash) {
-  if(!employee||employee.training>=2) throw new Error('Training limit');
+  if(!employee||!Number.isInteger(employee.training)||employee.training<0||employee.training>=2||!Number.isFinite(employee.workMultiplier)||employee.workMultiplier<=0) throw new Error('Training limit');
   const cost=100*(employee.training+1);
   if(!Number.isFinite(cash)||cash<cost) throw new Error('Insufficient cash');
   return {employee:{...employee,training:employee.training+1,workMultiplier:Math.max(0.7,employee.workMultiplier*0.95)},cash:cash-cost,cost};

@@ -1,11 +1,11 @@
-import { Game, Net, gameTimers, guestCust } from './state.js?v=27.0';
-import { newSeason } from './sim.js?v=27.0';
-import { showPlan, Plan } from './ui.js?v=27.0';
-import { buildTables } from './world.js?v=27.0';
-import { netDirty } from './net.js?v=27.0';
-import { showReportUI } from './report.js?v=27.0';
+import { Game, Net, gameTimers, guestCust } from './state.js?v=27.1';
+import { newSeason } from './sim.js?v=27.1';
+import { showPlan, Plan } from './ui.js?v=27.1';
+import { buildTables } from './world.js?v=27.1';
+import { netDirty } from './net.js?v=27.1';
+import { showReportUI } from './report.js?v=27.1';
 const KEY='lali-oli.library.v2', BACK=KEY+'.backup';
-const fields=['day','money','rep','stock','prices','enabled','upgrades','staff','forecast','season','lastDebt','starsLog','revUsed','revPrev','regulars','regVisited','buzz'];
+const fields=['day','money','rep','stock','prices','enabled','upgrades','staff','forecast','season','lastDebt','starsLog','revUsed','revPrev','regulars','regVisited','buzz','pendingPurchases'];
 const encode=x=>JSON.stringify(x,(_,v)=>v instanceof Set?{__laliSet:[...v]}:v);
 const decode=s=>JSON.parse(s,(_,v)=>v&&Array.isArray(v.__laliSet)?new Set(v.__laliSet):v);
 const copy=x=>decode(encode(x));
@@ -21,7 +21,7 @@ const settled=()=>{const p=Game.upgrades&&Game.upgrades.progression;if(!p)return
 function save(){if(locked||pending||Net.role==='guest'||!['plan','report'].includes(Game.mode)||Game.mode==='report'&&(!Net.ui||!Game.revModel)||Game.mode==='report'&&!settled())return;
 try{const kind=Net.role==='host'?'coop':'solo',data={};for(const k of fields)if(Game[k]!==undefined)data[k]=copy(Game[k]);if(Game.mode==='report'){data.dayStats=copy(Game.dayStats);data.revModel=copy(Game.revModel);}const s={id:active||uid(),kind,phase:Game.mode,data,names:copy(Net.names),roles:copy(Net.roles),ui:Game.mode==='report'?copy(Net.ui):null,date:new Date().toISOString()};if(!valid(s))throw Error();const sig=encode([s.kind,s.phase,s.data,s.ui,s.names,s.roles]);if(sig===last)return;
 const next=library.filter(x=>x.id!==s.id).concat(s),raw=encode(next);parse(raw);if(library.length)localStorage.setItem(BACK,encode(library));localStorage.setItem(KEY,raw);library=next;active=s.id;last=sig;message('✓ Guardado automático · Día '+Game.day+(Game.mode==='report'?' completado':' · preparación')+' · '+new Date().toLocaleTimeString('es-ES'));}catch(e){(console.error('[guardado]',e),message('No se pudo guardar ('+(e&&e.name||'error')+'). Conserva la página abierta; comprueba el almacenamiento.'));}}
-function restore(s){if(!valid(s))return;newSeason();for(const k of [...fields,'dayStats','revModel'])if(s.data[k]!==undefined)Game[k]=copy(s.data[k]);for(const key of ['revUsed','revPrev']){const obj=Game[key]||{};for(const k of Object.keys(obj))if(!(obj[k] instanceof Set))obj[k]=new Set(Array.isArray(obj[k])?obj[k]:[]);}
+function restore(s){if(!valid(s))return;newSeason();for(const k of [...fields,'dayStats','revModel'])if(s.data[k]!==undefined)Game[k]=copy(s.data[k]);if(s.phase==='plan'&&s.data.pendingPurchases===undefined)Game.upgrades.accountingLegacyUnknown=true;for(const key of ['revUsed','revPrev']){const obj=Game[key]||{};for(const k of Object.keys(obj))if(!(obj[k] instanceof Set))obj[k]=new Set(Array.isArray(obj[k])?obj[k]:[]);}
 Object.assign(Game,{hour:10,speed:1,customers:[],slots:[],floaters:[],particles:[],closing:false,closeT:0,spawnAcc:0,mods:{arr:1},dayEvent:null,eventDone:false});gameTimers.length=0;guestCust.clear();buildTables();Net.ready={p1:false,p2:false};Net.readySent=false;Net.pend.clear();Net.acks.length=0;Net.events.length=0;Net.lastMode=null;Net.revDirty=true;pending=null;active=s.id;last='';Plan.tab='compras';if(s.phase==='report'){Game.mode='report';Net.ui=copy(s.ui);showReportUI();}else{Game.dayStats=null;Net.ui=null;showPlan();}netDirty();save();}
 const css=document.createElement('style');css.textContent='.save-browser{position:fixed;inset:0;z-index:5000;background:#03272bef;overflow:auto;padding:24px 16px;color:#173b3d;font:15px/1.5 system-ui}.save-browser[hidden]{display:none}.save-sheet{max-width:560px;margin:auto;background:#fffdf8;border-radius:22px;padding:22px}.save-row{background:#f2eee4;border:1px solid #d6d9cc;border-radius:14px;padding:14px;margin:12px 0}.save-row strong{display:block}.save-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.save-action{background:#fffdf8!important;color:#12484c!important;border:1px solid #97b5b3!important;border-radius:12px;padding:12px 16px;font:700 15px system-ui;min-height:46px}.save-action.main{background:#0b676c!important;color:white!important}.save-state{font:12px/1.5 system-ui;color:#315e5d;margin:10px 24px}';document.head.append(css);
 const modal=document.createElement('section');modal.className='save-browser';modal.hidden=true;modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Tus partidas');document.body.append(modal);

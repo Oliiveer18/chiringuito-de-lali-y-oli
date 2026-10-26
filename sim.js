@@ -1,19 +1,20 @@
-import {initFloor,updateFloor,requestFloorClean,requestFloorCustomer,floorAway,updateFloorCustomer,releaseFloorCustomer,floorHasWork,abortFloor} from './floor-service.js?v=27.0';
+import {beginLedgerDay} from './bookkeeping.js?v=27.1';
+import {initFloor,updateFloor,requestFloorClean,requestFloorCustomer,floorAway,updateFloorCustomer,releaseFloorCustomer,floorHasWork,abortFloor} from './floor-service.js?v=27.1';
 /* =========================================================
    sim.js
    Simulación autoritativa (anfitrión): dificultad, clientes, pedidos, ciclo del día y economía.
    ========================================================= */
-import {factor} from './professional-model.mjs?v=27.0';
-import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=27.0';
-import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=27.0';
-import { Audio } from './audio.js?v=27.0';
-import { satisfaction } from './ratings-model.mjs?v=27.0';
-import { startBeach, updateBeach } from './beach.js?v=27.0';
-import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=27.0';
-import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=27.0';
-import { navSetTarget, navStep } from './nav.js?v=27.0';
-import { endDay, recordVisit } from './report.js?v=27.0';
-import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=27.0';
+import {factor} from './professional-model.mjs?v=27.1';
+import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=27.1';
+import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=27.1';
+import { Audio } from './audio.js?v=27.1';
+import { satisfaction } from './ratings-model.mjs?v=27.1';
+import { startBeach, updateBeach } from './beach.js?v=27.1';
+import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=27.1';
+import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=27.1';
+import { navSetTarget, navStep } from './nav.js?v=27.1';
+import { endDay, recordVisit } from './report.js?v=27.1';
+import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=27.1';
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -321,7 +322,7 @@ export function startDay(){
     by:{p1:{items:0,rev:0,clean:0},p2:{items:0,rev:0,clean:0},yeray:{items:0,rev:0,clean:0}}};
   // Las compras hechas en el plan de la mañana se imputan al día que empieza
   Game.dayStats.purchases = Game.pendingPurchases||0;
-  Game.pendingPurchases = 0;
+  Game.pendingPurchases = 0;beginLedgerDay();
   initFloor({clean:commitClean,prepare:startPart,deliver:completeFloorOrder,abandon:abandonFloor});
   startBeach();
   scheduleRegulars();
@@ -473,7 +474,7 @@ export function beginClosing(){
   toast('Hora de cerrar','Los últimos clientes terminan y recoges la barra.','');
 }
 
-export function buyStock(id,n,mult=1){
+export function buyStock(id,n,mult=1){if(!ITEMS[id]||!itemUnlocked(id)||!Number.isInteger(n)||n<1||n>500||![1,2].includes(mult)||!Number.isFinite(Game.money)||!Number.isFinite(ITEMS[id].cost)||ITEMS[id].cost<=0)return false;
   const cost = ITEMS[id].cost*n*mult;
   if(Game.money < cost) { Audio.bad(); flashMoney(); return false; }
   Game.money -= cost;

@@ -1,15 +1,15 @@
-import {floorActive,floorTableLabel} from './floor-service.js?v=27.0';
+import {floorActive,floorTableLabel} from './floor-service.js?v=27.1';
 /* =========================================================
    render.js
    Dibujo de la escena: cielo, kiosco, clientes, burbujas e indicadores de red.
    ========================================================= */
-import { H, PERSONALITIES, STATION_COLOR, STATION_LABEL, W, WHO_COLOR, stationOf } from './config.js?v=27.0';
-import { $, clamp, lerp, mixColor } from './util.js?v=27.0';
-import { drawIcon, rr } from './icons.js?v=27.0';
-import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js?v=27.0';
-import { COUNTER, HAMACA_POS, SKINS } from './world.js?v=27.0';
-import { canvas, ctx, view } from './canvas.js?v=27.0';
-import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js?v=27.0';
+import { H, PERSONALITIES, STATION_COLOR, STATION_LABEL, W, WHO_COLOR, stationOf } from './config.js?v=27.1';
+import { $, clamp, lerp, mixColor } from './util.js?v=27.1';
+import { drawIcon, rr } from './icons.js?v=27.1';
+import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js?v=27.1';
+import { COUNTER, HAMACA_POS, SKINS } from './world.js?v=27.1';
+import { canvas, ctx, view } from './canvas.js?v=27.1';
+import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js?v=27.1';
 
 // ---------- Dibujo ----------
 export const SKY_KEYS=[

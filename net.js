@@ -1,17 +1,17 @@
-import {floorCommand} from './floor-service.js?v=27.0';
+import {floorCommand} from './floor-service.js?v=27.1';
 /* =========================================================
    net.js
    Red: WebRTC con PeerJS (sin servidor propio), sala compartida,
    sincronización anfitrión→invitado y acciones pendientes del invitado.
    ========================================================= */
-import { STATION_LABEL, who } from './config.js?v=27.0';
-import { $, clamp, escapeHtml } from './util.js?v=27.0';
-import { Audio } from './audio.js?v=27.0';
-import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=27.0';
-import { TABLE_POS } from './world.js?v=27.0';
-import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=27.0';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=27.0';
-import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=27.0';
+import { STATION_LABEL, who } from './config.js?v=27.1';
+import { $, clamp, escapeHtml } from './util.js?v=27.1';
+import { Audio } from './audio.js?v=27.1';
+import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=27.1';
+import { TABLE_POS } from './world.js?v=27.1';
+import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=27.1';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=27.1';
+import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=27.1';
 
 export const REJECT_MSG = {
   busy:'Tu puesto ya estaba ocupado con otro pedido.',

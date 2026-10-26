@@ -1,17 +1,18 @@
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=27.1';
 /* =========================================================
    report.js
    Informe de fin de día y reseñas: el modelo se genera una vez y el render es puro.
    v25.7: voz por tipo de cliente, intensidad por estrellas y firma con pueblo.
    ========================================================= */
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES, who } from './config.js?v=27.0';
-import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js?v=27.0';
-import { rr } from './icons.js?v=27.0';
-import { Audio } from './audio.js?v=27.0';
-import { visitStars, experienceSummary, reputation } from './ratings-model.mjs?v=27.0';
-import { decideAll, opinionCounts } from './opinions-model.mjs?v=27.0';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, weatherToday } from './state.js?v=27.0';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=27.0';
-import { netAct, netDirty } from './net.js?v=27.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES, who } from './config.js?v=27.1';
+import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js?v=27.1';
+import { rr } from './icons.js?v=27.1';
+import { Audio } from './audio.js?v=27.1';
+import { visitStars, experienceSummary, reputation } from './ratings-model.mjs?v=27.1';
+import { decideAll, opinionCounts } from './opinions-model.mjs?v=27.1';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, weatherToday } from './state.js?v=27.1';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=27.1';
+import { netAct, netDirty } from './net.js?v=27.1';
 
 export function endDay(){
   Game.mode='report';
@@ -24,7 +25,7 @@ export function endDay(){
     if(lost>0){ Game.stock[id]-=lost; spoilVal+=lost*ITEMS[id].cost; spoilLines.push(`${lost} × ${ITEMS[id].name.toLowerCase()}`); }
   }
   Game.money -= wage + rent;
-  const net = s.revenue + s.hamacas - wage - rent - s.fines - s.urgent - s.purchases - (s.courtesies||0);
+  const net = operatingResult(s,{wage,rent});
   Game.season.revenue+=s.revenue; Game.season.served+=s.served; Game.season.lost+=s.lost;
   if(s.revenue>Game.season.bestDay){ Game.season.bestDay=s.revenue; Game.season.bestDayN=Game.day; }
   Game.rep=reputation(s.repStart,s.visits||[]);
@@ -53,7 +54,7 @@ export function endDay(){
 export function reportStatsHtml(s, m){
   const acc=m.acc;
   const repDelta=Game.rep-acc.repStart;
-  const net=s.revenue+s.hamacas-acc.wage-acc.rent-s.fines-s.urgent-s.purchases-(s.courtesies||0);
+  const net=operatingResult(s,acc);
   return `
     <div class="kpis">
       <div class="kpi"><div class="k">Atendidos</div><div class="v">${s.served}</div></div>
@@ -62,7 +63,7 @@ export function reportStatsHtml(s, m){
     </div>
     <p class="muted" style="margin:0 24px 12px">${opinionLine(s)} Alquileres de hamacas: ${s.beachRentals||0}.</p>
     <div class="stats">
-      <span>Ventas en barra</span><span class="pos">+${eur(s.revenue-s.tips)}</span>
+      <span>Ventas en barra</span><span class="pos">+${eur(s.revenue-s.tips-(s.tipsP||0))}</span>
       ${s.tips>0.5?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(s.tips)}</span>`:''}
       ${s.tipsP>0.05?`<span>Propinas de agradecimiento</span><span class="pos">+${eur(s.tipsP)}</span>`:''}
       ${s.hamacas>0.5?`<span>Alquiler de hamacas</span><span class="pos">+${eur(s.hamacas)}</span>`:''}
@@ -72,7 +73,7 @@ export function reportStatsHtml(s, m){
       <span>Licencia y alquiler</span><span class="neg">−${eur(acc.rent)}</span>
       ${s.fines?`<span>Multas</span><span class="neg">−${eur(s.fines)}</span>`:''}
       ${s.courtesies?`<span>Cortesías a clientes (respuestas)</span><span class="neg">−${eur(s.courtesies)}</span>`:''}
-      <span class="total">Resultado del día</span><span class="total ${net>=0?'pos':'neg'}">${net>=0?'+':'−'}${eur(Math.abs(net))}</span>
+      ${ledgerHtml(s)}<span class="total">Resultado operativo (base caja)</span><span class="total ${net>=0?'pos':'neg'}">${net>=0?'+':'−'}${eur(Math.abs(net))}</span>
       <span class="total">En caja</span><span class="total">${eur(Game.money)}</span>
     </div>
     <div style="padding:0 24px 12px;display:flex;flex-wrap:wrap;gap:6px">${acc.soldStr||'<span class="muted" style="margin:0">Hoy no se vendió nada.</span>'}</div>
@@ -80,7 +81,7 @@ export function reportStatsHtml(s, m){
     ${s.lost?`<p class="muted" style="margin:0 24px 12px">Clientes perdidos: ${[s.lostPrice?s.lostPrice+' por precios altos':'',s.lostQueue?s.lostQueue+' por cola llena':'',s.lostPatience?s.lostPatience+' por esperar demasiado':'',s.lostStock?s.lostStock+' porque no quedaba género':''].filter(Boolean).join(', ')}.</p>`:''}
     ${s.regVisits?`<p class="muted" style="margin:0 24px 12px">Habituales hoy: ${s.regVisits} visita${s.regVisits>1?'s':''}. Atendedlos bien y volverán más fieles.</p>`:''}
     ${Game.buzz>0.03?`<p class="muted" style="margin:0 24px 12px">Boca a boca: los habituales contentos traen amigos (+${Math.round(Game.buzz*12)}% de afluencia mañana).</p>`:''}
-    ${isCoop()?teamHtml(s):''}`;
+    ${capitalNote(s)}${isCoop()?teamHtml(s):''}`;
 }
 export function reviewsWrapHtml(m){ return `<div class="reviews">${reviewsSectionHtml(m)}</div>`; }
 export function revSigOf(m){ return m ? m.day+'#'+m.respCount+'#'+m.cards.map(c=>c.vid+':'+(c.resp||0)).join(',') : ''; }

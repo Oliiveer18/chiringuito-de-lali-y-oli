@@ -1,9 +1,9 @@
 /* Carrera infinita del chiringuito: temporadas encadenadas con objetivo, ventajas, Legado y traspaso.
    Lógica sin DOM: Game.day sigue siendo el día DE LA TEMPORADA (1..SEASON_DAYS), así que el resto del juego no cambia.
    Los datos de la carrera viven en Game.upgrades.career (se guardan y se sincronizan en cooperativo). */
-import { Game } from './state.js?v=27.0';
-import { GOAL, ITEMS, SEASON_DAYS, SPECIAL_DAYS, TYPES } from './config.js?v=27.0';
-import { clamp, pickW, rnd } from './util.js?v=27.0';
+import { Game } from './state.js?v=27.1';
+import { GOAL, ITEMS, SEASON_DAYS, SPECIAL_DAYS, TYPES } from './config.js?v=27.1';
+import { clamp, pickW, rnd } from './util.js?v=27.1';
 
 export const OBJ_TYPES = ['capital', 'reputacion', 'seguidores', 'servicio'];
 export const PERKS = {
@@ -23,7 +23,7 @@ export const LEGACY = {
 };
 // banderas por día que no deben cruzar el límite entre temporadas (el día vuelve a 1)
 const DAY_FLAGS = ['socialPost', 'socialPostDia', 'socialTrend', 'socialTrendDia', 'socialInflu', 'socialInfluDia', 'socialInfluContratado',
-  'socialRespondido', 'socialAplicado', 'socialArr', 'socialInfluArr', 'socialIdle', 'showHoy', 'showHora', 'showTipo', 'showDia', 'showFlojo',
+  'socialRespondido', 'socialAplicado', 'socialArr', 'socialInfluArr', 'showHoy', 'showHora', 'showTipo', 'showDia', 'showFlojo',
   'showFlojoDia', 'grupoDia', 'seguidoresDia', 'terrazaDia', 'incidentTipo', 'incidentHora', 'weatherHora', 'reservaHora'];
 
 const num = v => (Number.isFinite(v) ? v : 0);
@@ -194,7 +194,7 @@ export function nextSeason() {
   if (cl && cl.kind === 'season' && !cl.ok) Game.money += 200;
   c.season++; c.closed = null; c.red = 0; c.redKey = null; c.arrKey = null;
   if (c.perks.includes('mecenas')) Game.money += 400;
-  for (const k of DAY_FLAGS) delete U[k];
+  for (const k of DAY_FLAGS) delete U[k];if(U.socialCalendar)U.socialIdle=Math.max(0,Number(U.socialCalendar.idle)||0);
   Game.day = 1; Game.hour = 10;
   Game.season = { revenue: 0, served: 0, lost: 0, bestDay: 0, bestDayN: 1 };
   Game.forecast = buildForecast();
