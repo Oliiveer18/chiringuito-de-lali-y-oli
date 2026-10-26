@@ -11,7 +11,7 @@ import { netDirty } from './net.js';
 import { escapeHtml, eur, stars } from './util.js';
 import { postEffect, influEffect } from './social-model.js';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=18';
+import { POSTS, INFLU } from './v12.js?v=24';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';

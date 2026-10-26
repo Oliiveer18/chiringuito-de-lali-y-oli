@@ -6,6 +6,7 @@ import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, S
 import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js';
 import { rr } from './icons.js';
 import { Audio } from './audio.js';
+import { visitStars, experienceSummary, reputation } from './ratings-model.mjs';
 import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, weatherToday } from './state.js';
 import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js';
 import { netAct, netDirty } from './net.js';
@@ -25,6 +26,7 @@ export function endDay(){
   const net = s.revenue + s.hamacas - wage - rent - s.fines - s.urgent - s.purchases;
   Game.season.revenue+=s.revenue; Game.season.served+=s.served; Game.season.lost+=s.lost;
   if(s.revenue>Game.season.bestDay){ Game.season.bestDay=s.revenue; Game.season.bestDayN=Game.day; }
+  Game.rep=reputation(s.repStart,s.visits||[]);
   const dayStars = dayStarsSummary(s);
   if(!s._starsLogged){ Game.starsLog.push({sum:dayStars.sumStars, n:dayStars.count}); s._starsLogged=true; }
   Game.revPrev = Game.revUsed || {}; Game.revUsed = {}; // las frases de ayer no se repiten hoy
@@ -62,8 +64,9 @@ export function reportStatsHtml(s, m){
     <div class="kpis">
       <div class="kpi"><div class="k">Atendidos</div><div class="v">${s.served}</div></div>
       <div class="kpi"><div class="k">Perdidos</div><div class="v">${s.lost}</div></div>
-      <div class="kpi"><div class="k">Valoración</div><div class="v" style="color:#d98a12">${Game.rep.toFixed(1)} <small style="font-size:14px;color:${repDelta>=0?'#3f8a3a':'#c73e2a'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</small></div></div>
+      <div class="kpi"><div class="k">Reputación del kiosco</div><div class="v" style="color:#d98a12">${Game.rep.toFixed(1)} <small style="font-size:14px;color:${repDelta>=0?'#3f8a3a':'#c73e2a'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</small></div></div>
     </div>
+    <p class="muted" style="margin:0 24px 12px">Satisfacción de hoy: ${experienceSummary(s.visits||[]).avg==null?'sin visitas valorables':experienceSummary(s.visits||[]).avg.toFixed(2)+' / 5'}. La reputación tiene memoria y no cambia por cada cobro. Alquileres de hamacas: ${s.beachRentals||0}.</p>
     <div class="stats">
       <span>Ventas en barra</span><span class="pos">+${eur(s.revenue-s.tips)}</span>
       ${s.tips>0.5?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(s.tips)}</span>`:''}
@@ -191,19 +194,9 @@ export function recordVisit(c, extra){
 }
 
 // estrellas a partir de la satisfacción real (o del motivo de la pérdida)
-export function starsOf(v){
-  if(v.lost==='espera'||v.lost==='sinStock') return 1;
-  if(v.lost) return 2;
-  const sat=(v.sat==null)?0.5:v.sat;
-  return sat>=0.8?5 : sat>=0.6?4 : sat>=0.42?3 : sat>=0.22?2 : 1;
-}
-// media y distribución del día: SOLO clientes cobrados (los que suman a s.served)
-export function dayStarsSummary(s){
-  const rated=(s.visits||[]).filter(v=>!v.lost);
-  const dist={5:0,4:0,3:0,2:0,1:0}; let sum=0;
-  for(const v of rated){ const st=starsOf(v); dist[st]++; sum+=st; }
-  return {avg: rated.length? sum/rated.length : null, dist, count:rated.length, sumStars:sum};
-}
+export function starsOf(v){ return visitStars(v); }
+// Incluye experiencias fallidas; rechazar precios antes de entrar se trata como conversión.
+export function dayStarsSummary(s){ return experienceSummary(s.visits||[]); }
 
 // RNG con semilla por día (el informe de un día siempre es el mismo)
 export function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }

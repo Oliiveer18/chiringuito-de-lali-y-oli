@@ -7,6 +7,7 @@ import { netDirty } from './net.js';
 import { spawnCustomer } from './sim.js';
 import { guestSend, onGuestAction } from './coopbridge.js';
 import { postEffect, influEffect, settle } from './social-model.js';
+import { openDelivery } from './delivery-panel.js';
 
 const FOL='socialFollowers', RAT='socialRating';
 let lastDay=Game.day, puntaEnd=0, vipIds=[], vipBase=0, vipDone=false, lastT=null;
@@ -85,7 +86,7 @@ function publish(id){const P=POSTS[id],U=Game.upgrades;if(!P||U.socialPostDia===
  if(id==='encuesta'){const w=rnd()<0.5?'papas':'pescado';U.socialPoll=w;toast('Encuesta cerrada','La gente ha votado: '+ITEMS[w].name+'. Vended 3 o más hoy.','');}netDirty();}
 function hireInflu(){const U=Game.upgrades,k=U.socialInflu;if(!k||U.socialInfluContratado)return;const I=INFLU[k];if(Game.money<I.cost){toast('Sin caja','No llega para el influencer.','bad');return;}if(!I.req()){toast('No disponible',I.reqTxt,'bad');return;}const ie=influEffect({I,f:U[FOL]||0,rating:U[RAT]||3});Game.money-=I.cost;addPend(I.name,ie.followers,{prest:true});U.socialInfluArr=ie.arr;U.socialInfluContratado=1;toast('Colaboración cerrada',I.name+' visitará el chiringuito hoy: +'+Math.round(ie.arr*100)+'% de afluencia y +'+ie.followers+' seguidores al cierre (muchos son prestados y se irán antes).','good');netDirty();}
 function respond(kind){if(Game.upgrades.socialRespondido)return;const last=(Game.upgrades.socialComments||[])[0];if(!last)return;if(kind==='disculpa'){addPend('Respuesta',1);Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.05,1,5);}else{if(Game.money<50){toast('Sin caja','El descuento cuesta 50 €.','bad');return;}Game.money-=50;addPend('Respuesta',3);Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.15,1,5);}Game.upgrades.socialRespondido=1;toast('Respuesta publicada',kind==='disculpa'?'Habéis respondido con una disculpa.':'Habéis ofrecido un descuento.', 'good');netDirty();}
-function orderDelivery(id,qty){const it=ITEMS[id];if(!it||Game.upgrades.deliveryItem)return;if(!itemUnlocked(id)){toast('No disponible','Ese producto aún no está desbloqueado.','bad');return;}if(Game.money<it.cost*qty){toast('Sin caja','No llega para ese pedido.','bad');return;}Game.money-=it.cost*qty;Game.upgrades.deliveryItem=id;Game.upgrades.deliveryQty=qty;Game.upgrades.deliveryT=10+rnd()*5;toast('Repartidor en camino',qty+' × '+it.name+' llegarán en '+Math.round(Game.upgrades.deliveryT)+' segundos.','');netDirty();}
+function orderDelivery(id,qty){if(Game.mode!=='service'||!Number.isInteger(qty)||qty<1||qty>20)return;const it=ITEMS[id];if(!it||Game.upgrades.deliveryItem)return;if(!itemUnlocked(id)){toast('No disponible','Ese producto aún no está desbloqueado.','bad');return;}if(Game.money<it.cost*qty){toast('Sin caja','No llega para ese pedido.','bad');return;}Game.money-=it.cost*qty;Game.upgrades.deliveryItem=id;Game.upgrades.deliveryQty=qty;Game.upgrades.deliveryT=10+rnd()*5;toast('Repartidor en camino',qty+' × '+it.name+' llegarán en '+Math.round(Game.upgrades.deliveryT)+' segundos.','');netDirty();}
 // acciones que la invitada envía al anfitrión (se validan igual que si las pulsara él)
 onGuestAction('post',v=>{if(typeof v==='string')publish(v);});
 onGuestAction('influ',()=>hireInflu());
@@ -134,4 +135,4 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 setInterval(renderRed,500);
 function deliveryBtn(){let b=document.getElementById('v12-order');if(Game.mode==='service'){if(!b){b=document.createElement('button');b.id='v12-order';b.textContent='🛵 Reparto';b.style.cssText='position:fixed;right:12px;bottom:86px;z-index:60;background:#0f8b8d;color:#fff;border:0;padding:10px 14px;border-radius:999px;font:700 13px Satoshi,system-ui;box-shadow:0 6px 18px rgba(0,0,0,.35)';document.body.append(b);}}else if(b)b.remove();}
 setInterval(deliveryBtn,400);
-document.addEventListener('click',e=>{if(e.target.id!=='v12-order')return;if(Game.upgrades.deliveryItem){toast('Repartidor en camino','Esperad al pedido actual.','');return;}const id=prompt('Producto (cerveza, barraquito, batido, papas, queso, pescado):','cerveza');if(!id||!ITEMS[id])return;const q=parseInt(prompt('¿Cuántas unidades?','5'),10);if(!q||q<1)return;const n=Math.min(20,q);if(Net.role==='guest'){guestSend('delivery',{id,qty:n});return;}orderDelivery(id,n);});
+document.addEventListener('click',e=>{if(!e.target.closest?.('#v12-order')||Game.mode!=='service')return;openDelivery(orderDelivery);});

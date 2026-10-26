@@ -5,6 +5,8 @@
 import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js';
 import { $, clamp, eur2, pickW, rand, rnd } from './util.js';
 import { Audio } from './audio.js';
+import { satisfaction } from './ratings-model.mjs';
+import { startBeach, updateBeach } from './beach.js';
 import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js';
 import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js';
 import { navSetTarget, navStep } from './nav.js';
@@ -281,10 +283,9 @@ export function completeOrder(c){
   const T=TYPES[c.type];
   const waitFrac = 1 - clamp(c.patience/c.maxPatience,0,1);
   let priceF=0; for(const id of c.served) priceF += Math.max(0, Game.prices[id]/ITEMS[id].ref - 1)/T.maxRatio; priceF/=c.served.length;
-  let s = 1 - waitFrac*0.45 - priceF*0.6 - (c.missing?0.3:0) + (lvl('altavoz')?0.05:0) + (sync?0.1:0);
-  const cheap = c.served.reduce((a,id)=>a+Math.max(0,1-Game.prices[id]/ITEMS[id].ref),0)/c.served.length; s+=cheap*0.3;
+  const cheap = c.served.reduce((a,id)=>a+Math.max(0,1-Game.prices[id]/ITEMS[id].ref),0)/c.served.length;
   const dirty = Game.tables.filter(t=>t.state==='dirty').length;
-  s -= dirty*0.04;
+  let s=satisfaction({wait:waitFrac,price:priceF,missing:!!c.missing,dirty,cheap,music:!!lvl('altavoz'),sync});
   c.dirtySeen=dirty; // mesas sucias que vio al resolver su pedido
   c.priceF=priceF;
   // propina de personalidad (visible, moderada y aparte de la cooperativa)
@@ -310,7 +311,7 @@ export function giveUpPending(c){ pendingIdx(c).forEach(i=>{ c.itemSt[i]=3; c.mi
 export function leaveQueue(c){ c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? -60 : W+60, rand(660,700)); }
 export function addSat(s){
   Game.dayStats.satSum+=s; Game.dayStats.satN++;
-  Game.rep = clamp(Game.rep + (s*5 - Game.rep)*0.035, 0.5, 5);
+  // La reputación se calcula al cierre; cada visita sigue aportando satisfacción.
 }
 
 // ---------- Eventos ----------
@@ -336,6 +337,7 @@ export function startDay(){
   if(Game.staff.camarero) Game.slots.push(mk('yeray','all'));
   Game.dayStats={revenue:0,served:0,lost:0,lostPrice:0,lostQueue:0,lostPatience:0,lostStock:0,partial:0,noTable:0,satSum:0,satN:0,sold:{},stockOuts:{},hamacas:0,fines:0,urgent:0,purchases:0,repStart:Game.rep,cleaned:0,tips:0,combos:0,tipsP:0,regVisits:0,visits:[],usedNames:new Set(),
     by:{p1:{items:0,rev:0,clean:0},p2:{items:0,rev:0,clean:0},yeray:{items:0,rev:0,clean:0}}};
+  startBeach();
   scheduleRegulars();
   Net.ready={p1:false,p2:false};
   showServiceUI();
@@ -349,12 +351,10 @@ export function update(dt){
   Game.t += dt;
   if(Game.mode!=='service') { updateAmbient(dt); return; }
   for(let i=gameTimers.length-1;i>=0;i--){ gameTimers[i].t-=dt; if(gameTimers[i].t<=0){ const f=gameTimers[i].fn; gameTimers.splice(i,1); f(); } }
+  updateBeach();
   const prevHour=Game.hour;
   if(!Game.closing){
     Game.hour += dt/SEC_PER_HOUR;
-    // hamacas
-    const ham = hamacaCount();
-    if(ham){ const rate={sol:3,calima:1.6,viento:1.2,panza:0.9}[weatherToday()]; const inc = ham*rate*dt/SEC_PER_HOUR; Game.money+=inc; Game.dayStats.hamacas+=inc; }
     // llegada
     const w=WEATHER[weatherToday()];
     let rate = 8 * (HOUR_CURVE[Math.floor(Game.hour)]||0.6) * w.arr * (0.35 + Game.rep/5*0.95) * Game.mods.arr;

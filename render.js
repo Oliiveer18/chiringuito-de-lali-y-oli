@@ -8,6 +8,7 @@ import { drawIcon, rr } from './icons.js';
 import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js';
 import { COUNTER, HAMACA_POS, SKINS } from './world.js';
 import { canvas, ctx, view } from './canvas.js';
+import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js';
 
 // ---------- Dibujo ----------
 export const SKY_KEYS=[
@@ -70,6 +71,7 @@ export function render(){
   for(let i=0;i<ham;i++) drawHamaca(c,HAMACA_POS[i].x,HAMACA_POS[i].y,i,T,weather,nt);
   // chiringuito
   drawHut(c,T,h,nt,wind);
+  drawPurchasedProps(c,T,nt);
   // entidades ordenadas por y
   const ents=[];
   for(const t of Game.tables) ents.push({y:t.y,draw:()=>drawTable(c,t,T)});
@@ -181,7 +183,7 @@ export function drawHamaca(c,x,y,i,T,weather,nt){
   // tumbona
   c.fillStyle=mixColor('#fff6e6','#706a86',nt); c.beginPath(); c.moveTo(x-22,y+8); c.lineTo(x+20,y+8); c.lineTo(x+32,y-8); c.lineTo(x+28,y-10); c.lineTo(x+16,y+2); c.lineTo(x-22,y+2); c.closePath(); c.fill();
   // bañista si hace buen tiempo
-  if((weather==='sol'||(weather==='calima'&&i%2===0)) && (i*7)%3!==2 && nt<0.5){ c.fillStyle=SKINS[i%SKINS.length]; c.beginPath(); c.ellipse(x,y-2,16,5,0,0,7); c.fill(); c.beginPath(); c.arc(x+22,y-6,5,0,7); c.fill(); c.fillStyle=cols[(i+1)%4]; c.fillRect(x-6,y-6,10,6); }
+  drawBeachGuest(c,x,y,i,T);
 }
 // ---------- Puestos del kiosco: barra vs cocina, bien diferenciados ----------
 // Zonas de trabajo absolutas, fuera del alcance de burbujas e insignias:
