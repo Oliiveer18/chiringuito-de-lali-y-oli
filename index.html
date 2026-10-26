@@ -177,6 +177,8 @@
   window.addEventListener('error', e => {
     const b = document.getElementById('errbox');
     if(!b) return;
+    // "Script error." sin archivo ni línea: error opaco de un script de otro dominio (p. ej. PeerJS); no aporta datos
+    if(e.message === 'Script error.' && !e.filename) return;
     b.style.display = 'block';
     b.textContent += '[error] ' + (e.message || e.error) + '\n' + (e.filename || '') + ':' + (e.lineno || '') + '\n';
   });
