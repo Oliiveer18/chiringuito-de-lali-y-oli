@@ -1,0 +1,108 @@
+name: Recover validated v27.1 Pages
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/recover-accounting-pages.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4e08816c32ca04d5050444808fef9ffa3341e05c
+          fetch-depth: 0
+      - name: Require validated v27.1 source
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('.')
+          rows=json.loads((p/'diagnostics/accounting-build-result.json').read_text())
+          expected={(e,w,h) for e in ('chromium','webkit') for w,h in ((390,844),(844,390))}
+          required={'purchase-save-restore','single-purchase-counter','delivery-expense','incident-fine','no-double-cash-charge','progress-result-agreement','social-season-continuity'}
+          assert len(rows)==4
+          assert {(r['engine'],r['viewport']['width'],r['viewport']['height']) for r in rows}==expected
+          assert all(r['ok'] is True and required.issubset(r['checks']) for r in rows)
+          assert 'game.js?v=27.1' in (p/'index.html').read_text()
+          assert (p/'bookkeeping.js').is_file()
+          PY
+          mkdir -p /tmp/recovery-site
+          rsync -a --exclude=.git --exclude=.github --exclude=node_modules ./ /tmp/recovery-site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/recovery-site
+      - name: Publish attempt 1
+        id: first
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before retry
+        if: steps.first.outcome == 'failure'
+        run: sleep 20
+      - name: Publish attempt 2
+        id: second
+        if: steps.first.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before final retry
+        if: steps.second.outcome == 'failure'
+        run: sleep 40
+      - name: Publish attempt 3
+        id: third
+        if: steps.second.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Require deployment and verify public files
+        env:
+          PAGE_URL: ${{ steps.first.outputs.page_url || steps.second.outputs.page_url || steps.third.outputs.page_url }}
+          FIRST: ${{ steps.first.outcome }}
+          SECOND: ${{ steps.second.outcome }}
+          THIRD: ${{ steps.third.outcome }}
+        run: |
+          python3 - <<'PY'
+          import os,time,json,pathlib,urllib.request,hashlib
+          assert 'success' in [os.environ.get(k) for k in ('FIRST','SECOND','THIRD')], 'All Pages deployment attempts failed; version not published'
+          base=os.environ['PAGE_URL'].rstrip('/')+'/'
+          assert base.startswith('https://'), 'Missing HTTPS deployment URL'
+          files=['index.html','game.js','bookkeeping.js']
+          for attempt in range(12):
+              try:
+                  hashes={}
+                  for name in files:
+                      url=base+name+'?verify='+os.environ['GITHUB_SHA']+'-'+str(attempt)
+                      req=urllib.request.Request(url,headers={'Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(req,timeout=20) as response:
+                          body=response.read()
+                      local=(pathlib.Path('/tmp/recovery-site')/name).read_bytes()
+                      assert body==local, 'Public file differs from validated source: '+name
+                      hashes[name]=hashlib.sha256(body).hexdigest()
+                  result={'version':'27.1','url':base,'publicHtmlVerified':True,'publicFilesVerified':hashes,'validatedSource':'4e08816c32ca04d5050444808fef9ffa3341e05c','workflowCommit':os.environ['GITHUB_SHA']}
+                  pathlib.Path('/tmp/recovery-publication.json').write_text(json.dumps(result,indent=2))
+                  break
+              except Exception:
+                  if attempt==11: raise
+                  time.sleep(15)
+          PY
+      - name: Record verified publication
+        run: |
+          git pull --ff-only origin main
+          mkdir -p diagnostics
+          cp /tmp/recovery-publication.json diagnostics/accounting-publication.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/accounting-publication.json
+          git diff --cached --quiet || git commit -m 'Record byte-verified public v27.1 recovery deployment'
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recovery-publication-proof
+          path: /tmp/recovery-publication.json
