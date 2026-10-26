@@ -2,7 +2,7 @@ name: Apply tested service fixes v24
 on:
   push:
     branches: [main]
-    paths: [apply-service-v24.py]
+    paths: [apply-service-v24.py, .github/workflows/service-v24.yml]
 permissions:
   contents: write
 concurrency:
@@ -22,6 +22,17 @@ jobs:
         run: node service-v24.test.mjs
       - name: Apply exact checked edits
         run: python3 apply-service-v24.py
+      - name: Test rejection in plan and delivery during service
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('smoke.test.mjs')
+          s=p.read_text()
+          old="delete Game.upgrades.deliveryItem; const m5 = Game.money; guest('delivery', { id: 'cerveza', qty: 9999 });"
+          new="delete Game.upgrades.deliveryItem; const planMoney = Game.money; guest('delivery', { id: 'cerveza', qty: 5 });\ncheck('el reparto se rechaza durante la preparación sin cobrar', !Game.upgrades.deliveryItem && Game.money === planMoney);\nGame.mode = 'service'; const m5 = Game.money; guest('delivery', { id: 'cerveza', qty: 9999 });"
+          if s.count(old)!=1: raise RuntimeError('Contexto de prueba de reparto no encontrado una sola vez')
+          p.write_text(s.replace(old,new,1))
+          PY
       - name: Check modified JavaScript syntax
         run: |
           for f in sim.js render.js report.js v12.js chiringo-ui.js game.js beach.js delivery-panel.js scene-extras.js; do
@@ -38,7 +49,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add sim.js render.js report.js v12.js chiringo-ui.js game.js index.html progression.test.mjs
+          git add sim.js render.js report.js v12.js chiringo-ui.js game.js index.html progression.test.mjs smoke.test.mjs
           git diff --cached --quiet && exit 0
           git commit -m "Apply v24 service fixes after regression tests"
           git push origin HEAD:main
