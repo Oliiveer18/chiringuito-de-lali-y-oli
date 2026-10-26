@@ -1,0 +1,7 @@
+{
+  "error": "TimeoutError: page.waitForFunction: Timeout 30000ms exceeded.",
+  "menu": "v25.7.2 · activas: v11, v12, v14, v19, cierre, carrera, progreso, mercado",
+  "box": "",
+  "errors": [],
+  "requests": []
+}
