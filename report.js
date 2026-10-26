@@ -1,6 +1,7 @@
 /* =========================================================
    report.js
    Informe de fin de día y reseñas: el modelo se genera una vez y el render es puro.
+   v25.7: voz por tipo de cliente, intensidad por estrellas y firma con pueblo.
    ========================================================= */
 import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES, who } from './config.js';
 import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js';
@@ -16,7 +17,6 @@ export function endDay(){
   Game.mode='report';
   const s=Game.dayStats;
   const wage=wages(), rent=RENT;
-  // merma: proporción fija más una unidad extra probabilística
   let spoilVal=0; const spoilLines=[];
   for(const id of ITEM_IDS){
     const rate = lvl('nevera')?ITEMS[id].spoilF:ITEMS[id].spoil;
@@ -90,6 +90,7 @@ export function respondReview(vid, kind){
   if(isGuest()){ netAct({a:'revresp', vid, kind, day:Game.day}); return; }
   applyRevResp(vid, kind, Net.me||'p1', Game.day);
 }
+window.__respondReview = respondReview;
 export function applyRevResp(vid, kind, who, day){
   if(Game.mode!=='report') return false;
   if(day!==undefined && day!==Game.day) return false;
@@ -445,4 +446,88 @@ export function reviewText(v, trig, rng){
     P.push(pickPhrase('dataLost', DETAIL.dataLost, rng));
   }
   return P.join(' ');
+}
+
+// ---------- v25.7: voz por tipo de cliente, intensidad y firma con pueblo ----------
+export const REV_RESP_MAX = 3;
+export const REV_INVITE_COST = 15;
+export const REV_INVITE_REP = 0.15;
+export const REV_APOLOGY_REP = 0.08;
+export const Rev = { expanded:false, shownDay:0 };
+
+// Voz por tipo de cliente: cierra la reseña con un remate propio de cada perfil.
+const VOICE = {
+  turista: [
+    'Volveríamos si volvemos a la isla.',
+    'Un sitio de playa como los de nuestro país, pero con vistas mejores.',
+    'Para venir de vacaciones, cumple de sobra.',
+    'Lo recomendamos para un día de playa.',
+  ],
+  local: [
+    'De los de siempre, y eso ya dice mucho.',
+    'Nos vemos por la playa.',
+    'Para ser del sur, está bien resuelto.',
+    'Repetiremos, como buenos canarios.',
+  ],
+  surfista: [
+    'Después de una sesión, cae genial.',
+    'Con el viento de la tarde, se agradece un sitio así.',
+    'Entre ola y ola, un buen sitio para recargar.',
+    'El plan de después del agua, sin duda.',
+  ],
+};
+
+// Intensidad por estrellas: 1-2 quejas directas, 3 neutro, 4-5 elogio.
+function intensityNote(stars){
+  if(stars<=2) return 'No fue nuestra mejor experiencia.';
+  if(stars===3) return 'Correcto, sin más.';
+  return 'Merece la pena, sin duda.';
+}
+
+function townOf(v){
+  const n=v.name||'';
+  const parts=n.split(',');
+  return parts.length>1 ? parts[parts.length-1].trim() : '';
+}
+
+export function buildRevModel(s, dayStars){
+  const opinions=ensureOpinions(s);
+  const rng=mulberry32(Game.day*7919+13);
+  const cards=[];
+  (s.visits||[]).forEach((v,i)=>{
+    const o=opinions[i];
+    if(!o || !o.rated) return;
+    const trig=triggerFor(v,rng);
+    const text=fill(reviewText(v,trig,rng),v);
+    const st=visitStars(v);
+    const voice=(VOICE[v.type]||VOICE.local)[Math.floor(rng()*(VOICE[v.type]||VOICE.local).length)];
+    const town=townOf(v);
+    const sign= town ? `— ${escapeHtml(v.name||who(v.type))}, ${escapeHtml(town)}` : `— ${escapeHtml(v.name||who(v.type))}`;
+    cards.push({
+      vid:(v.name||('v'+i))+'#'+Game.day+'#'+i,
+      stars:st,
+      name:v.name||who(v.type),
+      text:`${text} ${intensityNote(st)} ${voice} ${sign}`,
+      resp:null, respGain:0,
+    });
+  });
+  return { day:Game.day, respCount:0, cards };
+}
+
+export function reviewsSectionHtml(m){
+  const cards=m.cards.map(c=>{
+    const head=`<div class="rev-head"><b>${escapeHtml(c.name)}</b><span>${stars(c.stars)}</span></div>`;
+    const body=`<p class="rev-text">${c.text}</p>`;
+    let foot='';
+    if(c.resp){
+      foot=`<p class="muted">Respuesta enviada: ${c.resp==='invita'?'invitación':"disculpas"} (+${c.respGain} de reputación).</p>`;
+    } else if(c.stars<=2){
+      foot=`<div class="net-actions">
+        <button class="btn" onclick="window.__respondReview('${c.vid}','disculpa')">Disculparte</button>
+        <button class="btn" onclick="window.__respondReview('${c.vid}','invita')">Invitar (${REV_INVITE_COST} €)</button>
+      </div>`;
+    }
+    return `<div class="review">${head}${body}${foot}</div>`;
+  }).join('');
+  return `<p class="eyebrow">Reseñas del día</p>${cards||'<p class="muted">Hoy no quedó ninguna reseña.</p>'}`;
 }
