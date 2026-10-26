@@ -1,2 +1,3 @@
-// Punto de entrada del juego.
+// Arranque y guardado entre jornadas.
 import './main.js';
+import './saves.js';
