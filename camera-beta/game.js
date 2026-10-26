@@ -1,4 +1,4 @@
-import './tabguard.js';
+import '../tabguard.js';
 import { EXTRA } from '../icons.js';
 import '../main.js';
 import '../saves.js?v=9';
