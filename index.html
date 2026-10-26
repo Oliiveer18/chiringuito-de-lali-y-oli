@@ -16,6 +16,11 @@
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=chillax@500,600,700&display=swap">
 <link rel="stylesheet" href="style.css?v=10">
+<style id="tabs-fix">
+  /* Barra de pestañas del plan: solo desplazamiento horizontal. overflow-x:auto hace que overflow-y también sea auto, y arrastrar con el dedo movía la barra (y la pantalla) hacia arriba y abajo. */
+  #plan .tabs{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  #plan .tabs .tab{touch-action:pan-x}
+</style>
 </head>
 <body>
 <div id="errbox" style="position:fixed;z-index:9999;left:8px;right:8px;bottom:8px;max-height:40vh;overflow:auto;background:#2b0d0d;color:#ffd7d7;border:1px solid #ff6b6b;border-radius:10px;padding:10px;font:12px/1.4 monospace;display:none;white-space:pre-wrap"></div>
@@ -198,6 +203,16 @@
     document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && lock) ask(); });
   })();
   ['gesturestart','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
+</script>
+<script>
+  /* Al elegir una pestaña, se centra dentro de la barra solo en horizontal (sin tocar el scroll vertical de la pantalla). */
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('#plan .tabs .tab');
+    if(!t) return;
+    const bar = t.parentElement;
+    const left = t.offsetLeft - (bar.clientWidth - t.offsetWidth) / 2;
+    try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
+  });
 </script>
 <script type="module" src="game.js?v=20"></script>
 </body>
