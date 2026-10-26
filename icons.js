@@ -4,6 +4,9 @@
    ========================================================= */
 import { ITEM_IDS } from './config.js';
 
+// Colores [principal, fondo] de productos añadidos por módulos posteriores (v11, v14)
+export const EXTRA = {};
+
 // ---------- Iconos (dibujados por código) ----------
 export function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
 export function drawIcon(c,id,x,y,s){
@@ -48,6 +51,10 @@ export function drawIcon(c,id,x,y,s){
       c.beginPath(); c.moveTo(8,0); c.lineTo(15,-7); c.lineTo(15,7); c.closePath(); c.fill(); c.stroke();
       c.fillStyle='#fff'; c.beginPath(); c.arc(-8,-2,2,0,7); c.fill(); c.fillStyle=out; c.beginPath(); c.arc(-8,-2,1,0,7); c.fill();
       c.fillStyle='#f4e23a'; c.beginPath(); c.moveTo(-14,8); c.arc(-14,8,5,Math.PI,Math.PI*1.6); c.closePath(); c.fill(); c.stroke(); break;
+    default: {
+      const col=EXTRA[id];
+      if(col){ c.fillStyle=col[1]; c.beginPath(); c.arc(0,0,15,0,7); c.fill(); c.stroke(); c.fillStyle=col[0]; c.beginPath(); c.arc(0,-2,9,0,7); c.fill(); }
+    }
   }
   c.restore();
 }
