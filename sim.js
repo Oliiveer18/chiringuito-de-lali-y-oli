@@ -27,7 +27,6 @@ export function newSeason(){
   }
   buildTables();
 }
-// ---------- Dificultad progresiva: determinista, sin estado de red adicional ----------
 export function difficultyProfile(day=Game.day){
   const d=clamp(Number(day)||1,1,SEASON_DAYS);
   const t=(d-1)/(SEASON_DAYS-1);
@@ -68,20 +67,18 @@ export function spawnCustomer(forceType, opts){
     order:[], patience:0, maxPatience:0, spot:-1, bob:rnd()*6, mood:null, moodT:0, moodTxt:null, tx:0, ty:0, table:null, eatT:0, waited:0, tag:null,
     act:'walk', actT:0, anger:0, angerT:0, graceT:null, subs:{}, walkPhase:0, stridePh:0,
     hat: look.hat || null};
-  // identidad para su futura reseña: se decide al nacer (nunca al reportar)
   if(Game.dayStats){
     let nm=who(type), tries=0;
     while(Game.dayStats.usedNames.has(nm) && tries++<4) nm=who(type);
     Game.dayStats.usedNames.add(nm);
     c.revName=nm;
   }
-  c.speed *= (0.9 + look.walk.stride*0.15); // la forma de caminar afecta al paso
+  c.speed *= (0.9 + look.walk.stride*0.15);
   if(regular){
     c.regLoyalty=Game.regulars[regular.id].loyalty;
     Game.regVisited[regular.id]='spawned';
     Game.floaters.push({x:clamp(c.x,60,W-60),y:c.y-90,text:(Game.regulars[regular.id].loyalty>1?'¡Hola otra vez, ':'¡Hola, ')+regular.name+'!',t:0,color:'#ffe9a8'});
   }
-  // decide pedido
   const items = activeItems().filter(id=>Game.stock[id]>0 || rnd()<0.5);
   const drinks = ['cerveza','barraquito','batido'];
   const weights = {};
@@ -92,14 +89,13 @@ export function spawnCustomer(forceType, opts){
     if(drinks.includes(id)) wv *= w.drinks;
     if(id==='cerveza' && lvl('nevera')) wv*=1.25;
     if(Game.mods.beer && id==='cerveza') wv*=2;
-    if(isCoop() && stationOf(id)==='cocina') wv*=1.7; // reparte la carga entre barra y cocina
+    if(isCoop() && stationOf(id)==='cocina') wv*=1.7;
     weights[id]=wv;
   }
   if(regular && itemUnlocked(regular.fav)){
-    weights[regular.fav]=(weights[regular.fav]||1)+8; // su favorito de siempre
+    weights[regular.fav]=(weights[regular.fav]||1)+8;
   }
   const keys = Object.keys(weights);
-  // decide si entra: si todo es caro, pasa de largo
   const avgRatio = activeItems().reduce((s,id)=>s+Game.prices[id]/ITEMS[id].ref,0)/Math.max(1,activeItems().length);
   const priceDeter = clamp((avgRatio-1)*T.elas*0.55,0,0.9);
   if(keys.length===0 || rnd()<priceDeter){
@@ -111,7 +107,7 @@ export function spawnCustomer(forceType, opts){
   const pool = {...weights};
   if(regular && itemUnlocked(regular.fav)){ c.order.push(regular.fav); delete pool[regular.fav]; }
   for(let i=c.order.length;i<n && Object.keys(pool).length;i++){ const k=pickW(pool); c.order.push(k); delete pool[k]; }
-  if(isCoop() && c.order.length===1 && rnd()<difficulty.mixedChance){ // en pareja, más pedidos mixtos
+  if(isCoop() && c.order.length===1 && rnd()<difficulty.mixedChance){
     const other = Object.keys(weights).filter(k=>stationOf(k)!==stationOf(c.order[0]));
     if(other.length){ const sub={}; other.forEach(k=>sub[k]=weights[k]); c.order.push(pickW(sub)); }
   }
@@ -120,8 +116,7 @@ export function spawnCustomer(forceType, opts){
     for(const id of Object.keys(weights)) if(!c.order.includes(id)) remaining[id]=weights[id];
     if(Object.keys(remaining).length) c.order.push(pickW(remaining));
   }
-  c.itemSt = c.order.map(()=>0); c.served=[]; c.missing=0; c.inPrep=0; c.partT={}; c.menuDur=rand(1.4,2.4); c.asked=c.order.slice(); // pedido solicitado, antes de sustituciones
-  // busca sitio en la cola
+  c.itemSt = c.order.map(()=>0); c.served=[]; c.missing=0; c.inPrep=0; c.partT={}; c.menuDur=rand(1.4,2.4); c.asked=c.order.slice();
   const taken = new Set(Game.customers.filter(o=>o.spot>=0).map(o=>o.spot));
   let spot=-1; for(let i=0;i<QUEUE_SPOTS;i++) if(!taken.has(i)){ spot=i; break; }
   if(spot<0){
@@ -145,13 +140,11 @@ export function slotOf(who){ return Game.slots.find(s=>s.who===who); }
 export function pendingIdx(c){ const out=[]; if(!c.itemSt) return out; c.itemSt.forEach((st,i)=>{ if(st===0) out.push(i); }); return out; }
 export function servable(c){ return c && (c.state==='queue' || c.state==='prep') && pendingIdx(c).length>0; }
 
-// ---------- Mejora 6: decisiones coherentes y anunciadas ----------
-// El cliente flexible acepta otro producto parecido si falta el suyo (siempre se avisa)
 export function chooseSubstitute(c, missingId){
   const cands = activeItems().filter(id=>Game.stock[id]>0 && !c.order.includes(id));
   if(!cands.length) return null;
   const sameStation = cands.filter(id=>stationOf(id)===stationOf(missingId));
-  const pool = sameStation.length ? sameStation : cands; // conserva barra/cocina si puede
+  const pool = sameStation.length ? sameStation : cands;
   const w={}; pool.forEach(id=>w[id]=TYPES[c.type].pref[id]||1);
   return pickW(w);
 }
@@ -160,7 +153,6 @@ export function announceSub(c, newId){
   c.moodTxt=`Pues ${ITEMS[newId].name.toLowerCase()}, ¡gracias!`;
   Game.floaters.push({x:c.x,y:c.y-120,text:'Cambia a '+ITEMS[newId].name.toLowerCase(),t:0,color:'#fff2c9'});
 }
-// Mejora 5: resultado de la visita de un habitual (una sola vez por visita)
 export function regularOutcome(c, sat){
   if(!c.regular || c.regDone) return;
   c.regDone=true;
@@ -172,33 +164,30 @@ export function regularOutcome(c, sat){
   if(d>0) Game.floaters.push({x:c.x,y:c.y-165,text:'★ '+c.regular.name+' más fiel',t:0,color:'#ffd36b'});
   else if(d<0) Game.floaters.push({x:c.x,y:c.y-165,text:c.regular.name+' defraudado',t:0,color:'#ffb0a0'});
 }
-// programa las visitas de los habituales de hoy
 export function scheduleRegulars(){
   Game.regVisited={};
   for(const r of REGULARS){
     const rec=Game.regulars[r.id]; if(!rec) continue;
     if(rec.next<=Game.day && !Game.regVisited[r.id]){
-      if(!itemUnlocked(r.fav)){ rec.next=Game.day+2; continue; } // aún no puede pedir su favorito
+      if(!itemUnlocked(r.fav)){ rec.next=Game.day+2; continue; }
       Game.regVisited[r.id]='scheduled';
       const delay = rand(0.2, Math.max(0.5, closeHour()-10.5)) * SEC_PER_HOUR;
       setTimeoutGame(()=>{ if(Game.mode==='service' && Game.regVisited[r.id]==='scheduled') spawnCustomer(null,{regular:r}); }, delay);
     }
   }
 }
-// Un puesto (jugador o Yeray) empieza su parte del pedido
 export function startPart(c, slot){
   if(!servable(c) || !slot || slot.cust) return false;
   const pend = pendingIdx(c);
   let take = slot.station==='all' ? pend : pend.filter(i=>stationOf(c.order[i])===slot.station);
   let penalty = 1;
-  if(!take.length){ take = pend; penalty = 1.6; } // cubre el puesto del compañero, pero tarda más
-  // Mejora 6: la sustitución se decide ANTES de reservar existencias
+  if(!take.length){ take = pend; penalty = 1.6; }
   const P = PERSONALITIES[c.personality] || PERSONALITIES.tranquilo;
   for(const i of take){
     if(Game.stock[c.order[i]]>0) continue;
     if(P.flex && c.subs[i]===undefined){
       const sub = chooseSubstitute(c, c.order[i]);
-      c.subs[i]=sub; // null => no había alternativa
+      c.subs[i]=sub;
       if(sub){ c.order[i]=sub; announceSub(c, sub); }
     }
   }
@@ -206,10 +195,9 @@ export function startPart(c, slot){
   for(const i of take){ if(Game.stock[c.order[i]]<=0){ c.itemSt[i]=3; c.missing++; const id=c.order[i]; Game.dayStats.stockOuts[id]=(Game.dayStats.stockOuts[id]||0)+1; } }
   if(!avail.length){ Game.floaters.push({x:c.x,y:c.y-120,text:c.subs&&Object.values(c.subs).includes(null)?'No queda nada parecido':'No queda',t:0,color:'#ffd9cf'}); checkComplete(c); updateStockbar(); return true; }
   for(const i of avail){ Game.stock[c.order[i]]--; c.itemSt[i]=1; }
-  // servir durante la protesta cancela la marcha (mejora 4)
   if(c.patience<=0 || c.anger===3){ c.patience=Math.max(c.patience, c.maxPatience*0.3); c.anger=Math.min(c.anger,1); c.angerT=0; c.graceT=null; }
   c.inPrep++; c.state='prep';
-  if(c.tServe==null) c.tServe=Game.t; // cuándo empezaron a atenderle
+  if(c.tServe==null) c.tServe=Game.t;
   slot.cust=c; slot.items=avail; slot.t=0;
   slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * (slot.who==='yeray'?1.15:1);
   slot.cover = penalty>1;
@@ -238,7 +226,6 @@ export function checkComplete(c){
   if(c.missing) Game.dayStats.partial++;
   completeOrder(c);
 }
-// cobra el pedido (dinero, stats, burbuja) y cierra la visita del habitual
 export function charge(c, total, sync){
   Game.money+=total; Game.dayStats.revenue+=total; Game.dayStats.served++;
   Game.floaters.push({x:c.x,y:c.y-110,text:'+'+eur2(total),t:0,color:'#ffe066'});
@@ -247,7 +234,6 @@ export function charge(c, total, sync){
   c.spot=-1;
   regularOutcome(c, c.sat!=null?c.sat:0.8);
 }
-// se sienta en la mesa: cobro + ruta hasta la silla
 export function payAndSeat(c, total, s, t){
   c.sat=clamp(s,0,1); addSat(c.sat);
   charge(c,total, c.syncTip);
@@ -260,7 +246,6 @@ export function payAndSeat(c, total, s, t){
   if(c.sat>0.8){ c.mood='feliz'; c.moodT=2; c.moodTxt=null; }
   else if(c.sat<0.45){ c.mood='meh'; c.moodT=2.5; c.moodTxt=null; }
 }
-// se lo lleva: cobro + salida (texto según personalidad, siempre anunciado)
 export function payAndGo(c, total, s, upset){
   c.sat=clamp(s,0,1); addSat(c.sat);
   charge(c,total,false);
@@ -274,8 +259,7 @@ export function payAndGo(c, total, s, upset){
 }
 export function completeOrder(c){
   let total=0; for(const id of c.served){ total+=Game.prices[id]; Game.dayStats.sold[id]=(Game.dayStats.sold[id]||0)+1; }
-  c.tDone=Game.t; // pedido terminado
-  // propina sincronizada: en pareja, las dos partes salen casi a la vez
+  c.tDone=Game.t;
   let sync=false, syncTip=0;
   if(isCoop() && c.partT.p1!=null && c.partT.p2!=null && Math.abs(c.partT.p1-c.partT.p2)<=2.5){
     sync=true; syncTip=total*0.15; total+=syncTip; Game.dayStats.tips+=syncTip; Game.dayStats.combos++;
@@ -286,19 +270,17 @@ export function completeOrder(c){
   const cheap = c.served.reduce((a,id)=>a+Math.max(0,1-Game.prices[id]/ITEMS[id].ref),0)/c.served.length;
   const dirty = Game.tables.filter(t=>t.state==='dirty').length;
   let s=satisfaction({wait:waitFrac,price:priceF,missing:!!c.missing,dirty,cheap,music:!!lvl('altavoz'),sync});
-  c.dirtySeen=dirty; // mesas sucias que vio al resolver su pedido
+  c.dirtySeen=dirty;
   c.priceF=priceF;
-  // propina de personalidad (visible, moderada y aparte de la cooperativa)
   const P=PERSONALITIES[c.personality]||PERSONALITIES.tranquilo;
   let pTip=0;
-  if(c.personality==='generoso') pTip=total*P.tipP;               // generoso agradece
-  if(c.personality==='exigente' && s>0.85) pTip=total*P.tipP;     // exigente premia la perfección
+  if(c.personality==='generoso') pTip=total*P.tipP;
+  if(c.personality==='exigente' && s>0.85) pTip=total*P.tipP;
   if(pTip>0.01){ total+=pTip; Game.dayStats.tipsP=(Game.dayStats.tipsP||0)+pTip; Game.floaters.push({x:c.x,y:c.y-190,text:'Propina +'+eur2(pTip),t:0,color:'#ffd36b'}); }
   c.syncTip=sync; c.tipped = sync || pTip>0.01; c.tipAmt = syncTip + Math.max(0,pTip);
-  // decisión de mesa ANTES de cobrar (mejora 6): anunciada siempre
   const free = Game.tables.find(t=>t.state==='free');
   if(free){ payAndSeat(c,total,s,free); return; }
-  if(P.takeaway==='mesa'){ // exige mesa: espera visible antes de cobrar
+  if(P.takeaway==='mesa'){
     c.totalDue=total; c.sat=clamp(s,0,1); c.state='waitTable'; c.waitT=0;
     c.mood='mesa'; c.moodT=2.5; c.moodTxt='¿Mesa libre, por favor?';
     return;
@@ -306,15 +288,12 @@ export function completeOrder(c){
   s -= (P.takeaway==='prefiere'?0:0.05);
   payAndGo(c,total,s,false);
 }
-// el cliente se cansa de esperar la otra parte: se lleva lo que haya
 export function giveUpPending(c){ pendingIdx(c).forEach(i=>{ c.itemSt[i]=3; c.missing++; }); checkComplete(c); }
 export function leaveQueue(c){ c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? -60 : W+60, rand(660,700)); }
 export function addSat(s){
   Game.dayStats.satSum+=s; Game.dayStats.satN++;
-  // La reputación se calcula al cierre; cada visita sigue aportando satisfacción.
 }
 
-// ---------- Eventos ----------
 export const RANDOM_EVENTS = [
   {id:'influencer', w:3, run(){ Game.rep=clamp(Game.rep+0.35,0,5); Game.mods.arr*=1.3; toast('Un influencer en tu barra','Se ha hecho una foto con un barraquito. Llega más gente el resto del día.','good'); Audio.good(); }},
   {id:'sanidad', w:2, run(){ const dirty=Game.tables.filter(t=>t.state==='dirty').length;
@@ -324,7 +303,6 @@ export const RANDOM_EVENTS = [
   {id:'futbol', w:2, run(){ Game.mods.beer=true; Game.mods.mix={local:1.6}; toast('Partido del CD Tenerife','Los vecinos vienen a verlo. Se dispara la cerveza.','good'); }},
   {id:'apagon', w:1, run(){ const lost=Math.floor(Game.stock.batido*0.5); Game.stock.batido-=lost; updateStockbar(); toast('Se va la luz un rato','La batidora se queda parada y se estropean '+lost+' plátanos.','bad'); Audio.bad(); }},
 ];
-// ---------- Ciclo de día ----------
 export function startDay(){
   Game.mode='service'; Game.hour=10; Game.closing=false; Game.closeT=0; Game.spawnAcc=0;
   Game.customers=[]; Game.floaters=[]; Game.mods={arr:1};
@@ -347,7 +325,6 @@ export function startDay(){
   Audio.init();
 }
 export function update(dt){
-  // dt en segundos reales escalados
   Game.t += dt;
   if(Game.mode!=='service') { updateAmbient(dt); return; }
   for(let i=gameTimers.length-1;i>=0;i--){ gameTimers[i].t-=dt; if(gameTimers[i].t<=0){ const f=gameTimers[i].fn; gameTimers.splice(i,1); f(); } }
@@ -355,20 +332,17 @@ export function update(dt){
   const prevHour=Game.hour;
   if(!Game.closing){
     Game.hour += dt/SEC_PER_HOUR;
-    // llegada
     const w=WEATHER[weatherToday()];
     let rate = 8 * (HOUR_CURVE[Math.floor(Game.hour)]||0.6) * w.arr * (0.35 + Game.rep/5*0.95) * Game.mods.arr;
     if(lvl('sombrillas') && (weatherToday()==='sol'||weatherToday()==='calima')) rate*=1.15;
     if(lvl('redes')) rate*=1.15;
     if(isWeekend(Game.day)) rate*=1.25;
     if(Game.dayEvent) rate*=Game.dayEvent.arr;
-    rate *= difficultyProfile().arrivals * difficultyRush(Game.hour); // curva gradual y picos suaves
-    if(isCoop()) rate *= 1.4; // con dos en la barra corre la voz
-    rate *= 1 + 0.12*(Game.buzz||0); // boca a boca: habituales contentos traen amigos
+    rate *= difficultyProfile().arrivals * difficultyRush(Game.hour);
+    if(isCoop()) rate *= 1.4;
+    rate *= 1 + 0.12*(Game.buzz||0);
     Game.spawnAcc += rate*dt/SEC_PER_HOUR;
     while(Game.spawnAcc>=1){ Game.spawnAcc-=1; spawnCustomer(); }
-    if(rnd() < (rate*dt/SEC_PER_HOUR)%1*0) spawnCustomer();
-    // evento aleatorio
     if(!Game.eventDone && Game.hour>=Game.eventHour){ Game.eventDone=true; let e=RANDOM_EVENTS[0]; const tot=RANDOM_EVENTS.reduce((s,e)=>s+e.w,0); let r=rnd()*tot; for(const ev of RANDOM_EVENTS){ r-=ev.w; if(r<=0){e=ev;break;} } e.run(); }
     if(Game.hour>=closeHour()){ Game.hour=closeHour(); beginClosing(); }
     if(Math.floor(prevHour)!==Math.floor(Game.hour)) updateHud();
@@ -376,12 +350,11 @@ export function update(dt){
     Game.closeT+=dt;
     for(const c of Game.customers) if(c.state==='prep' && c.inPrep===0 && pendingIdx(c).length) giveUpPending(c);
     const busy = Game.customers.some(c=>c.state!=='gone');
-    if(Game.closeT>3.5 && (!busy || Game.closeT>9)){ endDay(); return; } // el cierre no toca más stats del día
+    if(Game.closeT>3.5 && (!busy || Game.closeT>9)){ endDay(); return; }
   }
-  // espacios de servicio
   Game.slots.forEach(s=>{
     if(s.cust){ s.t+=dt; if(s.t>=s.total) finishSlot(s); }
-    else if(s.who==='yeray' && !Game.closing){ // camarero automático
+    else if(s.who==='yeray' && !Game.closing){
       s.think=(s.think||0)+dt;
       if(s.think>0.5){ s.think=0;
         const busy = new Set(Game.slots.filter(o=>o.cust).map(o=>o.cust));
@@ -390,10 +363,8 @@ export function update(dt){
       }
     }
   });
-  // la cola avanza (mejora 1: seguir atendible mientras avanza unos pasos)
   const inLine = Game.customers.filter(c=>c.spot>=0).sort((a,b)=>a.spot-b.spot);
   inLine.forEach((c,i)=>{ if(c.spot!==i){ c.spot=i; navSetTarget(c, QUEUE_POS[i].x, QUEUE_POS[i].y, {x:QUEUE_POS[i].x, y:QUEUE_POS[i].y+46}); } });
-  // enfado gradual (mejora 4): mirar alrededor → reloj → protesta → marcha
   function angerUpdate(c, dt, drainMul){
     const P=PERSONALITIES[c.personality]||PERSONALITIES.tranquilo;
     c.patience -= dt*drainMul*P.patMul;
@@ -413,23 +384,33 @@ export function update(dt){
     }
     return false;
   }
-  // clientes
   for(const c of Game.customers){
     c.bob += dt*8;
     if(c.moodT>0){ c.moodT-=dt; if(c.moodT<=0){ c.mood=null; c.moodTxt=null; } }
     switch(c.state){
-      case 'arrive':
-        if(navStep(c,dt,1.3)){ c.state='queue'; c.act='menu'; c.actT=0; c.tQueue=Game.t; }
+      case 'arrive': {
+        const sp=QUEUE_POS[c.spot];
+        if(sp && Math.hypot(c.x-sp.x,c.y-sp.y)<16){
+          c.x=sp.x; c.y=sp.y; c.path=null; c.movingSpd=0;
+          c.state='queue'; c.act='menu'; c.actT=0; c.tQueue=Game.t;
+        } else if(navStep(c,dt,1.3)){ c.state='queue'; c.act='menu'; c.actT=0; c.tQueue=Game.t; }
         c.patience-=dt*0.3*(PERSONALITIES[c.personality]||PERSONALITIES.tranquilo).patMul;
         break;
-      case 'queue':
-        navStep(c,dt,1);
+      }
+      case 'queue': {
+        const sp=QUEUE_POS[c.spot];
+        if(sp && Math.hypot(c.x-sp.x,c.y-sp.y)<6){
+          c.x=sp.x; c.y=sp.y; c.path=null; c.movingSpd=0;
+        } else {
+          navStep(c,dt,1);
+        }
         c.waited+=dt; c.actT+=dt;
         if(c.act==='menu' && c.actT>c.menuDur){ c.act='order'; c.actT=0; }
         else if(c.act==='order' && c.actT>0.9){ c.act='wait'; c.actT=0; }
         if(Game.closing){ c.state='leave'; c.act='walk'; leaveQueue(c); break; }
         if(angerUpdate(c,dt,1)){ c.state='leave'; c.act='walk'; c.mood='enfado'; c.moodT=3; c.moodTxt='¡Me largo!'; leaveQueue(c); c.tLeave=Game.t; Game.dayStats.lostPatience++; Game.dayStats.lost++; recordVisit(c,{lost:'espera'}); regularOutcome(c,0); addSat(0); Audio.angry(); }
         break;
+      }
       case 'prep':
         navStep(c,dt,1); c.actT+=dt;
         if(c.act!=='wait' && c.act!=='lookAround' && c.act!=='watch' && c.act!=='protest'){ c.act='wait'; c.actT=0; }
@@ -458,10 +439,8 @@ export function update(dt){
     }
   }
   Game.customers = Game.customers.filter(c=>c.state!=='gone');
-  // mesas
   for(const t of Game.tables){ if(t.state==='dirty'){ t.dirtyT+=dt; if(Game.staff.limpiador && t.dirtyT>3.2){ cleanTable(t,true,'acaymo'); } } }
   updateAmbient(dt);
-  // HUD reloj
   hud.tick+=dt; if(hud.tick>0.25){ hud.tick=0; updateHud(); }
 }
 export const hud={tick:0};

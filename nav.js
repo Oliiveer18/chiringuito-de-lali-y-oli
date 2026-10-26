@@ -7,8 +7,6 @@ import { clamp, lerp } from './util.js';
 import { Game } from './state.js';
 
 // ---------- Navegación (mejora 1): rutas que no atraviesan mesas ----------
-// Cuadrícula A* con obstáculos (mesas infladas por el radio del cliente).
-// Las rutas se calculan al cambiar de destino, no cada fotograma.
 export const NAV = {cs:10, gw:0, gh:0, blocked:null, cx:0, cy:0};
 export function navRebuild(){
   NAV.gw=Math.ceil(W/NAV.cs); NAV.gh=Math.ceil(H/NAV.cs); NAV.cx=NAV.gw; NAV.cy=NAV.gh;
@@ -18,9 +16,9 @@ export function navRebuild(){
     const gy0=Math.max(0,Math.floor(y0/NAV.cs)), gy1=Math.min(NAV.gh-1,Math.ceil(y1/NAV.cs)-1);
     for(let gy=gy0; gy<=gy1; gy++) for(let gx=gx0; gx<=gx1; gx++) NAV.blocked[gy*NAV.gw+gx]=1;
   };
-  const R=8; // radio del cliente
+  const R=8;
   for(const t of Game.tables) block(t.x-64-R, t.y-28-R, t.x+64+R, t.y+16+R);
-  block(20,150,540,540);      // chiringuito + barra: nadie pasa por detrás
+  block(20,150,540,540);
 }
 export function navCellFree(gx,gy){ return gx>=0&&gy>=0&&gx<NAV.gw&&gy<NAV.gh&&!NAV.blocked[gy*NAV.gw+gx]; }
 export function navFreeAt(x,y){ return navCellFree(Math.floor(x/NAV.cs),Math.floor(y/NAV.cs)); }
@@ -38,7 +36,6 @@ export function navLineFree(x0,y0,x1,y1){
   for(let i=0;i<=n;i++){ if(!navFreeAt(lerp(x0,x1,i/n), lerp(y0,y1,i/n))) return false; }
   return true;
 }
-// A* octogonal sin recortar esquinas
 export function navFind(x0,y0,x1,y1){
   const a=navNearestFree(x0,y0), b=navNearestFree(x1,y1);
   const g0x=Math.floor(a.x/NAV.cs), g0y=Math.floor(a.y/NAV.cs);
@@ -57,7 +54,7 @@ export function navFind(x0,y0,x1,y1){
       if(!dx&&!dy) continue;
       const nx=cur.x+dx, ny=cur.y+dy;
       if(!navCellFree(nx,ny)) continue;
-      if(dx&&dy&&(!navCellFree(cur.x+dx,cur.y)||!navCellFree(cur.x,cur.y+dy))) continue; // sin esquinas
+      if(dx&&dy&&(!navCellFree(cur.x+dx,cur.y)||!navCellFree(cur.x,cur.y+dy))) continue;
       const ng=cur.g+((dx&&dy)?1.41:1);
       const ni=idx(nx,ny);
       if(seen.has(ni)&&seen.get(ni)<=ng) continue;
@@ -66,7 +63,6 @@ export function navFind(x0,y0,x1,y1){
     }
   }
   if(!found) return [{x:b.x,y:b.y}];
-  // reconstruir y alisar con línea de visión
   let pts=[]; for(let n=found;n;n=n.p) pts.push({x:(n.x+0.5)*NAV.cs, y:(n.y+0.5)*NAV.cs});
   pts.reverse(); pts[0]={x:x0,y:y0}; pts[pts.length-1]={x:b.x,y:b.y};
   const sm=[]; let i=0;
@@ -77,7 +73,6 @@ export function navFind(x0,y0,x1,y1){
   }
   return sm;
 }
-// fija destino y calcula la ruta (con punto de aproximación si se indica)
 export function navSetTarget(c, x, y, approach){
   c.tx=x; c.ty=y;
   if(approach){
@@ -89,7 +84,7 @@ export function navSetTarget(c, x, y, approach){
   }
   c.navIdx=0;
 }
-// avanza por la ruta: frenado al llegar, separación entre clientes y deslizamiento junto a mesas
+// avanza por la ruta: frenado al llegar, separación solo mientras camina y deslizamiento junto a mesas
 export function navStep(c, dt, mul){
   const speed=c.speed*(mul||1);
   let px=c.tx, py=c.ty;
@@ -99,17 +94,20 @@ export function navStep(c, dt, mul){
     if(c.navIdx<c.path.length){ const w=c.path[c.navIdx]; px=w.x; py=w.y; }
   }
   let dx=px-c.x, dy=py-c.y; const d=Math.hypot(dx,dy);
-  const brake = d<70 ? clamp(d/70,0.25,1) : 1;               // frenado al llegar
+  const brake = d<70 ? clamp(d/70,0.25,1) : 1;
   let vx=dx/(d||1)*speed*brake, vy=dy/(d||1)*speed*brake;
-  for(const o of Game.customers){                               // separación en cola y paso
-    if(o===c) continue;
-    const ox=c.x-o.x, oy=c.y-o.y, od=Math.hypot(ox,oy);
-    if(od<30 && od>0.01){ const f=(30-od)/30*46; vx+=ox/od*f; vy+=oy/od*f; }
-  }
-  for(const t of Game.tables){                                 // no atravesar mesas
-    if(t===c.exemptTable) continue;
-    const ox=c.x-t.x, oy=c.y-(t.y-8), od=Math.hypot(ox,oy);
-    if(od<70 && od>0.01){ const f=(70-od)/70*110; vx+=ox/od*f; vy+=oy/od*f; }
+  // Separación y esquiva solo mientras camina: evita temblores al estar quieto en la cola
+  if(d>12){
+    for(const o of Game.customers){
+      if(o===c) continue;
+      const ox=c.x-o.x, oy=c.y-o.y, od=Math.hypot(ox,oy);
+      if(od<30 && od>0.01){ const f=(30-od)/30*46; vx+=ox/od*f; vy+=oy/od*f; }
+    }
+    for(const t of Game.tables){
+      if(t===c.exemptTable) continue;
+      const ox=c.x-t.x, oy=c.y-(t.y-8), od=Math.hypot(ox,oy);
+      if(od<70 && od>0.01){ const f=(70-od)/70*110; vx+=ox/od*f; vy+=oy/od*f; }
+    }
   }
   const nl=Math.hypot(vx,vy); if(nl>speed){ vx=vx/nl*speed; vy=vy/nl*speed; }
   const mx=vx*dt, my=vy*dt; c.x+=mx; c.y+=my;
