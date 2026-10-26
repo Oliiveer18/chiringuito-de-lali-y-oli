@@ -1,4 +1,5 @@
-import { scheduleViewportResize } from './canvas.js';
+import { scheduleViewportResize, view } from './canvas.js';
+import { W, H } from './config.js';
 const css=document.createElement('style');
 css.textContent=`
 :root{--game-safe-left:env(safe-area-inset-left,0px);--game-safe-right:env(safe-area-inset-right,0px)}
@@ -32,7 +33,6 @@ css.textContent=`
 .modal.show{align-items:safe center}.netmsg-card{max-width:100%;margin:auto}
 .save-browser{left:var(--game-left)!important;top:var(--game-top)!important;right:auto!important;bottom:auto!important;width:var(--game-width);height:var(--game-height);padding:calc(22px + var(--st)) calc(16px + var(--sr)) calc(20px + var(--sb)) calc(16px + var(--sl))!important;overflow-x:hidden}
 .save-sheet{min-width:0}.save-action{max-width:100%;white-space:normal}.save-actions{align-items:stretch}
-#version-badge{top:calc(var(--game-top) + 4px + var(--st))!important;right:calc(6px + var(--sr))!important;font-size:9px!important;pointer-events:none;max-width:85%;white-space:normal}
 @media(max-width:640px){
 .sheet-head{gap:10px;padding:16px;align-items:stretch}.sheet-head h2{font-size:24px}.cash{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;text-align:left}.cash-note{flex-basis:100%;max-width:none}.cash .v{font-size:25px}
 .forecast{padding:12px 16px;gap:8px}.fc{width:190px}.tabs{padding:0 8px}.tab{padding:0 12px;min-height:46px}.tab-body{padding:12px 16px}
@@ -44,8 +44,35 @@ css.textContent=`
 @media(orientation:landscape) and (max-height:520px){
 .screen{padding-top:calc(10px + var(--st));padding-bottom:calc(10px + var(--sb))}.sheet-head{padding:12px 16px}.sheet-foot{padding:10px 16px}.title-card{padding-top:22px}.title-card h1{font-size:32px}.title-actions{flex-direction:row;gap:10px}.title-actions .btn{width:auto;flex:1}.brand-mark{width:40px;height:40px}.save-sheet{padding:16px}.hud-btn.warn span{display:none}
 }
+/* ===== v9: zonas reservadas, vertical y horizontal ===== */
+:root{--scene-top:0px;--scene-bottom:0px;--scene-w:100vw}
+.ver-line{margin:0;padding:6px 16px 10px;text-align:center;font:700 11px/1.3 system-ui,-apple-system,sans-serif;color:#6b5c48;opacity:.8}
+.title-card .ver-line{padding:0;margin:6px 0 0;color:rgba(255,255,255,.62);opacity:1}
+#errbox{max-height:26vh!important;font-size:11px!important;left:calc(8px + var(--sl))!important;right:calc(8px + var(--sr))!important;bottom:calc(8px + var(--sb))!important}
+#errbox::before{content:'Toca para cerrar este aviso';display:block;margin-bottom:4px;font-weight:700;opacity:.7}
+.stockbar>.stock:first-child{margin-left:auto}.stockbar>.stock:last-child{margin-right:auto}
+.hint{max-width:min(90%,var(--scene-w));font-size:11.5px;line-height:1.3}
+.toasts{width:min(92%,var(--scene-w),380px)}
+.toast{padding:8px 12px;font-size:12px}
+.toast:not(:nth-last-child(-n+2)){display:none}
+body.portrait .rotate-pill{display:none}
+body.portrait.playing .rotate-pill{display:flex;animation:none;opacity:1;visibility:visible;bottom:auto;top:calc(var(--game-top) + var(--game-height) - var(--bottom-ui,0px) - 10px);transform:translate(-50%,-100%);font-size:12px;padding:8px 14px;max-width:calc(100% - 24px)}
+body.portrait .hint{top:calc(var(--game-top) + var(--scene-bottom) + 10px);transform:translateX(-50%);max-width:calc(100% - 24px);font-size:12.5px}
+body.portrait .toasts{width:min(calc(100% - 24px),420px);top:calc(var(--game-top) + var(--top-ui,52px) + 6px);height:max(0px,calc(var(--scene-top) - var(--top-ui,52px) - 12px));justify-content:flex-end;overflow:hidden}
+body.portrait #hud{gap:6px 8px;padding-left:calc(10px + var(--sl));padding-right:calc(10px + var(--sr))}
+body.portrait .hud-spacer{flex:0 0 100%;height:0}
+body.portrait .hud-actions{margin-left:auto}
+body.portrait .hud-btn.warn span{display:inline}
+body.portrait .stockbar{flex-wrap:wrap;justify-content:center;overflow:visible;gap:6px}
+body.portrait .stockbar>.stock{margin:0}
 `;document.head.append(css);
-function measure(){const root=document.documentElement;for(const [id,key]of [['hud','--top-ui'],['stockbar','--bottom-ui']]){const e=document.getElementById(id);root.style.setProperty(key,(e&&e.getClientRects().length?e.getBoundingClientRect().height:0)+'px');}scheduleViewportResize();}
+const root=document.documentElement;
+function measure(){for(const [id,key]of [['hud','--top-ui'],['stockbar','--bottom-ui']]){const e=document.getElementById(id);root.style.setProperty(key,(e&&e.getClientRects().length?e.getBoundingClientRect().height:0)+'px');}scheduleViewportResize();requestAnimationFrame(()=>requestAnimationFrame(place));}
+let lastScene='';
+function place(){const d=view.dpr||1,s=view.s/d,top=view.oy/d,k=[top,H*s,W*s].map(v=>Math.round(v)).join('|');if(k===lastScene)return;lastScene=k;root.style.setProperty('--scene-top',top+'px');root.style.setProperty('--scene-bottom',(top+H*s)+'px');root.style.setProperty('--scene-w',(W*s)+'px');}
 if(window.ResizeObserver){const observer=new ResizeObserver(measure);for(const id of ['hud','stockbar'])observer.observe(document.getElementById(id));}
-window.addEventListener('resize',measure);window.addEventListener('orientationchange',measure);measure();
-const badge=document.getElementById('version-badge');if(badge)badge.textContent='v7 · interfaz iPhone';
+window.addEventListener('resize',measure);window.addEventListener('orientationchange',measure);measure();setInterval(place,400);
+const hud=document.getElementById('hud');
+if(hud){const sync=()=>document.body.classList.toggle('playing',!hud.classList.contains('hidden'));new MutationObserver(sync).observe(hud,{attributes:true,attributeFilter:['class']});sync();}
+const eb=document.getElementById('errbox');
+if(eb)eb.addEventListener('click',()=>{eb.style.display='none';eb.textContent='';});
