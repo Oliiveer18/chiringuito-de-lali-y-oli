@@ -8,6 +8,7 @@ import { spawnCustomer } from './sim.js';
 import { guestSend, onGuestAction } from './coopbridge.js';
 import { postEffect, influEffect, settle, postMetrics, reachFactor, engagement } from './social-model.js';
 import { openDelivery } from './delivery-panel.js';
+import { influCost } from './influencer-model.mjs';
 
 const FOL='socialFollowers', RAT='socialRating';
 let lastDay=Game.day, puntaEnd=0, vipIds=[], vipBase=0, vipDone=false, lastT=null;
@@ -21,7 +22,8 @@ export const POSTS={
  encuesta:{name:'Encuesta: ¿papas o pescado?',cost:0,arr:0.06,followers:3,desc:'La gente vota y llega más gente. Si vendes 3 del elegido, bonus de seguidores.'},
  concurso:{name:'Sorteo de un barraquito',cost:35,arr:0.12,followers:6,req:()=>Game.stock.barraquito>0,reqTxt:'Necesitáis barraquitos en stock.',desc:'Comentario + sorteo: buena afluencia.'}
 };
-export const INFLU={micro:{name:'Microinfluencer',cost:100,arr:0.10,followers:20,req:()=>true,reqTxt:''},medio:{name:'Influencer mediano',cost:250,arr:0.20,followers:50,req:()=>Game.upgrades[RAT]>=3&&(Game.upgrades[FOL]||0)>=100,reqTxt:'Necesitáis 3,0 de valoración pública y 100 seguidores.'},grande:{name:'Influencer grande',cost:600,arr:0.35,followers:120,req:()=>Game.upgrades[RAT]>=3.5&&(Game.upgrades[FOL]||0)>=500,reqTxt:'Necesitáis 3,5 de valoración pública y 500 seguidores.'}};
+function influCostNow(k){const h=((Game.upgrades.progression&&Game.upgrades.progression.history)||[]).slice(-7).map(r=>r.sales!==undefined?r.sales:r.revenue).filter(x=>x>0);return influCost(k,h.length?h.reduce((a,b)=>a+b,0)/h.length:0);}
+export const INFLU={micro:{name:'Microinfluencer',get cost(){return influCostNow('micro');},arr:0.15,followers:20,req:()=>true,reqTxt:''},medio:{name:'Influencer mediano',get cost(){return influCostNow('medio');},arr:0.26,followers:50,req:()=>Game.upgrades[RAT]>=3&&(Game.upgrades[FOL]||0)>=100,reqTxt:'Necesitáis 3,0 de valoración pública y 100 seguidores.'},grande:{name:'Influencer grande',get cost(){return influCostNow('grande');},arr:0.42,followers:120,req:()=>Game.upgrades[RAT]>=3.5&&(Game.upgrades[FOL]||0)>=500,reqTxt:'Necesitáis 3,5 de valoración pública y 500 seguidores.'}};
 const TRENDS=['papas','batido','cerveza','algodon','pescado'];
 function migrate(){if(Game.upgrades[FOL]==null)Game.upgrades[FOL]=50;if(Game.upgrades[RAT]==null)Game.upgrades[RAT]=3;if(!Array.isArray(Game.upgrades.socialComments))Game.upgrades.socialComments=[];if(!Array.isArray(Game.upgrades.socialPend))Game.upgrades.socialPend=[];}
 function addPend(k,n,o){const U=Game.upgrades;if(!Array.isArray(U.socialPend))U.socialPend=[];U.socialPend.push({k,n,...(o||{})});}

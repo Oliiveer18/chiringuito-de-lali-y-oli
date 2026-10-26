@@ -1,4 +1,4 @@
-v25.2 aplicada: chiringo-ui.js, cierre-ui.js, config.js, game.js, index.html, ratings-model.mjs, v12.js, v25.test.mjs
+v25.2 aplicada: chiringo-ui.js, cierre-ui.js, config.js, game.js, index.html, ratings-model.mjs, smoke.test.mjs, v12.js, v25.test.mjs
 == v25
 OK v25: opiniones deterministas, valoracion publica, reputacion gradual, historial corregible sin duplicar y metricas sociales.
 == tab-persist
@@ -20,8 +20,8 @@ Reglas de Chiringo (v13)
   ok  promocionar algodón sin stock genera queja y se puede responder
   ok  responder cuenta una sola vez al día
   ok  anunciar un show que no se contrató da queja
-  FALLO  influencer contratado sube la afluencia aunque no haya publicación → 1.2156959999999999
-  FALLO  al día siguiente se puede volver a contratar influencer
+  ok  influencer contratado sube la afluencia aunque no haya publicación
+  ok  al día siguiente se puede volver a contratar influencer
   ok  la encuesta tiene resultado (papas o pescado)
 Cooperativo (la invitada actúa como el anfitrión)
   ok  la invitada contrata un show y se cobra
@@ -39,8 +39,7 @@ Clima y misiones (v14)
   ok  cumplir la misión da la recompensa una vez
   ok  el informe del día queda guardado
 
-FALLOS: 2 · superados: 27
-TEST FAIL smoke
+TODOS LOS TESTS OK · superados: 29
 == social-model
 Alcance e interacción
   ok  con 50 seguidores el alcance es neutro
@@ -111,4 +110,4 @@ OK: 500 jornadas, 87 NPC, tres tablas de diez por ámbito, revisión semanal, ci
 OK: 500 jornadas, 87 economías, ligas simultáneas de 10, persistencia, determinismo, inversiones condicionadas a caja, nombres Unicode.
 == service-v24
 OK: equilibrio de estrellas, reputación con memoria, pérdidas y precios diferenciados; 12 jornadas de hamacas con cobros por sesión y límites de ingresos.
-RESULT ok=false
+RESULT ok=true

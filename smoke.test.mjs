@@ -102,11 +102,12 @@ check('responder cuenta una sola vez al día', respN() === r0 + 1);
 Game.upgrades.socialPost = 'show'; Game.upgrades.socialPostDia = 22;
 day(23, stats());
 check('anunciar un show que no se contrató da queja', /show/i.test(Game.upgrades.socialComments[0]));
+const infCost = (await import('./influencer-model.mjs')).influCost('micro', 0);
 Game.upgrades.socialInflu = 'micro'; Game.upgrades.socialInfluDia = 23; Game.mode = 'plan'; const m0 = Game.money;
 guest('influ'); Game.mode = 'service'; Game.hour = 12; Game.mods = { arr: 1 }; tick();
-check('influencer contratado sube la afluencia aunque no haya publicación', Game.money === m0 - 100 && Game.mods.arr > 1.05, Game.mods.arr);
+check('influencer contratado sube la afluencia aunque no haya publicación', Game.money === m0 - infCost && Game.mods.arr > 1.05, Game.mods.arr);
 day(24, stats()); Game.upgrades.socialInflu = 'micro'; Game.upgrades.socialInfluDia = 24; const m1 = Game.money; guest('influ');
-check('al día siguiente se puede volver a contratar influencer', Game.money === m1 - 100);
+check('al día siguiente se puede volver a contratar influencer', Game.money === m1 - infCost);
 day(25, stats()); const w0 = Game.upgrades.socialPoll; guest('post', 'encuesta');
 check('la encuesta tiene resultado (papas o pescado)', ['papas', 'pescado'].includes(Game.upgrades.socialPoll) && w0 === undefined);
 

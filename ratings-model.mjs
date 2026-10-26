@@ -8,7 +8,7 @@ export function visitStars(v){
  if(v.lost==='espera'||v.lost==='sinStock')return 1;
  if(v.lost)return 2;
  let s=Number.isFinite(v.sat)?v.sat:.5;
- let star=s>=.94?5:s>=.76?4:s>=.54?3:s>=.3?2:1;
+ let star=s>=.90?5:s>=.72?4:s>=.52?3:s>=.3?2:1;
  if(v.missing||v.substituted||v.waitFrac>.5||v.upset)star=Math.min(star,4);
  return star;
 }
@@ -19,7 +19,7 @@ export function experienceSummary(visits=[]){
  for(const v of rated){const stars=visitStars(v),w=v.lost==='lleno'?.5:1;dist[stars]++;sum+=stars*w;weight+=w;}
  return {avg:weight?sum/weight:null,dist,count:rated.length,sumStars:Object.entries(dist).reduce((s,[k,n])=>s+Number(k)*n,0),weight};
 }
-export function reputation(previous,visits=[]){const s=experienceSummary(visits);if(!s.weight)return previous;const alpha=.22*s.weight/(s.weight+14);return cap(previous+cap((s.avg-previous)*alpha,-.3,.15),.5,5);}
+export function reputation(previous,visits=[]){const s=experienceSummary(visits);if(!s.weight)return previous;const alpha=.25*s.weight/(s.weight+14);return cap(previous+cap((s.avg-previous)*alpha,-.35,.2),.5,5);}
 // Una sola causa por visita: el mismo incidente no se explica ni se penaliza dos veces.
 export function incidentCause(v){if(v.lost==='caro')return 'precio';if(v.lost==='espera')return 'espera';if(v.lost==='sinStock'||v.missing||v.substituted)return 'pedido';if(v.lost==='lleno')return 'aforo';if(v.upset)return 'mesa';if((v.dirtySeen||0)>=2)return 'limpieza';if(v.priceF>.3)return 'precio';if(v.waitFrac>.55)return 'espera';return null;}
 // Tres capas separadas: satisfaccion de hoy, valoracion publica y reputacion acumulada.

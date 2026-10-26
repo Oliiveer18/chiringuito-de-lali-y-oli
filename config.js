@@ -21,7 +21,7 @@ export const ITEMS = {
   batido:    {name:'Batido de plátano',  cost:0.9, ref:4.5,  prep:1.3, spoil:0.5,  spoilF:0.1,  unlock:null},
   papas:     {name:'Papas con mojo',     cost:1.3, ref:6.5,  prep:2.1, spoil:0.15, spoilF:0.05, unlock:null},
   queso:     {name:'Queso asado con mojo',cost:2.2,ref:8.5,  prep:2.3, spoil:0.25, spoilF:0.05, unlock:'plancha'},
-  pescado:   {name:'Pescado fresco',     cost:4.5, ref:16,   prep:3.2, spoil:1.0,  spoilF:0.3,  unlock:'cocina'},
+  pescado:   {name:'Pescado fresco',     cost:4.5, ref:16,   prep:3.2, spoil:0.75, spoilF:0.25,  unlock:'cocina'},
 };
 export const ITEM_IDS = Object.keys(ITEMS);
 export const DRINKS = ['cerveza','barraquito','batido'];

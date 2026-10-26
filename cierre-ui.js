@@ -2,7 +2,7 @@
    El balance de seguidores se resuelve una sola vez al cerrar la jornada y se aplica en ese momento: al abrir el día siguiente no se repite. */
 import { Game, Net } from './state.js';
 import { escapeHtml, eur } from './util.js';
-import { closeSocialDay } from './v12.js?v=26';
+import { closeSocialDay } from './v12.js?v=27';
 
 function closeHtml() {
   const u = Game.upgrades;
