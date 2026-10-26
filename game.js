@@ -1,20 +1,20 @@
 import './tabguard.js';
 import { EXTRA } from './icons.js';
 import './main.js';
-import './coopguard.js';
 import './saves.js?v=8';
 import './layout.js?v=10';
 import './reliability.js?v=8';
+import './coopbridge.js';
 Object.assign(EXTRA,{algodon:['#ffb7d5','#fff0f6'],agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']});
 const loaded=[],failed=[],nativeInterval=window.setInterval;
 // En cooperativo la simulación y los eventos son del anfitrión: el invitado solo los recibe en las instantáneas.
 window.setInterval=(fn,ms,...args)=>nativeInterval(typeof fn==='function'&&fn.name==='tick'?function(){if(window.Net&&window.Net.role==='guest')return;fn();}:fn,ms,...args);
 try{
-  for(const [name,url] of [['v11','./features.js?v=15'],['v12','./v12.js?v=15'],['v14','./v14.js?v=16']]){
+  for(const [name,url] of [['v11','./features.js?v=17'],['v12','./v12.js?v=17'],['v14','./v14.js?v=16']]){
     try{await import(url);loaded.push(name);}
     catch(e){failed.push(name);console.error('Módulo '+name+' no cargó',e);
       const b=document.getElementById('errbox');if(b){b.style.display='block';b.textContent+='['+name+'] '+(e&&e.message||e)+'\n';}}
   }
 }finally{window.setInterval=nativeInterval;}
 const title=document.getElementById('ver-title');
-if(title)title.textContent='v16 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
+if(title)title.textContent='v17 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');

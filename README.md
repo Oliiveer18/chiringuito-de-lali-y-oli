@@ -23,9 +23,13 @@ Todos los módulos ES están en la raíz del repositorio. `game.js` es el punto 
 - Núcleo: `state.js`, `config.js`, `sim.js`, `ui.js`, `render.js`, `report.js`, `net.js`, `world.js`.
 - Guardado y fiabilidad: `saves.js`, `reliability.js`, `layout.js`.
 - Ampliaciones cargadas por `game.js` con captura de errores: `features.js` (v11: algodonera, shows, gestión), `v12.js` (v13: incidentes, repartidor y red social Chiringo), `v14.js` (clima cambiante, productos nuevos, reservas, misiones e informe).
-- Ayudas: `tabguard.js` (evita bucles al repintar las pestañas) y `coopguard.js` (acciones solo del anfitrión).
+- Ayudas: `tabguard.js` (evita bucles al repintar las pestañas) y `coopbridge.js` (canal para que la invitada ejecute en el anfitrión las acciones de las ampliaciones).
 
 Si una ampliación falla al cargar, el juego sigue funcionando y el título indica qué módulos están activos.
+
+## Cooperativo
+
+El anfitrión simula la partida y la invitada recibe el estado. Ambas pueden comprar, mejorar, contratar personal y shows, reparar máquinas, publicar en Chiringo, contratar influencers, responder reseñas y pedir reparto: la invitada envía la acción y el anfitrión la valida y la ejecuta.
 
 ## Pruebas
 
