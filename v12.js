@@ -1,5 +1,5 @@
 /* v13: incidentes, grupos, repartidor y Chiringo ampliado (perfil, tendencias, influencers, reseñas y respuestas). */
-import { Game, Net, hostLive, isCoop, lvl } from './state.js';
+import { Game, Net, hostLive, isCoop, lvl, setTimeoutGame } from './state.js';
 import { ITEMS } from './config.js';
 import { rnd, clamp } from './util.js';
 import { Plan, toast, updateStockbar } from './ui.js';
@@ -97,7 +97,6 @@ function renderRed(){const b=document.querySelector('#tab-body');if(!b||Plan.tab
 new MutationObserver(renderRed).observe(document.getElementById('tab-body'),{childList:true,subtree:true});
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-post],[data-influ],[data-resp]');if(!t||t.disabled)return;if(!(hostLive()||Net.role==='solo'))return;if(t.dataset.post)publish(t.dataset.post);else if(t.dataset.influ)hireInflu();else if(t.dataset.resp)respond(t.dataset.resp);},true);
 setInterval(renderRed,500);
-function respond(kind){if(Game.upgrades.socialRespondido)return;const last=(Game.upgrades.socialComments||[])[0];if(!last)return;if(kind==='disculpa'){Game.upgrades[FOL]+=1;Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.05,1,5);}else{if(Game.money<50){toast('Sin caja','El descuento cuesta 50 €.','bad');return;}Game.money-=50;Game.upgrades[FOL]+=3;Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.15,1,5);}Game.upgrades.socialRespondido=1;toast('Respuesta publicada',kind==='disculpa'?'Habéis respondido con una disculpa.':'Habéis ofrecido un descuento.','good');netDirty();}
 function deliveryBtn(){let b=document.getElementById('v12-order');if(Game.mode==='service'){if(!b){b=document.createElement('button');b.id='v12-order';b.textContent='🛵 Reparto';b.style.cssText='position:fixed;right:12px;bottom:86px;z-index:60;background:#0f8b8d;color:#fff;border:0;padding:10px 14px;border-radius:999px;font:700 13px Satoshi,system-ui;box-shadow:0 6px 18px rgba(0,0,0,.35)';document.body.append(b);}}else if(b)b.remove();}
 setInterval(deliveryBtn,400);
 document.addEventListener('click',e=>{if(e.target.id!=='v12-order')return;if(Game.upgrades.deliveryItem){toast('Repartidor en camino','Esperad al pedido actual.','');return;}const id=prompt('Producto (cerveza, barraquito, batido, papas, queso, pescado):','cerveza');if(!id||!ITEMS[id])return;const q=parseInt(prompt('¿Cuántas unidades?','5'),10);if(!q||q<1)return;orderDelivery(id,Math.min(20,q));});
