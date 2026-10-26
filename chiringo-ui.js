@@ -11,7 +11,7 @@ import { netDirty } from './net.js';
 import { escapeHtml, eur, stars } from './util.js';
 import { postEffect, influEffect, postMetrics } from './social-model.js';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=25';
+import { POSTS, INFLU } from './v12.js?v=26';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';
@@ -218,7 +218,7 @@ function afterAction(t) {
   const lastPend = (pred) => [...(u.socialPend || [])].reverse().find(pred);
   if (k === 'post') {
     const P = POSTS[t.dataset.post], e = lastPend(x => x.post); flash(t.dataset.post); sel = null;
-    setStatus('✅ Publicado: ' + P.name + ' · +' + (e ? e.n : P.followers) + ' seguidores al cierre · +' + Math.round((u.socialArr != null ? u.socialArr : P.arr) * 100) + '% afluencia hoy', 'good');
+    setStatus('✅ Publicado: ' + P.name + ' · +' + (e ? e.n : P.followers) + ' seguidores esperados · +' + Math.round((u.socialArr != null ? u.socialArr : P.arr) * 100) + '% afluencia hoy', 'good');
     if (P.cost) Audio.coin();
   } else if (k === 'influ') {
     const I = INFLU[u.socialInflu], e = lastPend(x => x.prest);

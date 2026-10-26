@@ -673,7 +673,7 @@ export function reviewsSectionHtml(m){
     <div style="text-align:center;min-width:92px">
       <div style="font:800 42px/1 Chillax,sans-serif;color:#b3541e">${avg==null?'—':avg.toFixed(1)}</div>
       <div style="color:#e8a33d;font-size:15px;letter-spacing:2px;margin-top:2px">${stars(avg==null?0:Math.round(avg))}</div>
-      <div style="font:600 10px Satoshi,sans-serif;color:#9a8a72;margin-top:3px" title="La media y la distribución reflejan solo a los clientes atendidos">${n>0?(n===1?'1 valoración':n+' valoraciones'):'Sin valoraciones nuevas'} · ${m.counts?m.counts.comments:0} con comentario · ${m.counts?m.counts.served:0} atendidos de ${m.visitsCount} visitantes</div>
+      <div style="font:600 10px Satoshi,sans-serif;color:#9a8a72;margin-top:3px" title="La media y la distribución reflejan solo a los clientes que dejaron estrellas">${n>0?(n===1?'1 valoración':n+' valoraciones'):'Sin valoraciones nuevas'} · ${m.counts?m.counts.comments:0} con comentario · ${m.counts?m.counts.served:0} atendidos de ${m.visitsCount} visitantes</div>
     </div>
     <div style="flex:1;min-width:200px">${distHtml}${trendHtml}</div>
   </div>`;

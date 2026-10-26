@@ -86,7 +86,7 @@ function finalHtml(c) {
 function paintFinal(c) {
   const card = $('final-card'); if (!card || !c.closed) return;
   const h = finalHtml(c);
-  if (card.__cr === h && card.firstChild) return;
+  if (card.__cr === h && card.querySelector('[data-cr]')) return;
   card.__cr = h; card.innerHTML = h;
 }
 
@@ -110,7 +110,7 @@ function tabHtml(c) {
 function paintTab(c) {
   const b = $('tab-body'); if (!b || Plan.tab !== TAB || Game.mode !== 'plan') return;
   const h = tabHtml(c);
-  if (b.__cr === h && b.firstChild) return;
+  if (b.__cr === h && b.firstElementChild && b.firstElementChild.classList.contains('cr')) return;
   b.__cr = h; b.innerHTML = h;
 }
 function patchPlan(c) {
