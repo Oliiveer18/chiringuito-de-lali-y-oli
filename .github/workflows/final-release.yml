@@ -1,0 +1,71 @@
+name: Final v25.7 validation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/final-release.yml']
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair and test the real new-game flow
+        run: |
+          pip install pyyaml
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml, subprocess
+          p = Path('sim.js')
+          text = p.read_text()
+          old = 'Game.pendingPurchases = (Game.pendingPurchases||0) + cost;'
+          assert old in text
+          text = text.replace(old, "Game.stock[id] = (Game.stock[id]||0) + n;\n  if(Game.mode==='plan') Game.pendingPurchases = (Game.pendingPurchases||0) + cost;")
+          p.write_text(text)
+          workflow = yaml.safe_load(Path('.github/workflows/repair-release.yml').read_text())
+          steps = workflow['jobs']['repair']['steps']
+          names = ['Prepare release', 'Install browser', 'Browser verification with diagnostics']
+          for name in names:
+              code = next(s['run'] for s in steps if s.get('name') == name).replace('25.7.2', '25.7')
+              if name.startswith('Browser'):
+                  needle = "await page.click('#btn-start');"
+                  assert needle in code
+                  code = code.replace(needle, needle + "\n    await page.locator('.save-browser').getByRole('button', {name:'Nueva partida', exact:true}).click();")
+                  code = code.replace("const errors = [], requests = [];", "page.on('dialog', d => d.accept('Charco Azul'));\n    const errors = [], requests = [];")
+              subprocess.run(code, shell=True, executable='/bin/bash', check=True)
+          PY
+      - name: Save diagnostic result
+        if: always()
+        run: |
+          mkdir -p diagnostics
+          cp /tmp/release-result.txt diagnostics/final-release-result.txt || echo 'Failed before browser test; see Actions logs.' > diagnostics/final-release-result.txt
+      - name: Commit validated v25.7
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' '*.mjs' index.html diagnostics/final-release-result.txt
+          git commit -m 'v25.7: validated new game, service and report; restore stock purchases'
+          git push
+      - name: Preserve failure diagnostic only
+        if: failure()
+        run: |
+          cp diagnostics/final-release-result.txt /tmp/final-diagnostic.txt
+          git reset --hard HEAD
+          mkdir -p diagnostics
+          cp /tmp/final-diagnostic.txt diagnostics/final-release-result.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/final-release-result.txt
+          git diff --cached --quiet || git commit -m 'Record final release diagnostic'
+          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - uses: actions/deploy-pages@v4
