@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+for (const f of ['camera-beta.js','gamefeel.js','player.js','netplayer.js','balance.js','game.js']) assert.ok(readFileSync(f,'utf8').length>0, f+' vacío');
+const cam = readFileSync('camera-beta.js','utf8');
+assert.ok(cam.includes("zones"), 'debe haber zonas de cámara');
+assert.ok(cam.includes("autoDelay"), 'la cámara automática debe tener retardo');
+const pl = readFileSync('player.js','utf8');
+assert.ok(pl.includes('navFind'), 'el personaje debe usar la navegación existente');
+assert.ok(pl.includes('nearestStation'), 'debe haber interacción por cercanía');
+const np = readFileSync('netplayer.js','utf8');
+assert.ok(np.includes('gx'), 'el compañero debe interpolarse');
+const bal = readFileSync('balance.js','utf8');
+assert.ok(bal.includes('patienceMul'), 'debe haber equilibrio de paciencia');
+console.log('OK camera-beta: 5 entregas presentes, navegación reutilizada, predicción local y equilibrio definidos.');

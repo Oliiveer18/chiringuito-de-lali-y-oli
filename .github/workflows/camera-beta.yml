@@ -1,0 +1,19 @@
+name: camera-beta checks
+on:
+  push:
+    branches: [camera-beta]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: camera-beta
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node camera-beta.test.mjs
+      - run: |
+          for f in camera-beta.js gamefeel.js player.js netplayer.js balance.js game.js; do node --experimental-default-type=module --check "$f"; done
