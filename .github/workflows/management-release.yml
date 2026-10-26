@@ -1,0 +1,78 @@
+name: Management v26.0 checked release
+on:
+  push:
+    branches: [main]
+    paths: ['apply-management.py', '.github/workflows/management-release.yml']
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare integration locally
+        run: python3 apply-management.py
+      - name: Check syntax and model regressions
+        run: |
+          for f in *.js *.mjs; do node --check "$f"; done
+          node --test management-model.test.mjs social-model.test.mjs
+      - name: Install browser checks
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Browser integration checks
+        run: |
+          mkdir -p /tmp/management-checks
+          python3 -m http.server 8765 >/tmp/management-http.log 2>&1 &
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright';
+          import assert from 'node:assert/strict';
+          import {writeFileSync} from 'node:fs';
+          const browser=await chromium.launch();const results=[];
+          try{for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+            const page=await browser.newPage({viewport});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+            await page.goto('http://localhost:8765/');await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('v26.0 · activas:'));
+            await page.evaluate(async()=>{const s=await import('./sim.js?v=26.0'),u=await import('./ui.js?v=26.0');s.newSeason();u.showPlan();});
+            await page.locator('[data-tab="personal"]').click();await page.locator('[data-candidate]').first().waitFor();assert.equal(await page.locator('[data-candidate]').count(),6);
+            await page.locator('[data-manage="hire"]').first().click();assert.equal(await page.evaluate(()=>Object.keys(Game.upgrades.workforce.team).length),1);
+            await page.evaluate(()=>{Game.upgrades.lastReport=JSON.stringify({day:1,revenue:100,served:10,lost:1,top:'PRUEBA-INFORME'});});
+            await page.locator('[data-tab="informe"]').click();await page.getByText('PRUEBA-INFORME',{exact:true}).waitFor();await page.locator('[data-tab="compras"]').click();await page.locator('[data-tab="informe"]').click();await page.getByText('PRUEBA-INFORME',{exact:true}).waitFor();
+            await page.locator('[data-tab="mercado"]').click();await page.locator('.league-summary').waitFor();assert.equal(await page.locator('.league-summary article').count(),3);
+            await page.locator('[data-tab="chiringo"]').click();await page.locator('[data-sel="atardecer"]').click();await page.locator('[data-post="atardecer"]').click();await page.locator('.cs-post').waitFor();
+            await page.evaluate(async()=>{Game.dayStats={served:10,sold:{},stockOuts:{},by:{}};Game.mode='report';const s=await import('./v12.js?v=26.0');s.closeSocialDay();const u=await import('./ui.js?v=26.0');u.showPlan();});
+            await page.locator('.photo-thread article').first().waitFor();assert.equal(await page.locator('.photo-thread article').count(),2);await page.locator('[data-manage="reply"]').first().click();await page.locator('.photo-thread blockquote').waitFor();
+            assert.deepEqual(errors,[]);await page.screenshot({path:'/tmp/management-checks/'+viewport.width+'.png',fullPage:true});results.push({viewport,ok:true});await page.close();
+          }}finally{await browser.close();writeFileSync('/tmp/management-checks/results.json',JSON.stringify(results));}
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: management-checks
+          path: /tmp/management-checks
+      - name: Commit validated integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          mkdir -p diagnostics
+          cp /tmp/management-checks/results.json diagnostics/management-v26-result.json
+          git add '*.js' '*.mjs' index.html diagnostics/management-v26-result.json
+          git commit -m 'v26.0: integrate weekly leagues, workforce applications, photo threads and report fix'
+          git push origin HEAD:main
+      - name: Prepare static deployment
+        run: rsync -a --exclude=.git --exclude=node_modules --exclude=.github ./ /tmp/management-site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/management-site
+      - uses: actions/deploy-pages@v4
