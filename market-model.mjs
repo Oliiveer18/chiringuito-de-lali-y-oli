@@ -1,4 +1,5 @@
-import {weeklyPoints} from './management-model.mjs?v=26.0';
+import {tieVector} from './professional-model.mjs?v=26.1';
+import {weeklyPoints} from './management-model.mjs?v=26.1';
 // v23: tres ligas simultáneas. Simulación económica resumida y determinista por cierre.
 export const AREAS=['Pueblo','Isla','Nación'],TIERS=['Bronce','Plata','Oro'];
 const names=['La Brisa','El Muelle','La Gaviota','Salitre','La Toalla','El Faro','La Duna','La Sombrilla','El Ancla','La Ola','El Coral','La Caleta','El Alisio','La Arena','El Mirador','Las Palmeras','La Orilla','El Timón','La Espuma','El Velero','El Cangrejo','El Pez Azul','La Costa','El Horizonte','Las Conchas','El Puerto','La Marea','El Refugio','El Islote'];
@@ -49,7 +50,7 @@ export function step(state,day,context={}){
  s.last=day;return s;
 }
 export function table(s,area,tier,playerHistory=[],name='El Charco Azul',day=s.last||1){
- return s.groups[area][tier].map(id=>{if(id==='player')return {id,name,style:'Vuestro kiosco',score:points(playerHistory,day)};const n=s.npcs.find(n=>n.id===id);return {id,name:n.name,style:n.style,score:points(n.history,day),action:n.lastAction};}).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id)).map((r,i)=>({...r,rank:i+1,change:s.previous[area+':'+r.id]==null?null:s.previous[area+':'+r.id]-(i+1)}));
+ return s.groups[area][tier].map(id=>{if(id==='player')return {id,name,style:'Vuestro kiosco',score:points(playerHistory,day),tie:tieVector(playerHistory,day)};const n=s.npcs.find(n=>n.id===id);return {id,name:n.name,style:n.style,score:points(n.history,day),tie:tieVector(n.history,day),action:n.lastAction};}).sort((a,b)=>b.score-a.score||b.tie[0]-a.tie[0]||b.tie[1]-a.tie[1]||b.tie[2]-a.tie[2]||a.id.localeCompare(b.id)).map((r,i)=>({...r,rank:i+1,change:s.previous[area+':'+r.id]==null?null:s.previous[area+':'+r.id]-(i+1)}));
 }
 export function review(state,day,history,name){if(day%7!==0||day<=state.reviewDay)return state;const s=JSON.parse(JSON.stringify(state));s.results=[];
  for(let a=0;a<3;a++){

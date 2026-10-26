@@ -2,16 +2,17 @@
    sim.js
    Simulación autoritativa (anfitrión): dificultad, clientes, pedidos, ciclo del día y economía.
    ========================================================= */
-import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=26.0';
-import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=26.0';
-import { Audio } from './audio.js?v=26.0';
-import { satisfaction } from './ratings-model.mjs?v=26.0';
-import { startBeach, updateBeach } from './beach.js?v=26.0';
-import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=26.0';
-import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=26.0';
-import { navSetTarget, navStep } from './nav.js?v=26.0';
-import { endDay, recordVisit } from './report.js?v=26.0';
-import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=26.0';
+import {factor} from './professional-model.mjs?v=26.1';
+import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=26.1';
+import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=26.1';
+import { Audio } from './audio.js?v=26.1';
+import { satisfaction } from './ratings-model.mjs?v=26.1';
+import { startBeach, updateBeach } from './beach.js?v=26.1';
+import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=26.1';
+import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=26.1';
+import { navSetTarget, navStep } from './nav.js?v=26.1';
+import { endDay, recordVisit } from './report.js?v=26.1';
+import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=26.1';
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -133,7 +134,7 @@ export function spawnCustomer(forceType, opts){
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
-  if(lvl('plancha')) t*=0.8; if(Game.staff.cocinero) t*=0.6*(Game.upgrades.workforce?.team?.cocinero?.workMultiplier??1);
+  if(lvl('plancha')) t*=0.8; if(Game.staff.cocinero) t*=0.6*factor(Game.upgrades.workforce?.team?.cocinero,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
   return t;
 }
 export function slotOf(who){ return Game.slots.find(s=>s.who===who); }
@@ -199,7 +200,7 @@ export function startPart(c, slot){
   c.inPrep++; c.state='prep';
   if(c.tServe==null) c.tServe=Game.t;
   slot.cust=c; slot.items=avail; slot.t=0;
-  slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * (slot.who==='yeray'?1.15*(Game.upgrades.workforce?.team?.camarero?.workMultiplier??1):1);
+  slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * (slot.who==='yeray'?1.15*factor(Game.upgrades.workforce?.team?.camarero,avail.map(i=>({station:stationOf(c.order[i]),complex:ITEMS[c.order[i]].prep>=2}))):1);
   slot.cover = penalty>1;
   if(avail.some(i=>stationOf(c.order[i])==='cocina')) Audio.sizzle(); else Audio.start();
   updateStockbar();
@@ -444,7 +445,7 @@ export function update(dt){
     }
   }
   Game.customers = Game.customers.filter(c=>c.state!=='gone');
-  for(const t of Game.tables)if(t.state==='dirty')t.dirtyT+=dt; if(Game.staff.limpiador){const q=Game.tables.filter(t=>t.state==='dirty').sort((a,b)=>Game.upgrades.workforce?.priority?.limpiador==='near'?a.x-b.x:b.dirtyT-a.dirtyT);const t=q[0];if(t&&t.dirtyT>3.2*(Game.upgrades.workforce?.team?.limpiador?.workMultiplier??1))cleanTable(t,true,'acaymo');}
+  for(const t of Game.tables)if(t.state==='dirty')t.dirtyT+=dt; if(Game.staff.limpiador){const q=Game.tables.filter(t=>t.state==='dirty').sort((a,b)=>Game.upgrades.workforce?.priority?.limpiador==='near'?a.x-b.x:b.dirtyT-a.dirtyT);const t=q[0];if(t&&t.dirtyT>3.2*factor(Game.upgrades.workforce?.team?.limpiador,[{complex:Game.tables.filter(t=>t.state==='dirty').length>2}]))cleanTable(t,true,'acaymo');}
   updateAmbient(dt);
   hud.tick+=dt; if(hud.tick>0.25){ hud.tick=0; updateHud(); }
 }
