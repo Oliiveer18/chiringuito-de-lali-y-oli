@@ -6,11 +6,11 @@ import '../layout.js?v=11';
 import '../reliability.js?v=9';
 import '../coopbridge.js';
 import { initCamBeta, applyCamBeta, camTick } from './camera-beta.js';
-import { fxTick, fxServe, fxClean } from './gamefeel.js';
-import { playerTick, playerGo } from './player.js';
+import { fxTick, fxDraw, fxServe, fxClean } from './gamefeel.js';
+import { playerTick, playerDraw, playerGo } from './player.js';
 import { netPlayerTick, guestMove } from './netplayer.js';
 import { applyBalance } from './balance.js';
-import { view, toWorld } from '../canvas.js';
+import { toWorld } from '../canvas.js';
 import { Game, Net } from '../state.js';
 Object.assign(EXTRA,{algodon:['#ffb7d5','#fff0f6'],agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']});
 const loaded=[],failed=[],nativeInterval=window.setInterval;
@@ -25,6 +25,8 @@ try{
 const title=document.getElementById('ver-title');
 if(title)title.textContent='camera-beta · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
 initCamBeta();
+// Capa beta: dibuja al jugador y los efectos encima de la escena principal
+window.__betaDraw=(ctx)=>{ playerDraw(ctx); fxDraw(ctx); };
 let lastT=performance.now();
 function betaLoop(now){
   const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;

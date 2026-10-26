@@ -10,6 +10,7 @@ import { endDay } from './report.js';
 import { Plan, pressReady, showPlan, toggleReady } from './ui.js';
 import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js';
 import { render } from './render.js';
+import { ctx } from './canvas.js';
 
 // ---------- Bucle ----------
 let last=performance.now(), acc=0; const STEP=1/60;
@@ -19,6 +20,8 @@ function frame(now){
   else if(!manualTime){ acc+=dt*(Game.mode==='service'?Game.speed:1); while(acc>=STEP){ update(STEP); acc-=STEP; } }
   netTick(dt);
   render();
+  // Gancho opcional para copias beta: dibuja capas propias encima de la escena
+  if(window.__betaDraw){ try{ window.__betaDraw(ctx); }catch(e){ console.error('betaDraw', e); } }
   requestAnimationFrame(frame);
 }
 let manualTime=false;
