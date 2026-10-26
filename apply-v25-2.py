@@ -21,7 +21,11 @@ once('v12.js',"export const INFLU=","function influCostNow(k){const h=((Game.upg
 once('v12.js',"cost:100,arr:0.10,","get cost(){return influCostNow('micro');},arr:0.15,")
 once('v12.js',"cost:250,arr:0.20,","get cost(){return influCostNow('medio');},arr:0.26,")
 once('v12.js',"cost:600,arr:0.35,","get cost(){return influCostNow('grande');},arr:0.42,")
-# Pruebas
+# Prueba de humo: el precio del influencer ya no es fijo
+once('smoke.test.mjs',"Game.upgrades.socialInflu = 'micro'; Game.upgrades.socialInfluDia = 23;","const infCost = (await import('./influencer-model.mjs')).influCost('micro', 0);\nGame.upgrades.socialInflu = 'micro'; Game.upgrades.socialInfluDia = 23;")
+once('smoke.test.mjs',"Game.money === m0 - 100 &&","Game.money === m0 - infCost &&")
+once('smoke.test.mjs',"Game.money === m1 - 100)","Game.money === m1 - infCost)")
+# Pruebas nuevas
 once('v25.test.mjs',"import * as S from './social-model.js';","import * as S from './social-model.js';\nimport * as I from './influencer-model.mjs';\nimport { readFileSync } from 'node:fs';")
 once('v25.test.mjs',"-3<=0.15+1e-9","-3<=0.2+1e-9")
 once('v25.test.mjs',">=3.7-1e-9",">=3.65-1e-9")

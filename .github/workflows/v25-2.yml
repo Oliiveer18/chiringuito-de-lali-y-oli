@@ -27,7 +27,7 @@ jobs:
           {
             python3 apply-v25-2.py || ok=false
             if [ "$ok" = true ]; then
-              for f in ratings-model.mjs influencer-model.mjs config.js v12.js chiringo-ui.js cierre-ui.js game.js; do
+              for f in ratings-model.mjs influencer-model.mjs config.js v12.js chiringo-ui.js cierre-ui.js game.js smoke.test.mjs; do
                 node --experimental-default-type=module --check "$f" || { echo "SYNTAX FAIL $f"; ok=false; }
               done
               for t in v25 tab-persist smoke social-model career progression market service-v24; do
@@ -46,7 +46,7 @@ jobs:
           cp /tmp/v25-2-run.txt diagnostics/v25-2-run.txt
           git add diagnostics/v25-2-run.txt
           if [ "${{ steps.run.outputs.ok }}" = "true" ]; then
-            git add ratings-model.mjs config.js v12.js chiringo-ui.js cierre-ui.js game.js index.html v25.test.mjs
+            git add ratings-model.mjs config.js v12.js chiringo-ui.js cierre-ui.js game.js index.html v25.test.mjs smoke.test.mjs
             git commit -m "v25.2: influencers rentables y escalados a las ventas, cinco estrellas alcanzables, reputación con memoria y pescado menos punitivo"
           else
             git commit -m "v25.2: la comprobación falló; ver diagnostics/v25-2-run.txt (no se aplicó ningún cambio)"
