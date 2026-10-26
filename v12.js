@@ -6,7 +6,7 @@ import { Plan, toast, updateStockbar } from './ui.js';
 import { netDirty } from './net.js';
 import { spawnCustomer } from './sim.js';
 import { guestSend, onGuestAction } from './coopbridge.js';
-import { postEffect, influEffect, settle } from './social-model.js';
+import { postEffect, influEffect, settle, postMetrics, reachFactor, engagement } from './social-model.js';
 import { openDelivery } from './delivery-panel.js';
 
 const FOL='socialFollowers', RAT='socialRating';
@@ -45,14 +45,18 @@ function newDay(){
  else{tier=['Tardaron muchísimo en servirnos.','Faltaba medio menú… decepción.','Caro para lo que es.'];}
  const picks=tier.slice().sort(()=>rnd()-0.5).slice(0,2);
  // balance de seguidores: ganados menos perdidos (social-model.js)
+ const done=U.socialSettledDay===ayer&&U.socialReport&&U.socialReport.dia===ayer;
+ let S=U.socialReport;
+ if(!done){
  const idle=p?0:(U.socialIdle||0)+1;
- const S=settle({f,rep,pend:U.socialPend||[],postOk,extra,sinResp,idle,prestados:U.socialPrestados});
+ S=settle({f,rep,pend:U.socialPend||[],postOk,extra,sinResp,idle,prestados:U.socialPrestados});
  U[FOL]=S.total;U.socialIdle=idle;
- U.socialReport={dia:ayer,gains:S.gains,losses:S.losses,gainSum:S.gainSum,lossSum:S.lossSum,net:S.net};
+ U.socialReport={dia:ayer,before:f,total:S.total,gains:S.gains,losses:S.losses,gainSum:S.gainSum,lossSum:S.lossSum,net:S.net};
  let pr=U.socialPrestados;if(pr){pr.dias-=1;if(pr.dias<=0)pr=null;}
  const add=(U.socialPend||[]).filter(e=>e.prest).reduce((a,e)=>a+(e.n||0),0);if(add>0)pr={n:(pr?pr.n:0)+add,dias:7};
  if(pr)U.socialPrestados=pr;else delete U.socialPrestados;
  U.socialPend=[];
+ }
  if(Game.day>1)toast('Chiringo · balance de ayer',(S.net>=0?'+':'')+S.net+' seguidores ('+S.gainSum+' ganados, '+S.lossSum+' perdidos).',S.net>=0?'good':'bad');
  U.socialComments=[...neg,...pos,...picks,...(U.socialComments||[])].slice(0,6);
  U.socialNegativo=(neg.length||(!pos.length&&rep<3))?1:0;
@@ -66,6 +70,32 @@ function newDay(){
  if(isCoop()){const pr2=0.25+(Game.day/30)*0.45;if(rnd()<pr2){const tipos=['batidora','vip','punta','inspeccion','grupo'];U.incidentTipo=tipos[Math.floor(rnd()*tipos.length)];U.incidentHora=Math.round((11.5+rnd()*7)*10)/10;}}
  if(!U.batidoraRota)Game.enabled.batido=true;
  netDirty();
+}
+// v25: resuelve ganados y perdidos al cerrar la jornada, una sola vez. newDay() no vuelve a aplicarlo.
+export function closeSocialDay(){
+ const U=Game.upgrades;
+ if(Net.role==='guest'||Game.mode!=='report'||!Game.dayStats||U[FOL]==null)return U.socialReport||null;
+ if(U.socialSettledDay===Game.day&&U.socialReport&&U.socialReport.dia===Game.day)return U.socialReport;
+ const s=Game.dayStats,sold=s.sold||{},outs=s.stockOuts||{},day=Game.day,p=(U.socialPostDia===day)?U.socialPost:null;
+ const f=U[FOL]||0,rep=Game.rep,extra=[];let postOk=true;
+ if(p==='algodon'&&(outs.algodon||0)>0)postOk=false;
+ if(p==='show'&&(U.showDia!==day||U.showFlojoDia===day))postOk=false;
+ if(p==='encuesta'&&U.socialPoll&&ITEMS[U.socialPoll]&&(sold[U.socialPoll]||0)>=3)extra.push({k:'Encuesta acertada',n:4});
+ if(U.socialTrendDia===day&&U.socialTrend&&ITEMS[U.socialTrend]&&(sold[U.socialTrend]||0)>=3)extra.push({k:'Tendencia acertada',n:6});
+ if(rep>=4)extra.push({k:'Boca a boca',n:2+(day*7)%4});else if(rep>=3&&(day*5)%3>0)extra.push({k:'Boca a boca',n:(day*5)%3});
+ const hist=((U.progression&&U.progression.history)||[]).slice(-7),base=hist.length?hist.reduce((a,r)=>a+(r.served||0),0)/hist.length:20;
+ const resp=clamp(0.5+0.5*(s.served||0)/Math.max(10,base),0.4,1.5);
+ const pend=(U.socialPend||[]).map(e=>e.post?{...e,n:Math.max(0,Math.round(e.n*resp))}:e);
+ const quiet=p?0:(U.socialIdle||0)+1,sinResp=U.socialNegativo===1&&!U.socialRespondido;
+ const S=settle({f,rep,pend,postOk,extra,sinResp,idle:quiet,prestados:U.socialPrestados});
+ U[FOL]=S.total;U.socialIdle=quiet;
+ let pr=U.socialPrestados;if(pr){pr.dias-=1;if(pr.dias<=0)pr=null;}
+ const add=(U.socialPend||[]).filter(e=>e.prest).reduce((a,e)=>a+(e.n||0),0);if(add>0)pr={n:(pr?pr.n:0)+add,dias:7};
+ if(pr)U.socialPrestados=pr;else delete U.socialPrestados;
+ if(p){const mx=postMetrics({fx:{reach:reachFactor(f),eng:engagement({rating:U[RAT]||3})},f});U.socialStats={dia:day,reach:mx.reach,interactions:Math.round(mx.interactions*resp),likes:Math.round(mx.likes*resp),comments:Math.round(mx.comments*resp),followers:S.net};}else delete U.socialStats;
+ U.socialReport={dia:day,before:f,total:S.total,gains:S.gains,losses:S.losses,gainSum:S.gainSum,lossSum:S.lossSum,net:S.net,resp:+resp.toFixed(2)};
+ U.socialPend=[];U.socialSettledDay=day;
+ netDirty();return U.socialReport;
 }
 function runIncident(){
  const t=Game.upgrades.incidentTipo;delete Game.upgrades.incidentHora;if(!t)return;

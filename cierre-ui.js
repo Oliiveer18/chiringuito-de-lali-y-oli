@@ -1,30 +1,25 @@
-/* v20: bloque «Chiringo» en el informe de cierre (previsión de seguidores para la próxima apertura).
-   Se inserta en #rep-body cada vez que report.js lo repinta, también en el móvil de la invitada. */
-import { Game } from './state.js';
+/* v25: bloque «Chiringo · balance de hoy» en el informe de cierre.
+   El balance de seguidores se resuelve una sola vez al cerrar la jornada y se aplica en ese momento: al abrir el día siguiente no se repite. */
+import { Game, Net } from './state.js';
 import { escapeHtml, eur } from './util.js';
-import { settle } from './social-model.js';
-
-const FOL = 'socialFollowers';
+import { closeSocialDay } from './v12.js?v=25';
 
 function closeHtml() {
   const u = Game.upgrades;
-  if (!u || u[FOL] == null || !Game.dayStats) return '';
-  const f = u[FOL] || 0;
-  const postedToday = u.socialPostDia === Game.day;
-  const idle = postedToday ? 0 : (u.socialIdle || 0) + 1;
-  const S = settle({
-    f, rep: Game.rep, pend: u.socialPend || [], postOk: true, extra: [],
-    sinResp: u.socialNegativo === 1 && !u.socialRespondido, idle, prestados: u.socialPrestados
-  });
+  if (!u || u.socialFollowers == null || !Game.dayStats) return '';
+  let r = u.socialReport;
+  if (Net.role !== 'guest') { try { r = closeSocialDay() || r; } catch (e) { } }
+  if (!r || r.dia !== Game.day) return '';
   const rows = (a, sg) => a.length ? a.map(x => '<li><span>' + escapeHtml(x.k) + '</span><b>' + sg + x.n + '</b></li>').join('') : '<li class="rd-mut">Nada</li>';
-  const tips = [];
-  if (!postedToday) tips.push('Hoy no publicasteis en Chiringo.');
-  if (u.socialNegativo === 1 && !u.socialRespondido) tips.push('Hay una queja sin responder.');
-  return '<div class="rd-close"><div class="rd-close-h">Chiringo · previsión para mañana</div>' +
-    '<p class="rd-close-p">👥 <b>' + f + '</b> seguidores hoy → <b>' + S.total + '</b> (' + (S.net >= 0 ? '+' : '') + S.net + ')</p>' +
-    '<div class="rd-close-grid"><div><h5 class="g">Ganaréis +' + S.gainSum + '</h5><ul>' + rows(S.gains, '+') + '</ul></div>' +
-    '<div><h5 class="b">Perderéis −' + S.lossSum + '</h5><ul>' + rows(S.losses, '−') + '</ul></div></div>' +
-    '<p class="rd-close-n">' + (tips.length ? tips.join(' ') + ' ' : '') + 'Es una previsión: si no se cumple lo prometido (algodón sin stock, show sin ver) se pierde más. Caja: ' + eur(Game.money) + '.</p></div>';
+  const net = (r.net >= 0 ? '+' : '−') + Math.abs(r.net), st = u.socialStats;
+  return '<div class="rd-close"><div class="rd-close-h">Chiringo · balance de hoy</div>' +
+    '<p class="rd-close-p">👥 <b>' + r.before + '</b> seguidores al abrir → <b>' + r.total + '</b> definitivos (' + net + ')</p>' +
+    '<div class="rd-close-grid"><div><h5 class="g">Ganados +' + r.gainSum + '</h5><ul>' + rows(r.gains, '+') + '</ul></div>' +
+    '<div><h5 class="b">Perdidos −' + r.lossSum + '</h5><ul>' + rows(r.losses, '−') + '</ul></div></div>' +
+    '<p class="rd-close-n">Variación neta ' + net + ' · total definitivo ' + r.total + '. ' +
+    (st ? 'Alcance ' + st.reach + ' · interacciones ' + st.interactions + ' (❤️ ' + st.likes + ' · 💬 ' + st.comments + '). ' : '') +
+    (r.resp ? 'Respuesta del público a lo publicado: ×' + String(r.resp).replace('.', ',') + '. ' : '') +
+    'Este balance ya está aplicado y no se repetirá al abrir mañana. Caja: ' + eur(Game.money) + '.</p></div>';
 }
 
 const rb = document.getElementById('rep-body');
