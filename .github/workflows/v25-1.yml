@@ -1,0 +1,54 @@
+name: Apply tested v25.1
+on:
+  push:
+    branches: [main]
+    paths: [apply-v25-1.py, .github/workflows/v25-1.yml]
+permissions:
+  contents: write
+concurrency:
+  group: v25-1
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply, check and test
+        id: run
+        run: |
+          set +e
+          ok=true
+          {
+            python3 apply-v25-1.py || ok=false
+            if [ "$ok" = true ]; then
+              for f in career-ui.js market-ui.js report.js v12.js chiringo-ui.js cierre-ui.js game.js; do
+                node --experimental-default-type=module --check "$f" || { echo "SYNTAX FAIL $f"; ok=false; }
+              done
+              for t in v25 tab-persist smoke social-model career progression market service-v24; do
+                echo "== $t"; node --experimental-default-type=module $t.test.mjs || { echo "TEST FAIL $t"; ok=false; }
+              done
+            fi
+            echo "RESULT ok=$ok"
+          } > /tmp/v25-1-run.txt 2>&1
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ "${{ steps.run.outputs.ok }}" != "true" ]; then git checkout -- .; fi
+          mkdir -p diagnostics
+          cp /tmp/v25-1-run.txt diagnostics/v25-1-run.txt
+          git add diagnostics/v25-1-run.txt
+          if [ "${{ steps.run.outputs.ok }}" = "true" ]; then
+            git add career-ui.js market-ui.js report.js v12.js chiringo-ui.js cierre-ui.js game.js index.html
+            git commit -m "v25.1: Carrera se repinta aunque otra pestaña ocupe el cuerpo, sin avisos de NPC y textos coherentes"
+          else
+            git commit -m "v25.1: la comprobación falló; ver diagnostics/v25-1-run.txt (no se aplicó ningún cambio)"
+          fi
+          git push origin HEAD:main
