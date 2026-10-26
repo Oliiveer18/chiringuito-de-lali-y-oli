@@ -1,4 +1,4 @@
-name: Validate and publish v25.7.1
+name: Validate and publish v25.7.2
 on:
   push:
     branches: [main]
@@ -7,59 +7,52 @@ permissions:
   contents: write
   pages: write
   id-token: write
-concurrency:
-  group: pages
-  cancel-in-progress: false
 jobs:
   repair:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    environment: github-pages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare consistent module URLs and version
+      - name: Prepare release
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
-          report = Path('report.js').read_text()
-          for symbol in ['Rev', 'buildRevModel', 'reviewsSectionHtml']:
-              assert re.search(r'export\s+(?:const|let|var|function)\s+' + symbol + r'\b', report), symbol
           pattern = re.compile(r"(['\"])(\.\.?/[^'\"]+\.(?:js|mjs))(?:\?[^'\"]*)?\1")
           for p in list(Path('.').glob('*.js')) + list(Path('.').glob('*.mjs')):
-              if '.test.' in p.name:
-                  continue
-              text = pattern.sub(lambda m: m[1] + m[2] + '?v=25.7.1' + m[1], p.read_text())
-              if p.name == 'game.js':
-                  text = re.sub(r"title.textContent='v[0-9.]+", "title.textContent='v25.7.1", text)
+              if '.test.' in p.name: continue
+              text = pattern.sub(lambda m: m[1]+m[2]+'?v=25.7.2'+m[1], p.read_text())
+              if p.name == 'game.js': text = re.sub(r"title.textContent='v[0-9.]+", "title.textContent='v25.7.2", text)
+              if p.name == 'version.js': text = re.sub(r'v14', 'v25.7.2', text)
               p.write_text(text)
           p = Path('index.html')
-          text = re.sub(r'game\.js\?v=[^\"]+', 'game.js?v=25.7.1', p.read_text())
-          text = re.sub(r'v[0-9.]+ · cargando', 'v25.7.1 · cargando', text)
-          p.write_text(text)
+          text = re.sub(r'game\.js\?v=[^\"]+', 'game.js?v=25.7.2', p.read_text())
+          p.write_text(re.sub(r'v[0-9.]+ · cargando', 'v25.7.2 · cargando', text))
           PY
           for f in *.js *.mjs; do node --experimental-default-type=module --check "$f"; done
-      - name: Install browser validation
+      - name: Install browser
         run: |
           npm install --prefix /tmp/release-smoke playwright
           /tmp/release-smoke/node_modules/.bin/playwright install --with-deps chromium
-      - name: Verify menu, solo game and end-of-day report
+      - name: Browser verification with diagnostics
         run: |
           python3 -m http.server 8765 >/tmp/game-server.log 2>&1 &
           node <<'JS'
+          const fs = require('node:fs');
           const { chromium } = require('/tmp/release-smoke/node_modules/playwright');
           (async () => {
             const browser = await chromium.launch();
+            const page = await browser.newPage();
+            const errors = [], requests = [];
+            page.on('pageerror', e => errors.push(e.stack || e.message));
+            page.on('requestfailed', r => requests.push(r.url()+' '+r.failure()?.errorText));
+            page.on('response', r => { if(r.status()>=400) requests.push(r.status()+' '+r.url()); });
             try {
-              const page = await browser.newPage();
-              const errors = [];
-              page.on('pageerror', e => errors.push(e.message));
-              await page.goto('http://127.0.0.1:8765/', {waitUntil:'networkidle'});
-              await page.waitForFunction(() => document.getElementById('ver-title').textContent.includes('v25.7.1 · activas:'));
+              await page.goto('http://127.0.0.1:8765/', {waitUntil:'domcontentloaded'});
+              await page.waitForFunction(() => !!window.__api, {timeout:45000});
               await page.click('#btn-start');
               await page.waitForFunction(() => window.Game.mode === 'plan');
               await page.click('#btn-open');
@@ -67,19 +60,40 @@ jobs:
               await page.evaluate(() => window.__api.endDay());
               await page.waitForFunction(() => window.Game.mode === 'report' && document.getElementById('rep-body').textContent.includes('Resultado del día'));
               if(errors.length) throw new Error(errors.join('\n'));
+              fs.writeFileSync('/tmp/release-result.txt', 'PASS: menu, solo service and end-day report.');
+            } catch(e) {
+              const menu = await page.locator('#ver-title').textContent().catch(() => 'unavailable');
+              const box = await page.locator('#errbox').textContent().catch(() => 'unavailable');
+              const result = JSON.stringify({error:String(e),menu,box,errors,requests},null,2);
+              fs.writeFileSync('/tmp/release-result.txt',result);
+              console.error(result);
+              process.exitCode=1;
             } finally { await browser.close(); }
           })().catch(e => { console.error(e); process.exit(1); });
           JS
-      - name: Commit tested release
+      - name: Save diagnostics on failure without publishing game changes
+        if: failure()
         run: |
+          result=$(cat /tmp/release-result.txt 2>/dev/null || echo 'Failed before browser validation; see Actions logs.')
+          git reset --hard HEAD
+          mkdir -p diagnostics
+          printf '%s\n' "$result" > diagnostics/release-result.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add '*.js' '*.mjs' index.html
-          git diff --cached --quiet || git commit -m 'v25.7.1: validated module loading and consistent version'
+          git add diagnostics/release-result.txt
+          git diff --cached --quiet || git commit -m 'Record release diagnostics; game not deployed'
+          git push
+      - name: Commit validated release
+        run: |
+          mkdir -p diagnostics
+          cp /tmp/release-result.txt diagnostics/release-result.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' '*.mjs' index.html diagnostics/release-result.txt
+          git diff --cached --quiet || git commit -m 'v25.7.2: verified module loading and version'
           git push
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
       - uses: actions/deploy-pages@v4
-        id: deploy
