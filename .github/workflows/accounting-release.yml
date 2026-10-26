@@ -1,0 +1,93 @@
+name: Accounting and saves v27.1
+on:
+  push:
+    branches: [main]
+    paths: ['apply-accounting.py', '.github/workflows/accounting-release.yml']
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 apply-accounting.py
+      - name: Syntax and existing regressions
+        run: |
+          for f in *.js *.mjs; do node --check "$f"; done
+          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          globalThis.window={};
+          const {Game}=await import('./state.js?v=27.1');
+          const L=await import('./bookkeeping.js?v=27.1');
+          Game.mode='plan';Game.money=1000;Game.upgrades={};L.trackCost(20,'social');Game.mode='service';Game.dayStats={revenue:100,hamacas:0,fines:2,urgent:3,purchases:20};L.beginLedgerDay();L.trackCost(10,'delivery');L.trackRefund(5,'delivery');L.trackCost(100,'training',true);assert.equal(Game.money,1000);assert.equal(L.totalExtras(Game.dayStats),25);assert.equal(L.operatingResult(Game.dayStats,{wage:10,rent:5}),35);assert.equal(Game.dayStats.investments.training,100);
+          JS
+      - name: Install browsers
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Test actual save, purchase, delivery and closure
+        run: |
+          mkdir -p /tmp/accounting-results
+          python3 -m http.server 8765 >/tmp/accounting-http.log 2>&1 &
+          node --input-type=module <<'JS'
+          import {chromium,webkit} from 'playwright';
+          import assert from 'node:assert/strict';
+          import {writeFileSync} from 'node:fs';
+          const results=[];
+          for(const [engine,type]of [['chromium',chromium],['webkit',webkit]]){const browser=await type.launch();try{for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+            const page=await browser.newPage({viewport});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await page.goto('http://localhost:8765/');await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('v27.1 · activas:'));await page.locator('#btn-start').click();await page.locator('.save-browser').getByRole('button',{name:'Nueva partida',exact:true}).click();
+            await page.locator('[data-buy=papas][data-n=25]').click();const purchase=await page.evaluate(()=>({cost:Game.pendingPurchases,money:Game.money,stock:Game.stock.papas}));assert.ok(purchase.cost>0);await page.waitForFunction(cost=>JSON.parse(localStorage.getItem('lali-oli.library.v2')||'[]').some(s=>s.data.pendingPurchases===cost),purchase.cost);
+            await page.reload();await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('v27.1 · activas:'));await page.locator('#btn-start').click();await page.locator('.save-row').first().getByRole('button',{name:'Continuar',exact:true}).click();assert.deepEqual(await page.evaluate(()=>({cost:Game.pendingPurchases,money:Game.money,stock:Game.stock.papas})),purchase);await page.locator('#btn-open').click();await page.evaluate(()=>{Game.speed=0;});assert.equal(await page.evaluate(()=>Game.dayStats.purchases),purchase.cost);await page.waitForFunction(()=>!!Game.upgrades.progression?.start);assert.equal(await page.evaluate(()=>Game.upgrades.progression.start.rival),0);
+            const before=await page.evaluate(()=>Game.money);await page.locator('#v12-order').click();await page.locator('[data-del-id=papas][data-del-q=5]').click();const delivery=await page.evaluate(()=>({cost:Game.dayStats.extraCosts.delivery,money:Game.money}));assert.ok(delivery.cost>0);assert.ok(Math.abs(before-delivery.money-delivery.cost)<1e-8);
+            await page.evaluate(()=>{Game.tables[0].state='dirty';Game.upgrades.incidentTipo='inspeccion';Game.upgrades.incidentHora=Game.hour;});await page.waitForFunction(()=>Game.dayStats.fines===100);
+            const closure=await page.evaluate(async()=>{const r=await import('./report.js?v=27.1'),l=await import('./bookkeeping.js?v=27.1'),money=Game.money;r.endDay();return {cost:Game.dayStats.purchases,extra:Game.dayStats.extraCosts.delivery,result:l.operatingResult(Game.dayStats,Game.revModel.acc),closingCharge:money-Game.money,expectedCharge:Game.revModel.acc.wage+Game.revModel.acc.rent};});assert.equal(closure.cost,purchase.cost);assert.equal(closure.extra,delivery.cost);assert.ok(Math.abs(closure.closingCharge-closure.expectedCharge)<1e-8);await page.waitForFunction(()=>Game.upgrades.progression.last>=Game.day);assert.ok(Math.abs(await page.evaluate(()=>Game.upgrades.progression.history.at(-1).profit)-closure.result)<1e-8);
+            const continuity=await page.evaluate(async()=>{const c=await import('./career.js?v=27.1');c.initCareer();Game.upgrades.career.season=1;Game.day=30;Game.upgrades.socialIdle=5;Game.upgrades.socialCalendar={last:30,idle:5};Game.upgrades.socialSettledAbs=30;c.nextSeason();const initial=Game.upgrades.socialIdle;const sim=await import('./sim.js?v=27.1');sim.startDay();Game.speed=0;Game.mode='report';const s=await import('./v12.js?v=27.1');s.closeSocialDay();const once=Game.upgrades.socialIdle;s.closeSocialDay();return {initial,once,twice:Game.upgrades.socialIdle};});assert.deepEqual(continuity,{initial:5,once:6,twice:6});assert.deepEqual(errors,[]);results.push({engine,viewport,ok:true,checks:['purchase-save-restore','single-purchase-counter','delivery-expense','incident-fine','no-double-cash-charge','progress-result-agreement','social-season-continuity']});await page.close();
+          }}finally{await browser.close();}}
+          writeFileSync('/tmp/accounting-results/results.json',JSON.stringify(results));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accounting-results
+          path: /tmp/accounting-results
+      - name: Commit checked fixes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          cp /tmp/accounting-results/results.json diagnostics/accounting-build-result.json
+          git add '*.js' '*.mjs' index.html diagnostics/accounting-build-result.json
+          git commit -m 'v27.1: fix saved purchase costs, expense ledger, social continuity and initial ranking penalty'
+          git push origin HEAD:main
+          rsync -a --exclude=.git --exclude=node_modules --exclude=.github ./ /tmp/accounting-site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/accounting-site
+      - uses: actions/deploy-pages@v4
+        id: deploy
+      - name: Verify public version
+        env:
+          PAGE_URL: ${{ steps.deploy.outputs.page_url }}
+        run: |
+          ok=0
+          for n in $(seq 1 12); do
+            if curl -fsS "${PAGE_URL}?check=${GITHUB_SHA}-${n}" | grep -q 'game.js?v=27.1'; then ok=1; break; fi
+            sleep 15
+          done
+          test "$ok" = 1
+          python3 -c 'import json,os;json.dump({"version":"27.1","url":os.environ["PAGE_URL"],"publicHtmlVerified":True},open("diagnostics/accounting-publication.json","w"))'
+          git add diagnostics/accounting-publication.json
+          git commit -m 'Record verified public v27.1 deployment'
+          git push origin HEAD:main
