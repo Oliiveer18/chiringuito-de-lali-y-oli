@@ -1,0 +1,51 @@
+== node --experimental-default-type=module smoke.test.mjs
+exit=0
+  ok  el reparto se rechaza durante la preparación sin cobrar
+  ok  el reparto de la invitada se limita a 20 unidades
+  ok  no se puede pedir reparto de un producto bloqueado
+  ok  el clic de la invitada se envía al anfitrión en vez de ejecutarse
+Clima y misiones (v14)
+  ok  las bebidas nuevas piden más con calima que con panza de burro
+  ok  las bebidas nuevas ya no se ven afectadas en comida
+  ok  la misión se anuncia al empezar el día
+  ok  cumplir la misión da la recompensa una vez
+  ok  el informe del día queda guardado
+
+TODOS LOS TESTS OK · superados: 29
+== node social-model.test.mjs
+exit=0
+  ok  una buena publicación con 5 estrellas crece
+Promesas y quejas
+  ok  promesa incumplida: no se cobra y se pierde
+  ok  queja sin responder resta seguidores
+  ok  los seguidores prestados se van más rápido
+Robustez
+  ok  nunca baja de cero
+  ok  entradas raras no producen NaN
+  ok  60 días sin publicar no dejan la cuenta en negativo y la reducen
+  ok  60 días publicando con buena nota crecen y siguen acotados
+
+TODOS LOS TESTS OK · superados: 18
+== node --experimental-default-type=module career.test.mjs
+exit=0
+  ok  fallar el objetivo da una pequeña subvención
+  ok  el colchón evita la quiebra a mitad de temporada
+  ok  sin rescates la quiebra cierra la carrera con Legado
+Tienda de Legado
+  ok  no se compra sin puntos suficientes
+  ok  se compra una mejora y se descuentan los puntos
+  ok  no se compra dos veces
+  ok  la nueva carrera aplica la dote y conserva la mejora
+Robustez
+  ok  sin NaN en 40 temporadas simuladas
+
+TODOS LOS TESTS OK · superados: 30
+== node progression.test.mjs
+exit=0
+OK: 500 jornadas, 87 NPC, tres tablas de diez por ámbito, revisión semanal, cierres idempotentes y persistencia JSON.
+== node market.test.mjs
+exit=0
+OK: 500 jornadas, 87 economías, ligas simultáneas de 10, persistencia, determinismo, inversiones condicionadas a caja, nombres Unicode.
+== node service-v24.test.mjs
+exit=0
+OK: equilibrio de estrellas, reputación con memoria, pérdidas y precios diferenciados; 12 jornadas de hamacas con cobros por sesión y límites de ingresos.
