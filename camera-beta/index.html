@@ -44,6 +44,7 @@
 <div id="hint" class="hint hidden"></div>
 <div id="stockbar" class="stockbar hidden"></div>
 <div id="toasts" class="toasts"></div>
+<div id="rotate" class="rotate-pill"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M20.5 9.5a8.5 8.5 0 00-5-4.5M3.5 14.5a8.5 8.5 0 005 4.5"/></svg>Gira el móvil para ver todo el chiringuito</div>
 <section id="title" class="overlay show"><div class="screen center"><div class="title-card"><p class="eyebrow">Copia beta · camera-beta</p><h1>Chiringuito de Lali y Oli</h1><p class="lead">Cámara por zonas, toque ampliado y personaje del jugador. El juego principal no cambia.</p><div class="title-actions"><button id="btn-start" class="btn primary big">Jugar en solitario</button><button id="btn-coop" class="btn big ghost">Jugar online con tu pareja</button></div><p class="fine">Copia para probar · el juego principal sigue en la versión anterior</p><p class="fine ver-line" id="ver-title">camera-beta · cargando…</p></div></div></section>
 <section id="lobby" class="overlay"><div class="screen center"><div class="panel lobby-card"><p class="eyebrow">Cooperativo online</p><h2>Sala de juego</h2><div class="field"><label for="lobby-name">Tu nombre</label><input id="lobby-name" type="text" maxlength="14" placeholder="Cómo te llamas"></div><div id="lobby-choose" class="lobby-step"><button id="btn-create" class="btn primary big block">Crear partida</button><div class="or"><span>o únete a la de tu pareja</span></div><div class="join-row"><input id="lobby-join-code" type="text" inputmode="text" maxlength="4" placeholder="CÓDIGO"><button id="btn-join" class="btn big">Unirme</button></div></div><div id="lobby-host" class="lobby-step hidden"><p class="muted center-text">Pásale este código a tu pareja</p><div id="lobby-code" class="code-box">····</div><p id="lobby-peer" class="peer-status"></p><div id="role-pick" class="seg"><button data-role="barra">Barra</button><button data-role="cocina">Cocina</button></div><p id="role-note" class="muted center-text"></p><button id="btn-lobby-go" class="btn primary big block" disabled>Empezar la temporada</button></div><div id="lobby-guest" class="lobby-step hidden"><p id="guest-info" class="guest-info"></p></div><p id="lobby-status" class="lobby-status"></p><button id="btn-lobby-back" class="btn text">← Volver</button></div></div></section>
 <section id="plan" class="overlay"><div class="screen"><div class="panel sheet"><div class="sheet-head"><div><p id="plan-eyebrow" class="eyebrow"></p><h2 id="plan-title"></h2></div><div class="cash"><span class="k">En caja</span><b id="plan-money" class="v"></b><p id="plan-costs" class="cash-note"></p></div></div><div id="forecast" class="forecast"></div><nav class="tabs" role="tablist"><button class="tab on" data-tab="compras">Compras</button><button class="tab" data-tab="carta">Carta</button><button class="tab" data-tab="mejoras">Mejoras</button><button class="tab" data-tab="personal">Personal</button><button class="tab" data-tab="show">Show</button><button class="tab" data-tab="red">Red</button><button class="tab" data-tab="informe">Informe</button></nav><div id="tab-body" class="tab-body"></div><div class="sheet-foot"><button id="btn-open" class="btn primary big">Abrir el chiringuito</button></div></div></div></section>
@@ -51,6 +52,40 @@
 <section id="final" class="overlay"><div class="screen center"><div id="final-card" class="panel final-card"></div></div></section>
 <section id="urgent" class="overlay"><div class="screen center"><div class="panel urgent-card"><div class="sheet-head"><div><p class="eyebrow">Proveedor</p><h2>Pedido urgente</h2></div><div class="cash"><span class="k">En caja</span><b id="urg-money" class="v"></b></div></div><p id="urg-note" class="muted"></p><div id="urg-body" class="tab-body compact"></div><div class="sheet-foot"><button id="btn-urg-close" class="btn big">Volver al servicio</button></div></div></div></section>
 <section id="netmsg" class="modal"><div class="panel netmsg-card"><h3>Problema de conexión</h3><p id="netmsg-text"></p><div class="net-actions"><button id="btn-net-wait" class="btn primary">Seguir esperando</button><button id="btn-net-solo" class="btn hidden">Seguir en solitario</button><button id="btn-net-home" class="btn text">Ir al inicio</button></div></div></section>
-<script type="module" src="game.js?v=1"></script>
+<script>
+  window.addEventListener('error', e => {
+    const b = document.getElementById('errbox');
+    if(!b) return;
+    if(e.message === 'Script error.' && !e.filename) return;
+    b.style.display = 'block';
+    b.textContent += '[error] ' + (e.message || e.error) + '\n' + (e.filename || '') + ':' + (e.lineno || '') + '\n';
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const b = document.getElementById('errbox');
+    if(!b) return;
+    b.style.display = 'block';
+    b.textContent += '[promise] ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason) + '\n';
+  });
+</script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" crossorigin="anonymous"></script>
+<script>
+  (function(){
+    let lock=null;
+    async function ask(){ try{ if('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); }catch(e){} }
+    addEventListener('pointerdown', ask, {once:true});
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && lock) ask(); });
+  })();
+  ['gesturestart','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
+</script>
+<script>
+  document.addEventListener('click', e => {
+    const t = e.target.closest && e.target.closest('#plan .tabs .tab');
+    if(!t) return;
+    const bar = t.parentElement;
+    const left = t.offsetLeft - (bar.clientWidth - t.offsetWidth) / 2;
+    try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
+  });
+</script>
+<script type="module" src="game.js?v=2"></script>
 </body>
 </html>

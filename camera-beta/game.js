@@ -10,7 +10,7 @@ import { fxTick, fxServe, fxClean } from './gamefeel.js';
 import { playerTick, playerGo } from './player.js';
 import { netPlayerTick, guestMove } from './netplayer.js';
 import { applyBalance } from './balance.js';
-import { view } from '../canvas.js';
+import { view, toWorld } from '../canvas.js';
 import { Game, Net } from '../state.js';
 Object.assign(EXTRA,{algodon:['#ffb7d5','#fff0f6'],agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']});
 const loaded=[],failed=[],nativeInterval=window.setInterval;
@@ -37,11 +37,9 @@ const canvas=document.getElementById('game');
 if(canvas){
   canvas.addEventListener('pointerdown',e=>{
     if(Game.mode!=='service')return;
-    const rect=canvas.getBoundingClientRect();
-    const x=((e.clientX-rect.left)*canvas.width/rect.width-view.ox)/view.s;
-    const y=((e.clientY-rect.top)*canvas.height/rect.height-view.oy)/view.s;
-    playerGo(x,y);
-    if(Net.role==='guest'){const m=guestMove(x,y);if(m)netSend(m);}
+    const p=toWorld(e.clientX,e.clientY);
+    playerGo(p.x,p.y);
+    if(Net.role==='guest'&&window.netSend){const m=guestMove(p.x,p.y);if(m)window.netSend(m);}
   });
 }
 const origTryServe=window.tryServe;
