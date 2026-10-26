@@ -20,6 +20,13 @@ export function engagement({ rating = 3, match = false } = {}) {
 }
 export const fatigue = (id, prevId) => (id && id === prevId ? 0.6 : 1);
 
+// Alcance, interacciones y seguidores son metricas distintas.
+export function postMetrics({ fx, f = 0 } = {}) {
+  const reach = Math.round(Math.max(20, num(f)) * 2.5 * num((fx && fx.reach) || 1));
+  const interactions = Math.round(reach * 0.06 * num((fx && fx.eng) || 1));
+  const likes = Math.round(interactions * 0.7);
+  return { reach, interactions, likes, comments: interactions - likes };
+}
 export function postEffect({ id, P, f, rating, trendId, prevId }) {
   const match = !!(trendId && TREND_POST[id] === trendId);
   const reach = reachFactor(f), eng = engagement({ rating, match }), fat = fatigue(id, prevId);

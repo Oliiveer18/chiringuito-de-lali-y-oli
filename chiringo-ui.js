@@ -9,9 +9,9 @@ import { ICON_URL } from './icons.js';
 import { drawPerson } from './render.js';
 import { netDirty } from './net.js';
 import { escapeHtml, eur, stars } from './util.js';
-import { postEffect, influEffect } from './social-model.js';
+import { postEffect, influEffect, postMetrics } from './social-model.js';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=24';
+import { POSTS, INFLU } from './v12.js?v=25';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';
@@ -89,7 +89,7 @@ function header(u) {
   const f = u[FOL] || 0, r = u[RAT] || 3, m = milestone(f), a = Math.round(arrToday(u) * 100), pend = pendSum(u);
   const prize = MIL_PRIZE[m.next] && m.next > f ? ' · desbloquea ' + MIL_PRIZE[m.next] : '';
   return '<div class="rd-head"><div class="rd-logo">🏝️</div><div><div class="rd-n1">' + KIOSCO + '</div>' +
-    '<div class="rd-sub"><span>👥 <b>' + f + '</b> seguidores' + (pend ? ' <span class="rd-pend">(+' + pend + ' al cierre)</span>' : '') + '</span><span><span class="rd-stars">' + stars(r) + '</span> ' + r.toFixed(1).replace('.', ',') + '</span></div></div>' +
+    '<div class="rd-sub"><span>👥 <b>' + f + '</b> seguidores' + (pend ? ' <span class="rd-pend">(+' + pend + ' al cierre)</span>' : '') + '</span><span>👁️ <b>' + ((u.socialStats && u.socialStats.reach) || 0) + '</b> alcance</span><span>💬 <b>' + ((u.socialStats && u.socialStats.interactions) || 0) + '</b> interacciones</span></div></div>' +
     '<div class="rd-aff"><small>Afluencia hoy</small>' + (a ? '+' + a + '%' : '—') + '</div></div>' +
     '<div class="rd-prog"><div class="rd-prog-t"><span>Siguiente hito: <b>' + m.next + '</b> seguidores' + prize + '</span><span>' + (m.next > f ? 'faltan ' + (m.next - f) : '¡máximo!') + '</span></div>' +
     '<div class="rd-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + m.pct + '"><i style="width:' + m.pct + '%"></i></div></div>';
@@ -105,7 +105,7 @@ function todayCard(u, posted) {
   const ik = u.socialInflu, I = ik && INFLU[ik];
   if (I && u.socialInfluDia === day && !u.socialInfluContratado) {
     const okReq = I.req(), poor = money < I.cost, c = ctxOf(u), ie = influEffect({ I, f: c.f, rating: c.rating });
-    h += '<div class="rd-line"><span>🤝</span><div><b>Oferta: ' + I.name + '</b><br><span class="rd-mut">' + I.cost + ' € · +' + Math.round(ie.arr * 100) + '% afluencia · +' + ie.followers + ' seguidores (prestados: se van antes)' +
+    h += '<div class="rd-line"><span>🤝</span><div><b>Influencer · ' + I.name + '</b><br><span class="rd-mut">' + I.cost + ' € · +' + Math.round(ie.arr * 100) + '% afluencia · +' + ie.followers + ' seguidores (prestados: se van antes)' +
       (okReq ? '' : ' · 🔒 ' + I.reqTxt) + '</span></div><button class="btn sm primary" data-influ="1" ' + (poor || !okReq ? 'disabled' : '') + '>' + (poor && okReq ? 'Faltan ' + (I.cost - money) + ' €' : 'Contratar') + '</button></div>';
   } else if (u.socialInfluContratado && I) {
     h += '<div class="rd-line"><span>🤝</span><div>✅ Colaboración cerrada con <b>' + I.name + '</b>.</div></div>';
@@ -137,7 +137,7 @@ function postCard(id, P, posted, money, c) {
   const cls = ['rd-card', !ok ? 'locked' : '', posted ? 'done' : '', sel === id ? 'sel' : '', flashId === id ? 'flash' : ''].join(' ');
   return '<div class="' + cls + '" role="button" tabindex="0" data-sel="' + id + '" aria-disabled="' + (!ok || posted) + '">' +
     '<div class="rd-ico">' + postIcon(id) + '</div><div class="rd-pn">' + P.name + '</div>' +
-    '<div class="rd-meta"><span>' + (P.cost ? P.cost + ' €' : 'Gratis') + '</span><span>+' + Math.round(fx.arr * 100) + '%</span><span>+' + fx.followers + ' 👥</span>' +
+    '<div class="rd-meta"><span>' + (P.cost ? P.cost + ' €' : 'Gratis') + '</span><span>' + (P.cost ? 'Campaña' : 'Orgánica') + '</span><span>+' + Math.round(fx.arr * 100) + '%</span><span>+' + fx.followers + ' 👥</span>' +
     (fx.match ? '<span title="Encaja con la tendencia">🔥</span>' : '') + (fx.fat < 1 ? '<span title="Repetida: efecto reducido">😴 −40%</span>' : '') + '</div>' +
     (!ok ? '<div class="rd-lock">🔒 ' + (P.reqTxt || 'No disponible') + '</div>' : posted ? (flashId === id || Game.upgrades.socialPost === id ? '<div class="rd-ok">✅ Publicado</div>' : '') : poor ? '<div class="rd-warn">Faltan ' + (P.cost - money) + ' €</div>' : '') + '</div>';
 }
@@ -147,10 +147,13 @@ function previewPanel(u, posted, c) {
   const P = POSTS[sel], money = Game.money, poor = money < P.cost, ok = P.req ? P.req() : true;
   const fx = postEffect({ id: sel, P, f: c.f, rating: c.rating, trendId: c.trendId, prevId: c.prevId });
   let visits = 0; try { visits = Math.round(estimateCustomers() * fx.arr); } catch (e) { }
+  const mx = postMetrics({ fx, f: c.f });
   return '<div class="rd-prev"><div class="rd-prev-h"><b>' + P.name + '</b><span class="rd-mut">' + P.desc + '</span></div><ul>' +
     '<li>💶 Coste: <b>' + (P.cost ? P.cost + ' €' : 'gratis') + '</b> · te quedarán <b>' + eur(money - P.cost) + '</b></li>' +
     '<li>📈 Afluencia hoy: <b>+' + Math.round(fx.arr * 100) + '%</b>' + (visits ? ' (≈ ' + visits + ' visitas más)' : '') + '</li>' +
-    '<li>👥 Seguidores: <b>+' + fx.followers + '</b> al cierre, si cumplís lo prometido (ahora ' + c.f + ')</li>' +
+      '<li>👁️ Alcance estimado: <b>≈ ' + mx.reach + '</b> personas · 💬 interacciones: <b>≈ ' + mx.interactions + '</b></li>' +
+    '<li>👥 Seguidores: <b>+' + fx.followers + '</b> esperados; el resultado final depende de cómo responda el público hoy (ahora ' + c.f + ')</li>' +
+    '<li>🏷️ Tipo: <b>' + (P.cost ? 'campaña pagada' : 'publicación orgánica') + '</b></li>' +
     '<li>📊 Alcance ×' + fx.reach.toFixed(2).replace('.', ',') + ' · interacción ×' + fx.eng.toFixed(2).replace('.', ',') + (fx.match ? ' · encaja con la tendencia 🔥' : '') + (fx.fat < 1 ? ' · repetida: ×0,6' : '') + '</li></ul>' +
     '<div class="rd-prev-b"><button class="btn sm primary" data-post="' + sel + '" ' + (poor || !ok ? 'disabled' : '') + '>' + (poor ? 'Faltan ' + (P.cost - money) + ' €' : 'Confirmar y publicar') + '</button>' +
     '<button class="btn sm" data-selx="1">Cancelar</button></div></div>';
@@ -158,16 +161,18 @@ function previewPanel(u, posted, c) {
 
 function feed(u) {
   const cms = u.socialComments || [];
-  if (!cms.length) return '<div class="rd-h">Reseñas</div><p class="rd-mut">Todavía no hay reseñas. Aparecerán al cerrar el primer día.</p>';
-  const rep = u.socialReply;
-  let h = '<div class="rd-h">Reseñas</div><div class="rd-feed">';
+  if (!cms.length) return '<div class="rd-h">Comentarios</div><p class="rd-mut">Todavía no hay comentarios. Aparecerán al cerrar el primer día.</p>';
+  const rep = u.socialReply, ayer = (u.socialPostDia === Game.day - 1 && POSTS[u.socialPost]) ? POSTS[u.socialPost].name : null;
+  let h = '<div class="rd-h">Comentarios y respuestas</div><div class="rd-feed">';
   cms.forEach((c, i) => {
     const r = review(c), av = avatar(c);
+    const about = r.neg ? 'el servicio de ayer' : r.trend ? 'la tendencia de ayer' : ayer ? 'tu publicación «' + ayer + '»' : 'la jornada de ayer';
+    const likes = 1 + hash(c) % Math.max(3, Math.round((u[FOL] || 0) / 15));
     const replied = rep && rep.text === c && cms.indexOf(c) === i && REPLY[rep.kind];
     const canReply = i === 0 && r.neg && !u.socialRespondido && !replied;
     h += '<div class="rd-rev"><div class="rd-rev-top">' + (av ? '<img class="rd-av" src="' + av + '" alt="">' : '<div class="rd-av">🙂</div>') +
-      '<div class="rd-who"><b>' + r.name + '</b><span class="rd-mut">' + r.city + '</span><div class="rd-stars">' + stars(r.st) + '</div></div>' +
-      '<span class="rd-tag ' + r.cls + '">' + r.tag + '</span></div><p class="rd-txt">“' + escapeHtml(c) + '”</p>';
+      '<div class="rd-who"><b>' + r.name + '</b><span class="rd-mut">' + r.city + ' · sobre ' + escapeHtml(about) + '</span></div>' +
+      '<span class="rd-tag ' + r.cls + '">' + r.tag + '</span></div><p class="rd-txt">“' + escapeHtml(c) + '”</p><div class="rd-mut">❤️ ' + likes + ' me gusta · 💬 ' + (replied ? 1 : 0) + '</div>';
     if (replied) h += '<div class="rd-reply"><b>🏝️ ' + KIOSCO + '</b><br>' + REPLY[rep.kind] + '</div>';
     if (canReply) h += '<div class="rd-reply-do"><span class="rd-mut">Responder (si no, perdéis seguidores mañana):</span><button class="btn sm teal" data-resp="disculpa">Disculparos</button><button class="btn sm primary" data-resp="descuento" ' + (Game.money < 50 ? 'disabled' : '') + '>Descuento · 50 €</button></div>';
     h += '</div>';

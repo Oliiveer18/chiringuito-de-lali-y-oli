@@ -1,0 +1,42 @@
+name: Apply tested career tab fix (block 3)
+on:
+  push:
+    branches: [feature/reputacion-historial-social]
+    paths: [apply-career-tab.py, .github/workflows/career-tab.yml]
+permissions:
+  contents: write
+concurrency:
+  group: career-tab-fix
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/reputacion-historial-social
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact checked edits
+        run: python3 apply-career-tab.py
+      - name: Syntax check
+        run: |
+          for f in ui.js career-ui.js; do node --experimental-default-type=module --check "$f"; done
+      - name: Run regression suite
+        run: |
+          node tab-persist.test.mjs
+          node --experimental-default-type=module smoke.test.mjs
+          node social-model.test.mjs
+          node --experimental-default-type=module career.test.mjs
+          node progression.test.mjs
+          node market.test.mjs
+      - name: Commit only after tests pass
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ui.js career-ui.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Bloque 3: la pestana Carrera conserva su contenido al actualizar dinero y cooperativo"
+          git push origin HEAD:feature/reputacion-historial-social

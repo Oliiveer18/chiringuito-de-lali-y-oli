@@ -147,6 +147,7 @@ function step() {
   if (c.obj) paintTab(c);
 }
 setInterval(step, 300);
+document.addEventListener('plan-tab-repaint', () => { const c = Game.upgrades && Game.upgrades.career; if (c && c.obj) paintTab(c); });
 for (const id of ['final-card', 'tab-body']) { const el = $(id); if (el) new MutationObserver(step).observe(el, { childList: true }); }
 
 const tabs = document.querySelector('#plan .tabs');

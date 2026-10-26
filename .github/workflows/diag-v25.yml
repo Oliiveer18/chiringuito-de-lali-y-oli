@@ -1,0 +1,41 @@
+name: Diagnostico v25 (solo lectura de codigo)
+on:
+  push:
+    branches: [feature/reputacion-historial-social]
+    paths: [.github/workflows/diag-v25.yml]
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extraer el tramo central de report.js
+        run: |
+          mkdir -p diagnostics
+          a=$(grep -n 'export function reviewText' report.js | head -1 | cut -d: -f1)
+          b=$(grep -n 'export function buildRevModel' report.js | head -1 | cut -d: -f1)
+          if [ -z "$a" ] || [ -z "$b" ]; then echo 'no encontrado' > diagnostics/report-mid.txt; else sed -n "${a},$((b-1))p" report.js > diagnostics/report-mid.txt; fi
+      - name: Linea base de pruebas
+        run: |
+          : > diagnostics/baseline.txt
+          run_t() { echo "== node $*" >> diagnostics/baseline.txt; set +e; node "$@" > /tmp/o.txt 2>&1; echo "exit=$?" >> diagnostics/baseline.txt; set -e; tail -n 12 /tmp/o.txt >> diagnostics/baseline.txt; }
+          run_t --experimental-default-type=module smoke.test.mjs
+          run_t social-model.test.mjs
+          run_t --experimental-default-type=module career.test.mjs
+          run_t progression.test.mjs
+          run_t market.test.mjs
+          run_t service-v24.test.mjs
+      - name: Guardar en la rama de trabajo
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/report-mid.txt diagnostics/baseline.txt
+          git diff --cached --quiet && exit 0
+          git commit -m "Diagnostico 2: tramo central de report.js y linea base de pruebas (solo lectura)"
+          git push origin HEAD:feature/reputacion-historial-social

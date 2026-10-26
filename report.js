@@ -7,6 +7,7 @@ import { $, clamp, escapeHtml, eur, eur2, rnd, stars } from './util.js';
 import { rr } from './icons.js';
 import { Audio } from './audio.js';
 import { visitStars, experienceSummary, reputation } from './ratings-model.mjs';
+import { decideAll, opinionCounts } from './opinions-model.mjs';
 import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, weatherToday } from './state.js';
 import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js';
 import { netAct, netDirty } from './net.js';
@@ -66,7 +67,7 @@ export function reportStatsHtml(s, m){
       <div class="kpi"><div class="k">Perdidos</div><div class="v">${s.lost}</div></div>
       <div class="kpi"><div class="k">Reputación del kiosco</div><div class="v" style="color:#d98a12">${Game.rep.toFixed(1)} <small style="font-size:14px;color:${repDelta>=0?'#3f8a3a':'#c73e2a'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</small></div></div>
     </div>
-    <p class="muted" style="margin:0 24px 12px">Satisfacción de hoy: ${experienceSummary(s.visits||[]).avg==null?'sin visitas valorables':experienceSummary(s.visits||[]).avg.toFixed(2)+' / 5'}. La reputación tiene memoria y no cambia por cada cobro. Alquileres de hamacas: ${s.beachRentals||0}.</p>
+    <p class="muted" style="margin:0 24px 12px">${opinionLine(s)} Alquileres de hamacas: ${s.beachRentals||0}.</p>
     <div class="stats">
       <span>Ventas en barra</span><span class="pos">+${eur(s.revenue-s.tips)}</span>
       ${s.tips>0.5?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(s.tips)}</span>`:''}
@@ -196,7 +197,14 @@ export function recordVisit(c, extra){
 // estrellas a partir de la satisfacción real (o del motivo de la pérdida)
 export function starsOf(v){ return visitStars(v); }
 // Incluye experiencias fallidas; rechazar precios antes de entrar se trata como conversión.
-export function dayStarsSummary(s){ return experienceSummary(s.visits||[]); }
+// La decision de cada cliente se toma una vez y se guarda en la jornada: recargar no genera opiniones nuevas.
+export function ensureOpinions(s){ if(!Array.isArray(s.opinions)) s.opinions=decideAll(s.visits||[],Game.day,visitStars); return s.opinions; }
+// Valoracion publica: solo cuentan quienes dejaron estrellas; un comentario no suma otra valoracion.
+export function dayStarsSummary(s){ const o=ensureOpinions(s); return experienceSummary((s.visits||[]).filter((v,i)=>o[i]&&o[i].rated)); }
+export function opinionLine(s){
+  const sat=experienceSummary(s.visits||[]), pub=dayStarsSummary(s), c=opinionCounts(s);
+  return 'Satisfacción interna: '+(sat.avg==null?'sin datos':sat.avg.toFixed(2)+' / 5')+' · Valoración pública: '+(pub.count?pub.avg.toFixed(1)+' ★ ('+pub.count+')':'Sin valoraciones nuevas')+' · Reputación acumulada: '+Game.rep.toFixed(2)+'. Visitantes '+c.visitors+' · Atendidos '+c.served+' · Valoraciones '+c.rated+' · Comentarios '+c.comments+'.';
+}
 
 // RNG con semilla por día (el informe de un día siempre es el mismo)
 export function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
@@ -630,8 +638,9 @@ export function cardHtml(card, m){
 export function buildRevModel(s, dayStars){
   const rng=mulberry32(Game.day*7919+1013);
   const visits=(s.visits||[]).slice();
-  const cards=buildCards(visits,rng).map((p,i)=>makeCard(p.v,p.trig,rng,i+1));
-  return { day:Game.day, cards, dayStars, visitsCount:visits.length, respCount:0 };
+  const op=ensureOpinions(s);
+  const cards=buildCards(visits.filter((v,i)=>op[i]&&op[i].comment),rng).map((p,i)=>makeCard(p.v,p.trig,rng,i+1));
+  return { day:Game.day, cards, dayStars, visitsCount:visits.length, counts:opinionCounts(s), respCount:0 };
 }
 
 // sección de reseñas: cabecera estilo Google (media, distribución, tendencia) + tarjetas
@@ -664,7 +673,7 @@ export function reviewsSectionHtml(m){
     <div style="text-align:center;min-width:92px">
       <div style="font:800 42px/1 Chillax,sans-serif;color:#b3541e">${avg==null?'—':avg.toFixed(1)}</div>
       <div style="color:#e8a33d;font-size:15px;letter-spacing:2px;margin-top:2px">${stars(avg==null?0:Math.round(avg))}</div>
-      <div style="font:600 10px Satoshi,sans-serif;color:#9a8a72;margin-top:3px" title="La media y la distribución reflejan solo a los clientes atendidos">${n>0?(n===1?'1 valoración':n+' valoraciones'):'sin valoraciones'} de clientes atendidos · ${m.visitsCount} clientes hoy</div>
+      <div style="font:600 10px Satoshi,sans-serif;color:#9a8a72;margin-top:3px" title="La media y la distribución reflejan solo a los clientes atendidos">${n>0?(n===1?'1 valoración':n+' valoraciones'):'Sin valoraciones nuevas'} · ${m.counts?m.counts.comments:0} con comentario · ${m.counts?m.counts.served:0} atendidos de ${m.visitsCount} visitantes</div>
     </div>
     <div style="flex:1;min-width:200px">${distHtml}${trendHtml}</div>
   </div>`;
@@ -675,6 +684,6 @@ export function reviewsSectionHtml(m){
   if(m.cards.length>4 && !Rev.expanded){
     html+=`<div style="margin:0 24px 12px"><button class="btn sm" data-revmore="1">Ver más reseñas (${m.cards.length-4})</button></div>`;
   }
-  if(!m.cards.length) html+=`<div style="margin:0 24px 12px;font:500 13px Satoshi,sans-serif;color:#8a7a66">Hoy no dejó reseña nadie.</div>`;
+  if(!m.cards.length) html+=`<div style="margin:0 24px 12px;font:500 13px Satoshi,sans-serif;color:#8a7a66">Nadie dejó comentario hoy.</div>`;
   return html;
 }
