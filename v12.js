@@ -1,4 +1,4 @@
-/* v13: incidentes, grupos, repartidor y Chiringo ampliado (perfil, tendencias, influencers, reseñas y respuestas). */
+/* v13: incidentes, grupos, repartidor y Chiringo ampliado (perfil, tendencias, influencers, reseñas y respuestas). v19: seguidores con modelo (social-model.js). */
 import { Game, Net, hostLive, isCoop, itemUnlocked, lvl, setTimeoutGame } from './state.js';
 import { ITEMS } from './config.js';
 import { rnd, clamp } from './util.js';
@@ -6,6 +6,7 @@ import { Plan, toast, updateStockbar } from './ui.js';
 import { netDirty } from './net.js';
 import { spawnCustomer } from './sim.js';
 import { guestSend, onGuestAction } from './coopbridge.js';
+import { postEffect, influEffect, settle } from './social-model.js';
 
 const FOL='socialFollowers', RAT='socialRating';
 let lastDay=Game.day, puntaEnd=0, vipIds=[], vipBase=0, vipDone=false, lastT=null;
@@ -15,32 +16,43 @@ export const POSTS={
  barraquito:{name:'Barraquito',cost:25,arr:0.08,followers:3,req:()=>Game.stock.barraquito>0,reqTxt:'Necesitáis barraquitos en stock.',desc:'Atrae clientes de barra.'},
  algodon:{name:'Algodón de azúcar',cost:30,arr:0.15,followers:5,req:()=>lvl('algodonera')>0,reqTxt:'Necesitáis la algodonera.',desc:'Atrae familias. Riesgo si no queda algodón.'},
  show:{name:'Show esta tarde',cost:40,arr:0.20,followers:5,req:()=>!!Game.upgrades.showHoy,reqTxt:'Contrata primero un show.',desc:'Promociona el show de hoy.'},
- viral:{name:'Vídeo viral',cost:80,arr:0.25,followers:8,req:()=>Game.upgrades[RAT]>=3.5,reqTxt:'Necesitáis 3,5 de valoración pública.',desc:'Gran alcance si la valoración acompaña.'},
+ viral:{name:'Vídeo viral',cost:80,arr:0.25,followers:8,req:()=>Game.upgrades[RAT]>=3.5&&(Game.upgrades[FOL]||0)>=250,reqTxt:'Necesitáis 3,5 de valoración pública y 250 seguidores.',desc:'Gran alcance si la valoración acompaña.'},
  encuesta:{name:'Encuesta: ¿papas o pescado?',cost:0,arr:0.06,followers:3,desc:'La gente vota y llega más gente. Si vendes 3 del elegido, bonus de seguidores.'},
  concurso:{name:'Sorteo de un barraquito',cost:35,arr:0.12,followers:6,req:()=>Game.stock.barraquito>0,reqTxt:'Necesitáis barraquitos en stock.',desc:'Comentario + sorteo: buena afluencia.'}
 };
-export const INFLU={micro:{name:'Microinfluencer',cost:100,arr:0.10,followers:20,req:()=>true,reqTxt:''},medio:{name:'Influencer mediano',cost:250,arr:0.20,followers:50,req:()=>Game.upgrades[RAT]>=3,reqTxt:'Necesitáis 3,0 de valoración pública.'},grande:{name:'Influencer grande',cost:600,arr:0.35,followers:120,req:()=>Game.upgrades[RAT]>=3.5,reqTxt:'Necesitáis 3,5 de valoración pública.'}};
+export const INFLU={micro:{name:'Microinfluencer',cost:100,arr:0.10,followers:20,req:()=>true,reqTxt:''},medio:{name:'Influencer mediano',cost:250,arr:0.20,followers:50,req:()=>Game.upgrades[RAT]>=3&&(Game.upgrades[FOL]||0)>=100,reqTxt:'Necesitáis 3,0 de valoración pública y 100 seguidores.'},grande:{name:'Influencer grande',cost:600,arr:0.35,followers:120,req:()=>Game.upgrades[RAT]>=3.5&&(Game.upgrades[FOL]||0)>=500,reqTxt:'Necesitáis 3,5 de valoración pública y 500 seguidores.'}};
 const TRENDS=['papas','batido','cerveza','algodon','pescado'];
-function migrate(){if(Game.upgrades[FOL]==null)Game.upgrades[FOL]=50;if(Game.upgrades[RAT]==null)Game.upgrades[RAT]=3;if(!Array.isArray(Game.upgrades.socialComments))Game.upgrades.socialComments=[];}
+function migrate(){if(Game.upgrades[FOL]==null)Game.upgrades[FOL]=50;if(Game.upgrades[RAT]==null)Game.upgrades[RAT]=3;if(!Array.isArray(Game.upgrades.socialComments))Game.upgrades.socialComments=[];if(!Array.isArray(Game.upgrades.socialPend))Game.upgrades.socialPend=[];}
+function addPend(k,n,o){const U=Game.upgrades;if(!Array.isArray(U.socialPend))U.socialPend=[];U.socialPend.push({k,n,...(o||{})});}
 function newDay(){
  lastDay=Game.day;puntaEnd=0;vipIds=[];vipDone=false;
  const U=Game.upgrades,ayer=Game.day-1,s=Game.day>1?Game.dayStats:null,sold=(s&&s.sold)||{},outs=(s&&s.stockOuts)||{};
- delete U.incidentTipo;delete U.incidentHora;delete U.socialAplicado;delete U.batidoraQuitada;delete U.socialRespondido;delete U.socialInfluContratado;
- const rep=Game.rep,f=U[FOL]||0;let delta=0,postOk=true;const neg=[],pos=[];
+ const sinResp=U.socialNegativo===1&&!U.socialRespondido;
+ delete U.incidentTipo;delete U.incidentHora;delete U.socialAplicado;delete U.batidoraQuitada;delete U.socialRespondido;delete U.socialInfluContratado;delete U.socialArr;delete U.socialInfluArr;
+ const rep=Game.rep,f=U[FOL]||0;const extra=[];let postOk=true;const neg=[],pos=[];
  const p=(U.socialPostDia===ayer)?U.socialPost:null;
  // publicación de ayer: ¿se cumplió lo prometido?
  if(s&&p==='algodon'&&(outs.algodon||0)>0){postOk=false;neg.push('Pusisteis algodón en la red y no quedaba ninguno…');}
  if(s&&p==='show'){if(U.showDia!==ayer){postOk=false;neg.push('Anunciasteis show y no vimos nada.');}else if(U.showFlojoDia===ayer){postOk=false;neg.push('El show anunciado fue un chasco: casi no había ambiente.');}}
- if(s&&p==='encuesta'){const t=U.socialPoll;if(t&&ITEMS[t]&&(sold[t]||0)>=3){delta+=4;pos.push('La encuesta acertó: había ganas de '+ITEMS[t].name.toLowerCase()+'.');}}
+ if(s&&p==='encuesta'){const t=U.socialPoll;if(t&&ITEMS[t]&&(sold[t]||0)>=3){extra.push({k:'Encuesta acertada',n:4});pos.push('La encuesta acertó: había ganas de '+ITEMS[t].name.toLowerCase()+'.');}}
  delete U.socialPoll;
  // tendencia de ayer
- if(s&&U.socialTrendDia===ayer&&U.socialTrend&&ITEMS[U.socialTrend]){const t=U.socialTrend;if((sold[t]||0)>=3){delta+=6;Game.rep=clamp(Game.rep+0.1,0,5);pos.push('Justo lo que buscaba hoy: '+ITEMS[t].name.toLowerCase()+'.');}}
+ if(s&&U.socialTrendDia===ayer&&U.socialTrend&&ITEMS[U.socialTrend]){const t=U.socialTrend;if((sold[t]||0)>=3){extra.push({k:'Tendencia acertada',n:6});Game.rep=clamp(Game.rep+0.1,0,5);pos.push('Justo lo que buscaba hoy: '+ITEMS[t].name.toLowerCase()+'.');}}
  let tier;
- if(rep>=4){delta+=2+Math.floor(rnd()*4);tier=['¡El mejor chiringuito de la zona!','Todo buenísimo, volvemos seguro.','Mesas limpias y trato de diez.'];}
- else if(rep>=3){delta+=Math.floor(rnd()*3);tier=['Correcto, aunque estuvo bastante lleno.','Sitio agradable junto a la playa.','Buen sitio, aunque esperé un poco.'];}
- else{delta-=1+Math.floor(rnd()*4);tier=['Tardaron muchísimo en servirnos.','Faltaba medio menú… decepción.','Caro para lo que es.'];}
+ if(rep>=4){extra.push({k:'Boca a boca',n:2+Math.floor(rnd()*4)});tier=['¡El mejor chiringuito de la zona!','Todo buenísimo, volvemos seguro.','Mesas limpias y trato de diez.'];}
+ else if(rep>=3){const b=Math.floor(rnd()*3);if(b>0)extra.push({k:'Boca a boca',n:b});tier=['Correcto, aunque estuvo bastante lleno.','Sitio agradable junto a la playa.','Buen sitio, aunque esperé un poco.'];}
+ else{tier=['Tardaron muchísimo en servirnos.','Faltaba medio menú… decepción.','Caro para lo que es.'];}
  const picks=tier.slice().sort(()=>rnd()-0.5).slice(0,2);
- U[FOL]=clamp(f+delta,0,99999);
+ // balance de seguidores: ganados menos perdidos (social-model.js)
+ const idle=p?0:(U.socialIdle||0)+1;
+ const S=settle({f,rep,pend:U.socialPend||[],postOk,extra,sinResp,idle,prestados:U.socialPrestados});
+ U[FOL]=S.total;U.socialIdle=idle;
+ U.socialReport={dia:ayer,gains:S.gains,losses:S.losses,gainSum:S.gainSum,lossSum:S.lossSum,net:S.net};
+ let pr=U.socialPrestados;if(pr){pr.dias-=1;if(pr.dias<=0)pr=null;}
+ const add=(U.socialPend||[]).filter(e=>e.prest).reduce((a,e)=>a+(e.n||0),0);if(add>0)pr={n:(pr?pr.n:0)+add,dias:7};
+ if(pr)U.socialPrestados=pr;else delete U.socialPrestados;
+ U.socialPend=[];
+ if(Game.day>1)toast('Chiringo · balance de ayer',(S.net>=0?'+':'')+S.net+' seguidores ('+S.gainSum+' ganados, '+S.lossSum+' perdidos).',S.net>=0?'good':'bad');
  U.socialComments=[...neg,...pos,...picks,...(U.socialComments||[])].slice(0,6);
  U.socialNegativo=(neg.length||(!pos.length&&rep<3))?1:0;
  // valoración pública
@@ -50,7 +62,7 @@ function newDay(){
  if(rnd()<0.45){const t=TRENDS[Math.floor(rnd()*TRENDS.length)];U.socialTrend=t;U.socialTrendDia=Game.day;}
  if(rnd()<0.25){const ks=Object.keys(INFLU);U.socialInflu=ks[Math.floor(rnd()*ks.length)];U.socialInfluDia=Game.day;}
  // incidente
- if(isCoop()){const pr=0.25+(Game.day/30)*0.45;if(rnd()<pr){const tipos=['batidora','vip','punta','inspeccion','grupo'];U.incidentTipo=tipos[Math.floor(rnd()*tipos.length)];U.incidentHora=Math.round((11.5+rnd()*7)*10)/10;}}
+ if(isCoop()){const pr2=0.25+(Game.day/30)*0.45;if(rnd()<pr2){const tipos=['batidora','vip','punta','inspeccion','grupo'];U.incidentTipo=tipos[Math.floor(rnd()*tipos.length)];U.incidentHora=Math.round((11.5+rnd()*7)*10)/10;}}
  if(!U.batidoraRota)Game.enabled.batido=true;
  netDirty();
 }
@@ -65,9 +77,14 @@ function runIncident(){
 }
 function repairBatidora(){if(!Game.upgrades.batidoraRota)return;if(Game.money<120){toast('Sin caja','La reparación cuesta 120 €.','bad');return;}Game.money-=120;Game.upgrades.batidoraReparaT=20;delete Game.upgrades.batidoraRota;toast('Reparando batidora','El técnico llega en 20 segundos.','');netDirty();}
 function quitBatidos(){if(!Game.upgrades.batidoraRota)return;Game.upgrades.batidoraQuitada=1;delete Game.upgrades.batidoraRota;toast('Batidos fuera del menú','Hoy no habrá batidos.','');netDirty();}
-function publish(id){const P=POSTS[id];if(!P||Game.upgrades.socialPostDia===Game.day)return;if(Game.money<P.cost){toast('Sin caja','No llega para publicar.','bad');return;}if(P.req&&!P.req()){toast('No disponible',P.reqTxt||'No cumples el requisito.','bad');return;}Game.money-=P.cost;Game.upgrades.socialPost=id;Game.upgrades.socialPostDia=Game.day;delete Game.upgrades.socialAplicado;Game.upgrades[FOL]+=P.followers;toast('Publicado en Chiringo',P.name+' · +'+P.followers+' seguidores.','good');if(id==='encuesta'){const w=rnd()<0.5?'papas':'pescado';Game.upgrades.socialPoll=w;toast('Encuesta cerrada','La gente ha votado: '+ITEMS[w].name+'. Vended 3 o más hoy.','');}netDirty();}
-function hireInflu(){const k=Game.upgrades.socialInflu;if(!k||Game.upgrades.socialInfluContratado)return;const I=INFLU[k];if(Game.money<I.cost){toast('Sin caja','No llega para el influencer.','bad');return;}if(!I.req()){toast('No disponible',I.reqTxt,'bad');return;}Game.money-=I.cost;Game.upgrades[FOL]+=I.followers;Game.upgrades.socialInfluContratado=1;toast('Colaboración cerrada',I.name+' visitará el chiringuito hoy: +'+Math.round(I.arr*100)+'% de afluencia y +'+I.followers+' seguidores.','good');netDirty();}
-function respond(kind){if(Game.upgrades.socialRespondido)return;const last=(Game.upgrades.socialComments||[])[0];if(!last)return;if(kind==='disculpa'){Game.upgrades[FOL]+=1;Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.05,1,5);}else{if(Game.money<50){toast('Sin caja','El descuento cuesta 50 €.','bad');return;}Game.money-=50;Game.upgrades[FOL]+=3;Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.15,1,5);}Game.upgrades.socialRespondido=1;toast('Respuesta publicada',kind==='disculpa'?'Habéis respondido con una disculpa.':'Habéis ofrecido un descuento.', 'good');netDirty();}
+function publish(id){const P=POSTS[id],U=Game.upgrades;if(!P||U.socialPostDia===Game.day)return;if(Game.money<P.cost){toast('Sin caja','No llega para publicar.','bad');return;}if(P.req&&!P.req()){toast('No disponible',P.reqTxt||'No cumples el requisito.','bad');return;}
+ const trendId=(U.socialTrendDia===Game.day)?U.socialTrend:null,prevId=(U.socialPostDia===Game.day-1)?U.socialPost:null;
+ const fx=postEffect({id,P,f:U[FOL]||0,rating:U[RAT]||3,trendId,prevId});
+ Game.money-=P.cost;U.socialPost=id;U.socialPostDia=Game.day;delete U.socialAplicado;U.socialArr=fx.arr;addPend(P.name,fx.followers,{post:true});
+ toast('Publicado en Chiringo',P.name+' · +'+fx.followers+' seguidores al cierre · +'+Math.round(fx.arr*100)+'% de afluencia.'+(fx.fat<1?' Repetir la publicación de ayer reduce el efecto.':''),'good');
+ if(id==='encuesta'){const w=rnd()<0.5?'papas':'pescado';U.socialPoll=w;toast('Encuesta cerrada','La gente ha votado: '+ITEMS[w].name+'. Vended 3 o más hoy.','');}netDirty();}
+function hireInflu(){const U=Game.upgrades,k=U.socialInflu;if(!k||U.socialInfluContratado)return;const I=INFLU[k];if(Game.money<I.cost){toast('Sin caja','No llega para el influencer.','bad');return;}if(!I.req()){toast('No disponible',I.reqTxt,'bad');return;}const ie=influEffect({I,f:U[FOL]||0,rating:U[RAT]||3});Game.money-=I.cost;addPend(I.name,ie.followers,{prest:true});U.socialInfluArr=ie.arr;U.socialInfluContratado=1;toast('Colaboración cerrada',I.name+' visitará el chiringuito hoy: +'+Math.round(ie.arr*100)+'% de afluencia y +'+ie.followers+' seguidores al cierre (muchos son prestados y se irán antes).','good');netDirty();}
+function respond(kind){if(Game.upgrades.socialRespondido)return;const last=(Game.upgrades.socialComments||[])[0];if(!last)return;if(kind==='disculpa'){addPend('Respuesta',1);Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.05,1,5);}else{if(Game.money<50){toast('Sin caja','El descuento cuesta 50 €.','bad');return;}Game.money-=50;addPend('Respuesta',3);Game.upgrades[RAT]=clamp(Game.upgrades[RAT]+0.15,1,5);}Game.upgrades.socialRespondido=1;toast('Respuesta publicada',kind==='disculpa'?'Habéis respondido con una disculpa.':'Habéis ofrecido un descuento.', 'good');netDirty();}
 function orderDelivery(id,qty){const it=ITEMS[id];if(!it||Game.upgrades.deliveryItem)return;if(!itemUnlocked(id)){toast('No disponible','Ese producto aún no está desbloqueado.','bad');return;}if(Game.money<it.cost*qty){toast('Sin caja','No llega para ese pedido.','bad');return;}Game.money-=it.cost*qty;Game.upgrades.deliveryItem=id;Game.upgrades.deliveryQty=qty;Game.upgrades.deliveryT=10+rnd()*5;toast('Repartidor en camino',qty+' × '+it.name+' llegarán en '+Math.round(Game.upgrades.deliveryT)+' segundos.','');netDirty();}
 // acciones que la invitada envía al anfitrión (se validan igual que si las pulsara él)
 onGuestAction('post',v=>{if(typeof v==='string')publish(v);});
@@ -90,7 +107,7 @@ function tick(){
  if(Game.upgrades.batidoraReparaT!=null){Game.upgrades.batidoraReparaT-=gdt;if(Game.upgrades.batidoraReparaT<=0){delete Game.upgrades.batidoraReparaT;Game.enabled.batido=true;toast('Batidora reparada','Vuelven los batidos.','good');updateStockbar();netDirty();}}
  if(Game.upgrades.deliveryItem){Game.upgrades.deliveryT-=gdt;if(Game.upgrades.deliveryT<=0){const id=Game.upgrades.deliveryItem,q=Game.upgrades.deliveryQty;Game.stock[id]=(Game.stock[id]||0)+q;delete Game.upgrades.deliveryItem;delete Game.upgrades.deliveryQty;delete Game.upgrades.deliveryT;toast('Repartidor en el chiringuito','+'+q+' × '+ITEMS[id].name,'good');updateStockbar();netDirty();}}
  if(vipIds.length&&!vipDone){const alive=vipIds.filter(id=>Game.customers.some(c=>c.id===id));if(!alive.length){vipDone=true;const served=Game.dayStats?Game.dayStats.served-vipBase:0;if(served>=2){Game.money+=60;Game.rep=clamp(Game.rep+0.2,0,5);toast('VIP atendido','Gran servicio: +60 € y +0,2 de valoración.','good');}else{Game.rep=clamp(Game.rep-0.15,0,5);toast('VIP decepcionado','No le atendisteis como merecía.','bad');}vipIds=[];netDirty();}}
- if(!Game.upgrades.socialAplicado){const posted=Game.upgrades.socialPostDia===Game.day,P=posted?POSTS[Game.upgrades.socialPost]:null;let arr=P?P.arr:0;const inf=Game.upgrades.socialInfluContratado?INFLU[Game.upgrades.socialInflu]:null;if(inf)arr+=inf.arr;if(arr>0){Game.mods.arr*=1+arr;toast('Chiringo','La red social atrae más gente hoy (+'+Math.round(arr*100)+'%).','good');}if(posted||inf)Game.upgrades.socialAplicado=1;}
+ if(!Game.upgrades.socialAplicado){const posted=Game.upgrades.socialPostDia===Game.day,P=posted?POSTS[Game.upgrades.socialPost]:null;let arr=P?(Game.upgrades.socialArr!=null?Game.upgrades.socialArr:P.arr):0;const inf=Game.upgrades.socialInfluContratado?INFLU[Game.upgrades.socialInflu]:null;if(inf)arr+=(Game.upgrades.socialInfluArr!=null?Game.upgrades.socialInfluArr:inf.arr);if(arr>0){Game.mods.arr*=1+arr;toast('Chiringo','La red social atrae más gente hoy (+'+Math.round(arr*100)+'%).','good');}if(posted||inf)Game.upgrades.socialAplicado=1;}
  updateChip();
 }
 function updateChip(){let chip=document.getElementById('v12-delivery');if(Game.upgrades.deliveryItem){if(!chip){chip=document.createElement('div');chip.id='v12-delivery';chip.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:60;background:#0b4f54;color:#fff;padding:8px 14px;border-radius:999px;font:600 13px Satoshi,system-ui;box-shadow:0 6px 18px rgba(0,0,0,.35)';document.body.append(chip);}chip.textContent='🛵 Repartidor: '+Math.max(0,Math.ceil(Game.upgrades.deliveryT))+' s';}else if(chip)chip.remove();}
