@@ -1,16 +1,17 @@
+import {floorCommand} from './floor-service.js?v=27.0';
 /* =========================================================
    net.js
    Red: WebRTC con PeerJS (sin servidor propio), sala compartida,
    sincronización anfitrión→invitado y acciones pendientes del invitado.
    ========================================================= */
-import { STATION_LABEL, who } from './config.js?v=26.1';
-import { $, clamp, escapeHtml } from './util.js?v=26.1';
-import { Audio } from './audio.js?v=26.1';
-import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=26.1';
-import { TABLE_POS } from './world.js?v=26.1';
-import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=26.1';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=26.1';
-import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=26.1';
+import { STATION_LABEL, who } from './config.js?v=27.0';
+import { $, clamp, escapeHtml } from './util.js?v=27.0';
+import { Audio } from './audio.js?v=27.0';
+import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=27.0';
+import { TABLE_POS } from './world.js?v=27.0';
+import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=27.0';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=27.0';
+import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=27.0';
 
 export const REJECT_MSG = {
   busy:'Tu puesto ya estaba ocupado con otro pedido.',
@@ -21,13 +22,13 @@ export function pendHas(kind,key){ for(const p of Net.pend.values()) if(p.kind==
 export function guestServe(cu){
   if(!cu || pendHas('serve', cu.id)) return;
   const q=++Net.seq;
-  netAct({a:'serve', id:cu.id, q});
+  netAct({a:'serve', id:cu.id, q,serviceId:Game.floor?.id});
   Net.pend.set(q, {kind:'serve', key:cu.id, t0:performance.now(), expired:false});
 }
 export function guestClean(i){
   if(i==null || i<0 || pendHas('clean', i)) return;
   const q=++Net.seq;
-  netAct({a:'clean', i, q});
+  netAct({a:'clean', i, q,serviceId:Game.floor?.id});
   Net.pend.set(q, {kind:'clean', key:i, t0:performance.now(), expired:false});
 }
 export function guestPendTick(){
@@ -105,7 +106,7 @@ export function onNet(m){
     case 'peer':
       Net.peer=m.on;
       if(m.on){ toastLocal('Conectado', 'Tu pareja ya está en la partida.', 'good'); hideNetMsg(); if(Game.mode==='service' && Net.pausedByDrop){ Net.pausedByDrop=false; setSpeed(1); } }
-      else { if(Game.mode==='service' && Game.speed){ setSpeed(0); Net.pausedByDrop=true; } netLost(`${escapeHtml(Net.names.p2)} se ha desconectado. Puede volver a entrar con el código <b>${Net.code}</b>.`, true); }
+      else { if(Game.mode==='service' && Game.speed&&m.serviceId===Game.floor?.id){ setSpeed(0); Net.pausedByDrop=true; } netLost(`${escapeHtml(Net.names.p2)} se ha desconectado. Puede volver a entrar con el código <b>${Net.code}</b>.`, true); }
       renderLobby(); netDirty(); break;
     case 'closed': netLost('Tu pareja ha cerrado la partida.'); break;
     case 'hello': if(Net.role==='host'){ Net.names.p2 = String(m.name||'Jugador 2').slice(0,14); renderLobby(); netDirty(); } break;
@@ -115,14 +116,14 @@ export function onNet(m){
 }
 export function applyAct(m){
   const who='p2';
-  switch(m.a){
+  switch(m.a){case 'floor':floorCommand(m.command,who);break;
     case 'serve': {
       const c=Game.customers.find(o=>o.id===m.id);
       const slot=slotOf(who);
       let ok=false, why='gone';
-      if(Game.mode==='service' && Game.speed){
+      if(Game.mode==='service' && Game.speed&&m.serviceId===Game.floor?.id){
         if(c && servable(c)){
-          if(slot && slot.cust) why='busy';
+          if(slot&&(slot.cust||slot.floorBusy)&&!['floorWaitEscort','floorMenu','floorReady'].includes(c.state)) why='busy';
           else { ok=tryServe(c,who); if(!ok) why=(slot&&slot.cust)?'busy':'gone'; }
         }
       }
@@ -131,9 +132,9 @@ export function applyAct(m){
     }
     case 'clean': {
       let ok=false, why='gone';
-      if(Game.mode==='service'){
+      if(Game.mode==='service'&&m.serviceId===Game.floor?.id){
         const t=Game.tables[m.i];
-        if(t && t.state==='dirty'){ cleanTable(t,false,who); ok=true; }
+        if(t && t.state==='dirty'){ ok=!!cleanTable(t,false,who); }
         else why='clean';
       }
       pushAck(m.q, ok, why);
@@ -156,10 +157,11 @@ export function snapshot(){
     stock:Game.stock, prices:Game.prices, enabled:Game.enabled, upgrades:Game.upgrades, staff:Game.staff, forecast:Game.forecast, season:Game.season, buzz:Game.buzz,
     names:Net.names, roles:Net.roles, ready:Net.ready, ev:Net.events.splice(0), acks:Net.acks.splice(0) };
   if(Game.mode==='service'){
+    o.floor=Game.floor?{...Game.floor,events:[],tasks:Game.floor.tasks.map(t=>({...t,path:[]})),actors:Game.floor.actors.map(a=>({...a,returnPath:[]}))}:null;
     o.cu = Game.customers.map(c=>({i:c.id,x:Math.round(c.x),y:Math.round(c.y),s:c.state,o:c.order,st:c.itemSt,p:+(c.patience/(c.maxPatience||1)).toFixed(3),sp:c.spot,
       m:c.mood,mt:+(c.moodT||0).toFixed(2),mx:c.moodTxt,sh:c.shirt,sk:c.skin,h:c.hat,ty:c.type,d:c.dir||1,sv:c.served,ip:c.inPrep,
       pn:c.personality,lk:c.look,rg:c.regular?c.regular.id:null,nm:c.regular?c.regular.name:null,ly:c.regLoyalty,
-      an:c.act,at:+(c.actT||0).toFixed(2),ag:c.anger,sb:Object.keys(c.subs||{}).length?c.subs:null,wt:c.waitT,sat:c.sat}));
+      an:c.act,at:+(c.actT||0).toFixed(2),ag:c.anger,sb:Object.keys(c.subs||{}).length?c.subs:null,wt:c.waitT,sat:c.sat,ft:c.floorTableId,fp:c.floorPaid}));
     o.tb = Game.tables.map(t=>({s:t.state, e: t.cust && t.cust.state==='eat' ? t.cust.served : null}));
     o.sl = Game.slots.map(s=>({w:s.who, c:s.cust?s.cust.id:null, p:s.cust? +(s.t/s.total).toFixed(3):0, cv:!!s.cover, it:s.items||[]}));
     o.fl = Game.floaters.map(f=>({x:Math.round(f.x),y:Math.round(f.y),text:f.text,t:+f.t.toFixed(2),color:f.color}));
@@ -196,12 +198,12 @@ export function applyState(m){
   }
   if(m.ready && m.ready[Net.me]) Net.readySent=false;
   Game.mode = m.mode;
-  if(m.mode==='service'){
+  if(m.mode==='service'){Game.floor=m.floor||null;
     const seen=new Set();
     for(const sc of m.cu){ seen.add(sc.i); let c=guestCust.get(sc.i);
       if(!c){ c={id:sc.i,x:sc.x,y:sc.y,bob:Math.random()*6}; guestCust.set(sc.i,c); }
       Object.assign(c,{gx:sc.x,gy:sc.y,state:sc.s,order:sc.o,itemSt:sc.st,patience:sc.p,maxPatience:1,spot:sc.sp,mood:sc.m,moodT:sc.mt,moodTxt:sc.mx,shirt:sc.sh,skin:sc.sk,hat:sc.h,type:sc.ty,dir:sc.d,served:sc.sv,inPrep:sc.ip,
-        personality:sc.pn,look:sc.lk,regular:sc.rg?{id:sc.rg,name:sc.nm}:null,regLoyalty:sc.ly,act:sc.an,actT:sc.at,anger:sc.ag,subs:sc.sb||{},waitT:sc.wt,sat:sc.sat});
+        personality:sc.pn,look:sc.lk,regular:sc.rg?{id:sc.rg,name:sc.nm}:null,regLoyalty:sc.ly,act:sc.an,actT:sc.at,anger:sc.ag,subs:sc.sb||{},waitT:sc.wt,sat:sc.sat,floorTableId:sc.ft,floorPaid:sc.fp});
     }
     for(const k of [...guestCust.keys()]) if(!seen.has(k)) guestCust.delete(k);
     Game.customers=[...guestCust.values()];
@@ -317,3 +319,5 @@ export function goSolo(){
   else if(Game.mode==='report') showReportUI();
   else if(Game.mode==='lobby'){ hideAll(); Game.mode='title'; $('#title').classList.add('show'); }
 }
+
+document.addEventListener('floor-send',e=>{if(Net.role==='guest')netAct({a:'floor',command:e.detail});});

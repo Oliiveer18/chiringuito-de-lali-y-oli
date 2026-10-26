@@ -1,14 +1,15 @@
+import {floorActive,floorTableLabel} from './floor-service.js?v=27.0';
 /* =========================================================
    render.js
    Dibujo de la escena: cielo, kiosco, clientes, burbujas e indicadores de red.
    ========================================================= */
-import { H, PERSONALITIES, STATION_COLOR, STATION_LABEL, W, WHO_COLOR, stationOf } from './config.js?v=26.1';
-import { $, clamp, lerp, mixColor } from './util.js?v=26.1';
-import { drawIcon, rr } from './icons.js?v=26.1';
-import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js?v=26.1';
-import { COUNTER, HAMACA_POS, SKINS } from './world.js?v=26.1';
-import { canvas, ctx, view } from './canvas.js?v=26.1';
-import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js?v=26.1';
+import { H, PERSONALITIES, STATION_COLOR, STATION_LABEL, W, WHO_COLOR, stationOf } from './config.js?v=27.0';
+import { $, clamp, lerp, mixColor } from './util.js?v=27.0';
+import { drawIcon, rr } from './icons.js?v=27.0';
+import { Game, Net, closeHour, guestCust, hamacaCount, isCoop, isGuest, lvl, weatherToday, whoName } from './state.js?v=27.0';
+import { COUNTER, HAMACA_POS, SKINS } from './world.js?v=27.0';
+import { canvas, ctx, view } from './canvas.js?v=27.0';
+import { drawBeachGuest, drawPurchasedProps } from './scene-extras.js?v=27.0';
 
 // ---------- Dibujo ----------
 export const SKY_KEYS=[
@@ -76,6 +77,7 @@ export function render(){
   const ents=[];
   for(const t of Game.tables) ents.push({y:t.y,draw:()=>drawTable(c,t,T)});
   if(Game.mode==='service') for(const cu of Game.customers) ents.push({y:cu.y,draw:()=>drawCustomer(c,cu,T)});
+  if(Game.mode==='service'&&Game.floor)for(const a of Game.floor.actors)ents.push({y:a.y,draw:()=>drawFloorWorker(c,a,T)});
   ents.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
   // indicadores de cola por encima
   if(Game.mode==='service') for(const cu of Game.customers) drawBubble(c,cu,T);
@@ -271,12 +273,12 @@ export function drawHut(c,T,h,nt,wind){
     ? {shirt: st==='cocina' ? '#f4efe6' : '#0f8b8d', skin:SKIN(w), hat: st==='cocina'?'chef':'pañuelo', look:{hair:HAIR(w),walk:{},acc:[]}, type:'staff'}
     : {shirt:'#e8603c', skin:'#e0a97e', hat:'pañuelo', look:{hair:{style:'corto',color:'#2a211c'},walk:{},acc:[]}, type:'staff'};
   const px = p1x;
-  drawPerson(c,px,470,{...lookOf('p1', coop?Net.roles.p1:'all'), pose:poseOf('p1'), t:T, bob:sb('p1')?Math.sin(T*18)*2:0});
-  if(coop){ drawPerson(c,p2x,470,{...lookOf('p2',Net.roles.p2), pose:poseOf('p2'), t:T+0.7, bob:sb('p2')?Math.sin(T*18+1)*2:0}); }
+  if(!floorActive('p1'))drawPerson(c,px,470,{...lookOf('p1', coop?Net.roles.p1:'all'), pose:poseOf('p1'), t:T, bob:sb('p1')?Math.sin(T*18)*2:0});
+  if(coop&&!floorActive('p2')){ drawPerson(c,p2x,470,{...lookOf('p2',Net.roles.p2), pose:poseOf('p2'), t:T+0.7, bob:sb('p2')?Math.sin(T*18+1)*2:0}); }
   if(coop){ /* etiquetas de puesto: ahora se dibujan al final de render()
                (drawStationLabels) para que clientes y burbujas no las tapen */ }
-  if(Game.staff.camarero){ const s=Game.slots.find(s=>s.who==='yeray'); const b=s&&s.cust; drawPerson(c, b?360+Math.sin(T*8)*24:380, 470, {shirt:'#0f8b8d',skin:'#c58a5c',look:{hair:{style:'rastas',color:'#2a211c'},walk:{},acc:[]},type:'staff',bob:b?Math.sin(T*16)*2:0}); }
-  if(Game.staff.cocinero){ drawPerson(c,95+Math.sin(T*2)*8,470,{shirt:'#ffffff',skin:'#e0a97e',hat:'chef',type:'staff'}); if(Game.mode==='service'&&Game.slots.some(s=>s.cust)){ c.fillStyle='rgba(255,255,255,.4)'; for(let i=0;i<3;i++){ c.beginPath(); c.arc(130+i*10+Math.sin(T*3+i)*6, 380-((T*30+i*20)%50), 6,0,7); c.fill(); } } }
+  if(Game.staff.camarero&&!floorActive('yeray')){ const s=Game.slots.find(s=>s.who==='yeray'); const b=s&&s.cust; drawPerson(c, b?360+Math.sin(T*8)*24:380, 470, {shirt:'#0f8b8d',skin:'#c58a5c',look:{hair:{style:'rastas',color:'#2a211c'},walk:{},acc:[]},type:'staff',bob:b?Math.sin(T*16)*2:0}); }
+  if(Game.staff.cocinero&&!floorActive('carmela')){ drawPerson(c,95+Math.sin(T*2)*8,470,{shirt:'#ffffff',skin:'#e0a97e',hat:'chef',type:'staff'}); if(Game.mode==='service'&&Game.slots.some(s=>s.cust)){ c.fillStyle='rgba(255,255,255,.4)'; for(let i=0;i<3;i++){ c.beginPath(); c.arc(130+i*10+Math.sin(T*3+i)*6, 380-((T*30+i*20)%50), 6,0,7); c.fill(); } } }
   // barra
   c.fillStyle=mixColor('#0f8b8d','#123b44',nt*0.7); c.fillRect(COUNTER.x,COUNTER.y,COUNTER.w,COUNTER.h);
   c.fillStyle='rgba(255,255,255,.12)'; for(let i=0;i<11;i++) c.fillRect(COUNTER.x+i*40+4,COUNTER.y+12,30,COUNTER.h-12);
@@ -326,7 +328,7 @@ export function drawTable(c,t,T){
     const pulse = 1+Math.sin(T*6)*0.08;
     c.save(); c.translate(t.x,t.y-62); c.scale(pulse,pulse);
     c.fillStyle='#fff6e6'; rr(c,-34,-14,68,26,13); c.fill(); c.strokeStyle='#2a211c'; c.lineWidth=2; c.stroke();
-    c.fillStyle='#2a211c'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText('Limpiar',0,4);
+    c.fillStyle='#2a211c'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(floorTableLabel(t),0,4);
     c.restore();
   }
 }
@@ -356,6 +358,7 @@ export function drawPerson(c,x,y,o){
   const shL=-14*build, shR=14*build;
   const arm=(x0,y0,x1,y1)=>{ c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); };
   switch(pose){
+    case 'clean': arm(shL,-62,-8,-48);arm(shR,-62,22+Math.sin(t*12)*8,-45);break;
     case 'walk': arm(shL,-62,-19,-40+Math.cos(ph)*3); arm(shR,-62,19,-40-Math.cos(ph)*3); break;
     case 'menu': arm(shL,-62,-7,-48); arm(shR,-62,7,-48); break;
     case 'order': arm(shL,-62,-18,-40); arm(shR,-62,22,-84+Math.sin(t*8)*2); break;
@@ -621,3 +624,5 @@ export function drawNetStatus(c){
   c.fillStyle='#fff6e6'; c.textAlign='left'; c.fillText(txt,pillX+18*dpr,ry+26*dpr);
   c.restore();
 }
+
+function drawFloorWorker(c,a,T){const t=Game.floor.tasks.find(t=>t.id===a.task),slot=Game.slots.find(s=>s.who===a.id),moving=t?.state==='walking'||a.returning;const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?'cook':'idle';drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',pose,t:T,ph:a.phase,moving,dir:a.dir});if(a.carry){c.fillStyle='#e9ddc4';c.fillRect(a.x+8,a.y-44,28,4);}c.textAlign='center';c.font='700 10px system-ui';c.fillStyle='#fffdf8';c.strokeStyle='#163b3d';c.lineWidth=3;const text=a.name+' · '+(a.returning?'Volviendo':t?t.kind==='clean'?'Limpieza':'Terraza':slot?.cust?'Preparando':'Disponible');c.strokeText(text,a.x,a.y-105);c.fillText(text,a.x,a.y-105);}

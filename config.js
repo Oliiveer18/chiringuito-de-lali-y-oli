@@ -3,7 +3,7 @@
    Constantes del juego: dimensiones, calendario, economía, productos,
 clientes habituales, clima, mejoras y personal.
    ========================================================= */
-import { rnd } from './util.js?v=26.1';
+import { rnd } from './util.js?v=27.0';
 
 // ---------- Constantes ----------
 export const W = 1280, H = 720;
@@ -105,3 +105,5 @@ export const NAMES = {
 };
 export const REG_TOWN = {chano:'Arona', mari:'Adeje', fefo:'Los Cristianos', dacil:'El Médano', kike:'Las Américas', hannah:'Hamburgo'};
 export function who(type){ const a=NAMES[type]; return a[Math.floor(rnd()*a.length)]; }
+
+STAFF.push({id:'terraza',name:'Camarero de terraza',desc:'Acompaña, toma pedidos, recoge y entrega las comandas. Puede ayudar a limpiar.',wage:60});

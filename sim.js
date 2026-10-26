@@ -1,18 +1,19 @@
+import {initFloor,updateFloor,requestFloorClean,requestFloorCustomer,floorAway,updateFloorCustomer,releaseFloorCustomer,floorHasWork,abortFloor} from './floor-service.js?v=27.0';
 /* =========================================================
    sim.js
    Simulación autoritativa (anfitrión): dificultad, clientes, pedidos, ciclo del día y economía.
    ========================================================= */
-import {factor} from './professional-model.mjs?v=26.1';
-import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=26.1';
-import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=26.1';
-import { Audio } from './audio.js?v=26.1';
-import { satisfaction } from './ratings-model.mjs?v=26.1';
-import { startBeach, updateBeach } from './beach.js?v=26.1';
-import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=26.1';
-import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=26.1';
-import { navSetTarget, navStep } from './nav.js?v=26.1';
-import { endDay, recordVisit } from './report.js?v=26.1';
-import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=26.1';
+import {factor} from './professional-model.mjs?v=27.0';
+import { ANGER_MIN_STAGE, DRINKS, HOUR_CURVE, ITEMS, ITEM_IDS, PERSONALITIES, PKEYS, QUEUE_SPOTS, REGULARS, SEASON_DAYS, SEC_PER_HOUR, SPECIAL_DAYS, START_MONEY, TYPES, W, WAIT_TABLE_MAX, WEATHER, stationOf, who } from './config.js?v=27.0';
+import { $, clamp, eur2, pickW, rand, rnd } from './util.js?v=27.0';
+import { Audio } from './audio.js?v=27.0';
+import { satisfaction } from './ratings-model.mjs?v=27.0';
+import { startBeach, updateBeach } from './beach.js?v=27.0';
+import { Game, Net, activeItems, closeHour, gameTimers, hamacaCount, hostLive, isCoop, isWeekend, itemUnlocked, lvl, setTimeoutGame, weatherToday } from './state.js?v=27.0';
+import { QUEUE_POS, buildTables, custSeq, genLook } from './world.js?v=27.0';
+import { navSetTarget, navStep } from './nav.js?v=27.0';
+import { endDay, recordVisit } from './report.js?v=27.0';
+import { flashMoney, setSpeed, showServiceUI, toast, updateHud, updateStockbar } from './ui.js?v=27.0';
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -134,12 +135,12 @@ export function spawnCustomer(forceType, opts){
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
-  if(lvl('plancha')) t*=0.8; if(Game.staff.cocinero) t*=0.6*factor(Game.upgrades.workforce?.team?.cocinero,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
+  if(lvl('plancha')) t*=0.8; if(Game.staff.cocinero&&!floorAway('carmela')) t*=0.6*factor(Game.upgrades.workforce?.team?.cocinero,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
   return t;
 }
 export function slotOf(who){ return Game.slots.find(s=>s.who===who); }
 export function pendingIdx(c){ const out=[]; if(!c.itemSt) return out; c.itemSt.forEach((st,i)=>{ if(st===0) out.push(i); }); return out; }
-export function servable(c){ return c && (c.state==='queue' || c.state==='prep') && pendingIdx(c).length>0; }
+export function servable(c){return c&&(['floorWaitEscort','floorMenu','floorReady'].includes(c.state)||(['queue','prep','floorWaitingPrep'].includes(c.state)&&pendingIdx(c).length>0));}
 
 export function chooseSubstitute(c, missingId){
   const cands = activeItems().filter(id=>Game.stock[id]>0 && !c.order.includes(id));
@@ -177,7 +178,7 @@ export function scheduleRegulars(){
     }
   }
 }
-export function startPart(c, slot){
+export function startPart(c, slot){if(!slot||floorAway(slot.who))return false;
   if(!servable(c) || !slot || slot.cust) return false;
   const pend = pendingIdx(c);
   let take = slot.station==='all' ? pend : pend.filter(i=>stationOf(c.order[i])===slot.station);
@@ -201,14 +202,14 @@ export function startPart(c, slot){
   if(c.tServe==null) c.tServe=Game.t;
   slot.cust=c; slot.items=avail; slot.t=0;
   slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * (slot.who==='yeray'?1.15*factor(Game.upgrades.workforce?.team?.camarero,avail.map(i=>({station:stationOf(c.order[i]),complex:ITEMS[c.order[i]].prep>=2}))):1);
-  slot.cover = penalty>1;
+  slot.chefHelp=!!Game.staff.cocinero&&!floorAway('carmela');slot.cover = penalty>1;
   if(avail.some(i=>stationOf(c.order[i])==='cocina')) Audio.sizzle(); else Audio.start();
   updateStockbar();
   return true;
 }
 export function finishSlot(slot){
   const c=slot.cust; slot.cust=null; if(!c) return;
-  if(Game.staff.cocinero)Game.dayStats.staffPrepared=(Game.dayStats.staffPrepared||0)+slot.items.length; c.inPrep--; c.partT[slot.who]=Game.t;
+  if(slot.chefHelp)Game.dayStats.staffPrepared=(Game.dayStats.staffPrepared||0)+slot.items.length; c.inPrep--; c.partT[slot.who]=Game.t;
   const by = Game.dayStats.by[slot.who] || (Game.dayStats.by[slot.who]={items:0,rev:0,clean:0});
   for(const i of slot.items){ c.itemSt[i]=2; const id=c.order[i]; c.served.push(id); by.items++; by.rev+=Game.prices[id]; }
   slot.items=[];
@@ -224,7 +225,7 @@ export function checkComplete(c){
     regularOutcome(c,0);
     addSat(0.1); Audio.angry(); return;
   }
-  if(c.missing) Game.dayStats.partial++;
+  if(c.floorTableId!=null){c.state='floorReady';return;}if(c.missing) Game.dayStats.partial++;
   completeOrder(c);
 }
 export function charge(c, total, sync){
@@ -259,7 +260,7 @@ export function payAndGo(c, total, s, upset){
   leaveQueue(c);
 }
 export function completeOrder(c){
-  let total=0; for(const id of c.served){ total+=Game.prices[id]; Game.dayStats.sold[id]=(Game.dayStats.sold[id]||0)+1; }
+  let total=0; for(const id of c.served){ total+=(c.floorPrices?.[id]??Game.prices[id]); Game.dayStats.sold[id]=(Game.dayStats.sold[id]||0)+1; }
   c.tDone=Game.t;
   let sync=false, syncTip=0;
   if(isCoop() && c.partT.p1!=null && c.partT.p2!=null && Math.abs(c.partT.p1-c.partT.p2)<=2.5){
@@ -281,8 +282,8 @@ export function completeOrder(c){
   c.syncTip=sync; c.tipped = sync || pTip>0.01; c.tipAmt = syncTip + Math.max(0,pTip);
   // Mesa libre al azar: reparte a los clientes por la terraza en vez de acumularlos en la primera
   const freeTables = Game.tables.filter(t=>t.state==='free');
-  const free = freeTables.length ? freeTables[Math.floor(rnd()*freeTables.length)] : null;
-  if(free){ payAndSeat(c,total,s,free); return; }
+  const free = c.floorTableId!=null?Game.tables[c.floorTableId]:(freeTables.length ? freeTables[Math.floor(rnd()*freeTables.length)] : null);
+  if(free){payAndSeat(c,total,s,free);if(c.floorTableId!=null){c.state='eat';c.path=null;c.x=free.x+(free.x>1150?-38:38);c.y=free.y+8;c.tx=c.x;c.ty=c.y;}return;}
   if(P.takeaway==='mesa'){
     c.totalDue=total; c.sat=clamp(s,0,1); c.state='waitTable'; c.waitT=0;
     c.mood='mesa'; c.moodT=2.5; c.moodTxt='¿Mesa libre, por favor?';
@@ -292,7 +293,7 @@ export function completeOrder(c){
   payAndGo(c,total,s,false);
 }
 export function giveUpPending(c){ pendingIdx(c).forEach(i=>{ c.itemSt[i]=3; c.missing++; }); checkComplete(c); }
-export function leaveQueue(c){ c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? -60 : W+60, rand(660,700)); }
+export function leaveQueue(c){if(c.floorTableId!=null)releaseFloorCustomer(c); c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? -60 : W+60, rand(660,700)); }
 export function addSat(s){
   Game.dayStats.satSum+=s; Game.dayStats.satN++;
 }
@@ -321,6 +322,7 @@ export function startDay(){
   // Las compras hechas en el plan de la mañana se imputan al día que empieza
   Game.dayStats.purchases = Game.pendingPurchases||0;
   Game.pendingPurchases = 0;
+  initFloor({clean:commitClean,prepare:startPart,deliver:completeFloorOrder,abandon:abandonFloor});
   startBeach();
   scheduleRegulars();
   Net.ready={p1:false,p2:false};
@@ -334,6 +336,7 @@ export function update(dt){
   Game.t += dt;
   if(Game.mode!=='service') { updateAmbient(dt); return; }
   for(let i=gameTimers.length-1;i>=0;i--){ gameTimers[i].t-=dt; if(gameTimers[i].t<=0){ const f=gameTimers[i].fn; gameTimers.splice(i,1); f(); } }
+  updateFloor(dt);
   updateBeach();
   const prevHour=Game.hour;
   if(!Game.closing){
@@ -354,9 +357,9 @@ export function update(dt){
     if(Math.floor(prevHour)!==Math.floor(Game.hour)) updateHud();
   } else {
     Game.closeT+=dt;
-    for(const c of Game.customers) if(c.state==='prep' && c.inPrep===0 && pendingIdx(c).length) giveUpPending(c);
-    const busy = Game.customers.some(c=>c.state!=='gone');
-    if(Game.closeT>3.5 && (!busy || Game.closeT>9)){ endDay(); return; }
+    for(const c of Game.customers) if(c.floorTableId==null&&c.state==='prep' && c.inPrep===0 && pendingIdx(c).length) giveUpPending(c);
+    const busy = Game.customers.some(c=>c.state!=='gone')||floorHasWork();
+    if(Game.closeT>3.5 && (!busy || Game.closeT>45)){ abortFloor();endDay(); return; }
   }
   Game.slots.forEach(s=>{
     if(s.cust){ s.t+=dt; if(s.t>=s.total) finishSlot(s); }
@@ -393,6 +396,7 @@ export function update(dt){
   for(const c of Game.customers){
     c.bob += dt*8;
     if(c.moodT>0){ c.moodT-=dt; if(c.moodT<=0){ c.mood=null; c.moodTxt=null; } }
+    if(c.floorTableId!=null&&!['eat','leave','walkby','gone'].includes(c.state)){updateFloorCustomer(c,dt);continue;}
     switch(c.state){
       case 'arrive': {
         const sp=QUEUE_POS[c.spot];
@@ -445,7 +449,7 @@ export function update(dt){
     }
   }
   Game.customers = Game.customers.filter(c=>c.state!=='gone');
-  for(const t of Game.tables)if(t.state==='dirty')t.dirtyT+=dt; if(Game.staff.limpiador){const q=Game.tables.filter(t=>t.state==='dirty').sort((a,b)=>Game.upgrades.workforce?.priority?.limpiador==='near'?a.x-b.x:b.dirtyT-a.dirtyT);const t=q[0];if(t&&t.dirtyT>3.2*factor(Game.upgrades.workforce?.team?.limpiador,[{complex:Game.tables.filter(t=>t.state==='dirty').length>2}]))cleanTable(t,true,'acaymo');}
+  for(const t of Game.tables)if(t.state==='dirty')t.dirtyT+=dt;
   updateAmbient(dt);
   hud.tick+=dt; if(hud.tick>0.25){ hud.tick=0; updateHud(); }
 }
@@ -454,7 +458,8 @@ export function updateAmbient(dt){
   for(const f of Game.floaters) f.t+=dt; Game.floaters=Game.floaters.filter(f=>f.t<1.4);
   for(const p of Game.particles){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=200*dt; } Game.particles=Game.particles.filter(p=>p.t<p.life);
 }
-export function cleanTable(t,auto,who){
+export function cleanTable(t,auto,who){return requestFloorClean(t,who||'p1',!!auto); }
+export function commitClean(t,auto,who){
   if(!t || t.state!=='dirty') return;
   t.state='free'; t.dirtyT=0; Game.dayStats.cleaned++;
   const key=who||'p1';const b=Game.dayStats.by[key]||(Game.dayStats.by[key]={items:0,rev:0,clean:0});b.clean++;
@@ -477,8 +482,11 @@ export function buyStock(id,n,mult=1){
   if(Game.mode==='plan') Game.pendingPurchases = (Game.pendingPurchases||0) + cost;
   Audio.click(); return cost;
 }
-export function tryServe(c, who='p1'){
+export function tryServe(c, who='p1'){if(c&&['floorWaitEscort','floorMenu','floorReady'].includes(c.state))return requestFloorCustomer(c,who);
   const slot=slotOf(who); if(!slot || !servable(c)) return false;
   if(slot.cust){ Game.floaters.push({x:c.x,y:c.y-120,text:'Un momento…',t:0,color:'#fff6e6'}); return false; }
   return startPart(c, slot);
 }
+
+export function completeFloorOrder(c){if(!c||c.floorPaid||c.state!=='floorReady')return;c.floorPaid=true;if(c.missing)Game.dayStats.partial++;completeOrder(c);}
+export function abandonFloor(c){if(c.floorAbandoned||c.floorPaid)return;c.floorAbandoned=true;releaseFloorCustomer(c);c.state='leave';leaveQueue(c);Game.dayStats.lost++;Game.dayStats.lostPatience++;recordVisit(c,{lost:'espera'});addSat(0);}

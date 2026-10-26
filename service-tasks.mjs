@@ -1,10 +1,10 @@
 const TYPES=new Set(['clean','escort','takeOrder','pickup','deliver']);
-const ACTIVE=new Set(['queued','walking','working']);
+const ACTIVE=new Set(['queued','walking','working','blocked']);
 const number=(x,name)=>{if(!Number.isFinite(x)||x<0)throw Error('Invalid '+name);return x;};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function createService(id,actors,tables){
  if(!id||new Set(actors.map(a=>a.id)).size!==actors.length||new Set(tables.map(t=>t.id)).size!==tables.length)throw Error('Invalid identities');
- for(const a of actors){number(a.x,'x');number(a.y,'y');if(!(a.speed>0))throw Error('Invalid speed');}
+ for(const a of actors){number(a.x,'x');number(a.y,'y');if(!Number.isFinite(a.speed)||!(a.speed>0))throw Error('Invalid speed');}
  return {id:String(id),sequence:0,time:0,actors:clone(actors).map(a=>({...a,task:null,completed:0})),tables:clone(tables).map(t=>({...t,generation:t.generation||0,claim:null})),tasks:[],tickets:[],events:[]};
 }
 export function markDirty(s,id){const t=s.tables.find(t=>t.id===id);if(!t||t.claim||t.state==='busy'||t.state==='reserved')return false;t.state='dirty';t.generation++;return true;}
@@ -46,9 +46,9 @@ function complete(s,t){
 }
 export function stepTasks(s,dt,planPath){
  number(dt,'dt');if(dt===0)return;s.time+=dt;assignTasks(s,planPath);
- for(const t of s.tasks.filter(t=>t.state==='walking'||t.state==='working')){
+ for(const t of s.tasks.filter(t=>t.state==='walking'||t.state==='working'||t.state==='blocked')){
   const a=s.actors.find(a=>a.id===t.actor);if(!a||a.task!==t.id){cancelTask(s,t.id);continue;}
-  let remaining=dt,guard=0;
+  if(t.state==='blocked'){const p=planPath(a,t.legs[t.leg],t);if(!Array.isArray(p)||!p.length)continue;t.path=clone(p);t.state='walking';t.reason=null;}let remaining=dt,guard=0;
   while(remaining>0&&ACTIVE.has(t.state)&&guard++<10000){
    if(t.state==='walking'){
     const p=t.path[0];if(!p){t.state='working';continue;}
@@ -61,7 +61,7 @@ export function stepTasks(s,dt,planPath){
     s.events.push({id:t.id+':leg:'+t.leg,task:t.id,type:'leg-completed',leg:t.leg,actor:t.actor});t.leg++;t.progress=0;
     if(t.leg>=t.legs.length){complete(s,t);break;}
     const path=planPath(a,t.legs[t.leg],t);
-    if(!Array.isArray(path)||!path.length){t.reason='route-blocked';break;}
+    if(!Array.isArray(path)||!path.length){t.reason='route-blocked';t.state='blocked';break;}
     t.path=clone(path);t.state='walking';
    }
   }
@@ -81,7 +81,7 @@ export function beginItem(s,ticketId,lineId,stock,worker){
 }
 export function finishItem(s,ticketId,lineId,worker){const t=s.tickets.find(t=>t.id===ticketId),line=t?.items.find(l=>l.id===lineId);if(!t||t.cancelled||!line||line.state!=='preparing'||line.worker!==worker)return false;line.state='ready';return true;}
 export function deliverTicket(s,ticketId){
- const t=s.tickets.find(t=>t.id===ticketId);if(!t||t.cancelled||t.paid||t.items.some(l=>l.state!=='ready'))return null;
- t.paid=true;t.amount=t.items.reduce((n,l)=>n+l.price,0);s.events.push({id:t.id+':payment',type:'payment',ticket:t.id,amount:t.amount});return {ticket:t.id,amount:t.amount};
+ const t=s.tickets.find(t=>t.id===ticketId);if(!t||t.cancelled||t.paid||t.items.some(l=>!['ready','omitted'].includes(l.state))||!t.items.some(l=>l.state==='ready'))return null;
+ t.paid=true;t.amount=t.items.filter(l=>l.state==='ready').reduce((n,l)=>n+l.price,0);s.events.push({id:t.id+':payment',type:'payment',ticket:t.id,amount:t.amount});return {ticket:t.id,amount:t.amount};
 }
 export function cancelTicket(s,id){const t=s.tickets.find(t=>t.id===id);if(!t||t.paid||t.cancelled)return false;t.cancelled=true;s.events.push({id:t.id+':cancel',type:'ticket-cancelled',ticket:t.id,consumed:t.items.filter(l=>l.state!=='pending').map(l=>l.item)});return true;}

@@ -2,16 +2,16 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=26.1';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=26.1';
-import { ICON_URL } from './icons.js?v=26.1';
-import { Audio } from './audio.js?v=26.1';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=26.1';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=26.1';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=26.1';
-import { canvas, toWorld } from './canvas.js?v=26.1';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=26.1';
-import { drawPerson } from './render.js?v=26.1';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.0';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.0';
+import { ICON_URL } from './icons.js?v=27.0';
+import { Audio } from './audio.js?v=27.0';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.0';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.0';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.0';
+import { canvas, toWorld } from './canvas.js?v=27.0';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.0';
+import { drawPerson } from './render.js?v=27.0';
 
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
@@ -135,8 +135,8 @@ export function staffAvatar(id){
   if(avatarCache[id]) return avatarCache[id];
   const cv=document.createElement('canvas'); cv.width=cv.height=88; const c=cv.getContext('2d');
   c.fillStyle='#f6e8cf'; c.beginPath(); c.arc(44,44,42,0,7); c.fill();
-  const shirt={camarero:'#0f8b8d',cocinero:'#ffffff',limpiador:'#f5b82e'}[id];
-  const skin={camarero:'#c58a5c',cocinero:'#e0a97e',limpiador:'#8d5a3b'}[id];
+  const shirt={camarero:'#0f8b8d',cocinero:'#ffffff',limpiador:'#f5b82e',terraza:'#237d85'}[id];
+  const skin={camarero:'#c58a5c',cocinero:'#e0a97e',limpiador:'#8d5a3b',terraza:'#c58a5c'}[id];
   drawPerson(c,44,140,{shirt,skin,hat:id==='cocinero'?'chef':id==='camarero'?null:'gorra',look:{hair:{style:id==='limpiador'?'flequillo':'corto',color:'#d9b35a'},build:1,height:1,walk:{},acc:[]},type:'staff',scale:1.35});
   avatarCache[id]=cv.toDataURL(); return avatarCache[id];
 }

@@ -1,19 +1,19 @@
-import './tabguard.js?v=26.1';
-import { EXTRA } from './icons.js?v=26.1';
-import './main.js?v=26.1';
-import './saves.js?v=26.1';
-import './layout.js?v=26.1';
-import './reliability.js?v=26.1';
-import './coopbridge.js?v=26.1';
+import './tabguard.js?v=27.0';
+import { EXTRA } from './icons.js?v=27.0';
+import './main.js?v=27.0';
+import './saves.js?v=27.0';
+import './layout.js?v=27.0';
+import './reliability.js?v=27.0';
+import './coopbridge.js?v=27.0';
 Object.assign(EXTRA,{algodon:['#ffb7d5','#fff0f6'],agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']});
 const loaded=[],failed=[],nativeInterval=window.setInterval;
 window.setInterval=(fn,ms,...args)=>nativeInterval(typeof fn==='function'&&fn.name==='tick'?function(){if(window.Net&&window.Net.role==='guest')return;fn();}:fn,ms,...args);
 try{
-  for(const [name,url] of [['v11','./features.js?v=26.1'],['v12','./v12.js?v=26.1'],['v14','./v14.js?v=26.1'],['v19','./chiringo-ui.js?v=26.1'],['cierre','./cierre-ui.js?v=26.1'],['carrera','./career-ui.js?v=26.1'],['progreso','./progression-ui.js?v=26.1'],['mercado','./market-ui.js?v=26.1']]){
+  for(const [name,url] of [['v11','./features.js?v=27.0'],['v12','./v12.js?v=27.0'],['v14','./v14.js?v=27.0'],['v19','./chiringo-ui.js?v=27.0'],['cierre','./cierre-ui.js?v=27.0'],['carrera','./career-ui.js?v=27.0'],['progreso','./progression-ui.js?v=27.0'],['mercado','./market-ui.js?v=27.0']]){
     try{await import(url);loaded.push(name);}
     catch(e){failed.push(name);console.error('Módulo '+name+' no cargó',e);
       const b=document.getElementById('errbox');if(b){b.style.display='block';b.textContent+='['+name+'] '+(e&&e.message||e)+'\n';}}
   }
 }finally{window.setInterval=nativeInterval;}
 const title=document.getElementById('ver-title');
-if(title)title.textContent='v26.1 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
+if(title)title.textContent='v27.0 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');

@@ -39,12 +39,12 @@ export function recordComment(posts,postId,comment) {
 }
 function hash(text) {let h=2166136261;for(const c of String(text))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 const NAMES=['Naira','Aday','Dacil','Jonay','Iballa','Nauzet','Nerea','Airam','Yaiza','Beneharo','Celia','Saul'];
-const ROLES=[['camarero',55],['cocinero',65],['limpiador',30]];
+const ROLES=[['camarero',55],['cocinero',65],['limpiador',30],['terraza',60]];
 export function candidates(seed,day) {
   if(!Number.isInteger(day)||day<1) throw new Error('Invalid recruitment day');
   const batch=Math.floor((day-1)/3);
-  return Array.from({length:6},(_,i)=>{
-    const h=hash(seed+':'+batch+':'+i),[role,base]=ROLES[i%3];
+  return Array.from({length:8},(_,i)=>{
+    const h=hash(seed+':'+batch+':'+i),[role,base]=ROLES[i%ROLES.length];
     const level=h%3, wage=base+[-10,0,15][level];
     return {id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],experience:[0,2,5][level],wage,workMultiplier:[1.15,1,0.85][level],received:batch*3+1,expires:batch*3+3,training:0};
   });
