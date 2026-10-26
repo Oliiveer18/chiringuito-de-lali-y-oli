@@ -11,6 +11,7 @@ import { Plan, pressReady, showPlan, toggleReady } from './ui.js';
 import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js';
 import { render } from './render.js';
 import { ctx } from './canvas.js';
+import './variety.js';
 
 // ---------- Bucle ----------
 let last=performance.now(), acc=0; const STEP=1/60;
@@ -20,7 +21,6 @@ function frame(now){
   else if(!manualTime){ acc+=dt*(Game.mode==='service'?Game.speed:1); while(acc>=STEP){ update(STEP); acc-=STEP; } }
   netTick(dt);
   render();
-  // Gancho opcional para copias beta: dibuja capas propias encima de la escena
   if(window.__betaDraw){ try{ window.__betaDraw(ctx); }catch(e){ console.error('betaDraw', e); } }
   requestAnimationFrame(frame);
 }
@@ -31,9 +31,7 @@ window.render_game_to_text = ()=> JSON.stringify({
   stock:Game.stock, queue:Game.customers.filter(c=>c.state==='queue').map(c=>({spot:c.spot,type:c.type,order:c.order,patience:+c.patience.toFixed(1)})),
   tables:Game.tables.map(t=>t.state), slots:Game.slots.map(s=>!!s.cust), stats:Game.dayStats && {served:Game.dayStats.served,lost:Game.dayStats.lost,revenue:Math.round(Game.dayStats.revenue)}
 });
-// Exponer para pruebas
 window.__api = {serve:(c)=>tryServe(c), clean:t=>cleanTable(t,false), startDay, endDay, showPlan, newSeason, buyStock, ITEMS, UPGRADES,
-  // latencia real en pruebas: retrasa el envío y la recepción como una red con RTT (FIFO por dirección)
   setNetLatency(up=80, down=80, jitter=20){ Object.assign(NET_SIM,{on:true,up,down,jitter}); },
   clearNetLatency(){ NET_SIM.on=false; },
   setPendTimeouts(timeoutMs, dropMs){ if(timeoutMs!=null) Net.pendTimeout=timeoutMs; if(dropMs!=null) Net.pendDrop=dropMs; },
@@ -46,8 +44,6 @@ buildIcons();
 document.fonts && document.fonts.ready.then(()=>render());
 requestAnimationFrame(frame);
 
-// Exposición para el test de latencia: con módulos ES las funciones dejan de ser
-// globales, así que el test accede a través de window.__test.
 window.__test = { netOpen, netSend, newSeason, showPlan, toggleReady, pressReady,
   guestServe, guestClean, tryServe, spawnCustomer, applyState,
   setPlanTab: v => Plan.tab = v };
