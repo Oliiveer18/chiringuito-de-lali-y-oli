@@ -1,20 +1,30 @@
 /* =========================================================
-   variety.js
-   Amplía la variedad de NPCs y reseñas con nombres, pueblos y comentarios
-   de toda Tenerife. Se aplica sobre los bancos existentes sin duplicar código.
+   variety.js · v2
+   Variedad profesional de NPCs y reseñas para un chiringuito de Tenerife:
+   nombres y pueblos reales de la isla, comentarios naturales y situacionales,
+   y elogios con sabor canario. Se suma a los bancos base sin duplicarlos.
    ========================================================= */
 import { NAMES } from './config.js';
 import { REVIEW_BANK, PRAISE, DETAIL } from './report.js';
 
-// ---------- Nombres y pueblos de toda la isla ----------
-NAMES.turista.push(
-  'Elena, Berlín','Jonas, Múnich','Marta, Varsovia','Lucas, Lyon','Chloé, Bruselas',
-  'Sofía, Bogotá','Mateo, Buenos Aires','Camila, Ciudad de México','Andrés, Madrid',
-  'Nora, Oslo','Erik, Estocolmo','Inés, Lisboa','Pedro, Oporto','Anna, Viena',
-  'Sara, Milán','Tomás, Dublín','Julia, Ámsterdam','Ben, Londres','Mia, Copenhague',
-  'Diego, Santiago de Chile'
-);
-NAMES.local.push(
+const add = (arr, items) => { for (const it of items) if (!arr.includes(it)) arr.push(it); };
+
+// ---------- Turistas: nombres internacionales + ciudad de origen ----------
+add(NAMES.turista, [
+  'Hannah, Hamburgo','Liam, Mánchester','Sofie, Copenhague','Giulia, Milán','Ana, Madrid',
+  'Pierre, Lyon','Olga, Helsinki','Marta, Barcelona','Jon, Dublín','Ingrid, Oslo',
+  'Marco, Roma','Nils, Estocolmo','Elena, Berlín','Jonas, Múnich','Marta, Varsovia',
+  'Lucas, Lyon','Chloé, Bruselas','Sofía, Bogotá','Mateo, Buenos Aires','Camila, Ciudad de México',
+  'Andrés, Madrid','Nora, Oslo','Erik, Estocolmo','Inés, Lisboa','Pedro, Oporto',
+  'Anna, Viena','Sara, Milán','Tomás, Dublín','Julia, Ámsterdam','Ben, Londres',
+  'Mia, Copenhague','Diego, Santiago de Chile','Léa, París','Finn, Hamburgo','Sanne, Ámsterdam',
+  'Kasper, Copenhague','Elisa, Milán','Pablo, Bilbao','Lucía, Valencia','Marta, Sevilla',
+  'Iván, Moscú','Nina, Berlín','Tom, Bristol','Eva, Praga','Klara, Viena',
+  'Oskar, Varsovia','Lotte, Bruselas','Mads, Aarhus','Freja, Aarhus','Sven, Estocolmo'
+]);
+
+// ---------- Locales: nombres canarios + pueblos de toda la isla ----------
+add(NAMES.local, [
   'Gara, La Laguna','Adán, Santa Cruz','Nira, La Orotava','Ayoze, Los Realejos',
   'Candelaria, Güímar','Zebenzui, Fasnia','Nerea, Arico','Yeray, Granadilla',
   'Garañona, San Miguel','Aday, Arona','Noa, Adeje','Chaxiraxi, Guía de Isora',
@@ -22,17 +32,32 @@ NAMES.local.push(
   'Aday, Garachico','Nira, Icod de los Vinos','Ayoze, La Guancha',
   'Gara, San Juan de la Rambla','Adán, Los Silos','Nira, El Tanque',
   'Ayoze, Tacoronte','Candelaria, El Sauzal','Zebenzui, La Matanza',
-  'Nerea, La Victoria','Yeray, Santa Úrsula','Garañona, La Esperanza'
-);
-NAMES.surfista.push(
+  'Nerea, La Victoria','Yeray, Santa Úrsula','Garañona, La Esperanza',
+  'Gara, Anaga','Adán, San Andrés','Nira, Taganana','Ayoze, Igueste',
+  'Candelaria, La Laguna','Zebenzui, La Cuesta','Nerea, Taco','Yeray, La Salud',
+  'Garañona, La Candelaria','Aday, Arafo','Noa, Fasnia','Chaxiraxi, Arico',
+  'Arona, Granadilla','Iballa, San Isidro','Echedey, Los Abrigos','Aday, El Médano',
+  'Nira, La Camella','Ayoze, Costa del Silencio','Gara, Las Chafiras',
+  'Adán, Guargacho','Nira, Los Cristianos','Ayoze, Playa de la Arena',
+  'Candelaria, Puerto de Santiago','Zebenzui, Tamaimo','Nerea, Santiago del Teide',
+  'Yeray, Las Portelas','Garañona, Masca','Aday, Buenavista','Noa, Los Silos'
+]);
+
+// ---------- Surfistas: nombres + spots reales de la isla ----------
+add(NAMES.surfista, [
   'Nauzet, El Médano','Iballa, Las Américas','Aday, Costa Adeje','Gara, La Caleta',
   'Echedey, Puerto de la Cruz','Noa, Alcalá','Arona, Playa Paraíso',
   'Iballa, La Jaquita','Aday, El Poris','Gara, Abades','Echedey, Güímar',
-  'Noa, La Nea','Arona, Radazul','Iballa, Las Galletas','Aday, La Tejita'
-);
+  'Noa, La Nea','Arona, Radazul','Iballa, Las Galletas','Aday, La Tejita',
+  'Gara, El Cabezo','Echedey, La Jaquita','Noa, La Tejita','Arona, El Médano',
+  'Iballa, Las Américas','Aday, La Caleta','Gara, Alcalá','Echedey, Puerto de la Cruz',
+  'Noa, Playa Paraíso','Arona, La Jaquita','Iballa, El Poris','Aday, Abades',
+  'Gara, Güímar','Echedey, La Nea','Noa, Radazul','Arona, Las Galletas',
+  'Iballa, La Tejita','Aday, El Cabezo','Gara, Las Américas','Echedey, La Caleta'
+]);
 
-// ---------- Reseñas: más variantes por caso ----------
-REVIEW_BANK.colaLenta.push(
+// ---------- Reseñas: más variantes, más naturales y situacionales ----------
+add(REVIEW_BANK.colaLenta, [
   'La cola iba más lenta que el tráfico en la TF-1 un viernes.',
   'Esperamos tanto que nos dio tiempo a ver tres olas grandes.',
   'Con la calima y esa cola, se hizo eterno el mediodía.',
@@ -40,153 +65,280 @@ REVIEW_BANK.colaLenta.push(
   'Entre la marea de gente y la espera, se nos fue la mañana.',
   'Hicimos más cola que para el barco a La Gomera.',
   'La espera se nos hizo larga, aunque el sitio prometía.',
-  'Con esa cola, el sol nos hizo más daño que la sed.'
-);
-REVIEW_BANK.colaLlena.push(
+  'Con esa cola, el sol nos hizo más daño que la sed.',
+  'Más de veinte minutos esperando y con la calima encima.',
+  'La cola no avanzaba y los niños ya estaban de mala leche.',
+  'Esperamos tanto que nos dio tiempo a discutir el pedido.',
+  'Con la marea de gente, la espera se hizo cuesta arriba.',
+  'La fila era larga y el sol apretaba; no fue nuestro día.',
+  'Esperamos un buen rato, aunque el barraquito estaba bueno.',
+  'La cola se hizo eterna, pero el sitio tiene su encanto.'
+]);
+add(REVIEW_BANK.colaLlena, [
   'Había tanta gente que parecía la bajada del Carmen en Candelaria.',
   'Ni en las fiestas de La Laguna se ve una fila así.',
   'Dimos la vuelta al ver la cola: otro día será.',
   'La fila llegaba hasta la orilla, mejor nos fuimos al chiringuito de al lado.',
   'Ni de broma: había más cola que en el Teide en agosto.',
   'Pasamos, vimos la marea de gente y seguimos caminando.',
-  'Con esa cola, mejor nos compramos un agua en el kiosco de la playa.'
-);
-REVIEW_BANK.preciosAltos.push(
+  'Con esa cola, mejor nos compramos un agua en el kiosco de la playa.',
+  'Ni en el carnaval de Santa Cruz se ve una fila así.',
+  'Había cola para pedir y cola para respirar.',
+  'La fila llegaba hasta la arena; mejor nos fuimos.',
+  'Con esa marea, mejor venir temprano o no venir.',
+  'Vimos la cola desde la hamaca y decidimos seguir de paseo.',
+  'La cola daba la vuelta al chiringuito; otra vez será.',
+  'Demasiada gente para un chiringuito de playa.',
+  'Ni un hueco en la fila; seguimos de largo.'
+]);
+add(REVIEW_BANK.preciosAltos, [
   'Buen sitio, pero la cuenta nos dejó más calientes que la calima.',
   'Cobran como si la playa fuera la Costa Adeje premium.',
   'Por ese precio, en el pueblo comemos pescado entero.',
   'Está bien para un día, pero no para venir cada semana.',
   'La cuenta subió más que la marea con viento del norte.',
   'Caro, aunque el barraquito estaba bueno.',
-  'Nos pareció caro para lo que es un chiringuito de playa.'
-);
-REVIEW_BANK.sinStock.push(
+  'Nos pareció caro para lo que es un chiringuito de playa.',
+  'Por lo que costó la cuenta, en La Laguna comemos mejor.',
+  'Bueno, bonito y caro: dos de tres no está mal.',
+  'La cuenta nos dejó helados, y no por la cerveza.',
+  'Caro para lo que es, aunque el sitio es agradable.',
+  'Con esa cuenta, mejor comer en el pueblo.',
+  'Nos pareció caro, pero la vista acompaña.',
+  'El precio no acompañó tanto como el sol.',
+  'Cobran como en el puerto deportivo; ojo con la cuenta.'
+]);
+add(REVIEW_BANK.sinStock, [
   'Justo el día que apetecía pescado, no quedaba.',
   'Se nos acabó la suerte: lo que queríamos, agotado.',
   'Con media carta agotada, tocó improvisar.',
   'Fuimos por el batido y no había: qué rabia.',
   'Nos quedamos con las ganas de las papas con mojo.',
   'El género se agotó pronto; habrá que llegar más temprano.',
-  'Lo que pedimos no estaba; nos tocó cambiar de plan.'
-);
-REVIEW_BANK.mesasSucias.push(
+  'Lo que pedimos no estaba; nos tocó cambiar de plan.',
+  'Justo lo que apetecía, agotado; qué mala suerte.',
+  'No quedaba de lo nuestro; tocó buscar alternativa.',
+  'Con la carta a medias, se nos fue el hambre.',
+  'El pescado se acabó pronto; habrá que madrugar.',
+  'Sin stock de lo que queríamos, nos fuimos con las ganas.',
+  'Agotado lo que pedimos; otra vez será.',
+  'Nos quedamos sin lo nuestro de siempre.',
+  'La carta estaba coja por los agotados.'
+]);
+add(REVIEW_BANK.mesasSucias, [
   'Las gaviotas se comieron más tranquilo que nosotros.',
   'Había mesas sin recoger desde hacía rato.',
   'Con las mesas así, mejor nos quedamos en la toalla.',
   'Pedimos que limpiaran la mesa y tardaron en venir.',
   'La terraza estaba regular por las mesas sin recoger.',
-  'Más de una mesa con vasos de antes; no da buena imagen.'
-);
-REVIEW_BANK.sinMesa.push(
+  'Más de una mesa con vasos de antes; no da buena imagen.',
+  'Las mesas tardaban y la arena estaba llena de vasos.',
+  'Con esas mesas, el sitio perdía puntos.',
+  'Nos tocó pedir que nos arreglaran la mesa.',
+  'Había mesas sucias y nadie las recogía.',
+  'La limpieza de la terraza flojeó ese día.',
+  'Con las mesas así, el hambre se nos fue.',
+  'Las gaviotas comían mejor servidas que nosotros.',
+  'La terraza necesitaba una pasada de limpieza.',
+  'Mesas sin recoger; no da buena impresión.'
+]);
+add(REVIEW_BANK.sinMesa, [
   'Ni sombra ni mesa: a la toalla, que ya está bien.',
   'Queríamos sentarnos y no hubo manera.',
   'Con la playa llena, tocó comer de pie.',
   'Nos llevamos la comida a la arena, sin más.',
   'No había mesa ni en la terraza ni en la arena.',
-  'Dimos una vuelta buscando mesa y al final, para llevar.'
-);
-REVIEW_BANK.decepcion.push(
+  'Dimos una vuelta buscando mesa y al final, para llevar.',
+  'Sin mesa, pero con las vistas no se sufre tanto.',
+  'Nos tocó comer de pie como los cormoranes.',
+  'No cabía un alfiler; tocó toalla.',
+  'Buscamos mesa un buen rato y nada.',
+  'Con la terraza llena, tocó llevarse el pedido.',
+  'Sin mesa y con calima: no fue nuestro día.',
+  'La mesa nunca llegó; nos fuimos con el papel de aluminio.',
+  'Para llevar y a la arena, como buenamente se pudo.',
+  'Ni sombra ni mesa; otra vez será.'
+]);
+add(REVIEW_BANK.decepcion, [
   'Esperábamos más de un sitio con esas vistas.',
   'Está bien, pero hoy no nos convenció.',
   'Regular: ni fu ni fa.',
   'Nos quedamos con ganas de más.',
   'El sitio mola, pero el servicio flojeó.',
-  'Un día normal, sin más historia.'
-);
-REVIEW_BANK.habitual.push(
+  'Un día normal, sin más historia.',
+  'Con lo bonito que es el sitio, esperábamos mejor servicio.',
+  'Nos dejó tibios, siendo sinceros.',
+  'No es malo, pero hoy no acertamos con el día.',
+  'El sitio promete, pero hoy no estuvo a la altura.',
+  'Regular; esperábamos más por lo que cuesta.',
+  'Ni fu ni fa; la playa manda.',
+  'Nos fuimos con la sensación de que podía estar mejor.',
+  'Un poco desganado el servicio hoy.',
+  'No acabamos de disfrutar la visita.'
+]);
+add(REVIEW_BANK.habitual, [
   'Nuestra parada de siempre en la playa.',
   'Venimos cada verano y no falla.',
   'El chiringuito de confianza, como cada año.',
   'Otra vez por aquí, y bien atendidos.',
   'Ya somos de la casa.',
-  'Cada vez que bajamos a la playa, aquí estamos.'
-);
-REVIEW_BANK.pedidoPerfecto.push(
+  'Cada vez que bajamos a la playa, aquí estamos.',
+  'Nuestra parada fija después del baño.',
+  'Cuando volvemos a la isla, aquí sin falta.',
+  'El chiringuito de siempre, y no falla.',
+  'Repetimos visita y seguimos contentos.',
+  'Ya nos conocen, y eso se agradece.',
+  'Nuestro sitio de cada verano.',
+  'Como cada año, bien atendidos.',
+  'La parada fija de la familia.',
+  'El chiringuito de confianza, sin más.'
+]);
+add(REVIEW_BANK.pedidoPerfecto, [
   'Todo tal cual lo pedimos, ni un fallo.',
   'Pedido completo y bien servido.',
   'Exactamente lo que queríamos, sin cambios.',
   'Ni una pega: pedido redondo.',
   'Lo pedido es lo servido, perfecto.',
-  'Todo completo y en su punto.'
-);
-REVIEW_BANK.servicioRapido.push(
+  'Todo completo y en su punto.',
+  'Pedido exacto y bien presentado.',
+  'Ni un cambio ni una falta: perfecto.',
+  'Todo como lo pedimos, sin sustos.',
+  'Pedido redondo, para repetir.',
+  'Exactamente lo que pedimos, genial.',
+  'Sin faltas ni cambios, perfecto.',
+  'Todo en su punto y tal cual.',
+  'Pedido completo, bien servido.',
+  'Tal cual lo pedimos, sin más.'
+]);
+add(REVIEW_BANK.servicioRapido, [
   'En plena hora punta y nos atendieron volando.',
   'Ni tiempo a sudar la calima y ya teníamos el pedido.',
   'Rapidísimos, incluso con la playa llena.',
   'Pedimos y en un momento lo teníamos.',
   'Servicio de récord, para repetir.',
-  'Con esa marea de gente, nos sorprendió la rapidez.'
-);
-REVIEW_BANK.calima.push(
+  'Con esa marea de gente, nos sorprendió la rapidez.',
+  'A la hora punta y todo como un reloj.',
+  'Ni nos dio tiempo a decidirnos y ya estaba.',
+  'Rapidez de récord, para aplaudir.',
+  'En un visto y no visto teníamos el pedido.',
+  'Con la barra llena, nos sirvieron en nada.',
+  'Rápidos incluso con la hora punta encima.',
+  'Pedimos, parpadeamos y ya estaba listo.',
+  'Servicio rápido y bien hecho.',
+  'Con la playa llena, todo volando.'
+]);
+add(REVIEW_BANK.calima, [
   'Con la calima, la sombra del chiringuito se agradece.',
   'Bochorno de polvo, pero el batido salvó la tarde.',
   'Calima fuerte, pero el sitio tiene su encanto.',
   'Con ese calor del Sáhara, cualquier sombra es oro.',
   'La calima apretaba y el barraquito nos levantó el ánimo.',
-  'Día de polvo, pero bien resueltos con una bebida fría.'
-);
-REVIEW_BANK.templado.push(
+  'Día de polvo, pero bien resueltos con una bebida fría.',
+  'Con la calima, la cerveza fría es un alivio.',
+  'Bochorno del Sáhara, pero el sitio se defiende.',
+  'Calima y calor, pero la sombra acompañó.',
+  'Con ese viento de calima, la sombra era un lujo.',
+  'La calima no perdonaba, pero el chiringuito sí.',
+  'Día de polvo, pero el barraquito nos levantó.',
+  'Con la calima, cualquier sombra es un acierto.',
+  'Bochorno, pero la bebida fría salvó la tarde.',
+  'Calima fuerte; el sitio se las arregla bien.'
+]);
+add(REVIEW_BANK.templado, [
   'Correcto para un día de playa.',
   'Cumple para matar la sed.',
   'Ni fu ni fa, pero bien para un rato.',
   'Sitio agradable, servicio normal.',
   'Para un refresco, va bien.',
-  'Sin más, pero la playa acompaña.'
-);
+  'Sin más, pero la playa acompaña.',
+  'Correcto, sin más historia.',
+  'Cumple, sin más.',
+  'Bien para un rato, sin más.',
+  'Sitio normal, la playa manda.',
+  'Para un día de playa, correcto.',
+  'Ni fu ni fa; la vista acompaña.',
+  'Cumple para un refresco.',
+  'Correcto, sin más.',
+  'Bien para un rato en la playa.'
+]);
 
 // ---------- Elogios con más sabor canario ----------
-PRAISE.cerveza.push(
+add(PRAISE.cerveza, [
   'La cerveza bien fría, como debe ser en el sur.',
-  'Dorada helada, perfecta para la calima.'
-);
-PRAISE.barraquito.push(
+  'Dorada helada, perfecta para la calima.',
+  'La cerveza a su punto, ni fría ni caliente.',
+  'Bien tirada y bien fría, como manda la tradición.'
+]);
+add(PRAISE.barraquito, [
   'El barraquito con su canela, como los de toda la vida.',
-  'Un barraquito bien hecho, de los que quitan las penas.'
-);
-PRAISE.batido.push(
+  'Un barraquito bien hecho, de los que quitan las penas.',
+  'El barraquito estaba de otro nivel.',
+  'Con su licor y su canela, como manda la tradición.'
+]);
+add(PRAISE.batido, [
   'Batido de plátano de Canarias, espeso y buenísimo.',
-  'El plátano se notaba de aquí, no de importado.'
-);
-PRAISE.papas.push(
+  'El plátano se notaba de aquí, no de importado.',
+  'Batido espeso y frío, para repetir.',
+  'El plátano canario se notaba, muy bueno.'
+]);
+add(PRAISE.papas, [
   'Papas arrugadas con mojo verde, como las de casa.',
-  'El mojo picón tenía su punto, muy canario.'
-);
-PRAISE.queso.push(
+  'El mojo picón tenía su punto, muy canario.',
+  'Papas del país con su mojo, para chuparse los dedos.',
+  'El mojo estaba hecho en el mortero, se notaba.'
+]);
+add(PRAISE.queso, [
   'Queso asado con mojo, en su punto justo.',
-  'El queso de la isla, bien dorado.'
-);
-PRAISE.pescado.push(
+  'El queso de la isla, bien dorado.',
+  'Queso asado con mojo verde, muy bueno.',
+  'El queso estaba en su punto, para repetir.'
+]);
+add(PRAISE.pescado, [
   'Pescado del día, fresco y bien hecho.',
-  'Se notaba que era pescado de la isla, muy bueno.'
-);
+  'Se notaba que era pescado de la isla, muy bueno.',
+  'Pescado fresco, en su punto.',
+  'El pescado del día, para repetir.'
+]);
 
 // ---------- Detalles con más variantes ----------
-DETAIL.order.push(
+add(DETAIL.order, [
   'Pedimos {items}.',
   'Fuimos de {items}.',
   'Nuestro plan: {items}.',
-  'Pedimos {items}, sin más.'
-);
-DETAIL.wait.push(
+  'Pedimos {items}, sin más.',
+  'Entre los dos: {items}.',
+  'Nuestro pedido: {items}.'
+]);
+add(DETAIL.wait, [
   'Esperamos {mins} minutos, que se hicieron largos.',
   'Con {mins} minutos de cola, se hace cuesta arriba.',
-  'Nos tocaron {mins} minutos de espera.'
-);
-DETAIL.tableYes.push(
+  'Nos tocaron {mins} minutos de espera.',
+  'Cola de {mins} minutos, al sol.',
+  'Una espera de {mins} minutos, no es lo ideal.'
+]);
+add(DETAIL.tableYes, [
   'Mesa con vistas al mar, un acierto.',
   'Comimos mirando las olas, muy bien.',
-  'Mesa en primera línea, repetiremos.'
-);
-DETAIL.tableNo.push(
+  'Mesa en primera línea, repetiremos.',
+  'Mesa en la arena, qué más se puede pedir.',
+  'Mesa para nosotros, y con vistas de sobra.'
+]);
+add(DETAIL.tableNo, [
   'Sin mesa, tocó toalla.',
   'Nos lo llevamos a la arena.',
-  'Comimos de pie, como se pudo.'
-);
-DETAIL.dataPosNW.push(
+  'Comimos de pie, como se pudo.',
+  'Para llevar y a la arena.',
+  'Sin mesa, pero con las vistas no se sufre tanto.'
+]);
+add(DETAIL.dataPosNW, [
   'Cuenta de {price}, contentos.',
-  'Por {price}, bien servidos.'
-);
-DETAIL.dataTipNW.push(
+  'Por {price}, bien servidos.',
+  'Cuenta de {price}, sin queja.',
+  'Por {price}, bien gastados.'
+]);
+add(DETAIL.dataTipNW, [
   '{price} y propina de {tip}, merecido.',
-  'Cuenta de {price} y propina: repetiremos.'
-);
+  'Cuenta de {price} y propina: repetiremos.',
+  'Con {price} pagados y {tip} de propina, quedamos tan a gusto.',
+  'Cuenta de {price} y propina de {tip}: señal de que repetiremos.'
+]);
