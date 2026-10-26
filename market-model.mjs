@@ -1,3 +1,4 @@
+import {weeklyPoints} from './management-model.mjs?v=26.0';
 // v23: tres ligas simultáneas. Simulación económica resumida y determinista por cierre.
 export const AREAS=['Pueblo','Isla','Nación'],TIERS=['Bronce','Plata','Oro'];
 const names=['La Brisa','El Muelle','La Gaviota','Salitre','La Toalla','El Faro','La Duna','La Sombrilla','El Ancla','La Ola','El Coral','La Caleta','El Alisio','La Arena','El Mirador','Las Palmeras','La Orilla','El Timón','La Espuma','El Velero','El Cangrejo','El Pez Azul','La Costa','El Horizonte','Las Conchas','El Puerto','La Marea','El Refugio','El Islote'];
@@ -5,7 +6,7 @@ const styles=['Clásico','Familiar','Turístico','Gourmet','Económico','De moda
 const cap=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function hash(s){let h=2166136261;for(const c of String(s)){h=Math.imul(h^c.charCodeAt(0),16777619);}return h>>>0;}
 const random=(s,k)=>hash(s+':'+k)/4294967296;
-export function points(h){h=h.slice(-30);if(!h.length)return 0;const avg=k=>h.reduce((s,r)=>s+(Number.isFinite(r[k])?r[k]:0),0)/h.length;return Math.round(40*avg('rating')+.12*avg('revenue')+.08*avg('followers')+avg('served')+h.reduce((s,r)=>s+(r.grade?.score||0),0)/h.length);}
+export function points(h,day=Math.max(1,...h.map(r=>r.day||0))){return weeklyPoints(h,day).total;}
 export function migrate(seed,oldLeague=0,day=0){
  const npcs=AREAS.flatMap((area,a)=>names.map((name,i)=>({id:`npc-${a}-${i}`,name:name+' · '+area,area:a,style:styles[hash(seed+a+':'+i)%6],cash:1200+a*1000+i*20,capacity:30+a*18+i,staff:1,quality:3.1+i*.025,price:1,followers:40+a*100+i*10,history:[],lastAction:'Apertura',actions:[],reserve:300})));
  const groups=AREAS.map((_,a)=>[['player',...npcs.filter(n=>n.area===a).slice(0,9).map(n=>n.id)],npcs.filter(n=>n.area===a).slice(9,19).map(n=>n.id),npcs.filter(n=>n.area===a).slice(19).map(n=>n.id)]);
@@ -47,14 +48,14 @@ export function step(state,day,context={}){
  }
  s.last=day;return s;
 }
-export function table(s,area,tier,playerHistory=[],name='El Charco Azul'){
- return s.groups[area][tier].map(id=>{if(id==='player')return {id,name,style:'Vuestro kiosco',score:points(playerHistory)};const n=s.npcs.find(n=>n.id===id);return {id,name:n.name,style:n.style,score:points(n.history),action:n.lastAction};}).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id)).map((r,i)=>({...r,rank:i+1,change:s.previous[area+':'+r.id]==null?null:s.previous[area+':'+r.id]-(i+1)}));
+export function table(s,area,tier,playerHistory=[],name='El Charco Azul',day=s.last||1){
+ return s.groups[area][tier].map(id=>{if(id==='player')return {id,name,style:'Vuestro kiosco',score:points(playerHistory,day)};const n=s.npcs.find(n=>n.id===id);return {id,name:n.name,style:n.style,score:points(n.history,day),action:n.lastAction};}).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id)).map((r,i)=>({...r,rank:i+1,change:s.previous[area+':'+r.id]==null?null:s.previous[area+':'+r.id]-(i+1)}));
 }
-export function review(state,day,history,name){if(day-state.reviewDay<7)return state;const s=JSON.parse(JSON.stringify(state));s.results=[];
+export function review(state,day,history,name){if(day%7!==0||day<=state.reviewDay)return state;const s=JSON.parse(JSON.stringify(state));s.results=[];
  for(let a=0;a<3;a++){
-  const ranked=[0,1,2].map(t=>table(s,a,t,history,name));
+  const ranked=[0,1,2].map(t=>table(s,a,t,history,name,day));
   const own=ranked[s.tiers[a]].find(r=>r.id==='player');
-  s.results.push({area:a,tier:s.tiers[a],rank:own.rank,day});
+  s.results.push({area:a,tier:s.tiers[a],rank:own.rank,score:own.score,day});
   for(const rows of ranked)for(const r of rows)s.previous[a+':'+r.id]=r.rank;
   // Ascensos/descensos adyacentes simultáneos: ningún participante se mueve dos veces.
   const b=ranked[0].slice(0,3).map(r=>r.id),pd=ranked[1].slice(-3).map(r=>r.id);
@@ -63,6 +64,6 @@ export function review(state,day,history,name){if(day-state.reviewDay<7)return s
   const old=s.tiers[a];s.tiers[a]=s.groups[a].findIndex(g=>g.includes('player'));
   if(s.tiers[a]>old)s.badges.push({area:a,tier:s.tiers[a],day});
  }
- s.reviewDay=day;return s;
+ s.weeklyHistory=[...(s.weeklyHistory||[]),{day,results:s.results.map(r=>({...r}))}].slice(-104);s.reviewDay=day;return s;
 }
 export function nameValue(value){return Array.from(String(value||'').normalize('NFC').replace(/[\u0000-\u001f\u007f]/g,'').trim()).slice(0,32).join('')||'El Charco Azul';}

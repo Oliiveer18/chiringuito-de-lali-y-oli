@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, STAFF, START_MONEY } from './config.js?v=25.7';
+import { DAY_NAMES, ITEMS, ITEM_IDS, STAFF, START_MONEY } from './config.js?v=26.0';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -25,7 +25,7 @@ window.Net = Net;
 export const isCoop = ()=> Net.role!=='solo';
 export const isGuest = ()=> Net.role==='guest';
 export const hostLive = ()=> Net.role==='host' && Net.peer;
-export function whoName(w){ return w==='yeray'?'Yeray' : isCoop()? Net.names[w] : 'Preparando'; }
+export function whoName(w){ return w==='yeray'?(Game.upgrades.workforce?.team?.camarero?.name||'Yeray') : isCoop()? Net.names[w] : 'Preparando'; }
 export function partner(){ return Net.me==='p1'?'p2':'p1'; }
 
 export function lvl(id){ return Game.upgrades[id]||0; }
@@ -35,7 +35,7 @@ export function activeItems(){ return ITEM_IDS.filter(id=>itemUnlocked(id) && Ga
 // Máximo 10 mesas: es el número de posiciones definidas en world.js (TABLE_POS)
 export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('terraza')); }
 export function hamacaCount(){ return 4*lvl('hamacas'); }
-export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?st.wage:0), 0); }
+export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Game.upgrades.workforce?.team?.[st.id]?.wage??st.wage):0), 0); }
 
 export function weatherToday(){ return Game.forecast[Game.day-1]; }
 export function dayName(d){ return DAY_NAMES[(d-1)%7]; }

@@ -1,14 +1,16 @@
+import {socialIdle,markSocial,capturePhoto,closePhoto} from './management-ui.js?v=26.0';
+const absSocial=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 /* v13: incidentes, grupos, repartidor y Chiringo ampliado (perfil, tendencias, influencers, reseñas y respuestas). v19: seguidores con modelo (social-model.js). */
-import { Game, Net, hostLive, isCoop, itemUnlocked, lvl, setTimeoutGame } from './state.js?v=25.7';
-import { ITEMS } from './config.js?v=25.7';
-import { rnd, clamp } from './util.js?v=25.7';
-import { Plan, toast, updateStockbar } from './ui.js?v=25.7';
-import { netDirty } from './net.js?v=25.7';
-import { spawnCustomer } from './sim.js?v=25.7';
-import { guestSend, onGuestAction } from './coopbridge.js?v=25.7';
-import { postEffect, influEffect, settle, postMetrics, reachFactor, engagement } from './social-model.js?v=25.7';
-import { openDelivery } from './delivery-panel.js?v=25.7';
-import { influCost } from './influencer-model.mjs?v=25.7';
+import { Game, Net, hostLive, isCoop, itemUnlocked, lvl, setTimeoutGame } from './state.js?v=26.0';
+import { ITEMS } from './config.js?v=26.0';
+import { rnd, clamp } from './util.js?v=26.0';
+import { Plan, toast, updateStockbar } from './ui.js?v=26.0';
+import { netDirty } from './net.js?v=26.0';
+import { spawnCustomer } from './sim.js?v=26.0';
+import { guestSend, onGuestAction } from './coopbridge.js?v=26.0';
+import { postEffect, influEffect, settle, postMetrics, reachFactor, engagement } from './social-model.js?v=26.0';
+import { openDelivery } from './delivery-panel.js?v=26.0';
+import { influCost } from './influencer-model.mjs?v=26.0';
 
 const FOL='socialFollowers', RAT='socialRating';
 let lastDay=Game.day, puntaEnd=0, vipIds=[], vipBase=0, vipDone=false, lastT=null;
@@ -47,19 +49,19 @@ function newDay(){
  else{tier=['Tardaron muchísimo en servirnos.','Faltaba medio menú… decepción.','Caro para lo que es.'];}
  const picks=tier.slice().sort(()=>rnd()-0.5).slice(0,2);
  // balance de seguidores: ganados menos perdidos (social-model.js)
- const done=U.socialSettledDay===ayer&&U.socialReport&&U.socialReport.dia===ayer;
+ const done=absSocial()===1||(U.socialCalendar?.last>=absSocial()-1)||(U.socialSettledDay===ayer&&U.socialReport&&U.socialReport.dia===ayer);
  let S=U.socialReport;
  if(!done){
- const idle=p?0:(U.socialIdle||0)+1;
+ const idle=socialIdle(absSocial()-1,!!p);
  S=settle({f,rep,pend:U.socialPend||[],postOk,extra,sinResp,idle,prestados:U.socialPrestados});
- U[FOL]=S.total;U.socialIdle=idle;
+ U[FOL]=S.total;U.socialIdle=idle;markSocial(absSocial()-1,idle);
  U.socialReport={dia:ayer,before:f,total:S.total,gains:S.gains,losses:S.losses,gainSum:S.gainSum,lossSum:S.lossSum,net:S.net};
  let pr=U.socialPrestados;if(pr){pr.dias-=1;if(pr.dias<=0)pr=null;}
  const add=(U.socialPend||[]).filter(e=>e.prest).reduce((a,e)=>a+(e.n||0),0);if(add>0)pr={n:(pr?pr.n:0)+add,dias:7};
  if(pr)U.socialPrestados=pr;else delete U.socialPrestados;
  U.socialPend=[];
  }
- if(Game.day>1)toast('Chiringo · balance de ayer',(S.net>=0?'+':'')+S.net+' seguidores ('+S.gainSum+' ganados, '+S.lossSum+' perdidos).',S.net>=0?'good':'bad');
+ if(Game.day>1&&S)toast('Chiringo · balance de ayer',(S.net>=0?'+':'')+S.net+' seguidores ('+S.gainSum+' ganados, '+S.lossSum+' perdidos).',S.net>=0?'good':'bad');
  U.socialComments=[...neg,...pos,...picks,...(U.socialComments||[])].slice(0,6);
  U.socialNegativo=(neg.length||(!pos.length&&rep<3))?1:0;
  // valoración pública
@@ -77,7 +79,7 @@ function newDay(){
 export function closeSocialDay(){
  const U=Game.upgrades;
  if(Net.role==='guest'||Game.mode!=='report'||!Game.dayStats||U[FOL]==null)return U.socialReport||null;
- if(U.socialSettledDay===Game.day&&U.socialReport&&U.socialReport.dia===Game.day)return U.socialReport;
+ if(U.socialSettledAbs===absSocial()||(U.socialSettledAbs==null&&(U.career?.season||1)===1&&U.socialSettledDay===Game.day&&U.socialReport?.dia===Game.day))return U.socialReport;
  const s=Game.dayStats,sold=s.sold||{},outs=s.stockOuts||{},day=Game.day,p=(U.socialPostDia===day)?U.socialPost:null;
  const f=U[FOL]||0,rep=Game.rep,extra=[];let postOk=true;
  if(p==='algodon'&&(outs.algodon||0)>0)postOk=false;
@@ -88,15 +90,15 @@ export function closeSocialDay(){
  const hist=((U.progression&&U.progression.history)||[]).slice(-7),base=hist.length?hist.reduce((a,r)=>a+(r.served||0),0)/hist.length:20;
  const resp=clamp(0.5+0.5*(s.served||0)/Math.max(10,base),0.4,1.5);
  const pend=(U.socialPend||[]).map(e=>e.post?{...e,n:Math.max(0,Math.round(e.n*resp))}:e);
- const quiet=p?0:(U.socialIdle||0)+1,sinResp=U.socialNegativo===1&&!U.socialRespondido;
+ const quiet=socialIdle(absSocial(),!!p),sinResp=U.socialNegativo===1&&!U.socialRespondido;
  const S=settle({f,rep,pend,postOk,extra,sinResp,idle:quiet,prestados:U.socialPrestados});
- U[FOL]=S.total;U.socialIdle=quiet;
+ U[FOL]=S.total;U.socialIdle=quiet;markSocial(absSocial(),quiet);
  let pr=U.socialPrestados;if(pr){pr.dias-=1;if(pr.dias<=0)pr=null;}
  const add=(U.socialPend||[]).filter(e=>e.prest).reduce((a,e)=>a+(e.n||0),0);if(add>0)pr={n:(pr?pr.n:0)+add,dias:7};
  if(pr)U.socialPrestados=pr;else delete U.socialPrestados;
  if(p){const mx=postMetrics({fx:{reach:reachFactor(f),eng:engagement({rating:U[RAT]||3})},f});U.socialStats={dia:day,reach:mx.reach,interactions:Math.round(mx.interactions*resp),likes:Math.round(mx.likes*resp),comments:Math.round(mx.comments*resp),followers:S.net};}else delete U.socialStats;
  U.socialReport={dia:day,before:f,total:S.total,gains:S.gains,losses:S.losses,gainSum:S.gainSum,lossSum:S.lossSum,net:S.net,resp:+resp.toFixed(2)};
- U.socialPend=[];U.socialSettledDay=day;
+ U.socialPend=[];U.socialSettledDay=day;U.socialSettledAbs=absSocial();closePhoto();
  netDirty();return U.socialReport;
 }
 function runIncident(){
@@ -113,7 +115,7 @@ function quitBatidos(){if(!Game.upgrades.batidoraRota)return;Game.upgrades.batid
 function publish(id){const P=POSTS[id],U=Game.upgrades;if(!P||U.socialPostDia===Game.day)return;if(Game.money<P.cost){toast('Sin caja','No llega para publicar.','bad');return;}if(P.req&&!P.req()){toast('No disponible',P.reqTxt||'No cumples el requisito.','bad');return;}
  const trendId=(U.socialTrendDia===Game.day)?U.socialTrend:null,prevId=(U.socialPostDia===Game.day-1)?U.socialPost:null;
  const fx=postEffect({id,P,f:U[FOL]||0,rating:U[RAT]||3,trendId,prevId});
- Game.money-=P.cost;U.socialPost=id;U.socialPostDia=Game.day;delete U.socialAplicado;U.socialArr=fx.arr;addPend(P.name,fx.followers,{post:true});
+ Game.money-=P.cost;U.socialPost=id;U.socialPostDia=Game.day;delete U.socialAplicado;U.socialArr=fx.arr;U.socialIdle=0;if(U.socialCalendar)U.socialCalendar.idle=0;capturePhoto(id,P.cost,fx.arr);addPend(P.name,fx.followers,{post:true});
  toast('Publicado en Chiringo',P.name+' · +'+fx.followers+' seguidores esperados · +'+Math.round(fx.arr*100)+'% de afluencia hoy.'+(fx.fat<1?' Repetir la publicación de ayer reduce el efecto.':''),'good');
  if(id==='encuesta'){const w=rnd()<0.5?'papas':'pescado';U.socialPoll=w;toast('Encuesta cerrada','La gente ha votado: '+ITEMS[w].name+'. Vended 3 o más hoy.','');}netDirty();}
 function hireInflu(){const U=Game.upgrades,k=U.socialInflu;if(!k||U.socialInfluContratado)return;const I=INFLU[k];if(Game.money<I.cost){toast('Sin caja','No llega para el influencer.','bad');return;}if(!I.req()){toast('No disponible',I.reqTxt,'bad');return;}const ie=influEffect({I,f:U[FOL]||0,rating:U[RAT]||3});Game.money-=I.cost;addPend(I.name,ie.followers,{prest:true});U.socialInfluArr=ie.arr;U.socialInfluContratado=1;toast('Colaboración cerrada',I.name+' visitará el chiringuito hoy: +'+Math.round(ie.arr*100)+'% de afluencia y +'+ie.followers+' seguidores al cierre (muchos son prestados y se irán antes).','good');netDirty();}

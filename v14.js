@@ -1,11 +1,11 @@
 /* v14: clima cambiante, nuevos productos, reservas, misiones, Chiringo por stock real, shows con público e informe del día. v20: los cambios de seguidores pasan por el balance. */
-import { Game, setTimeoutGame, weatherToday } from './state.js?v=25.7';
-import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js?v=25.7';
-import { rnd, clamp } from './util.js?v=25.7';
-import { Plan, toast } from './ui.js?v=25.7';
-import { netDirty } from './net.js?v=25.7';
-import { spawnCustomer } from './sim.js?v=25.7';
-import { ICON_URL } from './icons.js?v=25.7';
+import { Game, setTimeoutGame, weatherToday } from './state.js?v=26.0';
+import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js?v=26.0';
+import { rnd, clamp } from './util.js?v=26.0';
+import { Plan, toast } from './ui.js?v=26.0';
+import { netDirty } from './net.js?v=26.0';
+import { spawnCustomer } from './sim.js?v=26.0';
+import { ICON_URL } from './icons.js?v=26.0';
 
 /* --- Productos nuevos --- */
 ITEMS.agua={name:'Agua fría',cost:0.3,ref:1.5,prep:0.2,spoil:0,spoilF:0,unlock:'refrescos'};
@@ -95,7 +95,7 @@ setInterval(tick,250);
 /* Informe del día */
 const tabs=document.querySelector('#plan .tabs');
 if(tabs&&!tabs.querySelector('[data-tab="informe"]')){const b=document.createElement('button');b.className='tab';b.dataset.tab='informe';b.setAttribute('role','tab');b.textContent='Informe';tabs.append(b);}
-function paint(b,h){if(b.dataset.v14===h&&b.childElementCount)return;b.innerHTML=h;b.dataset.v14=h;}
+function paint(b,h){if(b.innerHTML===h)return;b.innerHTML=h;b.dataset.v14=h;}
 function renderInforme(){const b=document.querySelector('#tab-body');if(!b||Plan.tab!=='informe')return;let rep=null;try{rep=JSON.parse(Game.upgrades.lastReport||'null');}catch(e){}
  const U=Game.upgrades, n=v=>Number(v)||0;
  const misionHtml=U.misionTxt?'<div class="row"><div class="name">Misión activa</div><div class="sub">'+U.misionTxt+' · recompensa '+n(U.misionReward)+' € y 10 seguidores · '+(U.misionHecha===1?'Cumplida':'En curso')+'</div></div>':'';

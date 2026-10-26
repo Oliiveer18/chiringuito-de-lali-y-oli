@@ -2,8 +2,8 @@
    camera-beta · entrega 4
    Cooperativo: predicción local del movimiento y interpolación del compañero.
    ========================================================= */
-import { Game, Net } from './state.js?v=25.7';
-import { PLAYER, playerGo } from './player.js?v=25.7';
+import { Game, Net } from './state.js?v=26.0';
+import { PLAYER, playerGo } from './player.js?v=26.0';
 
 export const NET_PLAYER = { x: 0, y: 0, tx: 0, ty: 0, dir: 1, stridePh: 0, movingSpd: 0 };
 export function netPlayerSend() {

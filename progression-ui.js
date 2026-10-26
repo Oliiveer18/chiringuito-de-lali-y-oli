@@ -1,12 +1,13 @@
+import {closeSocialDay} from './v12.js?v=26.0';
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net} from './state.js?v=25.7';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=25.7';
-import {Plan,toast} from './ui.js?v=25.7';
-import {refreshReportUI} from './report.js?v=25.7';
-import {netDirty} from './net.js?v=25.7';
-import {guestSend,onGuestAction} from './coopbridge.js?v=25.7';
-import {escapeHtml as E,eur} from './util.js?v=25.7';
-import * as M from './progression-model.mjs?v=25.7';
+import {Game,Net} from './state.js?v=26.0';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=26.0';
+import {Plan,toast} from './ui.js?v=26.0';
+import {refreshReportUI} from './report.js?v=26.0';
+import {netDirty} from './net.js?v=26.0';
+import {guestSend,onGuestAction} from './coopbridge.js?v=26.0';
+import {escapeHtml as E,eur} from './util.js?v=26.0';
+import * as M from './progression-model.mjs?v=26.0';
 const day=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 const pget=()=>Game.upgrades.progression;
 let current=null,selectedArea=0,selectedTier=0,metric='cash',windowSize=30;
@@ -26,7 +27,7 @@ function service(){if(Net.role==='guest')return;const p=ensure(),d=day();if(p.st
  if(bonus)toast('Evento preparado','+'+Math.round(bonus*100)+' % de afluencia por vuestra preparación.','good');
  netDirty();}
 function figs(s,a,p){const sales=M.num(s.revenue)+M.num(s.hamacas),profit=sales-M.num(a.wage)-M.num(a.rent)-M.num(s.fines)-M.num(s.urgent)-M.num(s.purchases)-M.num(s.courtesies);return {served:s.served,lost:s.lost,rating:Game.rep,waste:a.spoilVal,revenue:s.revenue,sales,profit,cash:Game.money,cashDelta:Game.money-M.num(p.start&&p.start.cash!=null?p.start.cash:Game.money),followers:Game.upgrades.socialFollowers||0};}
-function close(){if(Net.role==='guest'||!Game.dayStats)return;const p=ensure(),d=day();const s=Game.dayStats,a=Game.revModel?.acc;if(p.last>=d){if(a&&p.last===d){const am=M.amend(p,{day:d,...figs(s,a,p)});if(am.changed){Game.upgrades.progression=am.p;netDirty();}}return;}
+function close(){if(Net.role==='guest'||!Game.dayStats)return;closeSocialDay();const p=ensure(),d=day();const s=Game.dayStats,a=Game.revModel?.acc;if(p.last>=d){if(a&&p.last===d){const am=M.amend(p,{day:d,...figs(s,a,p)});if(am.changed){Game.upgrades.progression=am.p;netDirty();}}return;}
  if(!a)return;
  const profit=M.num(s.revenue)+M.num(s.hamacas)-M.num(a.wage)-M.num(a.rent)-M.num(s.fines)-M.num(s.urgent)-M.num(s.purchases)-M.num(s.courtesies);
  const out=M.settle(p,{day:d,...figs(s,a,p)});

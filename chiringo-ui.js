@@ -1,17 +1,18 @@
+import {photoThread} from './management-ui.js?v=26.0';
 /* v19: Chiringo (cabecera, tarjeta «Hoy», publicaciones en tarjetas, balance de seguidores, feed de reseñas y respuesta inmediata).
    Sustituye la pestaña «Red» de v12.js por «Chiringo». Reutiliza las acciones de v12 (data-post, data-influ, data-resp).
    Los efectos mostrados salen de social-model.js, el mismo cálculo que aplica v12.js. */
-import { Game, Net } from './state.js?v=25.7';
-import { ITEMS } from './config.js?v=25.7';
-import { Plan, toast, estimateCustomers } from './ui.js?v=25.7';
-import { Audio } from './audio.js?v=25.7';
-import { ICON_URL } from './icons.js?v=25.7';
-import { drawPerson } from './render.js?v=25.7';
-import { netDirty } from './net.js?v=25.7';
-import { escapeHtml, eur, stars } from './util.js?v=25.7';
-import { postEffect, influEffect, postMetrics } from './social-model.js?v=25.7';
+import { Game, Net } from './state.js?v=26.0';
+import { ITEMS } from './config.js?v=26.0';
+import { Plan, toast, estimateCustomers } from './ui.js?v=26.0';
+import { Audio } from './audio.js?v=26.0';
+import { ICON_URL } from './icons.js?v=26.0';
+import { drawPerson } from './render.js?v=26.0';
+import { netDirty } from './net.js?v=26.0';
+import { escapeHtml, eur, stars } from './util.js?v=26.0';
+import { postEffect, influEffect, postMetrics } from './social-model.js?v=26.0';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=25.7';
+import { POSTS, INFLU } from './v12.js?v=26.0';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';
@@ -163,7 +164,7 @@ function feed(u) {
   const cms = u.socialComments || [];
   if (!cms.length) return '<div class="rd-h">Comentarios</div><p class="rd-mut">Todavía no hay comentarios. Aparecerán al cerrar el primer día.</p>';
   const rep = u.socialReply, ayer = (u.socialPostDia === Game.day - 1 && POSTS[u.socialPost]) ? POSTS[u.socialPost].name : null;
-  let h = '<div class="rd-h">Comentarios y respuestas</div><div class="rd-feed">';
+  let h = '<div class="rd-h">Reseñas generales y respuestas</div><div class="rd-feed">';
   cms.forEach((c, i) => {
     const r = review(c), av = avatar(c);
     const about = r.neg ? 'el servicio de ayer' : r.trend ? 'la tendencia de ayer' : ayer ? 'tu publicación «' + ayer + '»' : 'la jornada de ayer';
@@ -360,7 +361,7 @@ function archiveHtml(u) {
     h += '<article class="cs-post"><header><div class="cs-avatar">🏝️</div><div><b>' + business + '</b><small>Temporada ' + r.season + ' · Día ' + r.day + ' · ' + (r.cost ? 'Campaña' : 'Orgánica') + '</small></div></header>';
     h += '<div class="cs-art cs-art-' + r.post + '"><span>' + postIcon(r.post) + '</span><strong>' + label + '</strong><small>Tenerife · Ilustración de la publicación</small></div>';
     h += '<div class="cs-post-body"><p>' + escapeHtml(P.desc) + '</p><p class="cs-metrics">' + (m ? '♡ ' + m.likes + ' me gusta · ' + m.comments + ' comentarios estimados · Alcance ' + m.reach : 'Resultados pendientes del cierre') + '</p>';
-    h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Previsión de afluencia: +' + Math.round(r.arr * 100) + '%') + '</p></div></article>';
+    h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Previsión de afluencia: +' + Math.round(r.arr * 100) + '%') + '</p></div>' + photoThread(r) + '</article>';
   }
   return h + '</section>';
 }
