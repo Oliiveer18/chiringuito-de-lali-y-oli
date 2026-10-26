@@ -32,7 +32,8 @@ export function lvl(id){ return Game.upgrades[id]||0; }
 export function closeHour(){ return lvl('luces')?22:20; }
 export function itemUnlocked(id){ const u=ITEMS[id].unlock; return !u || lvl(u)>0; }
 export function activeItems(){ return ITEM_IDS.filter(id=>itemUnlocked(id) && Game.enabled[id]); }
-export function tableCount(){ return 3 + 2*lvl('mesas'); }
+// Máximo 10 mesas: es el número de posiciones definidas en world.js (TABLE_POS)
+export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('terraza')); }
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?st.wage:0), 0); }
 
