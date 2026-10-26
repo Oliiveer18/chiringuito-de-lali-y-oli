@@ -1,6 +1,6 @@
 /* v14: clima cambiante, nuevos productos, reservas, misiones, Chiringo por stock real, shows con público e informe del día. */
-import { Game, setTimeoutGame } from './state.js';
-import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS } from './config.js';
+import { Game, setTimeoutGame, weatherToday } from './state.js';
+import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js';
 import { rnd, clamp } from './util.js';
 import { Plan, toast } from './ui.js';
 import { netDirty } from './net.js';
@@ -15,7 +15,8 @@ ITEMS.gofre={name:'Gofre',cost:1.5,ref:6,prep:2,spoil:0.1,spoilF:0.05,unlock:'go
 ITEMS.cocktail={name:'Cóctel tropical',cost:2,ref:9,prep:2.5,spoil:0,spoilF:0,unlock:'coctelera'};
 ITEMS.churros={name:'Churros con chocolate',cost:1,ref:4.5,prep:1.5,spoil:0.3,spoilF:0.1,unlock:'churrera'};
 const NEW_IDS=['agua','refresco','helado','gofre','cocktail','churros'];
-for(const id of ['agua','refresco','cocktail'])if(!DRINKS.includes(id))DRINKS.push(id);
+const NEW_DRINKS=['agua','refresco','cocktail'];
+for(const id of NEW_DRINKS)if(!DRINKS.includes(id))DRINKS.push(id);
 for(const id of NEW_IDS)if(!ITEM_IDS.includes(id))ITEM_IDS.push(id);
 UPGRADES.push({id:'refrescos',name:'Barra de refrescos',desc:'Desbloquea agua y refrescos: rápidos y baratos.',levels:[300]});
 UPGRADES.push({id:'heladera',name:'Heladera',desc:'Desbloquea helados. Se derriten si tardáis.',levels:[700]});
@@ -24,7 +25,11 @@ UPGRADES.push({id:'coctelera',name:'Barra de cócteles',desc:'Desbloquea cóctel
 UPGRADES.push({id:'churrera',name:'Churrera',desc:'Desbloquea churros con chocolate para la tarde.',levels:[800]});
 /* preferencias por tipo de cliente: [turista, local, surfista] */
 const NEWP={agua:[0.8,0.6,0.9],refresco:[0.7,0.5,0.8],helado:[1.4,0.6,0.8],gofre:[0.9,0.7,0.9],cocktail:[1.5,0.4,0.7],churros:[1.1,0.9,0.6]};
-['turista','local','surfista'].forEach((t,i)=>{const p=TYPES[t].pref;for(const id of NEW_IDS)p[id]=NEWP[id][i];});
+const TYPE_IDS=['turista','local','surfista'];
+let drinkMul=null;
+/* las bebidas nuevas reaccionan al clima igual que cerveza, barraquito y batido (sim.js solo conoce esas tres) */
+function applyDrinkMul(m){if(m===drinkMul)return;drinkMul=m;TYPE_IDS.forEach((t,i)=>{const p=TYPES[t].pref;for(const id of NEW_IDS)p[id]=NEWP[id][i]*(NEW_DRINKS.includes(id)?m:1);});}
+applyDrinkMul(1);
 /* iconos simples */
 const ICON_COLORS={agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']};
 function mkIcon(id){const cv=document.createElement('canvas');cv.width=cv.height=88;const c=cv.getContext('2d');const [a,b]=ICON_COLORS[id];c.fillStyle=b;c.beginPath();c.arc(44,44,30,0,7);c.fill();c.fillStyle=a;c.beginPath();c.arc(44,40,18,0,7);c.fill();return cv.toDataURL();}
@@ -34,12 +39,15 @@ for(const id of Object.keys(ICON_COLORS))ICON_URL[id]=mkIcon(id);
 const FOL='socialFollowers', RAT='socialRating', NOPROD=['atardecer','viral','encuesta','concurso','show'];
 let lastDay=Game.day, reservaSize=0, showLastSpawn=0, lastT=null;
 const MISSIONS=[{id:'rep4',txt:'Alcanza 4,0 de valoración hoy',check:s=>(Game.rep>=4),reward:200},{id:'rev1500',txt:'Gana 1.500 € hoy',check:s=>s.revenue>=1500,reward:250},{id:'served40',txt:'Sirve 40 clientes hoy',check:s=>s.served>=40,reward:200}];
+/* los seguidores de Chiringo atraen clientes: 1 % por cada 200 seguidores, hasta un 12 % */
+function followerBonus(){return Math.min(0.12,(Game.upgrades[FOL]||0)/2000);}
+function missionToast(){const U=Game.upgrades;if(U.mision&&!U.misionHecha)toast('Misión activa',U.misionTxt+' · +'+(U.misionReward||0)+' € y 10 seguidores.','');}
 function setMission(){const idx=Math.floor((Game.day-1)/5)%MISSIONS.length;const m=MISSIONS[idx];Game.upgrades.mision=m.id;Game.upgrades.misionTxt=m.txt;Game.upgrades.misionReward=m.reward;Game.upgrades.misionHecha=0;}
 function migrate(){
  if(Game.upgrades.lastReport==null)Game.upgrades.lastReport='';
  if(Game.mode==='title')return;
  for(const id of NEW_IDS){if(Game.stock[id]==null)Game.stock[id]=ITEMS[id].unlock?0:15;if(Game.prices[id]==null)Game.prices[id]=ITEMS[id].ref;if(Game.enabled[id]==null)Game.enabled[id]=true;}
- if(!Game.upgrades.mision)setMission();
+ if(!Game.upgrades.mision){setMission();if(Game.mode==='plan')missionToast();}
 }
 function topProduct(s){let best='',n=0;for(const k in (s.sold||{})){if(s.sold[k]>n&&ITEMS[k]){n=s.sold[k];best=k;}}return best?ITEMS[best].name+' ×'+n:'—';}
 function newDay(){
@@ -50,6 +58,7 @@ function newDay(){
  // informe del día anterior
  if(s){U.lastReport=JSON.stringify({day:Game.day-1,revenue:s.revenue||0,served:s.served||0,lost:s.lost||0,tips:(s.tips||0)+(s.tipsP||0),fines:s.fines||0,hamacas:s.hamacas||0,top:topProduct(s),mission:U.misionTxt||'',missionOk:U.misionHecha===1});}
  if(Game.day%5===1)setMission();
+ missionToast();
  // clima cambiante
  delete U.weatherHora;if(rnd()<0.5){U.weatherHora=Math.round((14+rnd()*4)*10)/10;}
  // reserva
@@ -70,6 +79,8 @@ function tick(){
  if(Game.mode==='plan'&&Game.day!==lastDay)newDay();
  if(Game.mode!=='service'){lastT=null;return;}
  lastT=Game.t;
+ const W=WEATHER[weatherToday()];if(W)applyDrinkMul(W.drinks);
+ if(Game.upgrades.seguidoresDia!==Game.day){Game.upgrades.seguidoresDia=Game.day;const b=followerBonus();if(b>0.005)Game.mods.arr*=1+b;}
  if(Game.upgrades.weatherHora&&Game.hour>=Game.upgrades.weatherHora){delete Game.upgrades.weatherHora;runWeather();}
  if(Game.upgrades.reservaHora&&Game.hour>=Game.upgrades.reservaHora){delete Game.upgrades.reservaHora;runReserva();}
  // shows atraen público distinto
@@ -82,13 +93,15 @@ const tabs=document.querySelector('#plan .tabs');
 if(tabs&&!tabs.querySelector('[data-tab="informe"]')){const b=document.createElement('button');b.className='tab';b.dataset.tab='informe';b.setAttribute('role','tab');b.textContent='Informe';tabs.append(b);}
 function paint(b,h){if(b.dataset.v14===h&&b.childElementCount)return;b.innerHTML=h;b.dataset.v14=h;}
 function renderInforme(){const b=document.querySelector('#tab-body');if(!b||Plan.tab!=='informe')return;let rep=null;try{rep=JSON.parse(Game.upgrades.lastReport||'null');}catch(e){}
- if(!rep){paint(b,'<p class="muted">Aún no hay un informe del día anterior.</p>');return;}
- const n=v=>Number(v)||0;
- paint(b,'<h3 style="margin:4px 0">Día '+rep.day+'</h3>'+
+ const U=Game.upgrades, n=v=>Number(v)||0;
+ const misionHtml=U.misionTxt?'<div class="row"><div class="name">Misión activa</div><div class="sub">'+U.misionTxt+' · recompensa '+n(U.misionReward)+' € y 10 seguidores · '+(U.misionHecha===1?'Cumplida':'En curso')+'</div></div>':'';
+ const segHtml='<div class="row"><div class="name">Chiringo</div><div class="sub">'+n(U[FOL])+' seguidores · +'+Math.round(followerBonus()*100)+'% de afluencia</div></div>';
+ if(!rep){paint(b,misionHtml+segHtml+'<p class="muted">Aún no hay un informe del día anterior.</p>');return;}
+ paint(b,misionHtml+segHtml+'<h3 style="margin:4px 0">Día '+rep.day+'</h3>'+
  '<div class="row"><div class="name">Caja</div><div class="sub">Ingresos: '+n(rep.revenue).toFixed(2)+' € · Propinas: '+n(rep.tips).toFixed(2)+' € · Multas: '+n(rep.fines)+' € · Hamacas: '+n(rep.hamacas).toFixed(2)+' €</div></div>'+
  '<div class="row"><div class="name">Clientes</div><div class="sub">Servidos: '+n(rep.served)+' · Perdidos: '+n(rep.lost)+'</div></div>'+
  '<div class="row"><div class="name">Producto estrella</div><div class="sub">'+(rep.top||'—')+'</div></div>'+
- '<div class="row"><div class="name">Misión</div><div class="sub">'+(rep.mission||'—')+' · '+(rep.missionOk?'Cumplida':'No cumplida')+'</div></div>');
+ '<div class="row"><div class="name">Misión del día anterior</div><div class="sub">'+(rep.mission||'—')+' · '+(rep.missionOk?'Cumplida':'No cumplida')+'</div></div>');
 }
 new MutationObserver(renderInforme).observe(document.getElementById('tab-body'),{childList:true,subtree:true});
 setInterval(renderInforme,500);
