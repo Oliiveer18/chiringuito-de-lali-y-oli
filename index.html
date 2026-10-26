@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Kiosco Yeray · Chiringuito Charco Azul</title>
+<title>Chiringuito de Lali y Oli</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b4f54">
 <meta name="description" content="Gestiona un chiringuito en la costa de Tenerife, en solitario o en cooperativo online con tu pareja.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Kiosco Yeray">
+<meta name="apple-mobile-web-app-title" content="Chiringuito">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -65,7 +65,7 @@
         <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0f8b8d"/><path d="M8 40c6-4 10-4 16 0s10 4 16 0 10-4 16 0v16H8z" fill="#fffdf8" opacity=".92"/><path d="M32 12v26" stroke="#fffdf8" stroke-width="3" stroke-linecap="round"/><path d="M14 24c4-10 14-13 18-12-1 8-8 14-18 12zM50 24c-4-10-14-13-18-12 1 8 8 14 18 12z" fill="#e8603c"/></svg>
       </div>
       <p class="eyebrow">Chiringuito Charco Azul · Tenerife</p>
-      <h1>Kiosco Yeray</h1>
+      <h1>Chiringuito de Lali y Oli</h1>
       <p class="lead">Compra el género, ajusta la carta y sirve a turistas y vecinos antes de que pierdan la paciencia. Treinta días para comprar la concesión.</p>
       <div class="title-actions">
         <button id="btn-start" class="btn primary big">Jugar en solitario</button>
@@ -168,8 +168,8 @@
   </div>
 </section>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
-  window.__WS_BASE__ = location.origin;
   (function(){
     let lock=null;
     async function ask(){ try{ if('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); }catch(e){} }
