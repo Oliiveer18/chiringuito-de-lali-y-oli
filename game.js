@@ -3,4 +3,5 @@ import './saves.js?v=8';
 import './layout.js?v=10';
 import './reliability.js?v=8';
 import './features.js?v=11';
-import './version.js?v=11';
+import './v12.js?v=12';
+import './version.js?v=12';

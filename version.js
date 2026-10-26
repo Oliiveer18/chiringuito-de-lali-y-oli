@@ -1,5 +1,5 @@
-export const VERSION='v11';
-export const LABEL='v11 · algodonera y shows';
+export const VERSION='v12';
+export const LABEL='v12 · grupos, repartidor y Chiringo';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
