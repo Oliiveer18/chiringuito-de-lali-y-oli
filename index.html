@@ -19,6 +19,7 @@
 </head>
 <body>
 <div id="errbox" style="position:fixed;z-index:9999;left:8px;right:8px;bottom:8px;max-height:40vh;overflow:auto;background:#2b0d0d;color:#ffd7d7;border:1px solid #ff6b6b;border-radius:10px;padding:10px;font:12px/1.4 monospace;display:none;white-space:pre-wrap"></div>
+<div id="version-badge" style="position:fixed;z-index:9998;top:6px;right:6px;background:#0b4f54;color:#fff;font:700 11px/1.2 system-ui;padding:5px 8px;border-radius:8px;opacity:.9">v3 · build 2026-10-26</div>
 <canvas id="game"></canvas>
 
 <header id="hud" class="hidden">
@@ -193,6 +194,6 @@
   })();
   ['gesturestart','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
 </script>
-<script type="module" src="game.js?v=3"></script>
+<script type="module" src="game.js?v=4"></script>
 </body>
 </html>
