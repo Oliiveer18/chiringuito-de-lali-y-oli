@@ -1,9 +1,10 @@
+import { Game, Net } from "../state.js?v=27.6";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { floorTableLabel } from "../floor-service.js?v=27.5";
-import { mixColor } from "../util.js?v=27.5";
-import { drawIcon } from "../icons.js?v=27.5";
-import { rr } from "../icons.js?v=27.5";
-import { drawBeachGuest } from "../scene-extras.js?v=27.5";
+import { floorTableLabel } from "../floor-service.js?v=27.6";
+import { mixColor } from "../util.js?v=27.6";
+import { drawIcon } from "../icons.js?v=27.6";
+import { rr } from "../icons.js?v=27.6";
+import { drawBeachGuest } from "../scene-extras.js?v=27.6";
 
 export function drawHamaca(c,x,y,i,T,weather,nt){
   // sombrilla
@@ -31,10 +32,17 @@ export function drawTable(c,t,T){
     // moscas
     for(let i=0;i<2;i++){ c.fillStyle='#2a211c'; c.beginPath(); c.arc(t.x+Math.sin(T*6+i*2)*18, t.y-40+Math.cos(T*7+i)*8,1.8,0,7); c.fill(); }
     // aviso
-    const pulse = 1+Math.sin(T*6)*0.08;
+    const index=Game.tables.indexOf(t);
+    const task=Game.floor?.tasks.find(q=>q.kind==='clean'&&q.target==='table'+index&&['queued','walking','working','blocked'].includes(q.state));
+    const owner=task&&(task.requestedBy||task.actor);
+    const name=owner?(Net.names?.[owner]||Game.floor?.actors.find(a=>a.id===owner)?.name||'Personal'):'';
+    const label=task?(task.state==='working'?'Limpiando · ':'Asignada · ')+name:floorTableLabel(t);
+    c.font='700 12px Satoshi, sans-serif';
+    const labelWidth=Math.max(68,c.measureText(label).width+18);
+    const pulse = task?1:1+Math.sin(T*6)*0.08;
     c.save(); c.translate(t.x,t.y-62); c.scale(pulse,pulse);
-    c.fillStyle='#fff6e6'; rr(c,-34,-14,68,26,13); c.fill(); c.strokeStyle='#2a211c'; c.lineWidth=2; c.stroke();
-    c.fillStyle='#2a211c'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(floorTableLabel(t),0,4);
+    c.fillStyle='#fff6e6'; rr(c,-labelWidth/2,-14,labelWidth,26,13); c.fill(); c.strokeStyle='#2a211c'; c.lineWidth=2; c.stroke();
+    c.fillStyle='#2a211c'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(label,0,4);
     c.restore();
   }
 }

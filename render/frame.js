@@ -1,38 +1,38 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { H } from "../config.js?v=27.5";
-import { W } from "../config.js?v=27.5";
-import { WHO_COLOR } from "../config.js?v=27.5";
-import { clamp } from "../util.js?v=27.5";
-import { lerp } from "../util.js?v=27.5";
-import { mixColor } from "../util.js?v=27.5";
-import { rr } from "../icons.js?v=27.5";
-import { Game } from "../state.js?v=27.5";
-import { closeHour } from "../state.js?v=27.5";
-import { hamacaCount } from "../state.js?v=27.5";
-import { lvl } from "../state.js?v=27.5";
-import { weatherToday } from "../state.js?v=27.5";
-import { whoName } from "../state.js?v=27.5";
-import { HAMACA_POS } from "../world.js?v=27.5";
-import { canvas } from "../canvas.js?v=27.5";
-import { ctx } from "../canvas.js?v=27.5";
-import { view } from "../canvas.js?v=27.5";
-import { drawPurchasedProps } from "../scene-extras.js?v=27.5";
-import { drawBubble } from "./identity.js?v=27.5";
-import { drawClouds } from "./scene.js?v=27.5";
-import { drawCustomer } from "./characters.js?v=27.5";
-import { drawFloorWorker } from "./characters.js?v=27.5";
-import { drawHamaca } from "./tables.js?v=27.5";
-import { drawHut } from "./scene.js?v=27.5";
-import { drawLights } from "./effects.js?v=27.5";
-import { drawNetStatus } from "./hud.js?v=27.5";
-import { drawPalm } from "./scene.js?v=27.5";
-import { drawPendingBadges } from "./hud.js?v=27.5";
-import { drawSea } from "./scene.js?v=27.5";
-import { drawStationLabels } from "./identity.js?v=27.5";
-import { drawTable } from "./tables.js?v=27.5";
-import { drawTeide } from "./scene.js?v=27.5";
-import { nightness } from "./scene.js?v=27.5";
-import { skyAt } from "./scene.js?v=27.5";
+import { H } from "../config.js?v=27.6";
+import { W } from "../config.js?v=27.6";
+import { WHO_COLOR } from "../config.js?v=27.6";
+import { clamp } from "../util.js?v=27.6";
+import { lerp } from "../util.js?v=27.6";
+import { mixColor } from "../util.js?v=27.6";
+import { rr } from "../icons.js?v=27.6";
+import { Game } from "../state.js?v=27.6";
+import { closeHour } from "../state.js?v=27.6";
+import { hamacaCount } from "../state.js?v=27.6";
+import { lvl } from "../state.js?v=27.6";
+import { weatherToday } from "../state.js?v=27.6";
+import { whoName } from "../state.js?v=27.6";
+import { HAMACA_POS } from "../world.js?v=27.6";
+import { canvas } from "../canvas.js?v=27.6";
+import { ctx } from "../canvas.js?v=27.6";
+import { view } from "../canvas.js?v=27.6";
+import { drawPurchasedProps } from "../scene-extras.js?v=27.6";
+import { drawBubble } from "./identity.js?v=27.6";
+import { drawClouds } from "./scene.js?v=27.6";
+import { drawCustomer } from "./characters.js?v=27.6";
+import { drawFloorWorker } from "./characters.js?v=27.6";
+import { drawHamaca } from "./tables.js?v=27.6";
+import { drawHut } from "./scene.js?v=27.6";
+import { drawLights } from "./effects.js?v=27.6";
+import { drawNetStatus } from "./hud.js?v=27.6";
+import { drawPalm } from "./scene.js?v=27.6";
+import { drawPendingBadges } from "./hud.js?v=27.6";
+import { drawSea } from "./scene.js?v=27.6";
+import { drawStationLabels } from "./identity.js?v=27.6";
+import { drawTable } from "./tables.js?v=27.6";
+import { drawTeide } from "./scene.js?v=27.6";
+import { nightness } from "./scene.js?v=27.6";
+import { skyAt } from "./scene.js?v=27.6";
 
 export function render(){
   const c=ctx; const h = Game.mode==='service'? Game.hour : (Game.mode==='report'? closeHour() : 11);
@@ -86,6 +86,13 @@ export function render(){
   ents.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
   // indicadores de cola por encima
   if(Game.mode==='service') for(const cu of Game.customers) drawBubble(c,cu,T);
+  if(Game.mode==='service')for(const cu of Game.customers){
+    if(cu.state!=='floorWaitEscort')continue;
+    const task=Game.floor?.tasks.find(t=>t.kind==='escort'&&t.customer===cu.id&&['queued','blocked'].includes(t.state));
+    if(!task)continue;
+    c.save();c.font='700 12px system-ui';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#083f43';c.fillStyle='#fffdf8';
+    c.strokeText('Esperando camarero',cu.x,cu.y-145);c.fillText('Esperando camarero',cu.x,cu.y-145);c.restore();
+  }
   // etiquetas de puesto por encima de clientes y burbujas: siempre legibles
   drawStationLabels(c);
   // barras de preparación: fila fija sobre la zona de burbujas (una por slot; dos slots pueden repartirse un pedido mixto)

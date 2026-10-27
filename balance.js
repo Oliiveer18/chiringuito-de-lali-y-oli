@@ -2,7 +2,7 @@
    camera-beta · entrega 5
    Equilibrio: paciencia y afluencia se ajustan a la nueva carga de trabajo.
    ========================================================= */
-import { Game } from './state.js?v=27.5';
+import { Game } from './state.js?v=27.6';
 
 export const BALANCE = {
   patienceMul: 1.15,

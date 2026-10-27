@@ -15,7 +15,7 @@ export function requestTask(s,{kind,target,requestedBy=null,legs,priority=0}){
  const table=['clean','escort'].includes(kind)?s.tables.find(t=>t.id===target):null;
  if(kind==='clean'&&(!table||table.state!=='dirty'))return null;
  const old=s.tasks.find(t=>t.kind===kind&&t.target===target&&ACTIVE.has(t.state));
- if(old){if(requestedBy){old.requestedBy=requestedBy;old.priority=Math.max(old.priority,100);}return old.id;}
+ if(old){if(kind==='clean'){if(old.requestedBy&&requestedBy&&old.requestedBy!==requestedBy)return null;if(old.state!=='queued')return !requestedBy||old.actor===requestedBy?old.id:null;}if(requestedBy){old.requestedBy=requestedBy;old.priority=Math.max(old.priority,100);}return old.id;}
  if(kind==='escort'&&(!table||table.state!=='free'||table.claim))return null;
  const id=s.id+':task:'+ ++s.sequence;
  if(kind==='escort'){table.state='reserved';table.claim=id;}
@@ -23,10 +23,10 @@ export function requestTask(s,{kind,target,requestedBy=null,legs,priority=0}){
 }
 function release(s,t){const a=s.actors.find(a=>a.id===t.actor);if(a?.task===t.id)a.task=null;const table=s.tables.find(x=>x.id===t.target);if(table?.claim===t.id){table.claim=null;if(t.kind==='escort'&&table.state==='reserved')table.state='free';}}
 export function cancelTask(s,id){const t=s.tasks.find(t=>t.id===id);if(!t||!ACTIVE.has(t.state))return false;release(s,t);t.state='cancelled';s.events.push({id:t.id+':cancel',task:t.id,type:'cancelled'});return true;}
-function eligible(a,t){if(a.task||a.busy||!a.can?.includes(t.kind))return false;if(a.player)return t.requestedBy===a.id;return !!t.requestedBy||a.auto?.includes(t.kind);}
+function eligible(a,t){if(t.kind==='clean'&&t.requestedBy&&a.id!==t.requestedBy)return false;if(a.task||a.busy||!a.can?.includes(t.kind))return false;if(a.player)return t.requestedBy===a.id;return !!t.requestedBy||a.auto?.includes(t.kind);}
 export function assignTasks(s,planPath){
  const queue=s.tasks.filter(t=>t.state==='queued').sort((a,b)=>(b.priority+(s.time-b.created)*2)-(a.priority+(s.time-a.created)*2)||a.created-b.created||a.id.localeCompare(b.id));
- for(const t of queue){
+ for(const t of queue){if(t.kind==='clean'&&s.tables.find(x=>x.id===t.target)?.state!=='dirty'){cancelTask(s,t.id);continue;}
   const possible=s.actors.filter(a=>eligible(a,t)).sort((a,b)=>Number(b.id===t.requestedBy)-Number(a.id===t.requestedBy)||Math.hypot(a.x-t.legs[0].x,a.y-t.legs[0].y)-Math.hypot(b.x-t.legs[0].x,b.y-t.legs[0].y)||a.id.localeCompare(b.id));
   for(const a of possible){
    const path=planPath(a,t.legs[0],t);
