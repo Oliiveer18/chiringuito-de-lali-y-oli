@@ -1,12 +1,24 @@
-import {Game,Net,isCoop} from './state.js?v=27.4';
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=27.4';
-import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=27.4';
-import {factor} from './professional-model.mjs?v=27.4';
-import * as M from './service-tasks.mjs?v=27.4';
+import {Game,Net,isCoop} from './state.js?v=27.5';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=27.5';
+import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=27.5';
+import {factor} from './professional-model.mjs?v=27.5';
+import * as M from './service-tasks.mjs?v=27.5';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
 const endpoint=t=>({x:t.x+(t.x>1150?-80:80),y:t.y+42});
-function route(a,p){const path=navFind(a.x,a.y,p.x,p.y);let x=a.x,y=a.y;for(const q of path){if(!navLineFree(x,y,q.x,q.y))return null;x=q.x;y=q.y;}return path;}
+function route(a,p){
+  const inside=q=>q.x>=20&&q.x<=540&&q.y>=150&&q.y<540;
+  if(a.player&&(inside(a)||inside(p))){
+    const exit={x:550,y:560}, door={x:550,y:470};
+    let prefix=[], suffix=[], start={x:a.x,y:a.y}, end={x:p.x,y:p.y};
+    if(inside(a)){prefix=[{x:550,y:a.y},door,exit];start=exit;}
+    if(inside(p)){suffix=[door,{x:550,y:p.y},{x:p.x,y:p.y}];end=exit;}
+    const outside=navFind(start.x,start.y,end.x,end.y);
+    let prev=start;
+    for(const q of outside){if(!navLineFree(prev.x,prev.y,q.x,q.y))return null;prev=q;}
+    return [...prefix,...outside,...suffix];
+  }
+const path=navFind(a.x,a.y,p.x,p.y);let x=a.x,y=a.y;for(const q of path){if(!navLineFree(x,y,q.x,q.y))return null;x=q.x;y=q.y;}return path;}
 function syncTables(){const s=Game.floor;if(!s)return;for(let i=0;i<Game.tables.length;i++){const a=s.tables[i],b=Game.tables[i];if(a)a.state=b.state;}}
 export function floorActive(id){return Game.mode==='service'&&!!actor(id);}
 export function floorAway(id){const a=actor(id);return !!a&&(!!a.task||!!a.returning||Math.hypot(a.x-a.home.x,a.y-a.home.y)>5);}
@@ -16,7 +28,9 @@ export function requestFloorClean(t,who='p1',automatic=false){if(Game.mode!=='se
 export function requestFloorCustomer(c,who=null){if(!c||!Game.floor)return false;const t=Game.tables[c.floorTableId];if(!t)return false;const p=endpoint(t);if(c.state==='floorWaitEscort')return task('escort','table'+c.floorTableId,[{x:c.x,y:c.y+12,duration:.2},{...p,duration:.3}],who,c,10);if(c.state==='floorMenu')return task('takeOrder',String(c.id),[{...p,duration:.8},{x:520,y:560,duration:.2}],who,c,50);if(c.state==='floorReady')return task('deliver',String(c.id),[{x:520,y:560,duration:.5},{...p,duration:.6}],who,c,80);if(c.state==='floorWaitingPrep')return !!hooks.prepare(c,Game.slots.find(s=>s.who===who));return false;}
 function returnHome(a){a.carry=false;a.carryItems=[];a.returning=true;a.returnPath=route(a,a.home)||[];a.finishedAt=Game.floor.time;}
 function moveHome(a,dt){if(!a.returning)return;if(!a.returnPath.length){if(Math.hypot(a.x-a.home.x,a.y-a.home.y)<5){a.x=a.home.x;a.y=a.home.y;a.returning=false;return;}a.returnPath=route(a,a.home)||[];}let left=dt;while(left>0&&a.returnPath.length){const p=a.returnPath[0],d=Math.hypot(p.x-a.x,p.y-a.y);if(d<.01){a.returnPath.shift();continue;}const use=Math.min(left,d/a.speed);a.x+=(p.x-a.x)/d*a.speed*use;a.y+=(p.y-a.y)/d*a.speed*use;left-=use;if(use>=d/a.speed)a.returnPath.shift();}}
-function reserve(c){const i=Game.tables.findIndex(t=>t.state==='free');if(i<0)return;const t=Game.tables[i];c.floorTableId=i;c.state='floorWaitEscort';c.spot=-1;c.table=t;const bonus=12+Math.abs(t.x-520)/110;c.patience+=bonus;c.maxPatience+=bonus;const id=task('escort','table'+i,[{x:c.x,y:c.y+12,duration:.2},{...endpoint(t),duration:.3}],null,c,10);if(!id){delete c.floorTableId;c.state='queue';return;}t.state='reserved';t.cust=c;}
+function reserve(c){
+  if(!Game.floor.actors.some(a=>!a.player&&a.can?.includes('escort')&&a.auto?.includes('escort')))return;
+const i=Game.tables.findIndex(t=>t.state==='free');if(i<0)return;const t=Game.tables[i];c.floorTableId=i;c.state='floorWaitEscort';c.spot=-1;c.table=t;const bonus=12+Math.abs(t.x-520)/110;c.patience+=bonus;c.maxPatience+=bonus;const id=task('escort','table'+i,[{x:c.x,y:c.y+12,duration:.2},{...endpoint(t),duration:.3}],null,c,10);if(!id){delete c.floorTableId;c.state='queue';return;}t.state='reserved';t.cust=c;}
 function ticket(c){return Game.floor.tickets.find(t=>t.id===c.floorTicket);}
 function events(){const s=Game.floor;for(const e of s.events.splice(0)){const t=job(e.task);if(!t)continue;const a=actor(t.actor),c=Game.customers.find(c=>c.id===t.customer),table=Game.tables[Number(String(t.target).replace('table',''))];if(e.type==='leg-completed'&&e.leg===0&&c){if(t.kind==='escort'){const seat=Game.tables[c.floorTableId],p=endpoint(seat);c.state='floorFollowing';c.exemptTable=seat;navSetTarget(c,seat.x+(seat.x>1150?-38:38),seat.y+8,p);}if(t.kind==='takeOrder'){c.floorPrices={...Game.prices};c.floorTicket=s.id+':order:'+c.id;M.openTicket(s,{id:c.floorTicket,customer:String(c.id),table:'table'+c.floorTableId,lines:c.order,prices:c.floorPrices});}if(t.kind==='deliver'){a.carry=true;a.carryItems=[...(c.order||[])];}}if(e.type==='completed'){if(t.kind==='clean'&&table)hooks.clean(table,!t.requestedBy,t.actor);if(t.kind==='escort'&&c){Game.tables[c.floorTableId].state='busy';c.state='floorWalkingSeat';}if(t.kind==='takeOrder'&&c)c.state='floorWaitingPrep';if(t.kind==='deliver'&&c&&c.state==='floorReady'){const r=ticket(c);if(r){r.items.forEach((l,i)=>{l.item=c.order[i];l.price=c.floorPrices?.[l.item]??Game.prices[l.item];l.state=c.itemSt[i]===3?'omitted':c.itemSt[i]===2?'ready':'pending';});if(M.deliverTicket(s,r.id))hooks.deliver(c);}}if(a)returnHome(a);}if(e.type==='cancelled'){if(t.kind==='escort'&&table&&table.state==='reserved'){table.state='free';table.cust=null;}if(a)returnHome(a);}}}
 export function releaseFloorCustomer(c){if(c.floorTableId==null||!Game.floor)return;for(const t of Game.floor.tasks)if(t.customer===c.id&&active(t))M.cancelTask(Game.floor,t.id);if(c.floorTicket)M.cancelTicket(Game.floor,c.floorTicket);const table=Game.tables[c.floorTableId];if(table?.cust===c){table.cust=null;table.state=c.served?.length?'dirty':'free';table.dirtyT=0;}for(const s of Game.slots)if(s.cust===c){s.cust=null;s.items=[];}c.inPrep=0;events();}

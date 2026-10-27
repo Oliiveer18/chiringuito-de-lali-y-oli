@@ -2,8 +2,8 @@
    canvas.js
    Canvas principal: viewport, redimensionado y conversión de coordenadas.
    ========================================================= */
-import { H, W } from './config.js?v=27.4';
-import { $ } from './util.js?v=27.4';
+import { H, W } from './config.js?v=27.5';
+import { $ } from './util.js?v=27.5';
 
 // ---------- Entrada ----------
 export const canvas=$('#game'), ctx=canvas.getContext('2d');
@@ -23,6 +23,8 @@ export function resize(){
   const hud=document.getElementById('hud'),stock=document.getElementById('stockbar');
   const top=hud&&hud.getClientRects().length?hud.getBoundingClientRect().height+4:0;
   const bottom=stock&&stock.getClientRects().length?stock.getBoundingClientRect().height+4:0;
+  root.style.setProperty('--top-ui',top+'px');
+  root.style.setProperty('--bottom-ui',bottom+'px');
   const styles=getComputedStyle(root);
   const left=parseFloat(styles.getPropertyValue('--game-safe-left'))||0;
   const right=parseFloat(styles.getPropertyValue('--game-safe-right'))||0;

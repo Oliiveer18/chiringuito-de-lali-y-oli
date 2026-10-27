@@ -1,9 +1,9 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { floorTableLabel } from "../floor-service.js?v=27.4";
-import { mixColor } from "../util.js?v=27.4";
-import { drawIcon } from "../icons.js?v=27.4";
-import { rr } from "../icons.js?v=27.4";
-import { drawBeachGuest } from "../scene-extras.js?v=27.4";
+import { floorTableLabel } from "../floor-service.js?v=27.5";
+import { mixColor } from "../util.js?v=27.5";
+import { drawIcon } from "../icons.js?v=27.5";
+import { rr } from "../icons.js?v=27.5";
+import { drawBeachGuest } from "../scene-extras.js?v=27.5";
 
 export function drawHamaca(c,x,y,i,T,weather,nt){
   // sombrilla

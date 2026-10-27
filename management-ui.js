@@ -1,14 +1,14 @@
-import {trackCost} from './bookkeeping.js?v=27.4';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=27.4';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=27.4';
-import * as Rankings from './market-model.mjs?v=27.4';
-import {Game,Net} from './state.js?v=27.4';
-import {STAFF,RENT} from './config.js?v=27.4';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=27.4';
-import {netDirty} from './net.js?v=27.4';
-import {guestSend,onGuestAction} from './coopbridge.js?v=27.4';
-import {escapeHtml as E,eur} from './util.js?v=27.4';
-import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=27.4';
+import {trackCost} from './bookkeeping.js?v=27.5';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=27.5';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=27.5';
+import * as Rankings from './market-model.mjs?v=27.5';
+import {Game,Net} from './state.js?v=27.5';
+import {STAFF,RENT} from './config.js?v=27.5';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=27.5';
+import {netDirty} from './net.js?v=27.5';
+import {guestSend,onGuestAction} from './coopbridge.js?v=27.5';
+import {escapeHtml as E,eur} from './util.js?v=27.5';
+import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=27.5';
 const day=()=>absoluteDay(Number(Game.upgrades.career?.season)||1,Game.day);
 const names=['Marta','Aday','Naira','Pablo','Yaiza','Liam'];
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
