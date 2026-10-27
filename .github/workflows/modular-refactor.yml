@@ -9,7 +9,7 @@ permissions:
   actions: read
 concurrency:
   group: modular-refactor
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   refactor:
     if: github.ref == 'refs/heads/refactor/modular-sim-render'
@@ -25,17 +25,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Preserve baseline and protect save format
+      - name: Preserve baseline and run existing logic tests
         run: |
           mkdir -p /tmp/refactor-baseline
           rsync -a --exclude=.git --exclude=node_modules ./ /tmp/refactor-baseline/
           sha256sum state.js saves.js config.js index.html > /tmp/refactor-protected.sha256
           node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs 2>&1 | tee /tmp/refactor-baseline-tests.log
-      - name: Install analysis and browser tools outside the repository
+      - name: Install only the JavaScript analysis tools
+        timeout-minutes: 4
         run: |
-          npm install --prefix /tmp/refactor-deps --no-save @babel/parser@7 @babel/traverse@7 @babel/types@7 playwright 2>&1 | tee /tmp/refactor-install.log
-          node /tmp/refactor-deps/node_modules/playwright/cli.js install --with-deps chromium webkit 2>&1 | tee /tmp/refactor-browsers.log
-      - name: Extract declarations and audit their syntax trees
+          npm install --prefix /tmp/refactor-deps --no-save --ignore-scripts --no-audit --no-fund @babel/parser@7 @babel/traverse@7 @babel/types@7 2>&1 | tee /tmp/refactor-analysis-install.log
+      - name: Generate real modules and audit unchanged declarations before browser setup
         run: |
           node tools/refactor-modules.mjs 2>&1 | tee /tmp/refactor-extraction.log
           find sim render -name '*.js' -print0 | xargs -0 -n 1 node --check 2>&1 | tee /tmp/refactor-syntax.log
@@ -43,30 +43,60 @@ jobs:
           node --check render.js
           sha256sum -c /tmp/refactor-protected.sha256
           node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs 2>&1 | tee /tmp/refactor-candidate-tests.log
-      - name: Compare real browser behavior, saves, exports and canvas pixels
+      - name: Save generated candidate for review before slow browser checks
+        uses: actions/upload-artifact@v4
+        with:
+          name: modular-refactor-candidate-not-yet-validated
+          path: |
+            sim.js
+            render.js
+            sim/
+            render/
+            diagnostics/modular-refactor.json
+      - name: Resolve matching Playwright package and prepared browser image
+        id: browsers
+        timeout-minutes: 8
         run: |
-          python3 -m http.server 8765 --bind 127.0.0.1 --directory /tmp/refactor-baseline >/tmp/refactor-baseline-http.log 2>&1 &
-          python3 -m http.server 8766 --bind 127.0.0.1 >/tmp/refactor-candidate-http.log 2>&1 &
-          for n in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:8765/ >/dev/null && curl -fsS http://127.0.0.1:8766/ >/dev/null; then break; fi
-            sleep 1
-          done
-          node tools/check-refactor.mjs 2>&1 | tee /tmp/refactor-browser-comparison.log
+          version=$(npm view playwright version)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          image="mcr.microsoft.com/playwright:v${version}-noble"
+          printf 'version=%s\nimage=%s\n' "$version" "$image" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$version" > /tmp/refactor-playwright-version.txt
+          docker pull "$image" 2>&1 | tee /tmp/refactor-browser-image.log
+      - name: Compare original and refactored code using preinstalled Chromium and WebKit
+        timeout-minutes: 10
+        env:
+          PLAYWRIGHT_VERSION: ${{ steps.browsers.outputs.version }}
+          PLAYWRIGHT_IMAGE: ${{ steps.browsers.outputs.image }}
+        run: |
+          docker run --rm --ipc=host \
+            -e PLAYWRIGHT_VERSION \
+            -v "$GITHUB_WORKSPACE:/work" \
+            -v /tmp/refactor-baseline:/tmp/refactor-baseline:ro \
+            -w /work "$PLAYWRIGHT_IMAGE" bash -euo pipefail -c '
+              npm install --prefix /tmp/refactor-deps --no-save --ignore-scripts --no-audit --no-fund "playwright@$PLAYWRIGHT_VERSION"
+              python3 -m http.server 8765 --bind 127.0.0.1 --directory /tmp/refactor-baseline >/tmp/baseline-http.log 2>&1 &
+              python3 -m http.server 8766 --bind 127.0.0.1 --directory /work >/tmp/candidate-http.log 2>&1 &
+              for n in $(seq 1 30); do
+                if curl -fsS http://127.0.0.1:8765/ >/dev/null && curl -fsS http://127.0.0.1:8766/ >/dev/null; then break; fi
+                sleep 1
+              done
+              node tools/check-refactor.mjs
+            ' 2>&1 | tee /tmp/refactor-browser-comparison.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: modular-refactor-review
           path: |
             diagnostics/modular-refactor*.json
-            sim/
-            render/
             /tmp/refactor-*.log
-      - name: Commit verified simulation and renderer separately to the isolated branch
+            /tmp/refactor-playwright-version.txt
+      - name: Require successful reports and commit the two refactors separately
         run: |
           test "$GITHUB_REF" = refs/heads/refactor/modular-sim-render
           sha256sum -c /tmp/refactor-protected.sha256
           python3 - <<'PY'
-          import json,pathlib,subprocess
+          import json,pathlib,subprocess,os
           p=pathlib.Path
           report=json.loads(p('diagnostics/modular-refactor-tests.json').read_text())
           assert report.get('ok') is True, 'Browser comparison did not pass'
@@ -76,7 +106,7 @@ jobs:
           assert {(r['engine'],r['viewport']['width'],r['viewport']['height'],r['coop']) for r in rows}==expected
           assert all(r.get('ok') is True and r.get('saveRoundTrip') is True and r.get('publicSignaturesEqual') is True for r in rows)
           extraction=json.loads(p('diagnostics/modular-refactor.json').read_text())
-          assert extraction['workflowCommit']==__import__('os').environ['GITHUB_SHA'], 'Stale extraction report'
+          assert extraction['workflowCommit']==os.environ['GITHUB_SHA'], 'Stale extraction report'
           for kind in ('sim','render'):
               assert p(kind+'/index.js').is_file()
               assert extraction['files'][kind+'.js']['modules']
@@ -90,7 +120,7 @@ jobs:
           git add render.js render/ diagnostics/modular-refactor.json diagnostics/modular-refactor-tests.json
           git commit -m 'refactor(render): extract unchanged drawing modules and record equivalence checks'
           git push origin HEAD:refs/heads/refactor/modular-sim-render
-      - name: Preserve failure details without pushing failed source changes
+      - name: Record failure details without pushing failed game changes
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -116,5 +146,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add diagnostics/modular-refactor-failure.json
-          git diff --cached --quiet || git commit -m 'Record refactor failure details without publishing failed source changes'
+          git diff --cached --quiet || git commit -m 'Record refactor failure details without publishing failed game changes'
           git push origin HEAD:refs/heads/refactor/modular-sim-render
