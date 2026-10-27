@@ -1,0 +1,123 @@
+name: Validate and publish 27.6
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-27-6.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages-27-6
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare candidate and align regression test
+        run: |
+          python3 -m pip install PyYAML
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml,re
+          p=Path('service-tasks.test.mjs');s=p.read_text()
+          s=s.replace('busy player delegates to an eligible NPC, never the other player','busy player keeps exclusive cleaning queued, never delegates')
+          s=s.replace("assert.equal(s.tasks[0].actor,'cleaner');assert.equal(s.actors.find(a=>a.id==='p2').task,null);", "assert.equal(s.tasks[0].actor,null);assert.equal(s.tasks[0].state,'queued');assert.equal(s.actors.find(a=>a.id==='p2').task,null);s.actors.find(a=>a.id==='p1').busy=false;M.stepTasks(s,.1,route);assert.equal(s.tasks[0].actor,'p1');")
+          p.write_text(s)
+          if "VERSION='v27.6'" not in Path('version.js').read_text():
+              workflow=yaml.safe_load(Path('.github/workflows/release-27-6.yml').read_text())
+              step=next(x for x in workflow['jobs']['patch']['steps'] if x.get('name')=='Apply release')
+              exec(compile(step['run'],'release-27-6','exec'))
+          p=Path('game.js');s=p.read_text();s=re.sub(r"title.textContent='v[0-9.]+", "title.textContent='v27.6",s);p.write_text(s)
+          PY
+          node --test service-tasks.test.mjs cleaning-ownership.test.mjs
+          find sim render -name '*.js' -print0 | xargs -0 -n1 node --check
+          node --check floor-service.js
+      - name: Install browser verification
+        run: |
+          npm install --prefix /tmp/smoke playwright
+          /tmp/smoke/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify actual modules and UI
+        run: |
+          mkdir -p /tmp/diagnostics
+          python3 -m http.server 8765 >/tmp/diagnostics/server.log 2>&1 &
+          node <<'JS'
+          const fs=require('node:fs');
+          const {chromium}=require('/tmp/smoke/node_modules/playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            try{
+              for(const viewport of [{width:844,height:390},{width:390,height:844}]){
+                const page=await browser.newPage({viewport});const errors=[];
+                page.on('pageerror',e=>errors.push(e.stack||e.message));
+                try{
+                  await page.goto('http://127.0.0.1:8765/',{waitUntil:'domcontentloaded'});
+                  await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('v27.6')&&document.querySelector('#ver-title')?.textContent.includes('activas'),null,{timeout:45000});
+                  await page.click('#btn-start');
+                  await page.waitForFunction(()=>document.querySelector('#plan')?.classList.contains('show'));
+                  await page.click('#btn-open');
+                  await page.waitForFunction(()=>!document.querySelector('#hud')?.classList.contains('hidden'));
+                  await page.waitForTimeout(1500);
+                  if(await page.locator('#floor-board').count())throw Error('Terraza panel still present');
+                  await page.evaluate(async()=>{
+                    const {Game}=await import('/state.js?v=27.6');
+                    if(Game.mode!=='service')throw Error('Service did not start');
+                    const M=await import('/service-tasks.mjs?v=27.6');
+                    const {requestFloorClean,updateFloor}=await import('/floor-service.js?v=27.6');
+                    const a=Game.floor.actors.find(a=>a.id==='p1');
+                    for(const t of Game.floor.tasks)if(['queued','walking','working','blocked'].includes(t.state))M.cancelTask(Game.floor,t.id);
+                    a.task=null;a.returning=false;a.busy=false;
+                    Game.tables[0].state='dirty';Game.tables[1].state='dirty';
+                    if(!requestFloorClean(Game.tables[0],'p1')||!requestFloorClean(Game.tables[1],'p1'))throw Error('Cleaning could not queue');
+                    let chained=false;
+                    for(let i=0;i<2400;i++){
+                      updateFloor(.05);
+                      const second=Game.floor.tasks.find(t=>t.kind==='clean'&&t.target==='table1');
+                      if(second?.actor==='p1'&&second.state==='walking'){
+                        if(a.returning)throw Error('Returned home between tables');
+                        chained=true;
+                      }
+                      if(Game.tables[0].state==='free'&&Game.tables[1].state==='free')break;
+                    }
+                    if(!chained||Game.tables[0].state!=='free'||Game.tables[1].state!=='free')throw Error('Cleaning chain failed');
+                    const {endDay}=await import('/report.js?v=27.6');endDay();
+                  });
+                  await page.waitForFunction(()=>document.querySelector('#report')?.classList.contains('show'));
+                  const box=await page.locator('#errbox').textContent();
+                  if(errors.length||box.trim())throw Error(JSON.stringify({errors,box}));
+                  await page.screenshot({path:'/tmp/diagnostics/pass-'+viewport.width+'.png'});
+                }catch(e){await page.screenshot({path:'/tmp/diagnostics/failure-'+viewport.width+'.png'});fs.writeFileSync('/tmp/diagnostics/error.json',JSON.stringify({error:String(e),errors},null,2));throw e;}
+                finally{await page.close();}
+              }
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-27-6
+          path: /tmp/diagnostics
+      - name: Commit verified candidate
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' '*.mjs' index.html render sim
+          git diff --cached --quiet || git commit -m 'v27.6: browser-verified cleaning queues, UI and consistent version'
+          git push origin HEAD:main
+      - name: Stage website
+        run: |
+          mkdir -p /tmp/public
+          tar --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tools' --exclude='*.test.*' --exclude='*.py' -cf - . | tar -xf - -C /tmp/public
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/public
+      - uses: actions/deploy-pages@v4
