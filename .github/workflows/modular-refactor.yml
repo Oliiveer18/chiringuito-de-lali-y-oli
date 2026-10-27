@@ -15,6 +15,9 @@ jobs:
     if: github.ref == 'refs/heads/refactor/modular-sim-render'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,6 +65,24 @@ jobs:
         run: |
           test "$GITHUB_REF" = refs/heads/refactor/modular-sim-render
           sha256sum -c /tmp/refactor-protected.sha256
+          python3 - <<'PY'
+          import json,pathlib,subprocess
+          p=pathlib.Path
+          report=json.loads(p('diagnostics/modular-refactor-tests.json').read_text())
+          assert report.get('ok') is True, 'Browser comparison did not pass'
+          rows=report['results']
+          expected={(e,w,h,c) for e in ('chromium','webkit') for w,h in ((390,844),(844,390)) for c in (False,True)}
+          assert len(rows)==8
+          assert {(r['engine'],r['viewport']['width'],r['viewport']['height'],r['coop']) for r in rows}==expected
+          assert all(r.get('ok') is True and r.get('saveRoundTrip') is True and r.get('publicSignaturesEqual') is True for r in rows)
+          extraction=json.loads(p('diagnostics/modular-refactor.json').read_text())
+          assert extraction['workflowCommit']==__import__('os').environ['GITHUB_SHA'], 'Stale extraction report'
+          for kind in ('sim','render'):
+              assert p(kind+'/index.js').is_file()
+              assert extraction['files'][kind+'.js']['modules']
+          changed=subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()
+          assert set(changed)<= {'sim.js','render.js'}, 'Unexpected tracked source changes: '+str(changed)
+          PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add sim.js sim/
