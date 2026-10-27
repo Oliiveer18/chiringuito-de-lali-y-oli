@@ -1,10 +1,11 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES } from "../config.js?v=27.1";
+import { PERSONALITIES, WHO_COLOR } from "../config.js?v=27.1";
 import { W } from "../config.js?v=27.1";
 import { rr } from "../icons.js?v=27.1";
 import { Game } from "../state.js?v=27.1";
 import { PCOLORS } from "./scene.js?v=27.1";
 import { drawPictogram } from "./scene.js?v=27.1";
+import { drawHeldItem } from "./items.js?v=27.1";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -120,6 +121,17 @@ export function drawCustomer(c,cu,T){
     board:cu.type==='surfista'&&!sit, camera:cu.id%2===0,
     pose, t:(cu.actT!=null&&cu.actT<50)?cu.actT:T, ph:cu.stridePh||0, moving, bob:bobAmt, dir:cu.dir||1,
     shorts: cu.type==='surfista'?'#e8603c':'#2a3f6b'});
+  // Identidad: etiqueta breve y estable para cada cliente
+  if(!sit){
+    const label = cu.revName || (cu.regular && cu.regular.name) || '';
+    if(label){
+      c.font='600 10px Satoshi, sans-serif';
+      const tw=c.measureText(label).width+12;
+      const tx=clamp(cu.x,tw/2+4,W-tw/2-4);
+      c.fillStyle='rgba(42,33,28,.72)'; rr(c,tx-tw/2,cu.y-124,tw,16,8); c.fill();
+      c.fillStyle='#fff6e6'; c.textAlign='center'; c.fillText(label,tx,cu.y-113);
+    }
+  }
 }
 
 export function drawPersonalityBadge(c,cu,bx,by,bw){
@@ -141,4 +153,23 @@ export function drawPersonalityBadge(c,cu,bx,by,bw){
   c.textAlign='center';
 }
 
-export function drawFloorWorker(c,a,T){const t=Game.floor.tasks.find(t=>t.id===a.task),slot=Game.slots.find(s=>s.who===a.id),moving=t?.state==='walking'||a.returning;const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?'cook':'idle';drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',pose,t:T,ph:a.phase,moving,dir:a.dir});if(a.carry){c.fillStyle='#e9ddc4';c.fillRect(a.x+8,a.y-44,28,4);}c.textAlign='center';c.font='700 10px system-ui';c.fillStyle='#fffdf8';c.strokeStyle='#163b3d';c.lineWidth=3;const text=a.name+' · '+(a.returning?'Volviendo':t?t.kind==='clean'?'Limpieza':'Terraza':slot?.cust?'Preparando':'Disponible');c.strokeText(text,a.x,a.y-105);c.fillText(text,a.x,a.y-105);}
+export function drawFloorWorker(c,a,T){
+  const t=Game.floor.tasks.find(t=>t.id===a.task),slot=Game.slots.find(s=>s.who===a.id),moving=t?.state==='walking'||a.returning;
+  const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?'cook':'idle';
+  drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',pose,t:T,ph:a.phase,moving,dir:a.dir});
+  // Identidad de jugadores: anillo de color propio bajo los pies
+  if(a.player){
+    const col=WHO_COLOR[a.id]||'#ffd36b';
+    c.strokeStyle=col; c.lineWidth=2.5;
+    c.beginPath(); c.ellipse(a.x,a.y+2,18,6,0,0,7); c.stroke();
+  }
+  // Bandeja con productos reales al llevar un pedido
+  if(a.carry){
+    c.fillStyle='#e9ddc4'; rr(c,a.x+6,a.y-46,32,5,2); c.fill();
+    const items=(a.carryItems&&a.carryItems.length?a.carryItems:['cerveza','papas']).slice(0,2);
+    items.forEach((id,i)=>drawHeldItem(c,a.x+14+i*14,a.y-52,id,{scale:.9}));
+  }
+  c.textAlign='center';c.font='700 10px system-ui';c.fillStyle='#fffdf8';c.strokeStyle='#163b3d';c.lineWidth=3;
+  const text=a.name+' · '+(a.returning?'Volviendo':t?t.kind==='clean'?'Limpieza':'Terraza':slot?.cust?'Preparando':'Disponible');
+  c.strokeText(text,a.x,a.y-105);c.fillText(text,a.x,a.y-105);
+}
