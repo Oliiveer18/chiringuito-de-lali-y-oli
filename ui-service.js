@@ -42,6 +42,7 @@ export function showFinalUI(){
   $('#final-card').innerHTML = Net.ui.card;
   $('#final').classList.add('show');
   $('#btn-again').onclick=()=>{ Audio.click(); if(isGuest()) netAct({a:'again'}); else { newSeason(); Plan.tab='compras'; showPlan(); } };
+}
 
 export function renderUrgent(){
   $('#urg-money').textContent=eur(Game.money);
