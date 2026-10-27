@@ -1,18 +1,18 @@
-import {trackCost} from './bookkeeping.js?v=27.1';
+import {trackCost} from './bookkeeping.js?v=27.4';
 /* =========================================================
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.1';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.1';
-import { ICON_URL } from './icons.js?v=27.1';
-import { Audio } from './audio.js?v=27.1';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.1';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.1';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.1';
-import { canvas, toWorld } from './canvas.js?v=27.1';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.1';
-import { drawPerson } from './render.js?v=27.1';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.4';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.4';
+import { ICON_URL } from './icons.js?v=27.4';
+import { Audio } from './audio.js?v=27.4';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.4';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.4';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.4';
+import { canvas, toWorld } from './canvas.js?v=27.4';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.4';
+import { drawPerson } from './render.js?v=27.4';
 
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');

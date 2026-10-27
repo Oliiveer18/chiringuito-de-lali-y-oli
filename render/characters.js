@@ -1,12 +1,13 @@
-import { clamp } from "../util.js?v=27.1";
+import { Net } from "../state.js?v=27.4";
+import { clamp } from "../util.js?v=27.4";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR } from "../config.js?v=27.1";
-import { W } from "../config.js?v=27.1";
-import { rr } from "../icons.js?v=27.1";
-import { Game } from "../state.js?v=27.1";
-import { PCOLORS } from "./scene.js?v=27.1";
-import { drawPictogram } from "./scene.js?v=27.1";
-import { drawHeldItem } from "./items.js?v=27.1";
+import { PERSONALITIES, WHO_COLOR } from "../config.js?v=27.4";
+import { W } from "../config.js?v=27.4";
+import { rr } from "../icons.js?v=27.4";
+import { Game } from "../state.js?v=27.4";
+import { PCOLORS } from "./scene.js?v=27.4";
+import { drawPictogram } from "./scene.js?v=27.4";
+import { drawHeldItem } from "./items.js?v=27.4";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -29,6 +30,13 @@ export function drawPerson(c,x,y,o){
   if((look.acc||[]).includes('mochila')){ c.fillStyle='#8a5a36'; rr(c,-24*build,-64,10,22,4); c.fill(); }
   // torso
   c.fillStyle=o.shirt; rr(c,-15*build,-68,30*build,36,10); c.fill();
+  if(o.uniform){
+  c.fillStyle=o.uniform==='limpiador'?'#334155':o.uniform==='cocina'?'#263b42':'#0f6268';
+  rr(c,-12*build,-54,24*build,27,3); c.fill();
+  c.strokeStyle='#f5efe4'; c.lineWidth=2;
+  c.beginPath(); c.moveTo(-8,-65); c.lineTo(-6,-54); c.moveTo(8,-65); c.lineTo(6,-54); c.stroke();
+  c.fillStyle='#fffdf8'; c.fillRect(-6,-47,12,5);
+}
   // brazos según la actividad (mejora 2)
   c.strokeStyle=o.skin; c.lineWidth=6; c.lineCap='round';
   const shL=-14*build, shR=14*build;
@@ -157,7 +165,7 @@ export function drawPersonalityBadge(c,cu,bx,by,bw){
 export function drawFloorWorker(c,a,T){
   const t=Game.floor.tasks.find(t=>t.id===a.task),slot=Game.slots.find(s=>s.who===a.id),moving=t?.state==='walking'||a.returning;
   const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?'cook':'idle';
-  drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',pose,t:T,ph:a.phase,moving,dir:a.dir});
+  drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',uniform:a.player?(Net.roles[a.id]||'barra'):a.role==='cocinero'?'cocina':a.role,hat:(a.role==='cocinero'||a.player&&Net.roles[a.id]==='cocina')?'chef':a.role==='limpiador'?'gorra':'pañuelo',pose,t:T,ph:a.phase,moving,dir:a.dir});
   // Identidad de jugadores: anillo de color propio bajo los pies
   if(a.player){
     const col=WHO_COLOR[a.id]||'#ffd36b';

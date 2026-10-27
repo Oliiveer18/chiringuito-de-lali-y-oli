@@ -1,5 +1,5 @@
-import { Game, Net } from './state.js?v=27.1';
-import { setSpeed, toastLocal } from './ui.js?v=27.1';
+import { Game, Net } from './state.js?v=27.4';
+import { setSpeed, toastLocal } from './ui.js?v=27.4';
 const Base=window.Peer;
 let sessionToken;try{sessionToken=sessionStorage.getItem('lali-oli.peer-token');if(!sessionToken){sessionToken=crypto.randomUUID();sessionStorage.setItem('lali-oli.peer-token',sessionToken);}}catch(e){sessionToken=String(Date.now())+Math.random();}
 function notice(text){const el=document.querySelector('#lobby-status');if(el)el.textContent=text;}
