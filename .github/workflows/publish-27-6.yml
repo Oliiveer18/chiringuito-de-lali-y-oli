@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare candidate and align regression test
+      - name: Prepare candidate
         run: |
           python3 -m pip install PyYAML
           python3 - <<'PY'
@@ -33,19 +33,19 @@ jobs:
           s=s.replace("assert.equal(s.tasks[0].actor,'cleaner');assert.equal(s.actors.find(a=>a.id==='p2').task,null);", "assert.equal(s.tasks[0].actor,null);assert.equal(s.tasks[0].state,'queued');assert.equal(s.actors.find(a=>a.id==='p2').task,null);s.actors.find(a=>a.id==='p1').busy=false;M.stepTasks(s,.1,route);assert.equal(s.tasks[0].actor,'p1');")
           p.write_text(s)
           if "VERSION='v27.6'" not in Path('version.js').read_text():
-              workflow=yaml.safe_load(Path('.github/workflows/release-27-6.yml').read_text())
-              step=next(x for x in workflow['jobs']['patch']['steps'] if x.get('name')=='Apply release')
-              exec(compile(step['run'],'release-27-6','exec'))
-          p=Path('game.js');s=p.read_text();s=re.sub(r"title.textContent='v[0-9.]+", "title.textContent='v27.6",s);p.write_text(s)
+              w=yaml.safe_load(Path('.github/workflows/release-27-6.yml').read_text())
+              step=next(x for x in w['jobs']['patch']['steps'] if x.get('name')=='Apply release')
+              exec(compile(step['run'],'candidate','exec'))
+          p=Path('game.js');p.write_text(re.sub(r"title.textContent='v[0-9.]+","title.textContent='v27.6",p.read_text()))
           PY
           node --test service-tasks.test.mjs cleaning-ownership.test.mjs
           find sim render -name '*.js' -print0 | xargs -0 -n1 node --check
           node --check floor-service.js
-      - name: Install browser verification
+      - name: Install browser
         run: |
           npm install --prefix /tmp/smoke playwright
           /tmp/smoke/node_modules/.bin/playwright install --with-deps chromium
-      - name: Verify actual modules and UI
+      - name: Verify menu, new game, cleaning and report
         run: |
           mkdir -p /tmp/diagnostics
           python3 -m http.server 8765 >/tmp/diagnostics/server.log 2>&1 &
@@ -56,46 +56,49 @@ jobs:
             const browser=await chromium.launch();
             try{
               for(const viewport of [{width:844,height:390},{width:390,height:844}]){
-                const page=await browser.newPage({viewport});const errors=[];
+                const page=await browser.newPage({viewport});const errors=[];let stage='load';
                 page.on('pageerror',e=>errors.push(e.stack||e.message));
                 try{
                   await page.goto('http://127.0.0.1:8765/',{waitUntil:'domcontentloaded'});
                   await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('v27.6')&&document.querySelector('#ver-title')?.textContent.includes('activas'),null,{timeout:45000});
-                  await page.click('#btn-start');
-                  await page.waitForFunction(()=>document.querySelector('#plan')?.classList.contains('show'));
+                  stage='save browser';await page.click('#btn-start');
+                  await page.locator('.save-browser:not([hidden])').waitFor({state:'visible'});
+                  await page.locator('.save-browser').getByRole('button',{name:'Nueva partida',exact:true}).click();
+                  stage='planning';await page.locator('#plan.show').waitFor({state:'visible'});
                   await page.click('#btn-open');
-                  await page.waitForFunction(()=>!document.querySelector('#hud')?.classList.contains('hidden'));
+                  stage='service';await page.waitForFunction(()=>!document.querySelector('#hud')?.classList.contains('hidden'));
                   await page.waitForTimeout(1500);
                   if(await page.locator('#floor-board').count())throw Error('Terraza panel still present');
-                  await page.evaluate(async()=>{
+                  stage='cleaning';await page.evaluate(async()=>{
                     const {Game}=await import('/state.js?v=27.6');
-                    if(Game.mode!=='service')throw Error('Service did not start');
+                    if(Game.mode!=='service')throw Error('Service not started');
                     const M=await import('/service-tasks.mjs?v=27.6');
-                    const {requestFloorClean,updateFloor}=await import('/floor-service.js?v=27.6');
+                    const F=await import('/floor-service.js?v=27.6');
                     const a=Game.floor.actors.find(a=>a.id==='p1');
                     for(const t of Game.floor.tasks)if(['queued','walking','working','blocked'].includes(t.state))M.cancelTask(Game.floor,t.id);
                     a.task=null;a.returning=false;a.busy=false;
                     Game.tables[0].state='dirty';Game.tables[1].state='dirty';
-                    if(!requestFloorClean(Game.tables[0],'p1')||!requestFloorClean(Game.tables[1],'p1'))throw Error('Cleaning could not queue');
+                    if(!F.requestFloorClean(Game.tables[0],'p1')||!F.requestFloorClean(Game.tables[1],'p1'))throw Error('Cleaning queue failed');
                     let chained=false;
                     for(let i=0;i<2400;i++){
-                      updateFloor(.05);
+                      F.updateFloor(.05);
                       const second=Game.floor.tasks.find(t=>t.kind==='clean'&&t.target==='table1');
-                      if(second?.actor==='p1'&&second.state==='walking'){
-                        if(a.returning)throw Error('Returned home between tables');
-                        chained=true;
-                      }
+                      if(second?.actor==='p1'&&second.state==='walking'){if(a.returning)throw Error('Returned between tables');chained=true;}
                       if(Game.tables[0].state==='free'&&Game.tables[1].state==='free')break;
                     }
-                    if(!chained||Game.tables[0].state!=='free'||Game.tables[1].state!=='free')throw Error('Cleaning chain failed');
+                    if(!chained||Game.tables[0].state!=='free'||Game.tables[1].state!=='free')throw Error('Chain did not complete');
                     const {endDay}=await import('/report.js?v=27.6');endDay();
                   });
-                  await page.waitForFunction(()=>document.querySelector('#report')?.classList.contains('show'));
+                  stage='report';await page.locator('#report.show').waitFor({state:'visible'});
                   const box=await page.locator('#errbox').textContent();
                   if(errors.length||box.trim())throw Error(JSON.stringify({errors,box}));
                   await page.screenshot({path:'/tmp/diagnostics/pass-'+viewport.width+'.png'});
-                }catch(e){await page.screenshot({path:'/tmp/diagnostics/failure-'+viewport.width+'.png'});fs.writeFileSync('/tmp/diagnostics/error.json',JSON.stringify({error:String(e),errors},null,2));throw e;}
-                finally{await page.close();}
+                }catch(e){
+                  await page.screenshot({path:'/tmp/diagnostics/failure-'+viewport.width+'.png'});
+                  const box=await page.locator('#errbox').textContent().catch(()=>'');
+                  const diagnostic={stage,error:String(e),errors,box};
+                  fs.writeFileSync('/tmp/diagnostics/error.json',JSON.stringify(diagnostic,null,2));console.error(diagnostic);throw e;
+                }finally{await page.close();}
               }
             }finally{await browser.close();}
           })().catch(e=>{console.error(e);process.exit(1)});
@@ -110,9 +113,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add '*.js' '*.mjs' index.html render sim
-          git diff --cached --quiet || git commit -m 'v27.6: browser-verified cleaning queues, UI and consistent version'
+          git diff --cached --quiet || git commit -m 'v27.6: validated menu, new game, cleaning and report'
           git push origin HEAD:main
-      - name: Stage website
+      - name: Stage site
         run: |
           mkdir -p /tmp/public
           tar --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tools' --exclude='*.test.*' --exclude='*.py' -cf - . | tar -xf - -C /tmp/public
