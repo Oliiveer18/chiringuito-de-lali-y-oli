@@ -1,3 +1,4 @@
+import { clamp } from "../util.js?v=27.1";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
 import { PERSONALITIES, WHO_COLOR } from "../config.js?v=27.1";
 import { W } from "../config.js?v=27.1";
@@ -161,7 +162,7 @@ export function drawFloorWorker(c,a,T){
   if(a.player){
     const col=WHO_COLOR[a.id]||'#ffd36b';
     c.strokeStyle=col; c.lineWidth=2.5;
-    c.beginPath(); c.ellipse(a.x,a.y+2,18,6,0,0,7); c.stroke();
+    c.beginPath(); c.ellipse(a.x,a.y-132,14,5,0,0,7); c.stroke();
   }
   // Bandeja con productos reales al llevar un pedido
   if(a.carry){
