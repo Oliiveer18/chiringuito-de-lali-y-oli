@@ -14,7 +14,7 @@ import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.6';
 import { drawPerson } from './render.js?v=27.6';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
-  flashMoney, demandHint, renderTab, estimateCustomers, avatarCache, staffAvatar,
+  flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
 } from './ui-plan.js?v=27.6';
 import {
@@ -23,13 +23,62 @@ import {
 } from './ui-service.js?v=27.6';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
-  flashMoney, demandHint, renderTab, estimateCustomers, avatarCache, staffAvatar,
+  flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
 };
 export {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
 };
+export function renderTab(){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
+  const b=$('#tab-body'); let h=''; if(Plan.tab==='personal'){document.dispatchEvent(new Event('workforce-paint'));return;}
+  // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
+  if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
+  if(Plan.tab==='compras'){
+    h += `<p class="muted" style="margin:0 0 6px">Calcula unas ${Math.round(estimateCustomers())} visitas hoy. Lo fresco se estropea por la noche${lvl('nevera')?' (poco, gracias a la nevera)':''}.</p>`;
+    for(const id of ITEM_IDS){
+      const it=ITEMS[id], un=itemUnlocked(id);
+      const sp = lvl('nevera')?it.spoilF:it.spoil;
+      h += `<div class="row ${un?'':'locked'}"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">${un?`Coste ${eur2(it.cost)} · en almacén <b>${Game.stock[id]}</b> · merma ${Math.round(sp*100)}%`:`Necesitas: ${UPGRADES.find(u=>u.id===it.unlock).name}`}</div></div>
+      <div class="ctrl">${un?[10,25,50].map(n=>`<button class="btn sm" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n} · ${eur(it.cost*n)}</button>`).join(''):''}</div></div>`;
+    }
+  } else if(Plan.tab==='carta'){
+    h += `<p class="muted" style="margin:0 0 6px">Los turistas pagan casi cualquier cosa; la gente del pueblo conoce los precios. Fíjate en el precio de referencia.</p>`;
+    for(const id of ITEM_IDS){
+      const it=ITEMS[id], un=itemUnlocked(id);
+      if(!un){ h+=`<div class="row locked"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Bloqueado</div></div></div>`; continue; }
+      const margin = Game.prices[id]-it.cost;
+      h += `<div class="row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
+      <div class="ctrl"><div class="price"><button data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div>
+      <button class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera'}</button></div></div>`;
+    }
+  } else if(Plan.tab==='mejoras'){
+    h += '<div class="up-grid">';
+    for(const u of UPGRADES){
+      const l=lvl(u.id), max=u.levels.length, owned=l>=max, cost=u.levels[l], locked = u.req && !lvl(u.req);
+      h += `<div class="up ${owned?'owned':''}"><h4>${u.name}<span class="pips">${u.levels.map((_,i)=>`<i class="${i<l?'on':''}"></i>`).join('')}</span></h4><p>${u.desc}</p>
+      <div class="foot">${owned?'<span class="tag good">Instalado</span>':locked?`<span class="tag">Requiere ${UPGRADES.find(x=>x.id===u.req).name.toLowerCase()}</span>`:`<span class="tag">${eur(cost)}</span><button class="btn sm primary" data-up="${u.id}" ${Game.money<cost?'disabled':''}>Comprar</button>`}</div></div>`;
+    }
+    h += '</div>';
+  } else if(Plan.tab==='personal'){
+    h += `<p class="muted" style="margin:0 0 6px">El sueldo se paga cada día al cerrar. Puedes contratar o despedir cada mañana.</p>`;
+    for(const st of STAFF){
+      const hired=!!Game.staff[st.id];
+      h += `<div class="row"><img src="${staffAvatar(st.id)}" alt=""><div><div class="name">${st.name}</div><div class="sub">${st.desc} · ${eur(st.wage)}/día</div></div>
+      <div class="ctrl"><button class="btn sm ${hired?'':'primary'}" data-staff="${st.id}">${hired?'Despedir':'Contratar'}</button></div></div>`;
+    }
+  }
+  b.innerHTML=h;
+}
+export function estimateCustomers(){
+  const w=WEATHER[weatherToday()]; let tot=0;
+  for(let h=10;h<closeHour();h++) tot+=8*(HOUR_CURVE[h]||0.6)*((difficultyRush(h+0.25)+difficultyRush(h+0.75))/2);
+  tot*= w.arr*(0.35+Game.rep/5*0.95)*(lvl('redes')?1.15:1)*(isWeekend(Game.day)?1.25:1)*(SPECIAL_DAYS[Game.day]?SPECIAL_DAYS[Game.day].arr:1)*difficultyProfile().arrivals;
+  if(lvl('sombrillas') && (weatherToday()==='sol'||weatherToday()==='calima')) tot*=1.15;
+  if(isCoop()) tot*=1.4;
+  return tot;
+}
 // respuestas del propietario y "Ver más reseñas": delegación en el informe
 $('#rep-body').addEventListener('click',e=>{
   const b=(e.target && e.target.closest)? e.target.closest('button') : null;
