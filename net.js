@@ -44,20 +44,35 @@ let peer=null, conn=null;
 const PREFIX='chiringuito-lali-oli-';
 const LETTERS='ABCDEFGHJKLMNPQRSTUVWXYZ';
 function newCode(){ let c=''; for(let i=0;i<4;i++) c+=LETTERS[Math.floor(Math.random()*LETTERS.length)]; return c; }
+// STUN + TURN público (Open Relay de Metered). Si falla o se agota, se puede
+// sustituir por credenciales propias definiendo window.TURN_CONFIG antes de cargar net.js.
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+];
+function peerOptions(){
+  const ice = ICE_SERVERS.slice();
+  const t = window.TURN_CONFIG;
+  if (t && t.urls) ice.push({ urls: t.urls, username: t.username, credential: t.credential });
+  return { config: { iceServers: ice, iceCandidatePoolSize: 10 } };
+}
 export function netOpen(onOpen){
   if(peer && !peer.destroyed){ onOpen(); return; }
   if(!window.Peer){ lobbyError('No se ha podido cargar el módulo de conexión.'); return; }
   lobbyStatus('Conectando…');
-  peer=new Peer();
+  peer=new Peer(peerOptions());
   peer.on('open',()=>{ onOpen(); });
-  peer.on('error',e=>{ lobbyError('No se ha podido conectar. Inténtalo de nuevo.'); });
+  peer.on('error',e=>{ lobbyError('No se ha podido conectar ('+((e&&e.type)||'error')+'). Inténtalo de nuevo.'); });
   peer.on('disconnected',()=>{ try{peer.reconnect();}catch(e){} });
 }
 function hostStart(){
   const code=newCode();
   Net.role='host'; Net.me='p1'; Net.code=code;
   if(peer) peer.destroy();
-  peer=new Peer(PREFIX+code);
+  peer=new Peer(PREFIX+code, peerOptions());
   peer.on('open',()=>{ renderLobby(); lobbyStatus(''); });
   peer.on('connection',c=>{
     conn=c;
@@ -65,19 +80,19 @@ function hostStart(){
     c.on('data',d=>{ try{ onNet(typeof d==='string'?JSON.parse(d):d); }catch(e){} });
     c.on('close',()=>{ conn=null; Net.peer=false; onNet({t:'peer',on:false}); });
   });
-  peer.on('error',()=>{ lobbyError('No se ha podido crear la sala.'); });
+  peer.on('error',e=>{ lobbyError('No se ha podido crear la sala ('+((e&&e.type)||'error')+').'); });
 }
 function guestJoin(code){
   Net.role='guest'; Net.me='p2'; Net.code=code;
   if(peer) peer.destroy();
-  peer=new Peer();
+  peer=new Peer(peerOptions());
   peer.on('open',()=>{
     conn=peer.connect(PREFIX+code);
     conn.on('open',()=>{ Net.peer=true; renderLobby(); lobbyStatus(''); netSend({t:'hello', name:Net.names.p2}); onNet({t:'peer',on:true}); });
     conn.on('data',d=>{ try{ onNet(typeof d==='string'?JSON.parse(d):d); }catch(e){} });
     conn.on('close',()=>{ conn=null; Net.peer=false; onNet({t:'peer',on:false}); });
   });
-  peer.on('error',()=>{ lobbyError('No existe ninguna partida con ese código.'); });
+  peer.on('error',e=>{ lobbyError('No existe ninguna partida con ese código ('+((e&&e.type)||'error')+').'); });
 }
 export function netSimDelay(dir){
   if(!NET_SIM.on) return 0;
