@@ -1,0 +1,85 @@
+name: Release 27.6
+on:
+  push:
+    paths: ['.github/workflows/release-27-6.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply release
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          def edit(path,old,new):
+            p=Path(path);s=p.read_text();assert old in s,path+': unexpected baseline';p.write_text(s.replace(old,new,1))
+          edit('service-tasks.mjs','if(old){if(requestedBy){',"if(old){if(kind==='clean'){if(old.requestedBy&&requestedBy&&old.requestedBy!==requestedBy)return null;if(old.state!=='queued')return !requestedBy||old.actor===requestedBy?old.id:null;}if(requestedBy){")
+          edit('service-tasks.mjs','function eligible(a,t){',"function eligible(a,t){if(t.kind==='clean'&&t.requestedBy&&a.id!==t.requestedBy)return false;")
+          edit('service-tasks.mjs','for(const t of queue){',"for(const t of queue){if(t.kind==='clean'&&s.tables.find(x=>x.id===t.target)?.state!=='dirty'){cancelTask(s,t.id);continue;}")
+          edit('floor-service.js','function returnHome(a){',"function returnHome(a){if(a.player&&Game.floor.tasks.some(t=>t.kind==='clean'&&t.state==='queued'&&t.requestedBy===a.id&&Game.tables[Number(t.target.replace('table',''))]?.state==='dirty')){a.carry=false;a.carryItems=[];a.returning=false;a.returnPath=[];a.busy=false;return;}")
+          edit('floor-service.js','if(a.returning&&a.finishedAt<s.time)moveHome(a,dt);',"if(a.player&&a.returning&&s.tasks.some(t=>t.kind==='clean'&&t.state==='queued'&&t.requestedBy===a.id&&Game.tables[Number(t.target.replace('table',''))]?.state==='dirty')){a.returning=false;a.returnPath=[];}if(a.returning&&a.finishedAt<s.time)moveHome(a,dt);")
+          p=Path('floor-service.js');s=p.read_text();i=s.index("const panel=document.createElement('details');");s=s[:i];p.write_text(s)
+          p=Path('render/tables.js');s=p.read_text();s='import { Game, Net } from "../state.js?v=27.5";\n'+s
+          old="    const pulse = 1+Math.sin(T*6)*0.08;"
+          assert old in s
+          s=s.replace(old,"""    const index=Game.tables.indexOf(t);
+              const task=Game.floor?.tasks.find(q=>q.kind==='clean'&&q.target==='table'+index&&['queued','walking','working','blocked'].includes(q.state));
+              const owner=task&&(task.requestedBy||task.actor);
+              const name=owner?(Net.names?.[owner]||Game.floor?.actors.find(a=>a.id===owner)?.name||'Personal'):'';
+              const label=task?(task.state==='working'?'Limpiando · ':'Asignada · ')+name:floorTableLabel(t);
+              c.font='700 12px Satoshi, sans-serif';
+              const labelWidth=Math.max(68,c.measureText(label).width+18);
+              const pulse = task?1:1+Math.sin(T*6)*0.08;""",1)
+          s=s.replace('rr(c,-34,-14,68,26,13)','rr(c,-labelWidth/2,-14,labelWidth,26,13)')
+          s=s.replace('c.fillText(floorTableLabel(t),0,4)','c.fillText(label,0,4)');p.write_text(s)
+          p=Path('render/frame.js');s=p.read_text();old='  // etiquetas de puesto por encima de clientes y burbujas: siempre legibles';assert old in s
+          s=s.replace(old,"""  if(Game.mode==='service')for(const cu of Game.customers){
+              if(cu.state!=='floorWaitEscort')continue;
+              const task=Game.floor?.tasks.find(t=>t.kind==='escort'&&t.customer===cu.id&&['queued','blocked'].includes(t.state));
+              if(!task)continue;
+              c.save();c.font='700 12px system-ui';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#083f43';c.fillStyle='#fffdf8';
+              c.strokeText('Esperando camarero',cu.x,cu.y-145);c.fillText('Esperando camarero',cu.x,cu.y-145);c.restore();
+            }
+          """+old,1);p.write_text(s)
+          paths=list(Path('.').glob('*.js'))+list(Path('.').glob('*.mjs'))+list(Path('render').glob('*.js'))+list(Path('sim').glob('*.js'))+[Path('index.html')]
+          for p in paths:
+            s=p.read_text();s=re.sub(r'\?v=27\.[0-5](?!\d)','?v=27.6',s)
+            if p.name in ['version.js','index.html']:s=re.sub(r'v27\.[0-5](?!\d)','v27.6',s)
+            p.write_text(s)
+          Path('cleaning-ownership.test.mjs').write_text('''import {test} from 'node:test';
+          import assert from 'node:assert/strict';
+          import {createService,requestTask,assignTasks,stepTasks} from './service-tasks.mjs';
+          test('exclusive player cleaning and idempotent clicks',()=>{
+            const s=createService('test',[{id:'p1',player:true,x:0,y:0,speed:100,can:['clean']},{id:'p2',player:true,x:0,y:0,speed:100,can:['clean']}],[{id:'table0',state:'dirty'}]);
+            const input={kind:'clean',target:'table0',requestedBy:'p1',legs:[{x:1,y:1,duration:1}]};
+            const id=requestTask(s,input);
+            assert.equal(requestTask(s,{...input,requestedBy:'p2'}),null);
+            assert.equal(requestTask(s,input),id);assert.equal(s.tasks.length,1);
+            assignTasks(s,(a,p)=>[p]);assert.equal(s.tasks[0].actor,'p1');
+            assert.equal(requestTask(s,{...input,requestedBy:'p2'}),null);
+            stepTasks(s,3,(a,p)=>[p]);assert.equal(s.tables[0].state,'free');
+          });
+          ''')
+      - name: Validate
+        run: |
+          node --check floor-service.js
+          node --check render/tables.js
+          node --check render/frame.js
+          node --test cleaning-ownership.test.mjs
+          node --test service-tasks.test.mjs
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' '*.mjs' index.html render sim
+          git diff --cached --quiet || git commit -m 'v27.6: exclusive chained cleaning, contextual status and removal of terrace panel'
+          git push origin HEAD:main
