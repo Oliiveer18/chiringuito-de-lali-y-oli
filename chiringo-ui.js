@@ -13,124 +13,12 @@ import { escapeHtml, eur, stars } from './util.js?v=27.6';
 import { postEffect, influEffect, postMetrics } from './social-model.js?v=27.6';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
 import { POSTS, INFLU } from './v12.js?v=27.6';
-
-const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
-const KIOSCO = 'El Charco Azul';
-const MIL = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000];
-const MIL_PRIZE = { 100: 'Influencer mediano', 250: 'Vídeo viral', 500: 'Influencer grande' };
-const POST_ICON = { atardecer: '🌅', algodon: '🍭', show: '🎤', viral: '🎬', encuesta: '🗳️', concurso: '🎁' };
-const POST_IMG = { papas: 'papas', barraquito: 'barraquito' };
-const NAMES = ['Marta', 'Javi', 'Cristina', 'Hugo', 'Lucía', 'Dani', 'Sofía', 'Pablo', 'Irene', 'Álvaro', 'Nuria', 'Tom', 'Anna', 'Lars', 'Carmen', 'Iker'];
-const CITIES = ['Madrid', 'Bilbao', 'Sevilla', 'La Laguna', 'Santa Cruz', 'Londres', 'Mánchester', 'Berlín', 'Dublín', 'Valencia', 'Las Palmas', 'Oslo'];
-const SKINS_ = ['#f2c9a5', '#e0a97e', '#c58a5c', '#8d5a3b', '#f6d5b8'];
-const SHIRTS = ['#e8603c', '#0f8b8d', '#f5b82e', '#7a5bd6', '#3f8a3a', '#d6342a', '#2a6b8a', '#f4a6c0'];
-const HAIRS = ['corto', 'largo', 'coleta', 'flequillo', 'moño', 'rastas', 'calvo'];
-const HAIR_COL = ['#2a211c', '#6b4226', '#d9b35a', '#b8321f', '#8b8b8b'];
-const HATS = [null, null, 'sombrero', 'gorra', 'gafas'];
-const REPLY = {
-  disculpa: 'Gracias por avisarnos y perdón por las molestias. Mañana lo hacemos mejor.',
-  descuento: 'Lo sentimos mucho. Os invitamos con un descuento en la próxima visita.'
-};
+import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=27.6';
 
 let sel = null, status = null, flashId = null, flashT = 0, prev = { init: false }, prevDay = null;
 
-function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
-function pick(arr, text, salt) { return arr[hash(text + '|' + salt) % arr.length]; }
-
-const AV = {};
-function avatar(text) {
-  if (AV[text]) return AV[text];
-  try {
-    const cv = document.createElement('canvas'); cv.width = cv.height = 88; const c = cv.getContext('2d');
-    c.fillStyle = '#f6e8cf'; c.beginPath(); c.arc(44, 44, 42, 0, 7); c.fill();
-    const acc = hash(text + 'acc') % 4 === 0 ? ['gafasSol'] : hash(text + 'acc') % 4 === 1 ? ['pendiente'] : [];
-    drawPerson(c, 44, 140, {
-      shirt: pick(SHIRTS, text, 's'), skin: pick(SKINS_, text, 'k'), hat: pick(HATS, text, 'h'),
-      look: { hair: { style: pick(HAIRS, text, 'p'), color: pick(HAIR_COL, text, 'c') }, build: 1, height: 1, walk: {}, acc },
-      type: 'staff', scale: 1.35
-    });
-    AV[text] = cv.toDataURL();
-  } catch (e) { AV[text] = ''; }
-  return AV[text];
-}
-
-function review(text) {
-  const neg = /tard|falt|caro|decep|chasco|no vimos|no quedaba/i.test(text);
-  const trend = /buscaba|encuesta|acert/i.test(text);
-  const tag = neg ? 'Queja' : trend ? 'Tendencia' : 'Elogio';
-  const h = hash(text);
-  const st = neg ? 1 + h % 2 : trend ? 5 : 4 + h % 2;
-  return { neg, tag, cls: neg ? 'bad' : trend ? 'trend' : 'good', st, name: pick(NAMES, text, 'n'), city: pick(CITIES, text, 'y') };
-}
-
 function setStatus(msg, kind) { status = { msg, kind: kind || '', t: Date.now() }; }
 function flash(id) { flashId = id; flashT = Date.now(); }
-function milestone(f) {
-  const next = MIL.find(m => m > f) || f;
-  const before = [0, ...MIL].filter(m => m <= f).pop();
-  const pct = next > before ? Math.round((f - before) / (next - before) * 100) : 100;
-  return { next, before, pct };
-}
-function arrToday(u) {
-  let a = 0;
-  if (u.socialPostDia === Game.day && POSTS[u.socialPost]) a += (u.socialArr != null ? u.socialArr : POSTS[u.socialPost].arr);
-  if (u.socialInfluContratado && INFLU[u.socialInflu]) a += (u.socialInfluArr != null ? u.socialInfluArr : INFLU[u.socialInflu].arr);
-  return a;
-}
-const pendSum = u => (u.socialPend || []).reduce((s, e) => s + (e.n || 0), 0);
-function ctxOf(u) {
-  return {
-    f: u[FOL] || 0, rating: u[RAT] || 3,
-    trendId: (u.socialTrendDia === Game.day) ? u.socialTrend : null,
-    prevId: (u.socialPostDia === Game.day - 1) ? u.socialPost : null
-  };
-}
-
-function header(u) {
-  const f = u[FOL] || 0, r = u[RAT] || 3, m = milestone(f), a = Math.round(arrToday(u) * 100), pend = pendSum(u);
-  const prize = MIL_PRIZE[m.next] && m.next > f ? ' · desbloquea ' + MIL_PRIZE[m.next] : '';
-  return '<div class="rd-head"><div class="rd-logo">🏝️</div><div><div class="rd-n1">' + KIOSCO + '</div>' +
-    '<div class="rd-sub"><span>👥 <b>' + f + '</b> seguidores' + (pend ? ' <span class="rd-pend">(+' + pend + ' al cierre)</span>' : '') + '</span><span>👁️ <b>' + ((u.socialStats && u.socialStats.reach) || 0) + '</b> alcance</span><span>💬 <b>' + ((u.socialStats && u.socialStats.interactions) || 0) + '</b> interacciones</span></div></div>' +
-    '<div class="rd-aff"><small>Afluencia hoy</small>' + (a ? '+' + a + '%' : '—') + '</div></div>' +
-    '<div class="rd-prog"><div class="rd-prog-t"><span>Siguiente hito: <b>' + m.next + '</b> seguidores' + prize + '</span><span>' + (m.next > f ? 'faltan ' + (m.next - f) : '¡máximo!') + '</span></div>' +
-    '<div class="rd-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + m.pct + '"><i style="width:' + m.pct + '%"></i></div></div>';
-}
-
-function todayCard(u, posted) {
-  const money = Game.money, day = Game.day;
-  const tr = u.socialTrend;
-  let h = '<div class="rd-today"><div class="rd-h">Hoy · día ' + day + '</div>';
-  h += '<div class="rd-line"><span>📈</span><div>' + (tr && ITEMS[tr] && u.socialTrendDia === day
-    ? 'Tendencia: <b>' + ITEMS[tr].name + '</b>. Vende 3 o más y publícalo para ganar seguidores.'
-    : 'Hoy no hay ninguna tendencia.') + '</div></div>';
-  const ik = u.socialInflu, I = ik && INFLU[ik];
-  if (I && u.socialInfluDia === day && !u.socialInfluContratado) {
-    const okReq = I.req(), poor = money < I.cost, c = ctxOf(u), ie = influEffect({ I, f: c.f, rating: c.rating });
-    h += '<div class="rd-line"><span>🤝</span><div><b>Influencer · ' + I.name + '</b><br><span class="rd-mut">' + I.cost + ' € · +' + Math.round(ie.arr * 100) + '% afluencia · +' + ie.followers + ' seguidores (prestados: se van antes)' +
-      (okReq ? '' : ' · 🔒 ' + I.reqTxt) + '</span></div><button class="btn sm primary" data-influ="1" ' + (poor || !okReq ? 'disabled' : '') + '>' + (poor && okReq ? 'Faltan ' + (I.cost - money) + ' €' : 'Contratar') + '</button></div>';
-  } else if (u.socialInfluContratado && I) {
-    h += '<div class="rd-line"><span>🤝</span><div>✅ Colaboración cerrada con <b>' + I.name + '</b>.</div></div>';
-  } else h += '<div class="rd-line"><span>🤝</span><div>Hoy no hay ofertas de influencers.</div></div>';
-  const P = posted && POSTS[u.socialPost];
-  h += '<div class="rd-line rd-pub ' + (posted ? 'ok' : '') + '"><span>' + (posted ? '✅' : '⭕') + '</span><div>' +
-    (posted ? '<b>Ya has publicado hoy</b> · ' + (P ? P.name : '') : '<b>Aún no has publicado hoy</b><br><span class="rd-mut">Elige una publicación abajo.</span>') + '</div></div>';
-  if (posted && u.socialPost === 'encuesta' && ITEMS[u.socialPoll]) h += '<div class="rd-line"><span>🗳️</span><div>Ha ganado: <b>' + ITEMS[u.socialPoll].name + '</b>. Vended 3 o más.</div></div>';
-  if ((u.socialIdle || 0) >= 1 && !posted) h += '<div class="rd-line"><span>⚠️</span><div>Lleváis ' + u.socialIdle + ' día(s) sin publicar: desde el segundo se pierden seguidores.</div></div>';
-  return h + '</div>';
-}
-
-function ledger(u) {
-  const r = u.socialReport; if (!r) return '';
-  const rows = (a, sg) => a.length ? a.map(x => '<li><span>' + escapeHtml(x.k) + '</span><b>' + sg + x.n + '</b></li>').join('') : '<li class="rd-mut">Nada</li>';
-  return '<div class="rd-h">Balance del último cierre · ' + (r.net >= 0 ? '+' : '') + r.net + ' seguidores</div><div class="rd-ledger">' +
-    '<div class="rd-col good"><h5>Ganados +' + r.gainSum + '</h5><ul>' + rows(r.gains, '+') + '</ul></div>' +
-    '<div class="rd-col bad"><h5>Perdidos −' + r.lossSum + '</h5><ul>' + rows(r.losses, '−') + '</ul></div></div>';
-}
-
-function postIcon(id) {
-  const k = POST_IMG[id];
-  return k && ICON_URL[k] ? '<img src="' + ICON_URL[k] + '" alt="">' : '<span>' + (POST_ICON[id] || '📣') + '</span>';
-}
 
 function postCard(id, P, posted, money, c) {
   const ok = P.req ? P.req() : true, poor = money < P.cost;
@@ -158,27 +46,6 @@ function previewPanel(u, posted, c) {
     '<li>📊 Alcance ×' + fx.reach.toFixed(2).replace('.', ',') + ' · interacción ×' + fx.eng.toFixed(2).replace('.', ',') + (fx.match ? ' · encaja con la tendencia 🔥' : '') + (fx.fat < 1 ? ' · repetida: ×0,6' : '') + '</li></ul>' +
     '<div class="rd-prev-b"><button class="btn sm primary" data-post="' + sel + '" ' + (poor || !ok ? 'disabled' : '') + '>' + (poor ? 'Faltan ' + (P.cost - money) + ' €' : 'Confirmar y publicar') + '</button>' +
     '<button class="btn sm" data-selx="1">Cancelar</button></div></div>';
-}
-
-function feed(u) {
-  const cms = u.socialComments || [];
-  if (!cms.length) return '<div class="rd-h">Comentarios</div><p class="rd-mut">Todavía no hay comentarios. Aparecerán al cerrar el primer día.</p>';
-  const rep = u.socialReply, ayer = (u.socialPostDia === Game.day - 1 && POSTS[u.socialPost]) ? POSTS[u.socialPost].name : null;
-  let h = '<div class="rd-h">Reseñas generales y respuestas</div><div class="rd-feed">';
-  cms.forEach((c, i) => {
-    const r = review(c), av = avatar(c);
-    const about = r.neg ? 'el servicio de ayer' : r.trend ? 'la tendencia de ayer' : ayer ? 'tu publicación «' + ayer + '»' : 'la jornada de ayer';
-    const likes = 1 + hash(c) % Math.max(3, Math.round((u[FOL] || 0) / 15));
-    const replied = rep && rep.text === c && cms.indexOf(c) === i && REPLY[rep.kind];
-    const canReply = i === 0 && r.neg && !u.socialRespondido && !replied;
-    h += '<div class="rd-rev"><div class="rd-rev-top">' + (av ? '<img class="rd-av" src="' + av + '" alt="">' : '<div class="rd-av">🙂</div>') +
-      '<div class="rd-who"><b>' + r.name + '</b><span class="rd-mut">' + r.city + ' · sobre ' + escapeHtml(about) + '</span></div>' +
-      '<span class="rd-tag ' + r.cls + '">' + r.tag + '</span></div><p class="rd-txt">“' + escapeHtml(c) + '”</p><div class="rd-mut">❤️ ' + likes + ' me gusta · 💬 ' + (replied ? 1 : 0) + '</div>';
-    if (replied) h += '<div class="rd-reply"><b>🏝️ ' + KIOSCO + '</b><br>' + REPLY[rep.kind] + '</div>';
-    if (canReply) h += '<div class="rd-reply-do"><span class="rd-mut">Responder (si no, perdéis seguidores mañana):</span><button class="btn sm teal" data-resp="disculpa">Disculparos</button><button class="btn sm primary" data-resp="descuento" ' + (Game.money < 50 ? 'disabled' : '') + '>Descuento · 50 €</button></div>';
-    h += '</div>';
-  });
-  return h + '</div>';
 }
 
 function render(force) {
@@ -279,92 +146,12 @@ if (body) new MutationObserver(() => render(false)).observe(body, { childList: t
 setInterval(() => render(false), 400);
 setInterval(() => { if (Net.role !== 'guest') hito(); }, 1000);
 
-const css = `
-.rd{padding-bottom:6px}
-.rd-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,var(--teal-d),var(--teal));color:#fff}
-.rd-logo{width:52px;height:52px;border-radius:50%;background:var(--sand);display:grid;place-items:center;font-size:26px;flex:none;border:3px solid var(--gold)}
-.rd-n1{font:600 19px/1.1 var(--font-d)}
-.rd-sub{font-size:12.5px;display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:4px}
-.rd-pend{opacity:.85;font-size:11.5px}
-.rd-stars{color:var(--gold);letter-spacing:1px}
-.rd-head .rd-stars{color:#ffe08a}
-.rd-aff{margin-left:auto;text-align:center;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.16);font:600 20px/1.1 var(--font-d)}
-.rd-aff small{display:block;font:800 10px var(--font);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
-.rd-prog{margin:10px 0 12px}
-.rd-prog-t{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--ink-2);margin-bottom:4px}
-.rd-bar{height:10px;border-radius:99px;background:var(--sand-2);overflow:hidden;border:1px solid var(--line)}
-.rd-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--coral));border-radius:99px;transition:width .6s}
-.rd-h{margin:14px 0 8px;font:800 11px var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
-.rd-mut{color:var(--ink-2);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none}
-.rd-today{padding:4px 14px 6px;border-radius:16px;background:var(--sand);border:1px solid var(--line)}
-.rd-today .rd-h{margin:10px 0 4px}
-.rd-line{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
-.rd-line:last-child{border-bottom:0}
-.rd-line>span:first-child{font-size:20px;flex:none;width:26px;text-align:center}
-.rd-line>div{flex:1;min-width:0}
-.rd-pub.ok{color:var(--good)}
-.rd-pub.ok b{background:#dcf1d8;padding:2px 8px;border-radius:99px}
-.rd-ledger{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rd-col{padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--paper)}
-.rd-col h5{margin:0 0 6px;font:600 14px var(--font-d)}
-.rd-col.good h5{color:var(--good)}.rd-col.bad h5{color:var(--bad)}
-.rd-col ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:12.5px}
-.rd-col li{display:flex;justify-content:space-between;gap:8px}
-.rd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.rd-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:16px;background:var(--paper);border:2px solid var(--line);cursor:pointer;transition:transform .12s,border-color .15s,box-shadow .15s;min-height:44px}
-.rd-card:hover{box-shadow:var(--sh-1)}
-.rd-card:active{transform:scale(.97)}
-.rd-card.sel{border-color:var(--coral);box-shadow:0 0 0 3px rgba(232,96,60,.2)}
-.rd-card.locked{background:var(--sand);opacity:.7;cursor:not-allowed}
-.rd-card.locked .rd-ico{filter:grayscale(1)}
-.rd-card.done{opacity:.6}
-.rd-card.flash{animation:rdpop .7s ease;border-color:var(--good);opacity:1}
-.rd-ico{width:48px;height:48px;border-radius:12px;background:var(--sand);display:grid;place-items:center;font-size:26px}
-.rd-ico img{width:40px;height:40px;object-fit:contain}
-.rd-pn{font:600 14.5px/1.2 var(--font-d)}
-.rd-meta{display:flex;flex-wrap:wrap;gap:4px}
-.rd-meta span{padding:1px 8px;border-radius:99px;background:var(--sand-2);font-size:11.5px;font-weight:800}
-.rd-lock{font-size:11.5px;color:var(--bad);font-weight:700}
-.rd-warn{font-size:11.5px;color:var(--warn);font-weight:700}
-.rd-ok{font-size:12px;color:var(--good);font-weight:800}
-.rd-prev{margin-top:10px;padding:12px 14px;border-radius:16px;background:#fff4dc;border:1px solid #f0cf86;animation:toastin .25s ease}
-.rd-prev-h{display:flex;flex-direction:column;gap:2px}
-.rd-prev ul{margin:8px 0;padding-left:0;list-style:none;font-size:13px;display:grid;gap:4px}
-.rd-prev-b{display:flex;gap:8px;flex-wrap:wrap}
-.rd-feed{display:grid;gap:10px}
-.rd-rev{padding:12px;border-radius:16px;background:var(--paper);border:1px solid var(--line)}
-.rd-rev-top{display:flex;gap:10px;align-items:center}
-.rd-av{width:44px;height:44px;border-radius:50%;flex:none;background:var(--sand-2);display:grid;place-items:center}
-.rd-who{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13.5px}
-.rd-who .rd-stars{font-size:13px}
-.rd-tag{padding:2px 10px;border-radius:99px;font-size:11px;font-weight:800;background:var(--sand-2)}
-.rd-tag.bad{background:#fbdcd5;color:#a3321f}.rd-tag.good{background:#dcf1d8;color:#2d6a29}.rd-tag.trend{background:#d6f0f0;color:var(--teal-d)}
-.rd-txt{margin:8px 0 0;font-size:13.5px}
-.rd-reply{margin:8px 0 0 18px;padding:8px 12px;border-radius:12px;background:#e6f4f4;border-left:4px solid var(--teal);font-size:12.5px}
-.rd-reply-do{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
-.rd-status{position:sticky;top:0;z-index:5;margin-bottom:8px;padding:10px 14px;border-radius:12px;background:#eef3f3;border:1px solid var(--line-2);font-weight:700;font-size:13px;animation:rdpop .5s ease}
-.rd-status.good{background:#dcf1d8;border-color:#bfe0b8;color:#2d6a29}
-.rd-status.bad{background:#fbdcd5;border-color:#f0b4a6;color:#a3321f}
-@keyframes rdpop{0%{transform:scale(.94)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
-@media (max-width:640px){.rd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rd-aff{margin-left:0}.rd-ledger{grid-template-columns:1fr}}
-`;
-const st = document.createElement('style'); st.id = 'rd-style'; st.textContent = css; document.head.append(st);
+const rdSheet = document.createElement('link');
+rdSheet.id = 'rd-style';
+rdSheet.rel = 'stylesheet';
+rdSheet.href = 'chiringo-ui-css.css?v=27.6';
+document.head.append(rdSheet);
 
-function archiveHtml(u) {
-  const records = Array.isArray(u.chiringoArchive) ? u.chiringoArchive : [];
-  let h = '<section class="cs-timeline" aria-label="Historial de publicaciones"><h3>Tu perfil · Publicaciones</h3><p class="rd-mut">Historial de las últimas 60 publicaciones, registrado desde esta actualización. Las métricas son resultados calculados por el juego.</p>';
-  if (!records.length) h += '<p class="cs-empty">Tu próxima publicación aparecerá aquí. Elige una de las opciones de arriba para prepararla.</p>';
-  for (const r of [...records].reverse()) {
-    const P = POSTS[r.post]; if (!P) continue;
-    const label = escapeHtml(P.name), business = escapeHtml(u.kioskName || 'El Charco Azul');
-    const m = r.metrics;
-    h += '<article class="cs-post"><header><div class="cs-avatar">🏝️</div><div><b>' + business + '</b><small>Temporada ' + r.season + ' · Día ' + r.day + ' · ' + (r.cost ? 'Campaña' : 'Orgánica') + '</small></div></header>';
-    h += '<div class="cs-art cs-art-' + r.post + '"><span>' + postIcon(r.post) + '</span><strong>' + label + '</strong><small>Tenerife · Ilustración de la publicación</small></div>';
-    h += '<div class="cs-post-body"><p>' + escapeHtml(P.desc) + '</p><p class="cs-metrics">' + (m ? '♡ ' + m.likes + ' me gusta · ' + m.comments + ' comentarios estimados · Alcance ' + m.reach : 'Resultados pendientes del cierre') + '</p>';
-    h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Previsión de afluencia: +' + Math.round(r.arr * 100) + '%') + '</p></div>' + photoThread(r) + '</article>';
-  }
-  return h + '</section>';
-}
 function captureArchive() {
   if (Net.role === 'guest' || !['plan','service','report'].includes(Game.mode)) return;
   const u = Game.upgrades;
@@ -383,18 +170,8 @@ function captureArchive() {
   if (Plan.tab === TAB && Game.mode === 'plan') render(true);
 }
 setInterval(captureArchive, 500);
-const csStyle = document.createElement('style');
-csStyle.textContent = `
-.rd{max-width:940px;margin:auto;color:#263c40}.rd .rd-h{letter-spacing:.06em;font-size:12px}
-.cs-cover{display:flex;flex-direction:column;justify-content:end;min-height:150px;padding:22px;border-radius:20px 20px 0 0;color:white;background:radial-gradient(ellipse at 80% 10%,#f3c77c 0,transparent 35%),linear-gradient(145deg,#126971,#073f48)}
-.cs-cover>span{font-size:11px;letter-spacing:.22em;font-weight:800}.cs-cover strong{font:600 clamp(22px,5vw,32px)/1.2 var(--font-d);margin:8px 0}.cs-cover small{opacity:.9}
-.rd .rd-head{border-radius:0 0 18px 18px;background:#fff;color:#164e55;border:1px solid var(--line);border-top:0;padding:16px}.rd .rd-aff{background:#e5f2ef}.rd .rd-logo{background:#edf5f1}.cs-rating{font-size:12px;color:#52686b;margin:10px 0}
-.rd .rd-card{border-width:1px;background:white;padding:14px}.rd .rd-card.sel{border:2px solid var(--teal)}.rd .rd-meta{gap:6px}.rd .rd-meta span{background:#edf4f2;color:#244f54}.rd .rd-today{background:#f1f6f4}
-.rd button{min-height:44px}.rd .rd-card:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
-.cs-timeline{margin:24px 0}.cs-timeline>h3{font-size:20px}.cs-empty{border:1px dashed #b2c8c7;padding:20px;border-radius:14px}
-.cs-post{max-width:620px;margin:16px auto;background:#fff;border:1px solid #dce6e2;border-radius:18px;overflow:hidden}.cs-post header{display:flex;gap:10px;align-items:center;padding:14px}.cs-avatar{width:42px;height:42px;border-radius:50%;background:#e5f1ec;display:grid;place-items:center;font-size:22px;flex:none}.cs-post header b{overflow-wrap:anywhere}.cs-post header small{display:block;color:#607477;font-size:11px;margin-top:3px}
-.cs-art{min-height:180px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:#fff;background:linear-gradient(145deg,#136e73,#0b4049)}.cs-art-atardecer{background:linear-gradient(160deg,#eebc76,#ce7964 40%,#216e7a)}.cs-art-show,.cs-art-viral{background:linear-gradient(140deg,#493978,#176e7a)}.cs-art>span{font-size:48px}.cs-art img{width:64px;height:64px;object-fit:contain}.cs-art strong{font:600 24px var(--font-d)}.cs-art small{font-size:10px;opacity:.9}
-.cs-post-body{padding:0 16px 12px}.cs-post-body p{font-size:13px;line-height:1.5}.cs-metrics{font-weight:700;color:#225a60}.rd .rd-feed{max-width:620px;margin:auto}.rd .rd-rev{background:#fff;border-color:#dce6e2}.rd .rd-reply{background:#eaf4ef}
-@media(max-width:440px){.rd .rd-grid{gap:8px}.rd .rd-card{padding:10px}.rd .rd-pn{font-size:13px}.rd .rd-meta span{font-size:11px;padding:3px 6px}.cs-cover{min-height:120px;padding:18px}.cs-art{min-height:160px}.rd .rd-sub{gap:5px 10px}.rd .rd-aff{font-size:18px}}
-`;
-document.head.append(csStyle);
+
+const csSheet = document.createElement('link');
+csSheet.rel = 'stylesheet';
+csSheet.href = 'chiringo-ui-archive.css?v=27.6';
+document.head.append(csSheet);
