@@ -1,0 +1,70 @@
+name: Release 27.4
+on:
+  push:
+    paths: ['.github/workflows/release-27-4.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('floor-service.js'); s=p.read_text(); s=s.replace('const homeY=player?420:560','const homeY=player?470:560'); p.write_text(s)
+          p=Path('render/characters.js'); s=p.read_text()
+          if 'import { clamp }' not in s: s='import { clamp } from "../util.js?v=27.1";\n'+s
+          s='import { Net } from "../state.js?v=27.1";\n'+s
+          s=s.replace('c.ellipse(a.x,a.y+2,18,6,0,0,7)','c.ellipse(a.x,a.y-132,14,5,0,0,7)')
+          old='  // brazos según la actividad (mejora 2)'
+          assert old in s
+          s=s.replace(old,'''  if(o.uniform){
+            c.fillStyle=o.uniform==='limpiador'?'#334155':o.uniform==='cocina'?'#263b42':'#0f6268';
+            rr(c,-12*build,-54,24*build,27,3); c.fill();
+            c.strokeStyle='#f5efe4'; c.lineWidth=2;
+            c.beginPath(); c.moveTo(-8,-65); c.lineTo(-6,-54); c.moveTo(8,-65); c.lineTo(6,-54); c.stroke();
+            c.fillStyle='#fffdf8'; c.fillRect(-6,-47,12,5);
+          }
+          '''+old)
+          old="type:'staff',pose,t:T,ph:a.phase"
+          assert old in s
+          s=s.replace(old,"type:'staff',uniform:a.player?(Net.roles[a.id]||'barra'):a.role==='cocinero'?'cocina':a.role,hat:(a.role==='cocinero'||a.player&&Net.roles[a.id]==='cocina')?'chef':a.role==='limpiador'?'gorra':'pañuelo',pose,t:T,ph:a.phase")
+          p.write_text(s)
+          p=Path('render/scene.js'); s=p.read_text()
+          s='import { drawFloorWorker } from "./characters.js?v=27.1";\n'+s
+          old='  // barra\n'
+          assert old in s
+          s=s.replace(old,'''  // Interior workers are drawn before the counter front.
+          if(Game.mode==='service'&&Game.floor) for(const a of Game.floor.actors){
+            if(a.player&&!a.task&&!a.returning&&Math.hypot(a.x-a.home.x,a.y-a.home.y)<5) drawFloorWorker(c,a,T);
+          }
+          '''+old,1); p.write_text(s)
+          p=Path('render/frame.js'); s=p.read_text()
+          old='for(const a of Game.floor.actors)ents.push'
+          assert old in s
+          s=s.replace(old,'for(const a of Game.floor.actors)if(!(a.player&&!a.task&&!a.returning&&Math.hypot(a.x-a.home.x,a.y-a.home.y)<5))ents.push'); p.write_text(s)
+          for p in list(Path('.').glob('*.js'))+list(Path('render').glob('*.js'))+list(Path('sim').glob('*.js'))+[Path('index.html')]:
+            s=p.read_text()
+            for v in ['27.1','27.2','27.3']: s=s.replace('?v='+v,'?v=27.4')
+            if p.name in ['index.html','version.js']:
+              for v in ['v27.1','v27.2','v27.3']: s=s.replace(v,'v27.4')
+            p.write_text(s)
+      - name: Check syntax and commit
+        run: |
+          node --check render/characters.js
+          node --check render/scene.js
+          node --check render/frame.js
+          node --check floor-service.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' index.html render sim
+          git diff --cached --quiet || git commit -m 'v27.4: interior counter layering, staff uniforms and consistent version URLs'
+          git push origin HEAD:main
