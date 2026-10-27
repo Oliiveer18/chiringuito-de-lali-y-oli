@@ -1,0 +1,86 @@
+name: Release 27.5
+on:
+  push:
+    paths: ['.github/workflows/release-27-5.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply targeted patches
+        shell: python
+        run: |
+          from pathlib import Path
+          def replace(path, old, new):
+            p=Path(path); s=p.read_text(); assert old in s, path+': baseline mismatch'; p.write_text(s.replace(old,new,1))
+          replace('floor-service.js', 'function route(a,p){', '''function route(a,p){
+            const inside=q=>q.x>=20&&q.x<=540&&q.y>=150&&q.y<540;
+            if(a.player&&(inside(a)||inside(p))){
+              const exit={x:550,y:560}, door={x:550,y:470};
+              let prefix=[], suffix=[], start={x:a.x,y:a.y}, end={x:p.x,y:p.y};
+              if(inside(a)){prefix=[{x:550,y:a.y},door,exit];start=exit;}
+              if(inside(p)){suffix=[door,{x:550,y:p.y},{x:p.x,y:p.y}];end=exit;}
+              const outside=navFind(start.x,start.y,end.x,end.y);
+              let prev=start;
+              for(const q of outside){if(!navLineFree(prev.x,prev.y,q.x,q.y))return null;prev=q;}
+              return [...prefix,...outside,...suffix];
+            }
+          ''')
+          replace('floor-service.js','function reserve(c){','''function reserve(c){
+            if(!Game.floor.actors.some(a=>!a.player&&a.can?.includes('escort')&&a.auto?.includes('escort')))return;
+          ''')
+          replace('sim/day.js', "        c.patience-=dt*0.3*(PERSONALITIES[c.personality]||PERSONALITIES.tranquilo).patMul;", """        c.patience-=dt*0.3*(PERSONALITIES[c.personality]||PERSONALITIES.tranquilo).patMul;
+                  if(c.patience<=0){
+                    c.state='leave';c.act='walk';c.tLeave=Game.t;
+                    leaveQueue(c);Game.dayStats.lostPatience++;Game.dayStats.lost++;
+                    recordVisit(c,{lost:'espera'});regularOutcome(c,0);addSat(0);
+                  }""")
+          replace('canvas.js', "  const styles=getComputedStyle(root);", """  root.style.setProperty('--top-ui',top+'px');
+            root.style.setProperty('--bottom-ui',bottom+'px');
+            const styles=getComputedStyle(root);""")
+          css='''
+          /* v27.5: compact service HUD without removing controls */
+          body.playing #hud{gap:4px!important;padding:4px max(6px,env(safe-area-inset-right)) 4px max(6px,env(safe-area-inset-left))!important;align-items:center!important;}
+          body.playing #hud .hud-group{gap:4px!important;padding:3px 6px!important;}
+          body.playing #hud .hud-clock,body.playing #hud .hud-money{font-size:15px!important;}
+          body.playing #hud button{min-width:44px!important;min-height:44px!important;}
+          body.playing #hud .hud-actions{flex-wrap:nowrap!important;gap:3px!important;}
+          body.playing #btn-sound{display:inline-flex!important;}
+          body.playing #floor-board{position:absolute;right:8px;top:calc(100% + 4px);background:#083f43;color:white;border-radius:10px;padding:6px 10px;max-width:min(90vw,340px)!important;}
+          body.playing #floor-board summary{min-height:30px;cursor:pointer;}
+          body.playing #floor-board[open]>div{max-height:35vh!important;overflow:auto;}
+          body.playing #stockbar{flex-wrap:nowrap!important;overflow-x:auto!important;padding-top:4px!important;padding-bottom:max(4px,env(safe-area-inset-bottom))!important;gap:5px!important;}
+          body.playing #stockbar .stock{height:32px!important;font-size:13px!important;padding:0 8px!important;}
+          body.playing #hint{animation:service-help-away .3s 7s forwards;}
+          body.portrait.playing .rotate-pill{animation:service-help-away .3s 5s forwards!important;}
+          @keyframes service-help-away{to{opacity:0;visibility:hidden;pointer-events:none;}}
+          @media(orientation:landscape){body.playing #hud{flex-wrap:nowrap!important;}body.playing #hud .hud-role{max-width:110px;font-size:10px;}body.playing #hud .hud-weather{font-size:10px;}}
+          '''
+          p=Path('style.css');p.write_text(p.read_text()+css)
+          import re
+          paths=list(Path('.').glob('*.js'))+list(Path('.').glob('*.mjs'))+list(Path('sim').glob('*.js'))+list(Path('render').glob('*.js'))+[Path('index.html')]
+          for p in paths:
+            s=p.read_text();s=re.sub(r'\?v=27\.[0-4](?!\d)','?v=27.5',s)
+            if p.name in ['index.html','version.js']:s=re.sub(r'v27\.[0-4](?!\d)','v27.5',s)
+            if p.name=='index.html':s=re.sub(r'style\.css\?v=[^\"]+','style.css?v=27.5',s)
+            p.write_text(s)
+      - name: Syntax validation
+        run: |
+          find sim render -name '*.js' -print0 | xargs -0 -n1 node --check
+          node --check floor-service.js
+          node --check canvas.js
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' '*.mjs' index.html style.css sim render
+          git diff --cached --quiet || git commit -m 'v27.5: cleaning routes, service reservation guards, arrival patience and compact HUD'
+          git push origin HEAD:main
