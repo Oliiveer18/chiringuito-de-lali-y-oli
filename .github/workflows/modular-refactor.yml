@@ -1,0 +1,71 @@
+name: Isolated simulation and renderer refactor
+on:
+  push:
+    branches: [refactor/modular-sim-render]
+    paths: ['tools/refactor-modules.mjs', 'tools/check-refactor.mjs', '.github/workflows/modular-refactor.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: modular-refactor
+  cancel-in-progress: false
+jobs:
+  refactor:
+    if: github.ref == 'refs/heads/refactor/modular-sim-render'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve baseline and protect save format
+        run: |
+          mkdir -p /tmp/refactor-baseline
+          rsync -a --exclude=.git --exclude=node_modules ./ /tmp/refactor-baseline/
+          sha256sum state.js saves.js config.js index.html > /tmp/refactor-protected.sha256
+          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs
+      - name: Install analysis and browser tools outside the repository
+        run: |
+          npm install --prefix /tmp/refactor-deps --no-save @babel/parser@7 @babel/traverse@7 @babel/types@7 playwright
+          node /tmp/refactor-deps/node_modules/playwright/cli.js install --with-deps chromium webkit
+      - name: Extract declarations and audit their syntax trees
+        run: |
+          node tools/refactor-modules.mjs
+          find sim render -name '*.js' -print0 | xargs -0 -n 1 node --check
+          node --check sim.js
+          node --check render.js
+          sha256sum -c /tmp/refactor-protected.sha256
+          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs
+      - name: Compare real browser behavior, saves, exports and canvas pixels
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory /tmp/refactor-baseline >/tmp/refactor-baseline-http.log 2>&1 &
+          python3 -m http.server 8766 --bind 127.0.0.1 >/tmp/refactor-candidate-http.log 2>&1 &
+          for n in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/ >/dev/null && curl -fsS http://127.0.0.1:8766/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node tools/check-refactor.mjs
+      - name: Commit verified simulation and renderer separately to the isolated branch
+        run: |
+          test "$GITHUB_REF" = refs/heads/refactor/modular-sim-render
+          sha256sum -c /tmp/refactor-protected.sha256
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sim.js sim/
+          git commit -m 'refactor(sim): extract unchanged declarations into thematic ES modules'
+          git add render.js render/ diagnostics/modular-refactor.json diagnostics/modular-refactor-tests.json
+          git commit -m 'refactor(render): extract unchanged drawing modules and record equivalence checks'
+          git push origin HEAD:refs/heads/refactor/modular-sim-render
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: modular-refactor-review
+          path: |
+            diagnostics/modular-refactor*.json
+            sim/
+            render/
+            /tmp/refactor-baseline-http.log
+            /tmp/refactor-candidate-http.log
