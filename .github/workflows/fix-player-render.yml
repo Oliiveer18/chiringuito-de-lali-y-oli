@@ -1,0 +1,43 @@
+name: Fix player render
+on:
+  push:
+    paths: ['.github/workflows/fix-player-render.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply targeted corrections
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('render/characters.js')
+          s = p.read_text()
+          if 'import { clamp }' not in s:
+              s = 'import { clamp } from "../util.js?v=27.1";\n' + s
+          s = s.replace('c.ellipse(a.x,a.y+2,18,6,0,0,7)', 'c.ellipse(a.x,a.y-132,14,5,0,0,7)')
+          p.write_text(s)
+          p = Path('floor-service.js')
+          s = p.read_text()
+          assert 'const homeY=player?470:560' in s, 'Unexpected floor-service baseline'
+          s = s.replace('const homeY=player?470:560', 'const homeY=player?420:560')
+          p.write_text(s)
+      - name: Check syntax
+        run: |
+          node --check render/characters.js
+          node --check floor-service.js
+      - name: Commit corrections
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add render/characters.js floor-service.js
+          git diff --cached --quiet || git commit -m 'Fix missing clamp import, interior player home and overhead ring'
+          git push origin HEAD:main
