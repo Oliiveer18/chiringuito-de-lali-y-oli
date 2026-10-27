@@ -11,6 +11,8 @@ async function run(browser,url,viewport,coop){
   await context.route('**/api.fontshare.com/**',r=>r.abort());
   await context.addInitScript(()=>{
     let seed=123456789;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    let uuidSequence=0;
+    Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> '00000000-0000-4000-8000-'+(++uuidSequence).toString(16).padStart(12,'0')});
     const OriginalDate=Date;globalThis.Date=class extends OriginalDate{constructor(...args){super(...(args.length?args:[1700000000000]));}static now(){return 1700000000000;}};
     Object.defineProperty(performance,'now',{value:()=>0});
     const nativeRaf=window.requestAnimationFrame.bind(window);
