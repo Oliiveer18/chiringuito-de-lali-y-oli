@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: read
 concurrency:
   group: modular-refactor
   cancel-in-progress: false
@@ -26,19 +27,19 @@ jobs:
           mkdir -p /tmp/refactor-baseline
           rsync -a --exclude=.git --exclude=node_modules ./ /tmp/refactor-baseline/
           sha256sum state.js saves.js config.js index.html > /tmp/refactor-protected.sha256
-          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs
+          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs 2>&1 | tee /tmp/refactor-baseline-tests.log
       - name: Install analysis and browser tools outside the repository
         run: |
-          npm install --prefix /tmp/refactor-deps --no-save @babel/parser@7 @babel/traverse@7 @babel/types@7 playwright
-          node /tmp/refactor-deps/node_modules/playwright/cli.js install --with-deps chromium webkit
+          npm install --prefix /tmp/refactor-deps --no-save @babel/parser@7 @babel/traverse@7 @babel/types@7 playwright 2>&1 | tee /tmp/refactor-install.log
+          node /tmp/refactor-deps/node_modules/playwright/cli.js install --with-deps chromium webkit 2>&1 | tee /tmp/refactor-browsers.log
       - name: Extract declarations and audit their syntax trees
         run: |
-          node tools/refactor-modules.mjs
-          find sim render -name '*.js' -print0 | xargs -0 -n 1 node --check
+          node tools/refactor-modules.mjs 2>&1 | tee /tmp/refactor-extraction.log
+          find sim render -name '*.js' -print0 | xargs -0 -n 1 node --check 2>&1 | tee /tmp/refactor-syntax.log
           node --check sim.js
           node --check render.js
           sha256sum -c /tmp/refactor-protected.sha256
-          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs
+          node --test management-model.test.mjs service-tasks.test.mjs social-model.test.mjs service-v24.test.mjs 2>&1 | tee /tmp/refactor-candidate-tests.log
       - name: Compare real browser behavior, saves, exports and canvas pixels
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory /tmp/refactor-baseline >/tmp/refactor-baseline-http.log 2>&1 &
@@ -47,7 +48,16 @@ jobs:
             if curl -fsS http://127.0.0.1:8765/ >/dev/null && curl -fsS http://127.0.0.1:8766/ >/dev/null; then break; fi
             sleep 1
           done
-          node tools/check-refactor.mjs
+          node tools/check-refactor.mjs 2>&1 | tee /tmp/refactor-browser-comparison.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: modular-refactor-review
+          path: |
+            diagnostics/modular-refactor*.json
+            sim/
+            render/
+            /tmp/refactor-*.log
       - name: Commit verified simulation and renderer separately to the isolated branch
         run: |
           test "$GITHUB_REF" = refs/heads/refactor/modular-sim-render
@@ -59,13 +69,31 @@ jobs:
           git add render.js render/ diagnostics/modular-refactor.json diagnostics/modular-refactor-tests.json
           git commit -m 'refactor(render): extract unchanged drawing modules and record equivalence checks'
           git push origin HEAD:refs/heads/refactor/modular-sim-render
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: modular-refactor-review
-          path: |
-            diagnostics/modular-refactor*.json
-            sim/
-            render/
-            /tmp/refactor-baseline-http.log
-            /tmp/refactor-candidate-http.log
+      - name: Preserve failure details without pushing failed source changes
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$GITHUB_REF" = refs/heads/refactor/modular-sim-render
+          gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --json status,conclusion,url,headSha,jobs >/tmp/refactor-run-status.json 2>/tmp/refactor-status-error.log || true
+          python3 - <<'PY'
+          import os,json,pathlib
+          logs={}
+          for p in sorted(pathlib.Path('/tmp').glob('refactor-*.log')):
+              text=p.read_text(errors='replace')
+              logs[p.name]={'characters':len(text),'first':text[:10000],'last':text[-6000:]}
+          report={'checksPassed':False,'workflowCommit':os.environ['GITHUB_SHA'],'runId':os.environ['GITHUB_RUN_ID'],'runAttempt':os.environ['GITHUB_RUN_ATTEMPT'],'url':'https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],'logs':logs}
+          for filename,key in [('/tmp/refactor-run-status.json','runAtCapture'),('diagnostics/modular-refactor-tests.json','browserReport'),('diagnostics/modular-refactor.json','extractionReport')]:
+              try: report[key]=json.loads(pathlib.Path(filename).read_text())
+              except (OSError,ValueError): pass
+          pathlib.Path('/tmp/refactor-failure.json').write_text(json.dumps(report,indent=2))
+          PY
+          git fetch origin refs/heads/refactor/modular-sim-render
+          git reset --hard FETCH_HEAD
+          mkdir -p diagnostics
+          cp /tmp/refactor-failure.json diagnostics/modular-refactor-failure.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/modular-refactor-failure.json
+          git diff --cached --quiet || git commit -m 'Record refactor failure details without publishing failed source changes'
+          git push origin HEAD:refs/heads/refactor/modular-sim-render
