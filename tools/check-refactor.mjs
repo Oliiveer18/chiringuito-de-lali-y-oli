@@ -13,13 +13,22 @@ async function run(browser,url,viewport,coop){
     let seed=123456789;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
     const OriginalDate=Date;globalThis.Date=class extends OriginalDate{constructor(...args){super(...(args.length?args:[1700000000000]));}static now(){return 1700000000000;}};
     Object.defineProperty(performance,'now',{value:()=>0});
-    window.requestAnimationFrame=()=>0;window.cancelAnimationFrame=()=>{};
+    const nativeRaf=window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame=fn=>fn.name==='frame'?0:nativeRaf(fn);
     window.__refIntervals=[];window.setInterval=(fn,ms,...args)=>{window.__refIntervals.push({fn,args});return window.__refIntervals.length;};
     window.clearInterval=id=>{window.__refIntervals[id-1]=null;};
   });
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
-    const loaded=async()=>{await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('activas:'));assert(!await page.locator('#ver-title').textContent().then(t=>t.includes('con error:')),'Application module failed to load');};
+    const loaded=async()=>{
+      try{
+        await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('activas:'),null,{polling:100,timeout:30000});
+        assert(!await page.locator('#ver-title').textContent().then(t=>t.includes('con error:')),'Application module failed to load');
+      }catch(error){
+        const detail=await page.evaluate(()=>({title:document.querySelector('#ver-title')?.textContent,errbox:document.querySelector('#errbox')?.textContent})).catch(()=>null);
+        throw new Error('Application loading failed: '+JSON.stringify({url,errors,detail,reason:error.message}),{cause:error});
+      }
+    };
     await page.goto(url,{waitUntil:'domcontentloaded'});await loaded();
     await page.locator('#btn-start').click();await page.locator('.save-browser').getByRole('button',{name:'Nueva partida',exact:true}).click();
     const saved=await page.evaluate(()=>{
@@ -53,10 +62,9 @@ async function run(browser,url,viewport,coop){
     },{coop});
     assert.deepEqual(errors,[],'Browser JavaScript errors');
     assert.equal(await page.locator('#errbox').textContent(),'','In-game error box is not empty');
-    return {saved,samples:samples.map(s=>s.canvas?{...s,canvas:digestPlaceholder(s.canvas)}:s)};
+    return {saved,samples};
   }finally{await context.close();}
 }
-function digestPlaceholder(s){return s;}
 try{
   for(const [engine,type] of [['chromium',chromium],['webkit',webkit]]){
     const browser=await type.launch();try{for(const viewport of [{width:390,height:844},{width:844,height:390}])for(const coop of [false,true]){
