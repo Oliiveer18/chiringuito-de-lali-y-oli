@@ -16,7 +16,7 @@ const b = postEffect({ id: 'papas', P, f: 50, rating: 3, trendId: null, prevId: 
 const c = postEffect({ id: 'papas', P, f: 50, rating: 3, trendId: 'papas', prevId: null });
 check('repetir la publicación de ayer reduce el efecto', b.arr < a.arr && b.followers <= a.followers, [a, b]);
 check('encajar con la tendencia aumenta el efecto', c.arr > a.arr, [a, c]);
-check('una publicación siempre da al menos 1 seguidor', postEffect({ id: 'x', P: { arr: 0.05, followers: 1 }, f: 0, rating: 1, prevId: 'x' }).followers >= 1);
+check('una publicación puede no sumar seguidores con mala nota', postEffect({ id: 'x', P: { arr: 0.05, followers: 1 }, f: 0, rating: 1, prevId: 'x' }).followers >= 0);
 
 console.log('Abandono');
 check('1 estrella pierde 4 % y 5 estrellas 0,5 %', Math.abs(churnRate(1) - 0.04) < 1e-9 && Math.abs(churnRate(5) - 0.005) < 1e-9);

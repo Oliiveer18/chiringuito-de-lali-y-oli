@@ -5,12 +5,12 @@
 import { register } from 'node:module';
 
 const STUBS = {
-  './ui.js': "export const Plan={tab:'compras'};export const toasts=[];export const toast=(t,x,k)=>{toasts.push([t,x,k]);};export const toastLocal=toast;export const updateStockbar=()=>{};",
+  './ui.js': "export const Plan={tab:'compras'};export const toasts=[];export const toast=(t,x,k)=>{toasts.push([t,x,k]);};export const toastLocal=toast;export const updateStockbar=()=>{};export const refreshPlanMoney=()=>{};export const staffAvatar=()=>'data:x';export function renderTab(){};export function showPlan(){};export function hideAll(){};",
   './net.js': "export const sent=[];export const netDirty=()=>{};export const netAct=o=>{sent.push(o);};",
   './sim.js': "export const spawned=[];let n=0;export const spawnCustomer=t=>{spawned.push(t);globalThis.Game.customers.push({id:++n,type:t});};",
   './icons.js': "export const ICON_URL={};export const EXTRA={};",
 };
-const hook = 'const S=' + JSON.stringify(STUBS) + ';export async function resolve(s,c,n){if(S[s])return{url:"data:text/javascript,"+encodeURIComponent(S[s]),shortCircuit:true};return n(s,c);}';
+const hook = 'const S=' + JSON.stringify(STUBS) + ';export async function resolve(s,c,n){const base=s.split("?")[0];const stub=S[s]||S[base];if(stub)return{url:"data:text/javascript,"+encodeURIComponent(stub),shortCircuit:true};return n(s,c);}';
 register('data:text/javascript,' + encodeURIComponent(hook), import.meta.url);
 
 // ---------- DOM mínimo ----------
@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-await import('./coopbridge.js');
-const { Game, Net, gameTimers, tableCount } = await import('./state.js');
-const cfg = await import('./config.js');
-const ui = await import('./ui.js'), net = await import('./net.js'), sim = await import('./sim.js');
-await import('./features.js'); await import('./v12.js'); await import('./v14.js');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=27.9');
+await import('./coopbridge.js?v=27.9');
+const ui = await import('./ui.js?v=27.9'), net = await import('./net.js?v=27.9'), sim = await import('./sim.js?v=27.9');
+await import('./features.js?v=27.9'); await import('./v12.js?v=27.9'); await import('./v14.js?v=27.9');
+const cfg = await import('./config.js?v=27.9');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -84,7 +84,7 @@ for (let d = 1; d <= 15; d++) {
     tick(); tick();
     for (let i = gameTimers.length - 1; i >= 0; i--) { gameTimers[i].t -= 1; if (gameTimers[i].t <= 0) { const f = gameTimers[i].fn; gameTimers.splice(i, 1); f(); } }
     if (h === 13) { guest('fix'); guest('quit'); guest('delivery', { id: 'cerveza', qty: 5 }); guest('delivery', { id: 'zzz', qty: 1 }); }
-    if (h === 15) { click('guest', { id: 'v12-order' }); click('guest', { id: 'v12-fix' }); }
+    if (h === 15) { click('guest', { id: 'btn-delivery' }); click('guest', { id: 'v12-fix' }); }
     if (h === 18) guest('repairMachine');
   }
 }

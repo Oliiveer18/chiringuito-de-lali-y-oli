@@ -9,7 +9,7 @@ import { settle, postMetrics, reachFactor, engagement } from './social-model.js?
 import { FOL, RAT, INFLU, TRENDS } from './v12-posts.js?v=28';
 import { rt } from './v12-state.js?v=28';
 const absSocial=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
-export function migrate(){if(Game.upgrades[FOL]==null)Game.upgrades[FOL]=50;if(Game.upgrades[RAT]==null)Game.upgrades[RAT]=3;if(!Array.isArray(Game.upgrades.socialComments))Game.upgrades.socialComments=[];if(!Array.isArray(Game.upgrades.socialPend))Game.upgrades.socialPend=[];}
+export function migrate(){if(Game.upgrades[FOL]==null)Game.upgrades[FOL]=0;if(Game.upgrades[RAT]==null)Game.upgrades[RAT]=3;if(!Array.isArray(Game.upgrades.socialComments))Game.upgrades.socialComments=[];if(!Array.isArray(Game.upgrades.socialPend))Game.upgrades.socialPend=[];}
 export function addPend(k,n,o){const U=Game.upgrades;if(!Array.isArray(U.socialPend))U.socialPend=[];U.socialPend.push({k,n,...(o||{})});}
 export function newDay(){
  rt.lastDay=Game.day;rt.puntaEnd=0;rt.vipIds=[];rt.vipDone=false;
@@ -26,12 +26,13 @@ export function newDay(){
  // tendencia de ayer
  if(s&&U.socialTrendDia===ayer&&U.socialTrend&&ITEMS[U.socialTrend]){const t=U.socialTrend;if((sold[t]||0)>=3){extra.push({k:'Tendencia acertada',n:6});Game.rep=clamp(Game.rep+0.1,0,5);pos.push('Justo lo que buscaba hoy: '+ITEMS[t].name.toLowerCase()+'.');}}
  let tier;
- if(rep>=4){extra.push({k:'Boca a boca',n:2+Math.floor(rnd()*4)});tier=['¡El mejor chiringuito de la zona!','Todo buenísimo, volvemos seguro.','Mesas limpias y trato de diez.'];}
- else if(rep>=3){const b=Math.floor(rnd()*3);if(b>0)extra.push({k:'Boca a boca',n:b});tier=['Correcto, aunque estuvo bastante lleno.','Sitio agradable junto a la playa.','Buen sitio, aunque esperé un poco.'];}
+ if(rep>=4){extra.push({k:'Boca a boca',n:1+Math.floor(rnd()*3)});tier=['¡El mejor chiringuito de la zona!','Todo buenísimo, volvemos seguro.','Mesas limpias y trato de diez.'];}
+ else if(rep>=3){const b=Math.floor(rnd()*2);if(b>0)extra.push({k:'Boca a boca',n:b});tier=['Correcto, aunque estuvo bastante lleno.','Sitio agradable junto a la playa.','Buen sitio, aunque esperé un poco.'];}
  else{tier=['Tardaron muchísimo en servirnos.','Faltaba medio menú… decepción.','Caro para lo que es.'];}
  const picks=tier.slice().sort(()=>rnd()-0.5).slice(0,2);
  // balance de seguidores: ganados menos perdidos (social-model.js)
- const done=absSocial()===1||(U.socialCalendar?.last>=absSocial()-1)||(U.socialSettledDay===ayer&&U.socialReport&&U.socialReport.dia===ayer);
+ const already=ayer>0&&U.socialReport?.dia===ayer&&(U.socialSettledAbs===absSocial()-1||U.socialSettledDay===ayer);
+ const done=absSocial()<=1||already;
  let S=U.socialReport;
  if(!done){
  const idle=socialIdle(absSocial()-1,!!p);
@@ -68,7 +69,7 @@ export function closeSocialDay(){
  if(p==='show'&&(U.showDia!==day||U.showFlojoDia===day))postOk=false;
  if(p==='encuesta'&&U.socialPoll&&ITEMS[U.socialPoll]&&(sold[U.socialPoll]||0)>=3)extra.push({k:'Encuesta acertada',n:4});
  if(U.socialTrendDia===day&&U.socialTrend&&ITEMS[U.socialTrend]&&(sold[U.socialTrend]||0)>=3)extra.push({k:'Tendencia acertada',n:6});
- if(rep>=4)extra.push({k:'Boca a boca',n:2+(day*7)%4});else if(rep>=3&&(day*5)%3>0)extra.push({k:'Boca a boca',n:(day*5)%3});
+ if(rep>=4)extra.push({k:'Boca a boca',n:1+(day*7)%3});else if(rep>=3&&(day*5)%4>0)extra.push({k:'Boca a boca',n:(day*5)%3});
  const hist=((U.progression&&U.progression.history)||[]).slice(-7),base=hist.length?hist.reduce((a,r)=>a+(r.served||0),0)/hist.length:20;
  const resp=clamp(0.5+0.5*(s.served||0)/Math.max(10,base),0.4,1.5);
  const pend=(U.socialPend||[]).map(e=>e.post?{...e,n:Math.max(0,Math.round(e.n*resp))}:e);

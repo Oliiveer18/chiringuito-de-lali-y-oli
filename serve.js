@@ -2,9 +2,14 @@
 /* Servidor estático local para jugar o probar en el móvil de la misma red.
    Uso: node serve.js [puerto]   (por defecto 8000)
    Sirve solo los archivos de la raíz del juego (nada de server.js, tests ni package.json). */
-'use strict';
-const http = require('http'), fs = require('fs'), path = require('path');
-const PORT = +process.env.PORT || +process.argv[2] || 8000, ROOT = __dirname;
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PORT = +process.env.PORT || +process.argv[2] || 8000;
+const ROOT = __dirname;
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml' };
 const PRIVATE = /^(server|serve)\.js$|\.test\.m?js$|^package(-lock)?\.json$|^README\.md$/;
 const send = (res, code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
@@ -20,4 +25,4 @@ const server = http.createServer((req, res) => {
   });
 });
 server.listen(PORT, '0.0.0.0', () => console.log('Chiringuito de Lali y Oli en http://localhost:' + PORT));
-module.exports = server;
+export default server;

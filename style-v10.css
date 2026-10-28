@@ -2,9 +2,12 @@
    4) v10: sonido visible, vista vertical con zoom
    ========================================================= */
 @media(max-width:900px){
-  .hud-btn.quiet{display:inline-flex;justify-content:center;width:38px;min-width:38px;padding:0;font-size:0;opacity:1}
-  .hud-btn.quiet::before{content:'🔊';font-size:17px;line-height:1}
-  .hud-btn.quiet[data-sound='off']::before{content:'🔇'}
+  #btn-sound{display:inline-flex;justify-content:center;width:38px;min-width:38px;padding:0;font-size:0;opacity:1}
+  #btn-sound::before{content:'🔊';font-size:17px;line-height:1}
+  #btn-sound[data-sound='off']::before{content:'🔇'}
+  #btn-delivery{display:inline-flex;justify-content:center;min-width:38px;padding:0 8px;font-size:0;opacity:1}
+  #btn-delivery svg{width:18px;height:18px;fill:currentColor}
+  #btn-delivery span{display:none}
 }
 body.portrait .speed button{width:32px;min-width:32px}
 .cam-bar{display:none;position:fixed;z-index:22;left:50%;top:calc(var(--game-top) + var(--game-height) - var(--bottom-ui,0px) - 8px);transform:translate(-50%,-100%);gap:4px;padding:4px;border-radius:14px;background:rgba(8,40,44,.92);box-shadow:var(--sh-2);max-width:calc(100% - 24px)}

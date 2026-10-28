@@ -19,14 +19,17 @@ function patchNames(){const value=name();for(const root of document.querySelecto
 function state(){const p=Game.upgrades.progression;if(!p)return null;if(!p.rivals&&Net.role!=='guest'){p.rivals=R.migrate(p.seed,p.league||0,p.last||0);p.league=p.rivals.tiers[0];netDirty();}return p;}
 function html(p){const s=p.rivals;if(!s)return '<p>Esperando la clasificación del anfitrión…</p>';
  const rows=R.table(s,area,tier,p.history,name(),day());
- const own=rows.find(r=>r.id==='player'),t=s.tiers[area];
+ const playerTier=s.tiers[area];
+ const ownPlayer=R.table(s,area,playerTier,p.history,name(),day()).find(r=>r.id==='player');
+ const own=tier===playerTier?ownPlayer:null,t=s.tiers[area];
  const week=Math.floor((day()-1)/7)+1,jor=(day()-1)%7+1,season=Game.upgrades.career?.season||1;
  const areas=R.AREAS.map((label,a)=>{const r=R.table(s,a,s.tiers[a],p.history,name(),day()).find(x=>x.id==='player');const on=a===area;
   return `<button class="lg-area${on?' on':''}" data-mkarea="${a}" aria-pressed="${on}"><span class="lg-a-name">${label}</span><span class="lg-chip t${s.tiers[a]}">${R.TIERS[s.tiers[a]]}</span><span class="lg-a-rank"><b>${r.rank}</b><small>/10</small></span></button>`;}).join('');
  let ctx='';
- if(t<2){const inTop=own.rank<=3,gap=Math.max(0,rows[2].score-own.score),lead=own.score-rows[3].score;
+ if(tier!==playerTier&&ownPlayer)ctx+=`<div class="lg-ctx ok"><span class="lg-ctx-k">Vuestra categoría · ${R.TIERS[playerTier]}</span><span class="lg-ctx-v">Puesto ${ownPlayer.rank}º · ${ownPlayer.score} pts (tabla de ${R.TIERS[tier]} solo informativa)</span></div>`;
+ if(own&&t<2){const inTop=own.rank<=3,gap=Math.max(0,rows[2].score-own.score),lead=own.score-rows[3].score;
   ctx+=`<div class="lg-ctx ${inTop?'ok':'no'}"><span class="lg-ctx-k">Ascenso · puestos 1.º–3.º</span><span class="lg-ctx-v">${inTop?'Dentro · ventaja '+lead+' pts':'Fuera · te faltan '+gap+' pts para el 3.º'}</span><span class="lg-ctx-bar"><i style="width:${Math.min(100,Math.round(own.score*100/Math.max(1,rows[2].score)))}%"></i></span></div>`;}
- if(t>0){const danger=own.rank>7,gap=Math.max(0,rows[6].score-own.score),lead=own.score-rows[6].score;
+ if(own&&t>0){const danger=own.rank>7,gap=Math.max(0,rows[6].score-own.score),lead=own.score-rows[6].score;
   ctx+=`<div class="lg-ctx ${danger?'no':'ok'}"><span class="lg-ctx-k">Permanencia · del 8.º para abajo</span><span class="lg-ctx-v">${danger?'En descenso · a '+gap+' pts del 7.º':'Seguro · +'+lead+' pts sobre el 7.º'}</span><span class="lg-ctx-bar"><i style="width:${Math.min(100,Math.round(own.score*100/Math.max(1,rows[6].score)))}%"></i></span></div>`;}
  const table=rows.map(r=>{
   const zone=r.rank<=3&&t<2?' z-up':r.rank>=8&&t>0?' z-down':'';

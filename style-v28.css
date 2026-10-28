@@ -10,7 +10,15 @@
   border-radius:16px;background:rgba(6,44,48,.78);border:1px solid rgba(255,255,255,.14);
   backdrop-filter:blur(10px);box-shadow:0 6px 18px rgba(0,0,0,.28);padding:6px 10px;
 }
-body.playing #hud{border-radius:14px!important}
+body.playing #hud{border-radius:14px!important;padding:4px 8px!important;gap:4px!important;align-items:center!important}
+body.playing #hud .hud-group{padding:2px 6px!important;gap:3px!important}
+body.playing #hud .hud-day{font-size:10.5px!important;opacity:.9}
+body.playing #hud .hud-clock,body.playing #hud .hud-money{font-size:14px!important}
+body.playing #hud .hud-rep{font-size:12px!important}
+body.playing #hud .speed button{min-width:34px!important;min-height:34px!important}
+body.playing #hud .hud-btn{min-height:36px!important;padding:0 8px!important}
+body.playing #btn-delivery{background:rgba(15,139,141,.35);border-color:rgba(159,230,228,.45);color:#e8fffe}
+body.playing #btn-delivery svg{width:16px;height:16px;fill:currentColor;margin-right:4px}
 
 /* ---------- Barra de inventario flotante y plegable ---------- */
 #stockbar{
@@ -47,3 +55,12 @@ body.portrait #stockbar .stock-list{flex-wrap:wrap;justify-content:center}
 body:not(.playing) #btn-full-page{display:grid}
 /* No flotar sobre paneles con contenido arriba a la derecha (plan, informe, lobby…) */
 body:has(.overlay.show:not(#title):not(#final)) #btn-full-page{display:none}
+
+/* Plan: separación Compras vs Carta */
+.plan-panel{border:1px solid var(--line);border-radius:16px;padding:12px 14px 6px;background:var(--paper);margin:0 0 8px}
+.plan-panel-k{margin:0 0 4px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-d)}
+.plan-panel-d{margin:0 0 10px!important}
+.plan-stock{border-left:4px solid var(--teal)}
+.plan-prices{border-left:4px solid var(--coral)}
+.plan-price-row .price{background:var(--sand);border-radius:12px;padding:2px 4px}
+.plan-stock .ctrl .btn.primary{min-width:88px}
