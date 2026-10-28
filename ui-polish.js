@@ -1,4 +1,4 @@
-/* ui-polish v27.73: clima de hoy, reseñas legibles y limpieza visual. */
+/* ui-polish v27.74: clima de hoy, resumen de estrellas y una reseña por cliente. */
 import { Game } from './state.js?v=27.6';
 import { SEASON_DAYS, SPECIAL_DAYS, WEATHER } from './config.js?v=27.6';
 
@@ -25,6 +25,12 @@ function agenda(){
   if(fc.dataset.polish!==html){ fc.dataset.polish=html; fc.innerHTML=html; }
 }
 function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function starCount(card){
+  const el=card.querySelector('.rev-head span');
+  if(!el) return 0;
+  const m=el.textContent.match(/★|☆/g)||[];
+  return m.filter(c=>c==='★').length;
+}
 function polishReviews(){
   const rep=document.getElementById('rep-body');
   if(!rep||Game.mode!=='report') return;
@@ -34,8 +40,7 @@ function polishReviews(){
     const txt=card.querySelector('.rev-text');
     const starsEl=card.querySelector('.rev-head span');
     if(starsEl&&!starsEl.dataset.polished){
-      const m=(starsEl.textContent.match(/★|☆/g)||[]);
-      const filled=m.filter(c=>c==='★').length;
+      const filled=starCount(card);
       starsEl.dataset.polished='1';
       starsEl.innerHTML=`<span class="stars"><b>${'★'.repeat(filled)}</b><span>${'☆'.repeat(5-filled)}</span></span>`;
     }
@@ -44,14 +49,26 @@ function polishReviews(){
       if(t.includes('Disculparte')) b.classList.add('primary');
       else if(t.includes('Invitar')) b.classList.add('teal');
     });
-    const name=card.querySelector('.rev-head b');
-    const key=norm((name?name.textContent:'')+'|'+(starsEl?starsEl.textContent:'')+'|'+(txt?txt.textContent.slice(0,80):''));
-    if(seen.has(key)){ card.classList.add('dup'); } else { seen.add(key); card.classList.remove('dup'); }
+    const nameEl=card.querySelector('.rev-head b');
+    const name=norm(nameEl?nameEl.textContent:'');
+    if(name&&seen.has(name)){ card.classList.add('dup'); }
+    else{ if(name) seen.add(name); card.classList.remove('dup'); }
   });
   const visible=cards.filter(c=>!c.classList.contains('dup'));
   visible.forEach((c,i)=>c.classList.toggle('extra',i>=3&&!rep.classList.contains('show-all')));
   const wrap=rep.querySelector('.reviews');
   if(!wrap) return;
+  let summary=wrap.querySelector('.rev-summary');
+  if(visible.length){
+    const total=visible.reduce((a,c)=>a+starCount(c),0);
+    const avg=visible.length?total/visible.length:0;
+    const pos=visible.filter(c=>starCount(c)>=4).length;
+    const neu=visible.filter(c=>starCount(c)===3).length;
+    const neg=visible.filter(c=>starCount(c)<=2).length;
+    const html=`<div class="rev-summary"><div><span class="k">Valoración media</span><b>${avg.toFixed(1)} ★</b></div><div><span class="k">Reseñas</span><b>${visible.length}</b></div><div><span class="k">Reparto</span><b>${pos} positivas · ${neu} neutras · ${neg} negativas</b></div></div>`;
+    if(!summary){ wrap.insertAdjacentHTML('afterbegin',html); summary=wrap.querySelector('.rev-summary'); }
+    else summary.outerHTML=html;
+  } else if(summary) summary.remove();
   let btn=rep.querySelector('#btn-all-reviews');
   if(visible.length>3){
     if(!btn){
@@ -67,6 +84,9 @@ const CSS=`
 .fc .wicon{width:24px;height:24px;flex:none}
 .fc .v{display:flex;align-items:center;gap:8px}
 .fc.today{background:#e6f4f2;border-color:#9fd4cf}
+.rev-summary{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--sand);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 12px}
+.rev-summary .k{display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+.rev-summary b{font:700 18px/1.2 var(--font-d);color:var(--ink)}
 .review.extra{display:none}
 #rep-body.show-all .review.extra{display:block}
 #btn-all-reviews{margin:0 24px 14px;display:inline-block}
