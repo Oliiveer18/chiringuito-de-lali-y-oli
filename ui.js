@@ -2,25 +2,25 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.2';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.2';
-import { ICON_URL } from './icons.js?v=28.2';
-import { Audio } from './audio.js?v=28.2';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.2';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.2';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.2';
-import { canvas, toWorld } from './canvas.js?v=28.2';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.2';
-import { drawPerson } from './render.js?v=28.2';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.3';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.3';
+import { ICON_URL } from './icons.js?v=28.3';
+import { Audio } from './audio.js?v=28.3';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.3';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.3';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.3';
+import { canvas, toWorld } from './canvas.js?v=28.3';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.3';
+import { drawPerson } from './render.js?v=28.3';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=28.2';
+} from './ui-plan.js?v=28.3';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=28.2';
+} from './ui-service.js?v=28.3';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -30,6 +30,25 @@ export {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
 };
+function planComprasCartaHtml(){
+  let h = `<section class="plan-panel plan-unified"><p class="plan-panel-k">Compras y carta</p><p class="muted plan-panel-d">Compra stock para la jornada y fija el <b>precio de venta</b> de cada producto. Referencia = lo que espera la gente del pueblo. Unas ${Math.round(estimateCustomers())} visitas previstas hoy.</p>`;
+  for(const id of ITEM_IDS){
+    const it=ITEMS[id], un=itemUnlocked(id);
+    const sp = lvl('nevera')?it.spoilF:it.spoil;
+    if(!un){
+      h += `<div class="row locked plan-product"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Desbloquea: ${UPGRADES.find(u=>u.id===it.unlock).name}</div></div></div>`;
+      continue;
+    }
+    const margin = Game.prices[id]-it.cost;
+    h += `<div class="row plan-product"><img src="${ICON_URL[id]}" alt=""><div class="plan-product-main"><div class="name">${it.name}</div><div class="sub">Compra ${eur2(it.cost)} · almacén <b>${Game.stock[id]}</b> · referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
+    <div class="ctrl plan-product-ctrl">
+      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span><div class="plan-buy-btns">${[10,25,50].map(n=>`<button class="btn sm primary" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n}</button>`).join('')}</div></div>
+      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span><div class="price"><button type="button" data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button type="button" data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div></div>
+      <div class="plan-ctrl-block plan-ctrl-carta"><button type="button" class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera de carta'}</button></div>
+    </div></div>`;
+  }
+  return h + '</section>';
+}
 function planCartaSectionHtml(){
   let h = `<section class="plan-panel plan-prices"><p class="plan-panel-k">Fijar precios y carta</p><p class="muted plan-panel-d">Los turistas pagan casi cualquier cosa; la gente del pueblo conoce los precios. Fíjate en el precio de referencia.</p>`;
   for(const id of ITEM_IDS){
@@ -48,15 +67,7 @@ export function renderTab(){
   // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
   if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
   if(Plan.tab==='compras'){
-    h += `<section class="plan-panel plan-stock"><p class="plan-panel-k">Comprar stock</p><p class="muted plan-panel-d">Calcula unas ${Math.round(estimateCustomers())} visitas hoy. Lo fresco se estropea por la noche${lvl('nevera')?' (poco, gracias a la nevera)':''}.</p>`;
-    for(const id of ITEM_IDS){
-      const it=ITEMS[id], un=itemUnlocked(id);
-      const sp = lvl('nevera')?it.spoilF:it.spoil;
-      h += `<div class="row ${un?'':'locked'}"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">${un?`Coste ${eur2(it.cost)} · en almacén <b>${Game.stock[id]}</b> · merma ${Math.round(sp*100)}%`:`Necesitas: ${UPGRADES.find(u=>u.id===it.unlock).name}`}</div></div>
-      <div class="ctrl">${un?[10,25,50].map(n=>`<button class="btn sm primary" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n} · ${eur(it.cost*n)}</button>`).join(''):''}</div></div>`;
-    }
-    h += '</section>';
-    h += planCartaSectionHtml();
+    h += planComprasCartaHtml();
   } else if(Plan.tab==='carta'){
     h += planCartaSectionHtml();
   } else if(Plan.tab==='mejoras'){
@@ -76,6 +87,7 @@ export function renderTab(){
     }
   }
   b.innerHTML=h;
+  if(['compras','carta','mejoras','personal'].includes(Plan.tab)){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; }
 }
 export function estimateCustomers(){
   const w=WEATHER[weatherToday()]; let tot=0;
@@ -97,7 +109,12 @@ $('#tab-body').addEventListener('click',e=>{
   const d={...t.dataset}; Audio.click();
   if(isGuest()) netAct({a:'plan', d}); else applyPlanAction('p1', d);
 });
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ Plan.tab=t.dataset.tab; Audio.click(); renderTab(); }));
+document.querySelector('#plan .tabs')?.addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t||!t.dataset.tab) return;
+  const key=t.dataset.tab;
+  if(!['compras','carta','mejoras','personal'].includes(key)) return;
+  Plan.tab=key; Audio.click(); renderTab();
+});
 $('#btn-open').addEventListener('click',()=>{ Audio.init(); Audio.click();
   if(!isCoop()){ startDay(); return; }
   pressReady(); });

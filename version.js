@@ -1,5 +1,5 @@
-export const VERSION='v28.2';
-export const LABEL='v28.2 · Reparto, social, plan y reseñas';
+export const VERSION='v28.3';
+export const LABEL='v28.3 · Compras y carta por producto';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

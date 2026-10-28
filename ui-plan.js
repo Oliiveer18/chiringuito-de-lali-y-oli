@@ -1,15 +1,15 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=28.2';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.2';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.2';
-import { ICON_URL } from './icons.js?v=28.2';
-import { Audio } from './audio.js?v=28.2';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.2';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.2';
-import { advanceFromReport } from './report.js?v=28.2';
-import { netAct, netDirty } from './net.js?v=28.2';
-import { drawPerson } from './render.js?v=28.2';
-import { renderTab } from './ui.js?v=28.2';
+import { trackCost } from './bookkeeping.js?v=28.3';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.3';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.3';
+import { ICON_URL } from './icons.js?v=28.3';
+import { Audio } from './audio.js?v=28.3';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.3';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.3';
+import { advanceFromReport } from './report.js?v=28.3';
+import { netAct, netDirty } from './net.js?v=28.3';
+import { drawPerson } from './render.js?v=28.3';
+import { renderTab } from './ui.js?v=28.3';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};

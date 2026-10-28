@@ -56,11 +56,26 @@ body:not(.playing) #btn-full-page{display:grid}
 /* No flotar sobre paneles con contenido arriba a la derecha (plan, informe, lobby…) */
 body:has(.overlay.show:not(#title):not(#final)) #btn-full-page{display:none}
 
-/* Plan: separación Compras vs Carta */
+/* Plan: compras y carta unificadas por producto */
 .plan-panel{border:1px solid var(--line);border-radius:16px;padding:12px 14px 6px;background:var(--paper);margin:0 0 8px}
 .plan-panel-k{margin:0 0 4px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-d)}
 .plan-panel-d{margin:0 0 10px!important}
+.plan-unified{border-left:4px solid var(--teal);box-shadow:0 2px 12px rgba(6,44,48,.06)}
+.plan-product{align-items:flex-start;padding:14px 0}
+.plan-product-main{min-width:0}
+.plan-product-ctrl{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;width:100%;margin-top:4px}
+.plan-ctrl-block{display:flex;flex-direction:column;gap:4px;min-width:0}
+.plan-ctrl-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.plan-buy-btns{display:flex;flex-wrap:wrap;gap:6px}
+.plan-buy-btns .btn.primary{min-width:52px;padding-left:10px;padding-right:10px}
+.plan-product .price{background:var(--sand);border-radius:12px;border:1px solid var(--line-2)}
+.plan-ctrl-carta{align-self:flex-end;margin-left:auto}
 .plan-stock{border-left:4px solid var(--teal)}
 .plan-prices{border-left:4px solid var(--coral)}
 .plan-price-row .price{background:var(--sand);border-radius:12px;padding:2px 4px}
 .plan-stock .ctrl .btn.primary{min-width:88px}
+@media (min-width:720px){
+  .plan-product{grid-template-columns:48px 1fr;grid-template-rows:auto auto}
+  .plan-product>img{grid-row:1/span 2}
+  .plan-product-ctrl{grid-column:2;margin-top:8px}
+}
