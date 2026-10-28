@@ -24,6 +24,7 @@ jobs:
           node-version: '22'
       - name: Comprobación de sintaxis
         run: |
+          shopt -s nullglob
           for file in *.js *.mjs sim/*.js sim/*.mjs render/*.js render/*.mjs; do node --check "$file"; done
       - name: Instalar validación de navegador
         run: |
