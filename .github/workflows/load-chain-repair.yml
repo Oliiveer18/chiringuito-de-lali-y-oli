@@ -1,0 +1,113 @@
+name: Validate and deploy load chain repair
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/load-chain-repair.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: load-chain-repair
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update only existing local resource URLs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path.cwd().resolve()
+          paths=[*root.glob('*.js'),*root.glob('*.mjs'),*root.glob('*.css'),root/'index.html']
+          for folder in ['sim','render']:
+              paths.extend((root/folder).rglob('*.js'))
+              paths.extend((root/folder).rglob('*.mjs'))
+          pattern=re.compile(r'''(["'])([^"'\s]+\.(?:js|mjs|css))(?:\?v=[^"'\s]+)?\1''')
+          changed=[]
+          for p in paths:
+              if '.test.' in p.name: continue
+              text=p.read_text()
+              if 'PLACEHOLDER' in text: raise RuntimeError('Unresolved marker: '+str(p))
+              def replace(m):
+                  name=m[2]
+                  if ':' in name or name.startswith('//'): return m[0]
+                  target=(root/name.lstrip('/') if name.startswith('/') else p.parent/name).resolve()
+                  if not target.is_relative_to(root) or not target.is_file(): return m[0]
+                  return m[1]+name+'?v=27.82'+m[1]
+              updated=pattern.sub(replace,text)
+              if updated!=text:
+                  p.write_text(updated)
+                  changed.append(str(p.relative_to(root)))
+          if not changed: raise RuntimeError('No resource URLs updated')
+          print('Updated resource URLs:',changed)
+          PY
+          for file in *.js *.mjs sim/*.js render/*.js; do node --check "$file"; done
+      - name: Verify required exports and candidate integrity
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import * as M from './management-model.mjs?v=27.82';
+          for(const name of ['absoluteDay','dailyPoints','weeklyPoints','closeActivity','recordComment','candidates','hireCandidate','trainEmployee'])assert.equal(typeof M[name],'function',name);
+          assert.equal(M.absoluteDay(2,1),31);
+          const row={served:20,lost:0,rating:4,revenue:200,profit:80,followers:100};
+          const history=Array.from({length:7},(_,i)=>({...row,day:i+1}));
+          assert.equal(M.weeklyPoints(history,7).total,7*M.dailyPoints(row).total);
+          assert.equal(M.weeklyPoints(history,8).total,0);
+          for(let seed=0;seed<100;seed++)for(let day=1;day<=30;day++)for(const c of M.candidates(String(seed),day)){
+            assert.ok(c.age>=18&&c.age>=18+c.experience);
+            assert.ok(c.origin&&c.availability&&c.presentation);
+          }
+          JS
+      - name: Install browser validation
+        run: |
+          npm install --prefix /tmp/load-smoke playwright
+          /tmp/load-smoke/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify actual browser startup
+        run: |
+          python3 -m http.server 8765 >/tmp/load-server.log 2>&1 &
+          node <<'JS'
+          const assert=require('node:assert/strict');
+          const {chromium}=require('/tmp/load-smoke/node_modules/playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            try{
+              for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+                const page=await browser.newPage({viewport});
+                const errors=[];page.on('pageerror',e=>errors.push(e.message));
+                await page.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
+                await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('activas:'),null,{timeout:45000});
+                await page.waitForTimeout(1200);
+                assert.equal((await page.locator('#errbox').textContent()).trim(),'');
+                assert.ok(!(await page.locator('#ver-title').textContent()).includes('con error:'));
+                assert.deepEqual(errors,[]);
+                await page.close();
+              }
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1);});
+          JS
+      - name: Commit validated URL changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add '*.js' '*.mjs' '*.css' index.html
+          git diff --cached --quiet || git commit -m 'fix: cadena de carga coherente 27.82 validada'
+          git push origin HEAD:main
+      - name: Stage website
+        run: |
+          mkdir -p /tmp/load-public
+          tar --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tools' --exclude='*.test.*' --exclude='*.py' -cf - . | tar -xf - -C /tmp/load-public
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/load-public
+      - uses: actions/deploy-pages@v4
