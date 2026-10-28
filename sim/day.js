@@ -69,7 +69,6 @@ export function startDay(){
   if(Game.staff.camarero) Game.slots.push(mk('yeray','all'));
   Game.dayStats={revenue:0,served:0,lost:0,lostPrice:0,lostQueue:0,lostPatience:0,lostStock:0,partial:0,noTable:0,satSum:0,satN:0,sold:{},stockOuts:{},hamacas:0,fines:0,urgent:0,purchases:0,repStart:Game.rep,cleaned:0,tips:0,combos:0,tipsP:0,regVisits:0,visits:[],usedNames:new Set(),
     by:{p1:{items:0,rev:0,clean:0},p2:{items:0,rev:0,clean:0},yeray:{items:0,rev:0,clean:0}}};
-  // Las compras hechas en el plan de la mañana se imputan al día que empieza
   Game.dayStats.purchases = Game.pendingPurchases||0;
   Game.pendingPurchases = 0;beginLedgerDay();
   initFloor({clean:commitClean,prepare:startPart,deliver:completeFloorOrder,abandon:abandonFloor});
@@ -93,14 +92,17 @@ export function update(dt){
   if(!Game.closing){
     Game.hour += dt/SEC_PER_HOUR;
     const w=WEATHER[weatherToday()];
-    let rate = 8 * (HOUR_CURVE[Math.floor(Game.hour)]||0.6) * w.arr * (0.35 + Game.rep/5*0.95) * Game.mods.arr;
-    if(lvl('sombrillas') && (weatherToday()==='sol'||weatherToday()==='calima')) rate*=1.15;
-    if(lvl('redes')) rate*=1.15;
-    if(isWeekend(Game.day)) rate*=1.25;
-    if(Game.dayEvent) rate*=Game.dayEvent.arr;
-    rate *= difficultyProfile().arrivals * difficultyRush(Game.hour);
-    if(isCoop()) rate *= 1.4;
-    rate *= 1 + 0.12*(Game.buzz||0);
+    let mult = w.arr*(0.35+Game.rep/5*0.95)*Game.mods.arr;
+    if(lvl('sombrillas')&&(weatherToday()==='sol'||weatherToday()==='calima')) mult*=1.15;
+    if(lvl('redes')) mult*=1.15;
+    if(isWeekend(Game.day)) mult*=1.25;
+    if(Game.dayEvent) mult*=Game.dayEvent.arr;
+    mult=Math.min(mult,2.2);
+    let rate=8*(HOUR_CURVE[Math.floor(Game.hour)]||0.6)*mult;
+    rate*=difficultyProfile().arrivals*difficultyRush(Game.hour);
+    if(isCoop()) rate*=1.4;
+    rate*=1+0.12*(Game.buzz||0);
+    rate=Math.min(rate,30);
     Game.spawnAcc += rate*dt/SEC_PER_HOUR;
     while(Game.spawnAcc>=1){ Game.spawnAcc-=1; spawnCustomer(); }
     if(!Game.eventDone && Game.hour>=Game.eventHour){ Game.eventDone=true; let e=RANDOM_EVENTS[0]; const tot=RANDOM_EVENTS.reduce((s,e)=>s+e.w,0); let r=rnd()*tot; for(const ev of RANDOM_EVENTS){ r-=ev.w; if(r<=0){e=ev;break;} } e.run(); }
