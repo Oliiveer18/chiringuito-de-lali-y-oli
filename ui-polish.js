@@ -1,6 +1,6 @@
 /* ui-polish v27.77: clima de hoy, agenda compacta, reseñas y sistema unificado de estrellas. */
-import { Game } from './state.js?v=28.4';
-import { SPECIAL_DAYS, WEATHER } from './config.js?v=28.4';
+import { Game } from './state.js?v=28.5';
+import { SPECIAL_DAYS, WEATHER } from './config.js?v=28.5';
 const svgWrap=inner=>`<svg class="wicon" viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
 const SUN=svgWrap('<circle cx="12" cy="12" r="5" fill="#f5b82e"/><g stroke="#f5b82e" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g>');
 const CLOUD=svgWrap('<circle cx="9" cy="9" r="4" fill="#f5b82e"/><path d="M7 18h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.5 3.5 0 0 0 7 18z" fill="#cfd8dc"/>');
@@ -13,11 +13,11 @@ const cap=s=>s?s[0].toUpperCase()+s.slice(1):'';
 function weatherAt(d){const w=(Game.forecast&&Game.forecast[d-1])||'sol';return WEATHER[w]?w:'sol';}
 function dayCard(d,i){const w=weatherAt(d),W=WEATHER[w]||{label:cap(w),desc:''};const ev=SPECIAL_DAYS[d];return `<div class="fc${i===0?' today':''}${ev?' event':''}"><div class="k">${i===0?'Hoy · Día '+d:'Día '+d}</div><div class="v">${iconFor(w)}<span>${esc(W.label)}</span></div><div class="d">${esc(ev?ev.title:(W.desc||''))}</div></div>`;}
 function agenda(){
-  // v27.9: la pestaña Agenda la pinta progression-ui (único dueño del contenido).
-  // Aquí solo se refresca la cabecera del plan con la tarjeta de hoy.
+  // v28.5: no sustituir la tira multi-tarjeta de ui-plan renderForecast; solo marcar «Hoy».
   if(Game.mode!=='plan')return;
   const fc=document.getElementById('forecast');
-  if(fc){const today=dayCard(Game.day,0);if(fc.__last!==today){fc.__last=today;fc.innerHTML=today;}}
+  if(!fc||!fc.querySelector('.fc'))return;
+  fc.querySelectorAll('.fc').forEach((el,i)=>el.classList.toggle('today',i===0));
 }
 document.addEventListener('plan-tab-repaint',agenda);
 

@@ -1,5 +1,5 @@
-export const VERSION='v28.4';
-export const LABEL='v28.4 · compras legibles, personal y progreso pulidos';
+export const VERSION='v28.5';
+export const LABEL='v28.5 · pestañas del plan, clima y personal pulidos';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

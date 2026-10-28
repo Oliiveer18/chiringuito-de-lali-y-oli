@@ -2,25 +2,25 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.4';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.4';
-import { ICON_URL } from './icons.js?v=28.4';
-import { Audio } from './audio.js?v=28.4';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.4';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.4';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.4';
-import { canvas, toWorld } from './canvas.js?v=28.4';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.4';
-import { drawPerson } from './render.js?v=28.4';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.5';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.5';
+import { ICON_URL } from './icons.js?v=28.5';
+import { Audio } from './audio.js?v=28.5';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.5';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.5';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.5';
+import { canvas, toWorld } from './canvas.js?v=28.5';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.5';
+import { drawPerson } from './render.js?v=28.5';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=28.4';
+} from './ui-plan.js?v=28.5';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=28.4';
+} from './ui-service.js?v=28.5';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -42,7 +42,7 @@ function planComprasCartaHtml(){
     const margin = Game.prices[id]-it.cost;
     h += `<div class="row plan-product"><img src="${ICON_URL[id]}" alt=""><div class="plan-product-main"><div class="name">${it.name}</div><div class="sub">Compra ${eur2(it.cost)} · almacén <b>${Game.stock[id]}</b> · referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
     <div class="ctrl plan-product-ctrl">
-      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span><div class="plan-buy-btns">${[10,25,50].map(n=>`<button class="btn sm primary stock-buy" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}><span class="stock-buy-qty">+${n}</span><span class="stock-buy-total">${eur(it.cost*n)}</span></button>`).join('')}</div></div>
+      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span><div class="plan-buy-btns">${[10,25,50].map(n=>`<button class="btn sm primary stock-buy" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}><span class="stock-buy-qty plan-buy-qty">+${n}</span><span class="stock-buy-total plan-buy-amt">${eur(it.cost*n)}</span></button>`).join('')}</div></div>
       <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span><div class="price"><button type="button" data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button type="button" data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div></div>
       <div class="plan-ctrl-block plan-ctrl-carta"><button type="button" class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera de carta'}</button></div>
     </div></div>`;
@@ -62,7 +62,8 @@ function planCartaSectionHtml(){
   return h + '</section>';
 }
 export function renderTab(){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
+  if(Plan.tab==='carta')Plan.tab='compras';
+  document.querySelectorAll('#plan .tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   const b=$('#tab-body'); let h=''; if(Plan.tab==='personal'){document.dispatchEvent(new Event('workforce-paint'));return;}
   // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
   if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
@@ -89,6 +90,18 @@ export function renderTab(){
   b.innerHTML=h;
   if(['compras','carta','mejoras','personal'].includes(Plan.tab)){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; }
 }
+const PLAN_CORE_TABS=['compras','carta','mejoras','personal'];
+export function routePlanTab(){
+  if(Plan.tab==='carta')Plan.tab='compras';
+  document.querySelectorAll('#plan .tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
+  if(PLAN_CORE_TABS.includes(Plan.tab)){ renderForecast(); renderTab(); return; }
+  const b=$('#tab-body');
+  if(b){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; delete b.__mkNode; }
+  renderForecast();
+  if(Plan.tab==='show') import('./features.js?v=28.5').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
+  else if(Plan.tab==='red') import('./v12-ui.js?v=28.5').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
+  document.dispatchEvent(new Event('plan-tab-repaint'));
+}
 export function estimateCustomers(){
   const w=WEATHER[weatherToday()]; let tot=0;
   for(let h=10;h<closeHour();h++) tot+=8*(HOUR_CURVE[h]||0.6)*((difficultyRush(h+0.25)+difficultyRush(h+0.75))/2);
@@ -111,9 +124,9 @@ $('#tab-body').addEventListener('click',e=>{
 });
 document.querySelector('#plan .tabs')?.addEventListener('click',e=>{
   const t=e.target.closest('.tab'); if(!t||!t.dataset.tab) return;
-  const key=t.dataset.tab;
-  if(!['compras','carta','mejoras','personal'].includes(key)) return;
-  Plan.tab=key; Audio.click(); renderTab();
+  Plan.tab=t.dataset.tab;
+  Audio.click();
+  routePlanTab();
 });
 $('#btn-open').addEventListener('click',()=>{ Audio.init(); Audio.click();
   if(!isCoop()){ startDay(); return; }

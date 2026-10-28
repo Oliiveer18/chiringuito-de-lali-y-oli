@@ -1,16 +1,16 @@
-import {trackCost,operatingResult} from './bookkeeping.js?v=28.4';
-import {closeSocialDay} from './v12.js?v=28.4';
+import {trackCost,operatingResult} from './bookkeeping.js?v=28.5';
+import {closeSocialDay} from './v12.js?v=28.5';
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net} from './state.js?v=28.4';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.4';
-import {Plan,toast} from './ui.js?v=28.4';
-import {refreshReportUI} from './report.js?v=28.4';
-import {netDirty} from './net.js?v=28.4';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.4';
-import {escapeHtml as E,eur} from './util.js?v=28.4';
-import * as M from './progression-model.mjs?v=28.4';
-import { iconFor } from './ui-polish.js?v=28.4';
-import { tabHtml as careerTabHtml } from './career-ui.js?v=28.4';
+import {Game,Net} from './state.js?v=28.5';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.5';
+import {Plan,toast} from './ui.js?v=28.5';
+import {refreshReportUI} from './report.js?v=28.5';
+import {netDirty} from './net.js?v=28.5';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.5';
+import {escapeHtml as E,eur} from './util.js?v=28.5';
+import * as M from './progression-model.mjs?v=28.5';
+import { iconFor } from './ui-polish.js?v=28.5';
+import { tabHtml as careerTabHtml } from './career-ui.js?v=28.5';
 const day=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 const pget=()=>Game.upgrades.progression;
 let current=null,selectedArea=0,selectedTier=0,metric='cash',windowSize=30;
@@ -47,7 +47,7 @@ function chart(p){const h=p.history.slice(-windowSize),vals=h.map(r=>M.num(r[met
  const points=vals.map((v,i)=>`${50+i*620/Math.max(1,vals.length-1)},${175-(v-lo)*140/range}`).join(' ');
  return `<svg viewBox="0 0 700 220" role="img" aria-label="Historial de ${E(metric)}"><line x1="50" y1="175" x2="670" y2="175" stroke="#c8c8c8"/><polyline points="${points}" fill="none" stroke="#087f83" stroke-width="3"/><text x="5" y="30">${hi.toFixed(1)}</text><text x="5" y="175">${lo.toFixed(1)}</text><text x="50" y="205">Día ${h[0].day}</text><text x="570" y="205">Día ${h.at(-1).day}</text></svg><details><summary>Ver datos accesibles</summary><table><thead><tr><th>Día</th><th>${E(metric)}</th></tr></thead><tbody>${h.map(r=>`<tr><td>${r.day}</td><td>${M.num(r[metric]).toFixed(2)}</td></tr>`).join('')}</tbody></table></details>`;}
 function progressHtml(p){const chips=[['Ventas',eur(p.records.revenue||0)],['Clientes',String(p.records.served||0)],['Resultado',eur(p.records.profit||0)]].map(([k,v])=>`<span class="pg-chip"><span class="k">${k}</span><b>${v}</b></span>`).join('');const ach=Object.entries(p.achievements).map(([k,d])=>`<p class="pg-achievement">🏅 ${E(k)} · día ${d}</p>`).join('')||'<p>Todavía no hay logros.</p>';return `<section class="pg-card pg-goal"><header class="pg-section-head"><h3>Meta del día</h3></header><p class="pg-lead">Atended ${p.goal?.target||0} clientes · premio 20 €.</p></section>${gradeHtml(p)}<section class="pg-card pg-history"><header class="pg-section-head"><h3>Historial</h3></header><div class="pg-controls pg-controls-bar" role="toolbar" aria-label="Métrica y ventana temporal">${[['cash','Caja'],['revenue','Ventas'],['profit','Resultado operativo'],['cashDelta','Variación de caja'],['served','Clientes'],['rating','Valoración'],['followers','Seguidores'],['waste','Merma']].map(([k,l])=>`<button data-pgmetric="${k}" class="btn sm pg-ctrl">${l}</button>`).join('')}${[7,30,120].map(n=>`<button class="btn sm pg-ctrl" data-pgwindow="${n}">${n} días</button>`).join('')}</div>${chart(p)}</section><section class="pg-card pg-records"><header class="pg-section-head"><h3>Récords y rachas</h3></header><div class="pg-chips">${chips}</div><p>Sin pérdidas: ${p.streaks.clean} días (mejor ${p.best.clean}) · Nota A/S: ${p.streaks.quality} (mejor ${p.best.quality}).</p><header class="pg-section-head pg-subhead"><h3>Logros · ${Object.keys(p.achievements).length}/10</h3></header>${ach}</section>`;}
-function agendaHtml(p){let h='';const u=Game.upgrades;if(u&&u.misionTxt)h+=`<section class="pg-card pg-mission"><header class="pg-section-head"><h3>Misión activa</h3></header><p>${E(u.misionTxt)} · ${u.misionReward||0} € y 10 seguidores.</p><p>${u.misionHecha===1?'✅ Cumplida hoy.':'En curso: se comprueba al cerrar la jornada.'}</p></section>`;h+='<section class="pg-card pg-agenda-intro"><p class="pg-lead">Previsión de siete días. Las compras y el refuerzo son decisiones vuestras; no se contratan automáticamente.</p></section>';
+function agendaHtml(p){let h='';h+='<section class="pg-card pg-agenda-intro"><p class="pg-lead">Previsión de siete días. Las compras y el refuerzo son decisiones vuestras; no se contratan automáticamente.</p></section>';
  for(let i=0;i<7;i++){const d=Game.day+i;if(d>30){h+='<section class="pg-card">La próxima temporada generará su propio pronóstico; todavía no está confirmado.</section>';break;}
  const w=Game.forecast[d-1],ev=SPECIAL_DAYS[d],product=d===27?'batido':'cerveza';
  h+=`<section class="pg-card pg-day"><header class="pg-section-head"><h3>${i?'Día '+d:'Hoy'} · ${iconFor(w)}${E(WEATHER[w]?.label||'Sin pronóstico')}</h3></header><p>${E(WEATHER[w]?.desc||'')}</p>${ev?`<h4 class="pg-event-title">${E(ev.title)}</h4><p>${E(ev.desc)}</p><p>Preparación: 20 unidades de ${E(ITEMS[product]?.name||product)}, camarero y cartel. Hasta +6 % de afluencia adicional; sin preparación no hay penalización extra.</p>`:''}`;
@@ -64,7 +64,7 @@ function rankingHtml(p){const unlocked=Math.floor(p.league/3),locked=selectedAre
 function paint(){const p=pget();if(!p)return;const b=document.getElementById('tab-body');if(Game.mode==='plan'&&b&&['progreso','agenda','ligas'].includes(Plan.tab)){const c=Game.upgrades.career;const h='<div class="pg">'+(Plan.tab==='progreso'?((c&&c.obj?careerTabHtml(c):'')+progressHtml(p)):Plan.tab==='agenda'?agendaHtml(p):rankingHtml(p))+'</div>';if(b.__owner!=='progression'||b.__last!==h||!b.__pgNode||!b.contains(b.__pgNode)){b.__owner='progression';b.__last=h;b.innerHTML=h;b.__pgNode=b.firstElementChild;}}
  if(Game.mode==='report'){const body=document.getElementById('rep-body');if(body){let el=body.querySelector('#pg-report');if(!el){el=document.createElement('div');el.id='pg-report';body.append(el);}const gh=gradeHtml(p);if(el.__h!==gh){el.__h=gh;el.innerHTML=gh;}}}}
 function tickProgress(){if(Game.mode==='title'||Game.mode==='lobby')return;if(Game.mode==='plan')prepare();if(Game.mode==='service')service();if(Game.mode==='report')close();paint();}
-for(const [key,label]of [['progreso','Progreso'],['agenda','Agenda']]){const tabs=document.querySelector('#plan .tabs');if(!tabs)continue;if(tabs.querySelector('[data-tab="'+key+'"]'))continue;const b=document.createElement('button');b.className='tab';b.dataset.tab=key;b.setAttribute('role','tab');b.textContent=label;b.onclick=()=>{Plan.tab=key;document.querySelectorAll('#plan .tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===key));paint();};tabs.append(b);}
+for(const [key,label]of [['progreso','Progreso'],['agenda','Agenda']]){const tabs=document.querySelector('#plan .tabs');if(!tabs)continue;if(tabs.querySelector('[data-tab="'+key+'"]'))continue;const b=document.createElement('button');b.className='tab';b.dataset.tab=key;b.setAttribute('role','tab');b.textContent=label;tabs.append(b);}
 document.addEventListener('plan-tab-repaint',paint); // repintar Progreso/Agenda (con Carrera) al vuelo, sin esperar al intervalo
 document.addEventListener('click',e=>{const t=e.target.closest?.('[data-pgmetric],[data-pgwindow],[data-pgarea],[data-pgtier],[data-pgposter]');if(!t||t.disabled)return;if(t.dataset.pgmetric)metric=t.dataset.pgmetric;if(t.dataset.pgwindow)windowSize=Number(t.dataset.pgwindow);if(t.dataset.pgarea)selectedArea=Number(t.dataset.pgarea);if(t.dataset.pgtier)selectedTier=Number(t.dataset.pgtier);if(t.dataset.pgposter){if(Net.role==='guest')guestSend('progressPoster',day());else buyPoster(day());}paint();});
 setInterval(tickProgress,300);

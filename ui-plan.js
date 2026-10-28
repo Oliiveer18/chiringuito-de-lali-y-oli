@@ -1,15 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=28.4';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.4';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.4';
-import { ICON_URL } from './icons.js?v=28.4';
-import { Audio } from './audio.js?v=28.4';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.4';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.4';
-import { advanceFromReport } from './report.js?v=28.4';
-import { netAct, netDirty } from './net.js?v=28.4';
-import { drawPerson } from './render.js?v=28.4';
-import { renderTab } from './ui.js?v=28.4';
+import { trackCost } from './bookkeeping.js?v=28.5';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.5';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.5';
+import { ICON_URL } from './icons.js?v=28.5';
+import { Audio } from './audio.js?v=28.5';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.5';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.5';
+import { advanceFromReport } from './report.js?v=28.5';
+import { netAct, netDirty } from './net.js?v=28.5';
+import { drawPerson } from './render.js?v=28.5';
+import { iconFor } from './ui-polish.js?v=28.5';
+import { renderTab } from './ui.js?v=28.5';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
@@ -28,7 +29,7 @@ export function showPlanUI(){
 export function renderForecast(){
   const w=weatherToday(), tw=Game.forecast[Game.day];
   const ev=SPECIAL_DAYS[Game.day];
-  let html = `<div class="fc"><div class="k">Hoy</div><div class="v">${WEATHER[w].label}</div><div class="d">${WEATHER[w].desc}${isWeekend(Game.day)?' Fin de semana: más gente del pueblo.':''}</div></div>`;
+  let html = `<div class="fc today"><div class="k">Hoy</div><div class="v">${iconFor(w)}<span>${WEATHER[w].label}</span></div><div class="d">${WEATHER[w].desc}${isWeekend(Game.day)?' Fin de semana: más gente del pueblo.':''}</div></div>`;
   if(ev) html += `<div class="fc event"><div class="k">Evento</div><div class="v">${ev.title}</div><div class="d">${ev.desc}</div></div>`;
   if(Game.day<SEASON_DAYS) html += `<div class="fc"><div class="k">Mañana</div><div class="v">${WEATHER[tw].label}</div><div class="d">${SPECIAL_DAYS[Game.day+1]?SPECIAL_DAYS[Game.day+1].title:dayName(Game.day+1)}</div></div>`;
   html += `<div class="fc"><div class="k">Objetivo</div><div class="v">${eur(GOAL)}</div><div class="d">Quedan ${SEASON_DAYS-Game.day+1} días · valoración ${Game.rep.toFixed(1)}/5</div></div>`;

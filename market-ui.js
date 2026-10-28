@@ -1,11 +1,11 @@
-import {leaguePanel} from './management-ui.js?v=28.4';
+import {leaguePanel} from './management-ui.js?v=28.5';
 // v23: nombre por carrera y panel de las tres ligas simultáneas.
-import {Game,Net} from './state.js?v=28.4';
-import {Plan} from './ui.js?v=28.4';
-import {netDirty} from './net.js?v=28.4';
-import {escapeHtml as E,eur} from './util.js?v=28.4';
-import {ctx,view} from './canvas.js?v=28.4';
-import * as R from './market-model.mjs?v=28.4';
+import {Game,Net} from './state.js?v=28.5';
+import {Plan} from './ui.js?v=28.5';
+import {netDirty} from './net.js?v=28.5';
+import {escapeHtml as E,eur} from './util.js?v=28.5';
+import {ctx,view} from './canvas.js?v=28.5';
+import * as R from './market-model.mjs?v=28.5';
 let draft=null,area=0,tier=0,detail=null;
 const day=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 const name=()=>R.nameValue(Game.upgrades.kioskName);
@@ -49,7 +49,8 @@ function html(p){const s=p.rivals;if(!s)return '<p>Esperando la clasificación d
  h+=`<section class="lg-badges"><h4>Fajines conseguidos</h4><div class="lg-badge-list">${s.badges.map(b=>`<span class="lg-badge"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.5 5 5.5.8-4 3.9.9 5.4-4.9-2.6-4.9 2.6.9-5.4-4-3.9 5.5-.8z"/></svg>${R.AREAS[b.area]} · ${R.TIERS[b.tier]} · día ${b.day}</span>`).join('')||'<p class="muted">Aún ninguno. El primero llega al ascender de categoría.</p>'}</div></section>`;
  return '<div class="mk">'+h+leaguePanel(p,area,tier,day())+'</div>';}
 function paint(){const p=state();if(!p||Plan.tab!=='mercado'||Game.mode!=='plan')return;const b=document.getElementById('tab-body'),h=html(p);if(b&&(b.__owner!=='mercado'||b.__last!==h||!b.__mkNode||!b.contains(b.__mkNode))){b.__owner='mercado';b.__last=h;b.innerHTML=h;b.__mkNode=b.firstElementChild;}}
-const old=document.querySelector('#plan .tabs [data-tab="ligas"]');if(old)old.remove();const bar=document.querySelector('#plan .tabs');if(bar){const b=document.createElement('button');b.className='tab';b.dataset.tab='mercado';b.setAttribute('role','tab');b.textContent='Ligas';b.onclick=()=>{Plan.tab='mercado';document.querySelectorAll('#plan .tab').forEach(x=>x.classList.toggle('on',x===b));paint();};bar.append(b);}
+const old=document.querySelector('#plan .tabs [data-tab="ligas"]');if(old)old.remove();const bar=document.querySelector('#plan .tabs');if(bar){const b=document.createElement('button');b.className='tab';b.dataset.tab='mercado';b.setAttribute('role','tab');b.textContent='Ligas';bar.append(b);}
+document.addEventListener('plan-tab-repaint',paint);
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-mkarea],[data-mktier],[data-mkid],[data-mkclose]');if(!b)return;if(b.dataset.mkclose!==undefined)detail=null;else if(b.dataset.mkarea!==undefined){area=Number(b.dataset.mkarea);tier=state()?.rivals?.tiers[area]||0;}else if(b.dataset.mktier!==undefined)tier=Number(b.dataset.mktier);else if(b.dataset.mkid)detail=b.dataset.mkid;paint();});
 function update(){setName();const p=state();if(p&&Net.role!=='guest'&&p.kioskName!==name()){p.kioskName=name();netDirty();}library();patchNames();paint();}
 setInterval(update,300);new MutationObserver(()=>{library();setName();}).observe(document.body,{childList:true,subtree:true});

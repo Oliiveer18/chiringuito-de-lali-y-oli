@@ -1,11 +1,11 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { ITEMS } from "../config.js?v=28.4";
-import { eur2 } from "../util.js?v=28.4";
-import { Audio } from "../audio.js?v=28.4";
-import { Game } from "../state.js?v=28.4";
-import { itemUnlocked } from "../state.js?v=28.4";
-import { flashMoney } from "../ui.js?v=28.4";
-import { regularOutcome } from "./customers.js?v=28.4";
+import { ITEMS } from "../config.js?v=28.5";
+import { eur2 } from "../util.js?v=28.5";
+import { Audio } from "../audio.js?v=28.5";
+import { Game } from "../state.js?v=28.5";
+import { itemUnlocked } from "../state.js?v=28.5";
+import { flashMoney } from "../ui.js?v=28.5";
+import { regularOutcome } from "./customers.js?v=28.5";
 
 export function charge(c, total, sync){
   Game.money+=total; Game.dayStats.revenue+=total; Game.dayStats.served++; if(c.partT?.yeray!=null)Game.dayStats.staffClients=(Game.dayStats.staffClients||0)+1;

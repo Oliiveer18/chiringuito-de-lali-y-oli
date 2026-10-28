@@ -1,14 +1,14 @@
-import {trackCost} from './bookkeeping.js?v=28.4';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.4';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.4';
-import * as Rankings from './market-model.mjs?v=28.4';
-import {Game,Net} from './state.js?v=28.4';
-import {STAFF,RENT} from './config.js?v=28.4';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.4';
-import {netDirty} from './net.js?v=28.4';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.4';
-import {escapeHtml as E,eur} from './util.js?v=28.4';
-import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.4';
+import {trackCost} from './bookkeeping.js?v=28.5';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.5';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.5';
+import * as Rankings from './market-model.mjs?v=28.5';
+import {Game,Net} from './state.js?v=28.5';
+import {STAFF,RENT} from './config.js?v=28.5';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.5';
+import {netDirty} from './net.js?v=28.5';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.5';
+import {escapeHtml as E,eur} from './util.js?v=28.5';
+import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.5';
 const day=()=>absoluteDay(Number(Game.upgrades.career?.season)||1,Game.day);
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}
@@ -24,7 +24,7 @@ function cvCard(c,current){
  const exp=c.experienceLabel||(c.experience?c.experience+' años de experiencia':'Sin experiencia registrada');
  const avail=c.availability||'Disponibilidad no registrada';
  const pres=c.presentation||'';
- return '<article class="wf-card cv" data-candidate="'+E(c.id)+'"><img src="'+portrait(c)+'" alt="Retrato del candidato"><h4>'+E(c.name)+'</h4><p class="cv-origin">'+E(age)+' · '+E(origin)+'</p><div class="cv-section"><span class="k">Puesto</span><b>'+roleName(c.role)+'</b></div><div class="cv-section"><span class="k">Experiencia</span><b>'+E(exp)+'</b></div><div class="cv-section"><span class="k">Disponibilidad</span><b>'+E(avail)+'</b></div><div class="cv-section"><span class="k">Pretensión</span><b>'+eur(c.wage)+'/día</b></div>'+(pres?'<p class="cv-text">'+E(pres)+'</p>':'')+'<p>Vigente hasta la jornada '+c.expires+' de carrera.</p>'+(current?'<p>Actual: '+E(current.name)+' · '+eur(current.wage)+'/día · ×'+current.workMultiplier.toFixed(2)+'</p>':'<p>Puesto actualmente vacante.</p>')+button('hire',c.id,current?'Sustituir a '+current.name:'Contratar')+button('discard',c.id,'Descartar')+'</article>';
+ return '<article class="wf-card cv" data-candidate="'+E(c.id)+'"><div class="cv-head"><img class="cv-portrait" src="'+portrait(c)+'" alt="Retrato de '+E(c.name)+'"><div class="cv-head-text"><h4>'+E(c.name)+'</h4><p class="cv-origin">'+E(age)+' · '+E(origin)+'</p></div></div><div class="cv-fields"><div class="cv-section"><span class="k">Puesto</span><b>'+roleName(c.role)+'</b></div><div class="cv-section"><span class="k">Experiencia</span><b>'+E(exp)+'</b></div><div class="cv-section"><span class="k">Disponibilidad</span><b>'+E(avail)+'</b></div><div class="cv-section"><span class="k">Pretensión</span><b>'+eur(c.wage)+'/día</b></div></div>'+(pres?'<p class="cv-text">'+E(pres)+'</p>':'')+'<p class="cv-meta">Vigente hasta la jornada '+c.expires+' de carrera.</p>'+(current?'<p class="cv-meta">Actual: '+E(current.name)+' · '+eur(current.wage)+'/día · ×'+current.workMultiplier.toFixed(2)+'</p>':'<p class="cv-meta">Puesto actualmente vacante.</p>')+'<footer class="cv-footer">'+button('hire',c.id,current?'Sustituir a '+current.name:'Contratar')+button('discard',c.id,'Descartar')+'</footer></article>';
 }
 function paint(){
   if(Game.mode!=='plan'||Plan.tab!=='personal')return;
@@ -58,9 +58,10 @@ function paint(){
   if(w.performance){
     h+='<section class="wf-performance" aria-label="Rendimiento reciente"><h3>Última jornada registrada · '+w.performance.day+'</h3><p>Clientes con intervención del camarero: '+w.performance.clients+' · Productos preparados con ayuda de cocina: '+w.performance.prepared+' · Mesas recogidas por el ayudante: '+w.performance.cleaned+'. No se atribuyen beneficios económicos estimados.</p></section>';
   }
-  h+='<section class="wf-applicants" aria-label="Candidaturas"><h3>Candidaturas · '+w.applicants.length+'</h3><p class="wf-applicants-intro">Las candidaturas llegan poco a poco según la jornada y la marcha del chiringuito. Cada ficha incluye experiencia, disponibilidad y pretensión salarial.</p><div class="wf-grid">';
-  for(const c of w.applicants){const current=w.team[c.role];h+=cvCard(c,current);}
-  h+='</div></section></div>';
+  h+='<section class="wf-applicants" aria-label="Candidaturas"><h3>Candidaturas · '+w.applicants.length+'</h3><p class="wf-applicants-intro">Las candidaturas llegan poco a poco según la jornada y la marcha del chiringuito. Cada ficha incluye experiencia, disponibilidad y pretensión salarial.</p>';
+  if(!w.applicants.length)h+='<p class="wf-empty">No hay candidaturas abiertas en este lote. Vuelve en unos días de carrera.</p>';
+  else{h+='<div class="wf-grid">';for(const c of w.applicants){const current=w.team[c.role];h+=cvCard(c,current);}h+='</div>';}
+  h+='</section></div>';
   const b=document.getElementById('tab-body');
   if(b&&b.innerHTML!==h)b.innerHTML=h;
 }
