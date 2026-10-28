@@ -1,4 +1,4 @@
-/* ui-polish v27.76: clima de hoy, agenda compacta con iconos, reseñas y una reseña por cliente. */
+/* ui-polish v27.77: clima de hoy, agenda compacta, reseñas y sistema unificado de estrellas. */
 import { Game } from './state.js?v=27.6';
 import { SEASON_DAYS, SPECIAL_DAYS, WEATHER } from './config.js?v=27.6';
 const svgWrap=inner=>`<svg class="wicon" viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
@@ -11,20 +11,8 @@ const iconFor=w=>ICONS[w]||CLOUD;
 const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):'';
 function weatherAt(d){const w=(Game.forecast&&Game.forecast[d])||'sol';return WEATHER[w]?w:'sol';}
-function dayCard(d,i){
- const w=weatherAt(d),W=WEATHER[w]||{label:cap(w),desc:''};
- const ev=SPECIAL_DAYS[d];
- return `<div class="fc${i===0?' today':''}${ev?' event':''}"><div class="k">${i===0?'Hoy':'Día '+i}</div><div class="v">${iconFor(w)}<span>${esc(W.label)}</span></div><div class="d">${esc(ev?ev.title:(W.desc||''))}</div></div>`;
-}
-function agenda(){
- const fc=document.getElementById('forecast');
- if(!fc||Game.mode!=='plan')return;
- let html=dayCard(Game.day,0);
- html+='<p class="agenda-title">Agenda</p><div class="agenda">';
- for(let i=0;i<7;i++){const d=Game.day+i;if(d>SEASON_DAYS)break;html+=dayCard(d,i);}
- html+='</div>';
- if(fc.dataset.polish!==html){fc.dataset.polish=html;fc.innerHTML=html;}
-}
+function dayCard(d,i){const w=weatherAt(d),W=WEATHER[w]||{label:cap(w),desc:''};const ev=SPECIAL_DAYS[d];return `<div class="fc${i===0?' today':''}${ev?' event':''}"><div class="k">${i===0?'Hoy':'Día '+i}</div><div class="v">${iconFor(w)}<span>${esc(W.label)}</span></div><div class="d">${esc(ev?ev.title:(W.desc||''))}</div></div>`;}
+function agenda(){const fc=document.getElementById('forecast');if(!fc||Game.mode!=='plan')return;let html=dayCard(Game.day,0);html+='<p class="agenda-title">Agenda</p><div class="agenda">';for(let i=0;i<7;i++){const d=Game.day+i;if(d>SEASON_DAYS)break;html+=dayCard(d,i);}html+='</div>';if(fc.dataset.polish!==html){fc.dataset.polish=html;fc.innerHTML=html;}}
 function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
 function starCount(card){const el=card.querySelector('.rev-head span');if(!el)return 0;const m=el.textContent.match(/★|☆/g)||[];return m.filter(c=>c==='★').length;}
 function polishReviews(){
@@ -69,6 +57,11 @@ const CSS=`
 .agenda-title{margin:10px 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
 .agenda{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
 .agenda .fc{width:auto;flex:none}
+.stars{font-size:18px;letter-spacing:2px;line-height:1}
+.stars b{color:#e0a83f;font-weight:400}
+.stars span{color:#d8cbb2;font-weight:400}
+.rev-summary .stars{font-size:22px}
+#hud-rep{color:#e0a83f;font-size:14px;letter-spacing:1px}
 .review.extra{display:none}
 #rep-body.show-all .review.extra{display:block}
 #btn-all-reviews{margin:0 24px 14px;display:inline-block}
@@ -79,7 +72,6 @@ const CSS=`
 .review.dup{display:none}
 .rev-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .rev-text{margin:8px 0 10px;color:var(--ink);line-height:1.5;overflow-wrap:anywhere}
-.stars b{color:#f5b82e;font-weight:400}.stars span{color:#d8cbb2;font-weight:400}
 .net-actions{display:flex;gap:8px;flex-wrap:wrap}
 .net-actions .btn.primary{background:linear-gradient(180deg,#ee6d49,var(--coral));border-color:var(--coral-d);color:#fff}
 .net-actions .btn.teal{background:var(--teal);border-color:var(--teal-d);color:#fff}
