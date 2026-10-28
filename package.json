@@ -2,6 +2,13 @@
   "name": "chiringuito-de-lali-y-oli",
   "version": "1.0.0",
   "private": true,
-  "scripts": { "start": "node serve.js", "test": "node smoke.test.mjs && node social-model.test.mjs && node career.test.mjs && node progression.test.mjs" },
-  "engines": { "node": ">=18.19" }
+  "type": "module",
+  "scripts": {
+    "start": "node serve.js",
+    "test": "node smoke.test.mjs && node social-model.test.mjs && node career.test.mjs && node progression.test.mjs",
+    "check": "npm test"
+  },
+  "engines": {
+    "node": ">=18.19"
+  }
 }
