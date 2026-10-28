@@ -1,5 +1,5 @@
-export const VERSION='v27.6';
-export const LABEL='v27.6 · identidad, kiosco y pedidos reales';
+export const VERSION='v27.7';
+export const LABEL='v27.7 · agenda con clima, informe profesional y reseñas mejoradas';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
