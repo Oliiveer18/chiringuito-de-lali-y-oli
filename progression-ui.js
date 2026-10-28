@@ -20,7 +20,7 @@ function service(){if(Net.role==='guest')return;const p=ensure(),d=day();if(p.st
  const event=SPECIAL_DAYS[Game.day],product=Game.day===27?'batido':'cerveza';
  const checks=event?M.readiness(Game.stock,Game.staff,p.poster,product):[];
  const prep=checks.length?checks.filter(x=>x.ok).length/checks.length:0;
- const rows=M.table(p,Math.floor(p.league/3),p.league%3,d),rank=rows.find(x=>x.id==='player').rank;
+ const rows=M.table(p,Math.floor(p.league/3),p.league%3,d),rank=rows.find(x=>x.id==='player')?.rank??10;
  const scored=p.history.some(r=>r.day>=Math.floor((d-1)/7)*7+1&&r.day<d);const rival=scored&&rank>=8?-.03:0,bonus=event?prep*.06:0;
  Game.mods.arr*=1+rival+bonus;
  p.start={day:d,cash:Game.money,prep:Math.round(prep*100),rival,bonus};

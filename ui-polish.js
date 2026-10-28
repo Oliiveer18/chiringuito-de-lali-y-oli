@@ -92,6 +92,8 @@ const CSS=`
 .review{background:var(--sand);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
 .review.dup{display:none}
 .rev-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rev-who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+.rev-loc{font-size:12px;color:var(--ink-2);font-weight:600}
 .rev-text{margin:8px 0 10px;color:var(--ink);line-height:1.5;overflow-wrap:anywhere}
 .net-actions{display:flex;gap:8px;flex-wrap:wrap}
 .net-actions .btn.primary{background:linear-gradient(180deg,#ee6d49,var(--coral));border-color:var(--coral-d);color:#fff}

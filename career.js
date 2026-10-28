@@ -120,10 +120,10 @@ export function initCareer() {
   const L = loadLegacy();
   const c = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), season: 1, perks: [], legacyOwned: [...L.owned], rescuesUsed: 0, totals: { revenue: 0, served: 0, lost: 0 }, hist: [], red: 0, closed: null, leg: { points: L.points, owned: [...L.owned] } };
   if (L.owned.includes('dote')) Game.money += 300;
-  if (L.owned.includes('fama')) U.socialFollowers = (U.socialFollowers == null ? 50 : U.socialFollowers) + 70;
+  if (L.owned.includes('fama')) U.socialFollowers = (U.socialFollowers == null ? 0 : U.socialFollowers) + 70;
   if (L.owned.includes('fidelidad') && Game.regulars) for (const r of Object.values(Game.regulars)) r.loyalty = Math.max(r.loyalty || 1, 2);
   c.startMoney = Game.money;
-  c.startFol = U.socialFollowers == null ? 50 : U.socialFollowers;
+  c.startFol = U.socialFollowers == null ? 0 : U.socialFollowers;
   c.obj = objectiveFor(1, c.startMoney, c.startFol);
   U.career = c;
   applyEffects(c);
@@ -201,7 +201,7 @@ export function nextSeason() {
   Game.dayStats = null; Game.customers = []; Game.floaters = []; Game.particles = [];
   if (Game.regulars) for (const r of Object.values(Game.regulars)) r.next = Math.min(num(r.next) || 2, 2 + Math.floor(rnd() * 3));
   c.startMoney = Game.money;
-  c.startFol = U.socialFollowers == null ? 50 : U.socialFollowers;
+  c.startFol = U.socialFollowers == null ? 0 : U.socialFollowers;
   c.obj = objectiveFor(c.season, c.startMoney, c.startFol);
   applyEffects(c);
   return true;

@@ -9,7 +9,7 @@ const r3 = v => Math.round(v * 1000) / 1000;
 // publicación -> producto en tendencia con el que encaja
 export const TREND_POST = { papas: 'papas', algodon: 'algodon' };
 
-// 1 con los 50 seguidores iniciales; sube hasta 1,8 y baja hasta 0,7
+// 1 con ~50 seguidores de referencia; sube hasta 1,8 y baja hasta 0,7 (partida nueva empieza en 0 → alcance mínimo)
 export function reachFactor(f) {
   f = Math.max(0, num(f));
   return clamp((f / (f + REACH_N)) / (REF_F / (REF_F + REACH_N)), 0.7, 1.8);
@@ -30,7 +30,7 @@ export function postMetrics({ fx, f = 0 } = {}) {
 export function postEffect({ id, P, f, rating, trendId, prevId }) {
   const match = !!(trendId && TREND_POST[id] === trendId);
   const reach = reachFactor(f), eng = engagement({ rating, match }), fat = fatigue(id, prevId);
-  return { arr: r3(P.arr * reach * eng * fat), followers: Math.max(1, Math.round(P.followers * eng * fat)), reach, eng, fat, match };
+  return { arr: r3(P.arr * reach * eng * fat), followers: Math.max(0, Math.round(P.followers * eng * fat * reach * 0.72)), reach, eng, fat, match };
 }
 export function influEffect({ I, f, rating }) {
   const reach = reachFactor(f), eng = engagement({ rating });

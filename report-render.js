@@ -152,7 +152,8 @@ export function teamHtml(s){
 
 export function reviewsSectionHtml(m){
   const cards=m.cards.map(c=>{
-    const head=`<div class="rev-head"><b>${escapeHtml(c.name)}</b><span>${stars(c.stars)}</span></div>`;
+    const loc=c.town?`<span class="rev-loc">${escapeHtml(c.town)}</span>`:'';
+    const head=`<div class="rev-head"><div class="rev-who"><b>${escapeHtml(c.name)}</b>${loc}</div><span>${stars(c.stars)}</span></div>`;
     const body=`<p class="rev-text">${c.text}</p>`;
     let foot='';
     if(c.resp){

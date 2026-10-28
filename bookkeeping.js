@@ -5,7 +5,7 @@ const labels={delivery:'Compras al repartidor',social:'Publicaciones de Chiringo
 const epoch=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 const n=v=>Number.isFinite(v)?v:0;
 function book(){const u=Game.upgrades;if(u.financeBook?.day!==epoch())u.financeBook={day:epoch(),operating:{},capital:{}};return u.financeBook;}
-function synchronize(){const b=book(),s=Game.dayStats;if(s&&['service','report'].includes(Game.mode)&&s.ledgerDay===b.day){s.extraCosts={...b.operating};s.investments={...b.capital};}}
+function synchronize(){const b=book(),s=Game.dayStats;if(!s)return;if(s.ledgerDay==null)s.ledgerDay=b.day;if(s.ledgerDay===b.day){s.extraCosts={...b.operating};s.investments={...b.capital};}}
 function record(amount,category,capital){if(Net.role==='guest')return false;if(!allowed.has(category)||!Number.isFinite(amount))throw Error('Movimiento contable no valido');if(!amount)return true;const b=book(),bucket=capital?b.capital:b.operating;bucket[category]=n(bucket[category])+amount;synchronize();Net.sendT=1e9;return true;}
 export function trackCost(amount,category,capital=false){if(amount<0)throw Error('Coste negativo');return record(amount,category,capital);}
 export function trackRefund(amount,category){if(amount<0)throw Error('Devolucion negativa');return record(-amount,category,false);}

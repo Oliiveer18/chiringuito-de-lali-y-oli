@@ -36,23 +36,25 @@ export function renderTab(){
   // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
   if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
   if(Plan.tab==='compras'){
-    h += `<p class="muted" style="margin:0 0 6px">Calcula unas ${Math.round(estimateCustomers())} visitas hoy. Lo fresco se estropea por la noche${lvl('nevera')?' (poco, gracias a la nevera)':''}.</p>`;
+    h += `<section class="plan-panel plan-stock"><p class="plan-panel-k">Comprar stock</p><p class="muted plan-panel-d">Calcula unas ${Math.round(estimateCustomers())} visitas hoy. Lo fresco se estropea por la noche${lvl('nevera')?' (poco, gracias a la nevera)':''}.</p>`;
     for(const id of ITEM_IDS){
       const it=ITEMS[id], un=itemUnlocked(id);
       const sp = lvl('nevera')?it.spoilF:it.spoil;
       h += `<div class="row ${un?'':'locked'}"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">${un?`Coste ${eur2(it.cost)} · en almacén <b>${Game.stock[id]}</b> · merma ${Math.round(sp*100)}%`:`Necesitas: ${UPGRADES.find(u=>u.id===it.unlock).name}`}</div></div>
-      <div class="ctrl">${un?[10,25,50].map(n=>`<button class="btn sm" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n} · ${eur(it.cost*n)}</button>`).join(''):''}</div></div>`;
+      <div class="ctrl">${un?[10,25,50].map(n=>`<button class="btn sm primary" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n} · ${eur(it.cost*n)}</button>`).join(''):''}</div></div>`;
     }
+    h += '</section>';
   } else if(Plan.tab==='carta'){
-    h += `<p class="muted" style="margin:0 0 6px">Los turistas pagan casi cualquier cosa; la gente del pueblo conoce los precios. Fíjate en el precio de referencia.</p>`;
+    h += `<section class="plan-panel plan-prices"><p class="plan-panel-k">Fijar precios y carta</p><p class="muted plan-panel-d">Los turistas pagan casi cualquier cosa; la gente del pueblo conoce los precios. Fíjate en el precio de referencia.</p>`;
     for(const id of ITEM_IDS){
       const it=ITEMS[id], un=itemUnlocked(id);
       if(!un){ h+=`<div class="row locked"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Bloqueado</div></div></div>`; continue; }
       const margin = Game.prices[id]-it.cost;
-      h += `<div class="row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
+      h += `<div class="row plan-price-row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
       <div class="ctrl"><div class="price"><button data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div>
       <button class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera'}</button></div></div>`;
     }
+    h += '</section>';
   } else if(Plan.tab==='mejoras'){
     h += '<div class="up-grid">';
     for(const u of UPGRADES){
@@ -100,8 +102,9 @@ $('#btn-next').addEventListener('click',()=>{ Audio.click();
   pressReady(); });
 $('#btn-start').addEventListener('click',()=>{ Audio.init(); Audio.good(); Net.role='solo'; Net.me='p1'; newSeason(); Plan.tab='compras'; showPlan(); });
 
-// ---------- Urgente ----------
-$('#btn-urgent').addEventListener('click',()=>{ if(Game.mode!=='service') return; Audio.click();
+// Pedido urgente sigue disponible vía overlay #urgent si se reabre por código; botón retirado del HUD.
+const btnUrgent=document.getElementById('btn-urgent');
+if(btnUrgent) btnUrgent.addEventListener('click',()=>{ if(Game.mode!=='service') return; Audio.click();
   if(!isCoop()){ prevSpeed=Game.speed; setSpeed(0); }
   $('#urg-note').textContent = isCoop() ? 'A mitad de jornada todo cuesta el doble. Ojo: el servicio sigue mientras pides.' : 'A mitad de jornada todo cuesta el doble. Llega al momento.';
   renderUrgent(); $('#urgent').classList.add('show'); });

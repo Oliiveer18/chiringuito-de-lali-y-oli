@@ -24,6 +24,6 @@ function renderRed(){const b=document.querySelector('#tab-body');if(!b||Plan.tab
 new MutationObserver(renderRed).observe(document.getElementById('tab-body'),{childList:true,subtree:true});
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-post],[data-influ],[data-resp]');if(!t||t.disabled)return;const k=t.dataset.post?'post':t.dataset.influ?'influ':'resp',v=t.dataset.post||t.dataset.resp||'1';if(Net.role==='guest'){guestSend(k,v);return;}if(!(hostLive()||Net.role==='solo'))return;if(k==='post')publish(v);else if(k==='influ')hireInflu();else respond(v);},true);
 setInterval(renderRed,500);
-function deliveryBtn(){let b=document.getElementById('v12-order');if(Game.mode==='service'){if(!b){b=document.createElement('button');b.id='v12-order';b.textContent='🛵 Reparto';b.style.cssText='position:fixed;right:12px;bottom:86px;z-index:60;background:#0f8b8d;color:#fff;border:0;padding:10px 14px;border-radius:999px;font:700 13px Satoshi,system-ui;box-shadow:0 6px 18px rgba(0,0,0,.35)';document.body.append(b);}}else if(b)b.remove();}
-setInterval(deliveryBtn,400);
-document.addEventListener('click',e=>{if(!e.target.closest?.('#v12-order')||Game.mode!=='service')return;openDelivery(orderDelivery);});
+function bindDeliveryHud(){const b=document.getElementById('btn-delivery');if(!b||b.dataset.v12Bound)return;b.dataset.v12Bound='1';b.addEventListener('click',()=>{if(Game.mode!=='service')return;openDelivery(orderDelivery);});}
+bindDeliveryHud();
+setInterval(bindDeliveryHud,800);

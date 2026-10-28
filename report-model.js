@@ -352,12 +352,14 @@ export function buildRevModel(s, dayStars){
     const st=visitStars(v);
     const voice=(VOICE[v.type]||VOICE.local)[Math.floor(rng()*(VOICE[v.type]||VOICE.local).length)];
     const town=townOf(v);
-    const sign= town ? `— ${escapeHtml(v.name||who(v.type))}, ${escapeHtml(town)}` : `— ${escapeHtml(v.name||who(v.type))}`;
+    const rawName=v.name||who(v.type);
+    const displayName=rawName.includes(',')?rawName.split(',')[0].trim():rawName;
     cards.push({
       vid:(v.name||('v'+i))+'#'+Game.day+'#'+i,
       stars:st,
-      name:v.name||who(v.type),
-      text:`${text} ${intensityNote(st)} ${voice} ${sign}`,
+      name:displayName,
+      town,
+      text:`${text} ${intensityNote(st)} ${voice}`,
       resp:null, respGain:0,
     });
   });
