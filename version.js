@@ -1,5 +1,5 @@
-export const VERSION='v28';
-export const LABEL='v28 · arreglos de limpieza, ranking y pestañas';
+export const VERSION='v28.1';
+export const LABEL='v28.1 · Reparto, social, plan y reseñas';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

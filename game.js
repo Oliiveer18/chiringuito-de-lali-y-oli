@@ -1,19 +1,19 @@
-import './tabguard.js?v=28';
-import { EXTRA } from './icons.js?v=28';
-import './main.js?v=28';
-import './saves.js?v=28';
-import './layout.js?v=28';
-import './reliability.js?v=28';
-import './coopbridge.js?v=28';
+import './tabguard.js?v=28.1';
+import { EXTRA } from './icons.js?v=28.1';
+import './main.js?v=28.1';
+import './saves.js?v=28.1';
+import './layout.js?v=28.1';
+import './reliability.js?v=28.1';
+import './coopbridge.js?v=28.1';
 Object.assign(EXTRA,{algodon:['#ffb7d5','#fff0f6'],agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']});
 const loaded=[],failed=[],nativeInterval=window.setInterval;
 window.setInterval=(fn,ms,...args)=>nativeInterval(typeof fn==='function'&&fn.name==='tick'?function(){if(window.Net&&window.Net.role==='guest')return;fn();}:fn,ms,...args);
 try{
-  for(const [name,url] of [['v11','./features.js?v=28'],['v12','./v12.js?v=28'],['v14','./v14.js?v=28'],['v19','./chiringo-ui.js?v=28'],['cierre','./cierre-ui.js?v=28'],['carrera','./career-ui.js?v=28'],['progreso','./progression-ui.js?v=28'],['mercado','./market-ui.js?v=28']]){
+  for(const [name,url] of [['v11','./features.js?v=28.1'],['v12','./v12.js?v=28.1'],['v14','./v14.js?v=28.1'],['v19','./chiringo-ui.js?v=28.1'],['cierre','./cierre-ui.js?v=28.1'],['carrera','./career-ui.js?v=28.1'],['progreso','./progression-ui.js?v=28.1'],['mercado','./market-ui.js?v=28.1']]){
     try{await import(url);loaded.push(name);}
     catch(e){failed.push(name);console.error('Módulo '+name+' no cargó',e);
       const b=document.getElementById('errbox');if(b){b.style.display='block';b.textContent+='['+name+'] '+(e&&e.message||e)+'\n';}}
   }
 }finally{window.setInterval=nativeInterval;}
 const title=document.getElementById('ver-title');
-if(title)title.textContent='v28 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
+if(title)title.textContent='v28.1 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');

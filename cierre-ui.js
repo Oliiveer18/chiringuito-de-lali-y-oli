@@ -1,8 +1,8 @@
 /* v25: bloque «Chiringo · balance de hoy» en el informe de cierre.
    El balance de seguidores se resuelve una sola vez al cerrar la jornada y se aplica en ese momento: al abrir el día siguiente no se repite. */
-import { Game, Net } from './state.js?v=28';
-import { escapeHtml, eur } from './util.js?v=28';
-import { closeSocialDay } from './v12.js?v=28';
+import { Game, Net } from './state.js?v=28.1';
+import { escapeHtml, eur } from './util.js?v=28.1';
+import { closeSocialDay } from './v12.js?v=28.1';
 
 function closeHtml() {
   const u = Game.upgrades;

@@ -1,21 +1,21 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { ITEMS } from "../config.js?v=28";
-import { ITEM_IDS } from "../config.js?v=28";
-import { REGULARS } from "../config.js?v=28";
-import { SEASON_DAYS } from "../config.js?v=28";
-import { SPECIAL_DAYS } from "../config.js?v=28";
-import { START_MONEY } from "../config.js?v=28";
-import { clamp } from "../util.js?v=28";
-import { pickW } from "../util.js?v=28";
-import { rnd } from "../util.js?v=28";
-import { Audio } from "../audio.js?v=28";
-import { Game } from "../state.js?v=28";
-import { closeHour } from "../state.js?v=28";
-import { setTimeoutGame } from "../state.js?v=28";
-import { buildTables } from "../world.js?v=28";
-import { toast } from "../ui.js?v=28";
-import { updateStockbar } from "../ui.js?v=28";
-import { spawnCustomer } from "./customers.js?v=28";
+import { ITEMS } from "../config.js?v=28.1";
+import { ITEM_IDS } from "../config.js?v=28.1";
+import { REGULARS } from "../config.js?v=28.1";
+import { SEASON_DAYS } from "../config.js?v=28.1";
+import { SPECIAL_DAYS } from "../config.js?v=28.1";
+import { START_MONEY } from "../config.js?v=28.1";
+import { clamp } from "../util.js?v=28.1";
+import { pickW } from "../util.js?v=28.1";
+import { rnd } from "../util.js?v=28.1";
+import { Audio } from "../audio.js?v=28.1";
+import { Game } from "../state.js?v=28.1";
+import { closeHour } from "../state.js?v=28.1";
+import { setTimeoutGame } from "../state.js?v=28.1";
+import { buildTables } from "../world.js?v=28.1";
+import { toast } from "../ui.js?v=28.1";
+import { updateStockbar } from "../ui.js?v=28.1";
+import { spawnCustomer } from "./customers.js?v=28.1";
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
