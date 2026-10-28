@@ -1,14 +1,14 @@
 /* Carrera infinita: interfaz. Pestaña «Carrera», pantalla de cierre de temporada / traspaso, ventajas y Legado.
    Funciona en solitario y en cooperativo: el anfitrión decide y la invitada envía sus clics por el canal de acciones. */
-import { Game, Net } from './state.js?v=27.9';
-import { SEASON_DAYS } from './config.js?v=27.9';
-import { Plan, showPlan, toast } from './ui.js?v=27.9';
-import { Audio } from './audio.js?v=27.9';
-import { netDirty } from './net.js?v=27.9';
-import { newSeason } from './sim.js?v=27.9';
-import { guestSend, onGuestAction } from './coopbridge.js?v=27.9';
-import { escapeHtml, eur } from './util.js?v=27.9';
-import * as C from './career.js?v=27.9';
+import { Game, Net } from './state.js?v=28';
+import { SEASON_DAYS } from './config.js?v=28';
+import { Plan, showPlan, toast } from './ui.js?v=28';
+import { Audio } from './audio.js?v=28';
+import { netDirty } from './net.js?v=28';
+import { newSeason } from './sim.js?v=28';
+import { guestSend, onGuestAction } from './coopbridge.js?v=28';
+import { escapeHtml, eur } from './util.js?v=28';
+import * as C from './career.js?v=28';
 
 const TAB = 'carrera';
 const $ = id => document.getElementById(id);
@@ -90,7 +90,7 @@ function paintFinal(c) {
   card.__cr = h; card.innerHTML = h;
 }
 
-function tabHtml(c) {
+export function tabHtml(c) {
   const ctx = ctxNow(), o = c.obj, v = C.valueOf(o, ctx), pct = C.progressPct(o, ctx);
   const left = C.rescuesLeft(c);
   let h = '<div class="cr"><div class="cr-head"><div><div class="cr-t">Temporada ' + c.season + '</div><div class="cr-s">Día ' + Game.day + ' de ' + SEASON_DAYS + ' · día ' + C.careerDay(c) + ' de la carrera</div></div>' +
@@ -144,22 +144,11 @@ function step() {
   }
   if (Game.mode === 'final') paintFinal(c);
   patchPlan(c);
-  if (c.obj) paintTab(c);
 }
 setInterval(step, 300);
-document.addEventListener('plan-tab-repaint', () => { const c = Game.upgrades && Game.upgrades.career; if (c && c.obj) paintTab(c); });
 for (const id of ['final-card', 'tab-body']) { const el = $(id); if (el) new MutationObserver(step).observe(el, { childList: true }); }
 
-const tabs = document.querySelector('#plan .tabs');
-if (tabs && !tabs.querySelector('[data-tab="' + TAB + '"]')) {
-  const b = document.createElement('button'); b.className = 'tab'; b.dataset.tab = TAB; b.setAttribute('role', 'tab'); b.textContent = 'Carrera';
-  b.addEventListener('click', () => {
-    Plan.tab = TAB; Audio.click();
-    document.querySelectorAll('#plan .tab').forEach(x => x.classList.toggle('on', x.dataset.tab === TAB));
-    step();
-  });
-  tabs.append(b);
-}
+// v27.9: la pestaña Carrera se fusionó con Progreso; progression-ui pinta tabHtml dentro de su pestaña.
 
 const css = `
 .cr-offers{display:grid;gap:8px;margin:8px 0 14px;text-align:left}

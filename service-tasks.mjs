@@ -44,6 +44,20 @@ function complete(s,t){
  if(t.kind==='escort'&&table?.claim===t.id){table.state='busy';table.claim=null;}
  if(a){a.completed++;if(a.task===t.id)a.task=null;}t.state='done';s.events.push({id:t.id+':complete',task:t.id,type:'completed',kind:t.kind,target:t.target,actor:t.actor});
 }
+export function stepHome(a,dt,planPath){
+ if(!a.returning)return;
+ if(!a.returnPath.length){
+  if(Math.hypot(a.x-a.home.x,a.y-a.home.y)<5){a.x=a.home.x;a.y=a.home.y;a.returning=false;return;}
+  a.returnPath=planPath(a,a.home)||[];
+ }
+ let left=dt;
+ while(left>0&&a.returnPath.length){
+  const p=a.returnPath[0],d=Math.hypot(p.x-a.x,p.y-a.y);
+  if(d<.01){a.returnPath.shift();continue;}
+  const use=Math.min(left,d/a.speed);a.x+=(p.x-a.x)/d*a.speed*use;a.y+=(p.y-a.y)/d*a.speed*use;left-=use;
+  if(use>=d/a.speed-1e-9)a.returnPath.shift();
+ }
+}
 export function stepTasks(s,dt,planPath){
  number(dt,'dt');if(dt===0)return;s.time+=dt;assignTasks(s,planPath);
  for(const t of s.tasks.filter(t=>t.state==='walking'||t.state==='working'||t.state==='blocked')){

@@ -1,11 +1,11 @@
-import {leaguePanel} from './management-ui.js?v=27.9';
+import {leaguePanel} from './management-ui.js?v=28';
 // v23: nombre por carrera y panel de las tres ligas simultáneas.
-import {Game,Net} from './state.js?v=27.9';
-import {Plan} from './ui.js?v=27.9';
-import {netDirty} from './net.js?v=27.9';
-import {escapeHtml as E,eur} from './util.js?v=27.9';
-import {ctx,view} from './canvas.js?v=27.9';
-import * as R from './market-model.mjs?v=27.9';
+import {Game,Net} from './state.js?v=28';
+import {Plan} from './ui.js?v=28';
+import {netDirty} from './net.js?v=28';
+import {escapeHtml as E,eur} from './util.js?v=28';
+import {ctx,view} from './canvas.js?v=28';
+import * as R from './market-model.mjs?v=28';
 let draft=null,area=0,tier=0,detail=null;
 const day=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 const name=()=>R.nameValue(Game.upgrades.kioskName);
@@ -32,12 +32,12 @@ function html(p){const s=p.rivals;if(!s)return '<p>Esperando la clasificación d
   const zone=r.rank<=3&&t<2?' z-up':r.rank>=8&&t>0?' z-down':'';
   const mv=r.change===null?'<i class="mv eq">—</i>':r.change>0?`<i class="mv up">▲ ${r.change}</i>`:r.change<0?`<i class="mv down">▼ ${-r.change}</i>`:'<i class="mv eq">—</i>';
   const pos=r.rank<=3?`<span class="lg-medal m${r.rank}">${r.rank}</span>`:`<span class="lg-pos-n">${r.rank}</span>`;
-  return `<tr class="${r.id==='player'?'lg-own':''}${zone}" data-mkid="${r.id}"><td class="lg-pos">${pos}</td><td class="lg-name">${r.id==='player'?'<span class="lg-you">VOSOTROS</span>':''}<b>${E(r.name)}</b><small>${E(r.style)}</small></td><td class="lg-pts">${r.score}</td><td class="lg-mv">${mv}</td></tr>`;}).join('');
+  return `<tr class="${r.id==='player'?'lg-own':''}${detail===r.id?' sel':''}${zone}" data-mkid="${r.id}"><td class="lg-pos">${pos}</td><td class="lg-name">${r.id==='player'?'<span class="lg-you">VOSOTROS</span>':''}<b>${E(r.name)}</b><small>${E(r.style)}</small></td><td class="lg-pts">${r.score}</td><td class="lg-mv">${mv}</td></tr>`;}).join('');
  let h=`<div class="lg-hero"><div><p class="eyebrow">Temporada ${season} · semana ${week} · jornada ${jor} de 7</p><h3>Ligas</h3></div><p class="lg-hero-note">Competís a la vez en los tres ámbitos · 29 kioscos rivales por ámbito · los puntos de hoy se suman al cerrar</p></div>`;
  h+=`<div class="lg-areas">${areas}</div>`+ctx;
  h+=`<div class="lg-tiers">${R.TIERS.map((tt,i)=>`<button class="lg-tier${i===tier?' on':''}" data-mktier="${i}">${tt}</button>`).join('')}</div>`;
  h+=`<table class="lg-table"><thead><tr><th>#</th><th>Kiosco</th><th>Puntos</th><th>Cambio*</th></tr></thead><tbody>${table}</tbody></table>`;
- h+=`<p class="lg-legend">${t<2?'<span class="lg-sw up"></span>Zona de ascenso':''}${t>0?'<span class="lg-sw down"></span>Zona de descenso':''}<span class="lg-sw own"></span>Vuestro kiosco</span><span class="lg-note-mv">*Respecto al último cierre semanal</span></p>`;
+ h+=`<p class="lg-legend">${t<2?'<span class="lg-sw up"></span>Zona de ascenso':''}${t>0?'<span class="lg-sw down"></span>Zona de descenso':''}<span class="lg-sw own"></span>Vuestro kiosco<span class="lg-note-mv">*Respecto al último cierre semanal</span></p>`;
  h+=`<details class="lg-details"><summary>Cómo se calculan los puntos</summary><p>Misma fórmula para todos: cada jornada suma hasta 100 puntos (servicio 40, valoración 25, margen 20 y comunidad 15). El total semanal empieza en cero; se suman las siete jornadas antes de resolver ascensos y descensos. Los rivales realizan inversiones con caja propia y su demanda no depende de vuestra posición. Revisión cada séptimo día: ascienden los tres primeros de Bronce y Plata e intercambian plaza con los tres últimos de la categoría superior.</p></details>`;
  const n=s.npcs.find(n=>n.id===detail);
  if(n){const r=n.history.at(-1);
@@ -45,7 +45,7 @@ function html(p){const s=p.rivals;if(!s)return '<p>Esperando la clasificación d
  h+=`<section class="lg-week"><h4>Cierres semanales recientes</h4>${(s.weeklyHistory||[]).slice(-8).reverse().map(w=>`<div class="lg-week-row"><span class="lg-week-d">Jornada ${w.day}</span><span class="lg-week-r">${w.results.map(r=>`<span class="lg-chip t${r.tier}">${R.AREAS[r.area]} ${R.TIERS[r.tier]} · ${r.rank}º · ${r.score} pts</span>`).join('')}</span></div>`).join('')||'<p class="muted">El primer cierre semanal llegará al séptimo día.</p>'}</section>`;
  h+=`<section class="lg-badges"><h4>Fajines conseguidos</h4><div class="lg-badge-list">${s.badges.map(b=>`<span class="lg-badge"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.5 5 5.5.8-4 3.9.9 5.4-4.9-2.6-4.9 2.6.9-5.4-4-3.9 5.5-.8z"/></svg>${R.AREAS[b.area]} · ${R.TIERS[b.tier]} · día ${b.day}</span>`).join('')||'<p class="muted">Aún ninguno. El primero llega al ascender de categoría.</p>'}</div></section>`;
  return '<div class="mk">'+h+leaguePanel(p,area,tier,day())+'</div>';}
-function paint(){const p=state();if(!p||Plan.tab!=='mercado'||Game.mode!=='plan')return;const b=document.getElementById('tab-body'),h=html(p);if(b&&b.innerHTML!==h)b.innerHTML=h;}
+function paint(){const p=state();if(!p||Plan.tab!=='mercado'||Game.mode!=='plan')return;const b=document.getElementById('tab-body'),h=html(p);if(b&&(b.__owner!=='mercado'||b.__last!==h||!b.__mkNode||!b.contains(b.__mkNode))){b.__owner='mercado';b.__last=h;b.innerHTML=h;b.__mkNode=b.firstElementChild;}}
 const old=document.querySelector('#plan .tabs [data-tab="ligas"]');if(old)old.remove();const bar=document.querySelector('#plan .tabs');if(bar){const b=document.createElement('button');b.className='tab';b.dataset.tab='mercado';b.setAttribute('role','tab');b.textContent='Ligas';b.onclick=()=>{Plan.tab='mercado';document.querySelectorAll('#plan .tab').forEach(x=>x.classList.toggle('on',x===b));paint();};bar.append(b);}
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-mkarea],[data-mktier],[data-mkid],[data-mkclose]');if(!b)return;if(b.dataset.mkclose!==undefined)detail=null;else if(b.dataset.mkarea!==undefined){area=Number(b.dataset.mkarea);tier=state()?.rivals?.tiers[area]||0;}else if(b.dataset.mktier!==undefined)tier=Number(b.dataset.mktier);else if(b.dataset.mkid)detail=b.dataset.mkid;paint();});
 function update(){setName();const p=state();if(p&&Net.role!=='guest'&&p.kioskName!==name()){p.kioskName=name();netDirty();}library();patchNames();paint();}
@@ -83,6 +83,8 @@ const css=document.createElement('style');css.textContent=`
 .lg-table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .lg-table tbody tr{cursor:pointer;transition:background .12s}
 .lg-table tbody tr:hover{background:var(--sand-2)}
+.lg-table tbody tr.sel td{background:#e2f3f0}
+.lg-table tbody tr.sel:hover td{background:#d8eee9}
 .lg-table tr.z-up td:first-child{box-shadow:inset 3px 0 0 var(--good)}
 .lg-table tr.z-down td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
 .lg-pos{width:44px;text-align:center}

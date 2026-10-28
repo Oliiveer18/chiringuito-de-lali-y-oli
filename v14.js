@@ -1,11 +1,11 @@
 /* v14: clima cambiante, nuevos productos, reservas, misiones, Chiringo por stock real, shows con público e informe del día. v20: los cambios de seguidores pasan por el balance. */
-import { Game, setTimeoutGame, weatherToday } from './state.js?v=27.9';
-import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js?v=27.9';
-import { rnd, clamp } from './util.js?v=27.9';
-import { Plan, toast } from './ui.js?v=27.9';
-import { netDirty } from './net.js?v=27.9';
-import { spawnCustomer } from './sim.js?v=27.9';
-import { ICON_URL } from './icons.js?v=27.9';
+import { Game, setTimeoutGame, weatherToday } from './state.js?v=28';
+import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js?v=28';
+import { rnd, clamp } from './util.js?v=28';
+import { Plan, toast } from './ui.js?v=28';
+import { netDirty } from './net.js?v=28';
+import { spawnCustomer } from './sim.js?v=28';
+import { ICON_URL } from './icons.js?v=28';
 
 /* --- Productos nuevos --- */
 ITEMS.agua={name:'Agua fría',cost:0.3,ref:1.5,prep:0.2,spoil:0,spoilF:0,unlock:'refrescos'};
@@ -93,8 +93,7 @@ function tick(){
 setInterval(tick,250);
 
 /* Informe del día */
-const tabs=document.querySelector('#plan .tabs');
-if(tabs&&!tabs.querySelector('[data-tab="informe"]')){const b=document.createElement('button');b.className='tab';b.dataset.tab='informe';b.setAttribute('role','tab');b.textContent='Informe';tabs.append(b);}
+// v27.9: la pestaña Informe se retiró del menú; la misión activa se muestra ahora en la pestaña Agenda.
 function paint(b,h){if(b.innerHTML===h)return;b.innerHTML=h;b.dataset.v14=h;}
 function renderInforme(){const b=document.querySelector('#tab-body');if(!b||Plan.tab!=='informe')return;let rep=null;try{rep=JSON.parse(Game.upgrades.lastReport||'null');}catch(e){}
  const U=Game.upgrades,n=v=>Number(v)||0;

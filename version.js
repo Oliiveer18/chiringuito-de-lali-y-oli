@@ -1,5 +1,5 @@
-export const VERSION='v27.9';
-export const LABEL='v27.9 · escena a pantalla completa, HUD flotante y ligas pro';
+export const VERSION='v28';
+export const LABEL='v28 · arreglos de limpieza, ranking y pestañas';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

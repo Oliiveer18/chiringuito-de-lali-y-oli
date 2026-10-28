@@ -1,10 +1,10 @@
-import { Game, Net } from "../state.js?v=27.9";
+import { Game, Net } from "../state.js?v=28";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { floorTableLabel } from "../floor-service.js?v=27.9";
-import { mixColor } from "../util.js?v=27.9";
-import { drawIcon } from "../icons.js?v=27.9";
-import { rr } from "../icons.js?v=27.9";
-import { drawBeachGuest } from "../scene-extras.js?v=27.9";
+import { floorTableLabel } from "../floor-service.js?v=28";
+import { mixColor } from "../util.js?v=28";
+import { drawIcon } from "../icons.js?v=28";
+import { rr } from "../icons.js?v=28";
+import { drawBeachGuest } from "../scene-extras.js?v=28";
 
 export function drawHamaca(c,x,y,i,T,weather,nt){
   // sombrilla
@@ -40,7 +40,10 @@ export function drawTable(c,t,T){
     c.font='700 12px Satoshi, sans-serif';
     const labelWidth=Math.max(68,c.measureText(label).width+18);
     const pulse = task?1:1+Math.sin(T*6)*0.08;
-    c.save(); c.translate(t.x,t.y-62); c.scale(pulse,pulse);
+    // mientras friega, el rótulo se ancla sobre la cabeza del personaje (sobre la mesa lo taparía)
+  let bx=t.x,by=t.y-62;
+  if(task&&task.state==='working'){const a=Game.floor?.actors.find(a=>a.id===task.actor);if(a){bx=a.x;by=a.y-150;}}
+  c.save(); c.translate(bx,by); c.scale(pulse,pulse);
     c.fillStyle='#fff6e6'; rr(c,-labelWidth/2,-14,labelWidth,26,13); c.fill(); c.strokeStyle='#2a211c'; c.lineWidth=2; c.stroke();
     c.fillStyle='#2a211c'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(label,0,4);
     c.restore();

@@ -1,12 +1,12 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=27.9';
-import { Audio } from './audio.js?v=27.9';
-import { Game, NET_SIM, Net } from './state.js?v=27.9';
-import { pendingIdx, slotOf } from './sim.js?v=27.9';
-import { showReportUI } from './report.js?v=27.9';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=27.9';
-import { onNet } from './net-sync.js?v=27.9';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=27.9';
+import { $ } from './util.js?v=28';
+import { Audio } from './audio.js?v=28';
+import { Game, NET_SIM, Net } from './state.js?v=28';
+import { pendingIdx, slotOf } from './sim.js?v=28';
+import { showReportUI } from './report.js?v=28';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28';
+import { onNet } from './net-sync.js?v=28';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28';
 // ---------- Red: PeerJS (WebRTC) ----------
 let peer=null, conn=null;
 const PREFIX='chiringuito-lali-oli-';

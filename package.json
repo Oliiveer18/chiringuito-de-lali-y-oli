@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node serve.js",
-    "test": "node smoke.test.mjs && node social-model.test.mjs && node career.test.mjs && node progression.test.mjs",
+    "test": "node smoke.test.mjs && node social-model.test.mjs && node career.test.mjs && node progression.test.mjs && node cleaning-walk.test.mjs && node cleaning-ownership.test.mjs && node service-tasks.test.mjs",
+    "test:cleaning": "node cleaning-walk.test.mjs && node cleaning-ownership.test.mjs && node service-tasks.test.mjs && node tab-persist.test.mjs",
     "check": "npm test"
   },
   "engines": {

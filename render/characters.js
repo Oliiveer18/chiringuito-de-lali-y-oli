@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=27.9";
-import { clamp } from "../util.js?v=27.9";
+import { Net } from "../state.js?v=28";
+import { clamp } from "../util.js?v=28";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR } from "../config.js?v=27.9";
-import { W } from "../config.js?v=27.9";
-import { rr } from "../icons.js?v=27.9";
-import { Game } from "../state.js?v=27.9";
-import { PCOLORS } from "./scene.js?v=27.9";
-import { drawPictogram } from "./scene.js?v=27.9";
-import { drawHeldItem } from "./items.js?v=27.9";
+import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28";
+import { W } from "../config.js?v=28";
+import { rr } from "../icons.js?v=28";
+import { Game } from "../state.js?v=28";
+import { PCOLORS } from "./scene.js?v=28";
+import { drawPictogram } from "./scene.js?v=28";
+import { drawHeldItem } from "./items.js?v=28";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -42,7 +42,12 @@ export function drawPerson(c,x,y,o){
   const shL=-14*build, shR=14*build;
   const arm=(x0,y0,x1,y1)=>{ c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); };
   switch(pose){
-    case 'clean': arm(shL,-62,-8,-48);arm(shR,-62,22+Math.sin(t*12)*8,-45);break;
+    case 'clean': { // el brazo sigue el mismo punto de contacto que el trapo (misma fase)
+      const wp=o.wipePt;
+      if(wp){ const lx=(wp.x-x)/(s*(o.dir||1)), ly=(wp.y-y)/s;
+        if(lx>=0){arm(shR,-62,lx,ly);arm(shL,-62,-16,-40);}else{arm(shL,-62,lx,ly);arm(shR,-62,16,-40);} }
+      else {arm(shL,-62,-8,-48);arm(shR,-62,22+Math.sin(t*12)*8,-45);}
+      break; }
     case 'walk': arm(shL,-62,-19,-40+Math.cos(ph)*3); arm(shR,-62,19,-40-Math.cos(ph)*3); break;
     case 'menu': arm(shL,-62,-7,-48); arm(shR,-62,7,-48); break;
     case 'order': arm(shL,-62,-18,-40); arm(shR,-62,22,-84+Math.sin(t*8)*2); break;
@@ -165,12 +170,24 @@ export function drawPersonalityBadge(c,cu,bx,by,bw){
 export function drawFloorWorker(c,a,T){
   const t=Game.floor.tasks.find(t=>t.id===a.task),slot=Game.slots.find(s=>s.who===a.id),moving=t?.state==='walking'||a.returning;
   const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?'cook':'idle';
-  drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',uniform:a.player?(Net.roles[a.id]||'barra'):a.role==='cocinero'?'cocina':a.role,hat:(a.role==='cocinero'||a.player&&Net.roles[a.id]==='cocina')?'chef':a.role==='limpiador'?'gorra':'pañuelo',pose,t:T,ph:a.phase,moving,dir:a.dir});
+  // punto de contacto único: brazo y trapo siguen el mismo punto sobre la mesa
+  let wipePt=null;
+  if(pose==='clean'&&t&&t.kind==='clean'&&t.state==='working'){
+    const tb=Game.tables[Number(String(t.target).replace('table',''))];
+    if(tb){const side=Math.sign(a.x-tb.x)||1;wipePt={x:tb.x+side*(16+Math.sin(T*5)*12),y:tb.y-20+Math.cos(T*2.5)*3};}
+  }
+  drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',uniform:a.player?(Net.roles[a.id]||'barra'):a.role==='cocinero'?'cocina':a.role,hat:(a.role==='cocinero'||a.player&&Net.roles[a.id]==='cocina')?'chef':a.role==='limpiador'?'gorra':'pañuelo',pose,t:T,ph:a.phase,moving,dir:a.dir,wipePt});
+  // fregar: trapo sobre la mesa y brillo mientras se limpia
+  if(wipePt){
+    c.fillStyle='#fff6e6';c.beginPath();c.ellipse(wipePt.x,wipePt.y,11,6,0,0,7);c.fill();
+    c.strokeStyle='#d8cdb2';c.lineWidth=1.5;c.stroke();
+    for(let i=0;i<3;i++){const ph=(T*1.2+i/3)%1;c.fillStyle='rgba(191,239,255,'+(0.7*(1-ph)).toFixed(2)+')';c.beginPath();c.arc(wipePt.x+Math.sin(T*2+i*2.1)*18,wipePt.y-4-ph*22,2.2+ph*1.5,0,7);c.fill();}
+  }
   // Identidad de jugadores: anillo de color propio bajo los pies
   if(a.player){
     const col=WHO_COLOR[a.id]||'#ffd36b';
     c.strokeStyle=col; c.lineWidth=2.5;
-    c.beginPath(); c.ellipse(a.x,a.y-132,14,5,0,0,7); c.stroke();
+    c.beginPath(); c.ellipse(a.x,a.y-2,14,5,0,0,7); c.stroke();
   }
   // Bandeja con productos reales al llevar un pedido
   if(a.carry){
@@ -179,6 +196,8 @@ export function drawFloorWorker(c,a,T){
     items.forEach((id,i)=>drawHeldItem(c,a.x+14+i*14,a.y-52,id,{scale:.9}));
   }
   c.textAlign='center';c.font='700 10px system-ui';c.fillStyle='#fffdf8';c.strokeStyle='#163b3d';c.lineWidth=3;
+  // mientras limpia, la mesa ya muestra "Limpiando · nombre": se evita duplicar y chocar
+  const cleaning=t&&t.kind==='clean'&&t.state==='working';
   const text=a.name+' · '+(a.returning?'Volviendo':t?t.kind==='clean'?'Limpieza':'Terraza':slot?.cust?'Preparando':'Disponible');
-  c.strokeText(text,a.x,a.y-105);c.fillText(text,a.x,a.y-105);
+  if(!cleaning){c.strokeText(text,a.x,a.y-105);c.fillText(text,a.x,a.y-105);}
 }
