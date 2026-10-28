@@ -1,5 +1,6 @@
 /* ui-polish v27.77: clima de hoy, agenda compacta, reseñas y sistema unificado de estrellas. */
 import { Game } from './state.js?v=27.82';
+import { Plan, renderTab } from './ui.js?v=27.82';
 import { SEASON_DAYS, SPECIAL_DAYS, WEATHER } from './config.js?v=27.82';
 const svgWrap=inner=>`<svg class="wicon" viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
 const SUN=svgWrap('<circle cx="12" cy="12" r="5" fill="#f5b82e"/><g stroke="#f5b82e" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g>');
@@ -10,9 +11,29 @@ const ICONS={sol:SUN,panza:CLOUD,calima:HAZE,viento:WIND};
 const iconFor=w=>ICONS[w]||CLOUD;
 const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):'';
-function weatherAt(d){const w=(Game.forecast&&Game.forecast[d])||'sol';return WEATHER[w]?w:'sol';}
-function dayCard(d,i){const w=weatherAt(d),W=WEATHER[w]||{label:cap(w),desc:''};const ev=SPECIAL_DAYS[d];return `<div class="fc${i===0?' today':''}${ev?' event':''}"><div class="k">${i===0?'Hoy':'Día '+i}</div><div class="v">${iconFor(w)}<span>${esc(W.label)}</span></div><div class="d">${esc(ev?ev.title:(W.desc||''))}</div></div>`;}
-function agenda(){const fc=document.getElementById('forecast');if(!fc||Game.mode!=='plan')return;let html=dayCard(Game.day,0);html+='<p class="agenda-title">Agenda</p><div class="agenda">';for(let i=0;i<7;i++){const d=Game.day+i;if(d>SEASON_DAYS)break;html+=dayCard(d,i);}html+='</div>';if(fc.dataset.polish!==html){fc.dataset.polish=html;fc.innerHTML=html;}}
+function weatherAt(d){const w=(Game.forecast&&Game.forecast[d-1])||'sol';return WEATHER[w]?w:'sol';}
+function dayCard(d,i){const w=weatherAt(d),W=WEATHER[w]||{label:cap(w),desc:''};const ev=SPECIAL_DAYS[d];return `<div class="fc${i===0?' today':''}${ev?' event':''}"><div class="k">${i===0?'Hoy · Día '+d:'Día '+d}</div><div class="v">${iconFor(w)}<span>${esc(W.label)}</span></div><div class="d">${esc(ev?ev.title:(W.desc||''))}</div></div>`;}
+function agenda(){
+  if(Game.mode!=='plan')return;
+  const fc=document.getElementById('forecast');
+  if(fc){const today=dayCard(Game.day,0);if(fc.innerHTML!==today)fc.innerHTML=today;}
+  const tabs=document.querySelector('#plan .tabs');
+  if(tabs&&!tabs.querySelector('[data-tab="agenda"]')){
+    const button=document.createElement('button');
+    button.type='button';button.className='tab';button.dataset.tab='agenda';
+    button.setAttribute('role','tab');button.textContent='Agenda';
+    button.addEventListener('click',()=>{Plan.tab='agenda';renderTab();agenda();});
+    tabs.append(button);
+  }
+  if(Plan.tab!=='agenda')return;
+  const body=document.getElementById('tab-body');if(!body)return;
+  let html='<section aria-label="Agenda meteorológica"><h3>Agenda</h3><div class="agenda">';
+  for(let i=0;i<8;i++){const d=Game.day+i;if(d>SEASON_DAYS)break;html+=dayCard(d,i);}
+  html+='</div></section>';
+  if(body.innerHTML!==html)body.innerHTML=html;
+}
+document.addEventListener('plan-tab-repaint',agenda);
+
 function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
 function starCount(card){const el=card.querySelector('.rev-head span');if(!el)return 0;const m=el.textContent.match(/★|☆/g)||[];return m.filter(c=>c==='★').length;}
 function polishReviews(){
