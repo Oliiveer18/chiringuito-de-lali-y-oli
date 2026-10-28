@@ -1,0 +1,65 @@
+name: Release v27.9 (escena completa, HUD flotante, ligas y Red pro)
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/release-27-9.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: release-27-9
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobación de sintaxis
+        run: |
+          for file in *.js *.mjs sim/*.js sim/*.mjs render/*.js render/*.mjs; do node --check "$file"; done
+      - name: Instalar validación de navegador
+        run: |
+          npm install --prefix /tmp/rel-smoke playwright
+          /tmp/rel-smoke/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verificar arranque real en navegador (iPhone 14 Pro y Pro Max)
+        run: |
+          python3 -m http.server 8765 >/tmp/rel-server.log 2>&1 &
+          node <<'JS'
+          const assert=require('node:assert/strict');
+          const {chromium}=require('/tmp/rel-smoke/node_modules/playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            try{
+              for(const viewport of [{width:390,height:844},{width:844,height:390},{width:932,height:430},{width:1512,height:900}]){
+                const page=await browser.newPage({viewport});
+                const errors=[];page.on('pageerror',e=>errors.push(e.message));
+                await page.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
+                await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('activas:'),null,{timeout:45000});
+                await page.waitForTimeout(1200);
+                const ver=await page.locator('#ver-title').textContent();
+                assert.ok(ver.includes('v27.9'),'versión esperada v27.9: '+ver);
+                assert.equal((await page.locator('#errbox').textContent()).trim(),'');
+                assert.ok(!ver.includes('con error:'),'carga con error: '+ver);
+                assert.deepEqual(errors,[]);
+                await page.close();
+              }
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1);});
+          JS
+      - name: Publicar sitio
+        run: |
+          mkdir -p /tmp/rel-public
+          tar --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tools' --exclude='*.test.*' --exclude='*.py' -cf - . | tar -xf - -C /tmp/rel-public
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/rel-public
+      - uses: actions/deploy-pages@v4

@@ -17,16 +17,23 @@ register('data:text/javascript,' + encodeURIComponent(hook), import.meta.url);
 const intervals = [], clicks = [], errors = [];
 globalThis.window = globalThis;
 globalThis.setInterval = fn => { intervals.push(fn); return 1; };
-const canvas = () => ({ width: 0, height: 0, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x' });
-const el = () => ({ dataset: {}, style: {}, classList: { add() {}, remove() {}, toggle() {} }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0 });
+const canvas = () => ({ width: 0, height: 0, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {} } });
+const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }) });
 const byId = {}, tabs = el();
 globalThis.document = {
-  querySelector: s => (s === '#plan .tabs' ? tabs : el()),
-  getElementById: id => byId[id] || (byId[id] = el()),
+  querySelector: s => (s === '#plan .tabs' ? tabs : s === '#game' ? canvas() : el()),
+  getElementById: id => byId[id] || (byId[id] = (id === 'game' ? canvas() : el())),
   createElement: t => (t === 'canvas' ? canvas() : el()),
+  documentElement: el(),
   body: el(),
+  head: el(),
+  querySelectorAll: () => [],
   addEventListener: (t, fn) => { if (t === 'click') clicks.push(fn); },
 };
+globalThis.innerWidth = 1280; globalThis.innerHeight = 720;
+globalThis.getComputedStyle = globalThis.getComputedStyle || (() => ({ getPropertyValue: () => '0' }));
+globalThis.requestAnimationFrame = globalThis.requestAnimationFrame || (() => 0);
+globalThis.addEventListener = globalThis.addEventListener || (() => {});
 globalThis.MutationObserver = class { observe() {} };
 globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };

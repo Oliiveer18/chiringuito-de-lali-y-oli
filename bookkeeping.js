@@ -1,5 +1,5 @@
-import {Game,Net} from './state.js?v=27.82';
-import {escapeHtml,eur} from './util.js?v=27.82';
+import {Game,Net} from './state.js?v=27.9';
+import {escapeHtml,eur} from './util.js?v=27.9';
 const allowed=new Set(['delivery','social','influencers','compensations','repairs','shows','production','interest','staffExtras','posters','upgrades','training']);
 const labels={delivery:'Compras al repartidor',social:'Publicaciones de Chiringo',influencers:'Colaboraciones',compensations:'Compensaciones de Chiringo',repairs:'Reparaciones',shows:'Espectaculos (neto de devoluciones)',production:'Produccion de algodon',interest:'Intereses',staffExtras:'Primas de personal',posters:'Promocion de eventos',upgrades:'Mejoras',training:'Formacion'};
 const epoch=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;

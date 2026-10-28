@@ -1,14 +1,14 @@
-import {trackCost} from './bookkeeping.js?v=27.82';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=27.82';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=27.82';
-import * as Rankings from './market-model.mjs?v=27.82';
-import {Game,Net} from './state.js?v=27.82';
-import {STAFF,RENT} from './config.js?v=27.82';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=27.82';
-import {netDirty} from './net.js?v=27.82';
-import {guestSend,onGuestAction} from './coopbridge.js?v=27.82';
-import {escapeHtml as E,eur} from './util.js?v=27.82';
-import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=27.82';
+import {trackCost} from './bookkeeping.js?v=27.9';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=27.9';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=27.9';
+import * as Rankings from './market-model.mjs?v=27.9';
+import {Game,Net} from './state.js?v=27.9';
+import {STAFF,RENT} from './config.js?v=27.9';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=27.9';
+import {netDirty} from './net.js?v=27.9';
+import {guestSend,onGuestAction} from './coopbridge.js?v=27.9';
+import {escapeHtml as E,eur} from './util.js?v=27.9';
+import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=27.9';
 const day=()=>absoluteDay(Number(Game.upgrades.career?.season)||1,Game.day);
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}
@@ -37,4 +37,4 @@ const style=document.createElement('style');style.textContent='.wf-grid{display:
 export {act as applyManagementAction};
 function upgradeWorkforce(w){const u=Game.upgrades;if(!u.professionalSchema){u.managementMigrationBackup={workforce:JSON.parse(JSON.stringify(w)),calendar:u.socialCalendar?{...u.socialCalendar}:null,idle:u.socialIdle};for(const e of Object.values(w.team))if(String(e.id).startsWith('original-'))e.dateUnknown=true;const completed=day()-(u.socialSettledAbs===day()?0:1),posts=(u.chiringoArchive||[]).map(r=>(r.season-1)*30+r.day).filter(d=>d<=completed),lastPost=Math.max(0,...posts);u.socialCalendar=reconcileCalendar(u.socialCalendar||{last:completed,idle:u.socialIdle},completed,lastPost);u.socialIdle=u.socialCalendar.idle;u.professionalSchema=1;netDirty();}w.applicants=w.applicants.map(profile);for(const key of Object.keys(w.team))w.team[key]=profile(w.team[key]);}
 setInterval(()=>{if(Net.role==='guest'||Game.mode!=='report'||!Game.dayStats||!Game.upgrades.workforce)return;const w=Game.upgrades.workforce;let changed=false;for(const e of Object.values(w.team)){if(e.lastAuditDay===day())continue;e.lastAuditDay=day();if(Game.staff[e.role])e.worked=(e.worked||0)+1;else e.absences=(e.absences||0)+1;changed=true;}if(changed)netDirty();},400);
-export function leaguePanel(p,area,tier,d){const w=weeklyPoints(p.history,d),rows=Rankings.table(p.rivals,area,p.rivals.tiers[area],p.history,p.kioskName,d),own=rows.find(r=>r.id==='player'),t=p.rivals.tiers[area];let h='<section class="mk-card"><h3>Puntos de cada jornada</h3><p>Desempates: clientes atendidos en la semana, valoracion media, resultado operativo y, en ultimo caso, identificador estable.</p>';if(t<2)h+='<p>Diferencia actual respecto al 3.º: '+Math.max(0,rows[2].score-own.score)+' puntos. Es provisional, no una garantia de ascenso.</p>';if(t>0)h+='<p>Diferencia respecto al 7.º (permanencia): '+(own.score-rows[6].score)+' puntos.</p>';h+='<table><thead><tr><th>Jornada</th><th>Servicio</th><th>Nota</th><th>Margen</th><th>Comunidad</th><th>Total</th></tr></thead><tbody>'+w.rows.map(r=>'<tr><td>'+r.day+'</td>'+Object.values(r.parts).map(v=>'<td>'+v.toFixed(1)+'</td>').join('')+'<td>'+r.total+'</td></tr>').join('')+'</tbody></table><p>Total semanal: '+w.total+'. Se redondea el total de cada jornada antes de sumar.</p>';const a=p.history.slice(-2);if(a.length===2)h+='<p>Ultima jornada cerrada: '+dailyPoints(a[1]).total+' puntos; cambio respecto a la anterior: '+(dailyPoints(a[1]).total-dailyPoints(a[0]).total)+'.</p>';return h+'</section>';}
+export function leaguePanel(p,area,tier,d){const w=weeklyPoints(p.history,d),rows=Rankings.table(p.rivals,area,p.rivals.tiers[area],p.history,p.kioskName,d),own=rows.find(r=>r.id==='player'),t=p.rivals.tiers[area];let h='<section class="mk-card lg-weekpoints"><h3>Puntos de cada jornada</h3><p>Desempates: clientes atendidos en la semana, valoración media, resultado operativo y, en último caso, identificador estable.</p>';if(t<2)h+='<p class="lg-ctx-line up">Al ascenso: '+(own.rank<=3?'estás dentro, con ventaja de '+(own.score-rows[3].score)+' pts sobre el 4.º':'te faltan '+Math.max(0,rows[2].score-own.score)+' pts para el 3.º')+'. Es provisional, no una garantía.</p>';if(t>0)h+='<p class="lg-ctx-line down">Permanencia: '+(own.rank>7?'en puestos de descenso, a '+(rows[6].score-own.score)+' pts del 7.º':'+'+(own.score-rows[6].score)+' pts sobre el 7.º')+'.</p>';h+='<table><thead><tr><th>Jornada</th><th>Servicio</th><th>Nota</th><th>Margen</th><th>Comunidad</th><th>Total</th></tr></thead><tbody>'+w.rows.map(r=>'<tr><td>'+r.day+'</td>'+Object.values(r.parts).map(v=>'<td>'+v.toFixed(1)+'</td>').join('')+'<td class="lg-wp-t">'+r.total+'<i style="width:'+Math.min(100,r.total)+'%"></i></td></tr>').join('')+'</tbody></table><p class="lg-wp-sum">Total semanal: <b>'+w.total+'</b> puntos. Se redondea el total de cada jornada antes de sumar.</p>';const a=p.history.slice(-2);if(a.length===2){const prev=dailyPoints(a[0]).total,now=dailyPoints(a[1]).total;h+='<p class="lg-wp-diff '+(now>=prev?'up':'down')+'">Última jornada cerrada: '+now+' puntos ('+(now>=prev?'+':'')+(now-prev)+' respecto a la anterior).</p>';}return h+'</section>';}

@@ -1,0 +1,43 @@
+/* =========================================================
+   v28: HUD e inventario flotantes sobre el juego a pantalla
+   completa, botón de pantalla completa en escritorio y ajustes
+   de las capas de servicio. Se carga la última: gana la cascada.
+   ========================================================= */
+
+/* ---------- HUD flotante (ya no apila: el canvas va debajo) ---------- */
+#hud{
+  left:calc(8px + var(--sl));right:calc(8px + var(--sr));top:calc(6px + var(--st));width:auto;
+  border-radius:16px;background:rgba(6,44,48,.78);border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(10px);box-shadow:0 6px 18px rgba(0,0,0,.28);padding:6px 10px;
+}
+body.playing #hud{border-radius:14px!important}
+
+/* ---------- Barra de inventario flotante y plegable ---------- */
+#stockbar{
+  top:auto;left:50%;right:auto;bottom:calc(6px + var(--sb));transform:translateX(-50%);
+  width:auto;max-width:calc(var(--game-width) - 24px);border-radius:16px;
+  background:rgba(6,44,48,.78);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);
+  box-shadow:0 6px 18px rgba(0,0,0,.28);padding:6px 8px;display:flex;align-items:center;gap:6px;
+}
+#stockbar .stock-list{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;min-height:32px}
+#stockbar .stock-list::-webkit-scrollbar{display:none}
+#stockbar .stock{flex:0 0 auto}
+#stockbar.mini .stock-list{min-height:26px;gap:5px}
+#stockbar.mini .stock{height:26px;font-size:11.5px;padding:0 7px}
+#stockbar.mini .stock img{width:16px;height:16px}
+.stock-toggle{width:30px;height:30px;flex:none;border:0;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;cursor:pointer;transition:background .15s}
+.stock-toggle:hover{background:rgba(255,255,255,.24)}
+.stock-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+body.portrait #stockbar{flex-wrap:wrap;justify-content:center}
+body.portrait #stockbar .stock-list{flex-wrap:wrap;justify-content:center}
+
+/* Aviso contextual por encima de la barra plegada (solo escritorio: en táctil la capa móvil ya fija top y bottom:auto) */
+@media (hover:hover){
+  .hint{bottom:calc(58px + var(--sb))}
+}
+
+/* ---------- Pantalla completa (escritorio / Mac) ---------- */
+#btn-full svg,#btn-full-page svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#btn-full-page{position:fixed;z-index:45;right:calc(10px + var(--sr));top:calc(10px + var(--st));width:40px;height:40px;display:none;place-items:center;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(6,44,48,.72);backdrop-filter:blur(8px);color:#fff;cursor:pointer;transition:background .15s}
+#btn-full-page:hover{background:rgba(15,90,95,.85)}
+body:not(.playing) #btn-full-page{display:grid}

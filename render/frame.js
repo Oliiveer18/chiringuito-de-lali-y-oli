@@ -1,48 +1,56 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { H } from "../config.js?v=27.82";
-import { W } from "../config.js?v=27.82";
-import { WHO_COLOR } from "../config.js?v=27.82";
-import { clamp } from "../util.js?v=27.82";
-import { lerp } from "../util.js?v=27.82";
-import { mixColor } from "../util.js?v=27.82";
-import { rr } from "../icons.js?v=27.82";
-import { Game } from "../state.js?v=27.82";
-import { closeHour } from "../state.js?v=27.82";
-import { hamacaCount } from "../state.js?v=27.82";
-import { lvl } from "../state.js?v=27.82";
-import { weatherToday } from "../state.js?v=27.82";
-import { whoName } from "../state.js?v=27.82";
-import { HAMACA_POS } from "../world.js?v=27.82";
-import { canvas } from "../canvas.js?v=27.82";
-import { ctx } from "../canvas.js?v=27.82";
-import { view } from "../canvas.js?v=27.82";
-import { drawPurchasedProps } from "../scene-extras.js?v=27.82";
-import { drawBubble } from "./identity.js?v=27.82";
-import { drawClouds } from "./scene.js?v=27.82";
-import { drawCustomer } from "./characters.js?v=27.82";
-import { drawFloorWorker } from "./characters.js?v=27.82";
-import { drawHamaca } from "./tables.js?v=27.82";
-import { drawHut } from "./scene.js?v=27.82";
-import { drawLights } from "./effects.js?v=27.82";
-import { drawNetStatus } from "./hud.js?v=27.82";
-import { drawPalm } from "./scene.js?v=27.82";
-import { drawPendingBadges } from "./hud.js?v=27.82";
-import { drawSea } from "./scene.js?v=27.82";
-import { drawStationLabels } from "./identity.js?v=27.82";
-import { drawTable } from "./tables.js?v=27.82";
-import { drawTeide } from "./scene.js?v=27.82";
-import { nightness } from "./scene.js?v=27.82";
-import { skyAt } from "./scene.js?v=27.82";
+import { H } from "../config.js?v=27.9";
+import { W } from "../config.js?v=27.9";
+import { WHO_COLOR } from "../config.js?v=27.9";
+import { clamp } from "../util.js?v=27.9";
+import { lerp } from "../util.js?v=27.9";
+import { mixColor } from "../util.js?v=27.9";
+import { rr } from "../icons.js?v=27.9";
+import { Game } from "../state.js?v=27.9";
+import { closeHour } from "../state.js?v=27.9";
+import { hamacaCount } from "../state.js?v=27.9";
+import { lvl } from "../state.js?v=27.9";
+import { weatherToday } from "../state.js?v=27.9";
+import { whoName } from "../state.js?v=27.9";
+import { HAMACA_POS } from "../world.js?v=27.9";
+import { canvas } from "../canvas.js?v=27.9";
+import { ctx } from "../canvas.js?v=27.9";
+import { view } from "../canvas.js?v=27.9";
+import { drawPurchasedProps } from "../scene-extras.js?v=27.9";
+import { drawBubble } from "./identity.js?v=27.9";
+import { drawClouds } from "./scene.js?v=27.9";
+import { drawCustomer } from "./characters.js?v=27.9";
+import { drawFloorWorker } from "./characters.js?v=27.9";
+import { drawHamaca } from "./tables.js?v=27.9";
+import { drawHut } from "./scene.js?v=27.9";
+import { drawLights } from "./effects.js?v=27.9";
+import { drawNetStatus } from "./hud.js?v=27.9";
+import { drawPalm } from "./scene.js?v=27.9";
+import { drawPendingBadges } from "./hud.js?v=27.9";
+import { drawSea } from "./scene.js?v=27.9";
+import { drawStationLabels } from "./identity.js?v=27.9";
+import { drawTable } from "./tables.js?v=27.9";
+import { drawTeide } from "./scene.js?v=27.9";
+import { nightness } from "./scene.js?v=27.9";
+import { skyAt } from "./scene.js?v=27.9";
 
 export function render(){
   const c=ctx; const h = Game.mode==='service'? Game.hour : (Game.mode==='report'? closeHour() : 11);
   const weather = Game.forecast.length? weatherToday() : 'sol';
   c.setTransform(1,0,0,1,0,0);
-  // fondo de relleno a pantalla completa
+  // fondo de relleno a pantalla completa (sin bandas negras en ningún recorte)
   const sky=skyAt(h);
+  const nt=nightness(h);
   let g=c.createLinearGradient(0,0,0,view.oy+330*view.s); g.addColorStop(0,sky.top); g.addColorStop(1,sky.bot);
   c.fillStyle=g; c.fillRect(0,0,canvas.width,view.oy+332*view.s);
-  c.fillStyle='#2e2826'; c.fillRect(0,view.oy+420*view.s,canvas.width,canvas.height);
+  // banda de mar a todo el ancho con el mismo gradiente que drawSea
+  let gs=c.createLinearGradient(0,view.oy+330*view.s,0,view.oy+425*view.s);
+  gs.addColorStop(0,mixColor('#1f8fb0','#2b2f5a',nt)); gs.addColorStop(1,mixColor('#2ec2c4','#2b4a6a',nt));
+  c.fillStyle=gs; c.fillRect(0,view.oy+330*view.s,canvas.width,(425-330)*view.s);
+  // arena a todo el ancho con el mismo gradiente que la arena del mundo
+  let ga=c.createLinearGradient(0,view.oy+420*view.s,0,view.oy+H*view.s);
+  ga.addColorStop(0,mixColor('#5a4e48','#2a2430',nt)); ga.addColorStop(1,mixColor('#2e2826','#1a1618',nt));
+  c.fillStyle=ga; c.fillRect(0,view.oy+420*view.s,canvas.width,Math.max(0,canvas.height-(view.oy+420*view.s)));
   c.setTransform(view.s,0,0,view.s,view.ox,view.oy);
   const T=Game.t;
   const wind = weather==='viento'?2.2:1;
@@ -54,7 +62,7 @@ export function render(){
     c.fillStyle= h>18.5? '#ffb062':'#fff3c4'; c.beginPath(); c.arc(sunX,sunY,34,0,7); c.fill();
   }
   // estrellas
-  const nt=nightness(h); if(nt>0.2){ c.fillStyle=`rgba(255,255,255,${(nt-0.2)*1.2})`; for(let i=0;i<40;i++){ const x=(i*137)%W, y=(i*71)%260; c.fillRect(x,y,2,2);} }
+  if(nt>0.2){ c.fillStyle=`rgba(255,255,255,${(nt-0.2)*1.2})`; for(let i=0;i<40;i++){ const x=(i*137)%W, y=(i*71)%260; c.fillRect(x,y,2,2);} }
   // La Gomera al fondo (silueta)
   c.fillStyle=mixColor('#7fa6bf','#3a3557',nt); c.beginPath(); c.moveTo(-20,332); c.quadraticCurveTo(80,290,180,300); c.quadraticCurveTo(260,286,330,332); c.fill();
   // Teide

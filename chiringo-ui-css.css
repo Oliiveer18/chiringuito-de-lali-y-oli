@@ -66,3 +66,26 @@
 .rd-status.bad{background:#fbdcd5;border-color:#f0b4a6;color:#a3321f}
 @keyframes rdpop{0%{transform:scale(.94)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
 @media (max-width:640px){.rd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rd-aff{margin-left:0}.rd-ledger{grid-template-columns:1fr}}
+
+/* v28: iconos SVG, gráfica de seguidores y reseñas interactivas */
+.ci{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-3px}
+.rd-logo .ci.bm,.cs-avatar .ci.bm{width:40px;height:40px;stroke:none}
+.rd-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rd-spark-wrap{display:flex;flex-direction:column;gap:3px;margin-left:auto}
+.rd-spark-wrap small{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#52686b;font-weight:800}
+.rd-spark{width:138px;height:38px}
+.rd-spark .a{fill:rgba(15,139,141,.14)}
+.rd-spark .l{fill:none;stroke:#0f8b8d;stroke-width:2;stroke-linecap:round}
+.rd-spark .d{fill:#e8603c}
+.rd-acts{display:flex;align-items:center;gap:14px;margin:6px 0 0}
+.rd-like{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:99px;border:1px solid #d7e2de;background:#fff;color:#52686b;font:700 12px var(--font);cursor:pointer;transition:all .15s}
+.rd-like:hover{border-color:var(--teal);color:var(--teal-d)}
+.rd-like.on{background:#fdeee9;border-color:#f2a08b;color:#c73e2a}
+.rd-like.on .ci{fill:#c73e2a;stroke:#c73e2a}
+.rd-cm{display:inline-flex;align-items:center;gap:6px;color:#7a8f92;font-size:12px;font-weight:600}
+.rd-pollwin{background:#eef5f1;border-radius:10px}
+.rd-warn{background:#fdf3e0;border-radius:10px}
+.rd-influ{background:#f4f7f9;border-radius:10px}
+.rd-influ.ok{background:#eaf5e7}
+.rd-line.trend{background:#fdece4;border-radius:10px}
+@media(max-width:440px){.rd-spark-wrap{margin-left:0}}

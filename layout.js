@@ -1,6 +1,6 @@
-import { scheduleViewportResize, view } from './canvas.js?v=27.82';
-import { W, H } from './config.js?v=27.82';
-import { Game } from './state.js?v=27.82';
+import { scheduleViewportResize, view } from './canvas.js?v=27.9';
+import { W, H } from './config.js?v=27.9';
+import { Game } from './state.js?v=27.9';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 const CAM_SPAN=700,CAM_CX={barra:290,mesas:930};
@@ -62,4 +62,18 @@ const snd=document.getElementById('btn-sound');
 if(snd){
   const upd=()=>{const on=!/no\s*$/i.test(snd.textContent.trim());snd.dataset.sound=on?'on':'off';snd.setAttribute('aria-label',on?'Sonido activado':'Sonido desactivado');};
   new MutationObserver(upd).observe(snd,{childList:true,characterData:true,subtree:true});upd();
+}
+
+/* v28: pantalla completa en escritorio (Mac). En iPhone el navegador no
+   lo permite y los botones no aparecen: la PWA ya va a pantalla completa. */
+const FS_ON='<svg viewBox="0 0 20 20"><path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5"/></svg>';
+const FS_OFF='<svg viewBox="0 0 20 20"><path d="M8 3H3v5M12 3h5v5M17 12v5h-5M8 17H3v-5M3 3l5 5M17 3l-5 5M17 17l-5-5M3 17l5-5"/></svg>';
+if(document.fullscreenEnabled||document.documentElement.requestFullscreen){
+  const syncFs=()=>{const on=!!document.fullscreenElement;for(const b of [document.getElementById('btn-full'),document.getElementById('btn-full-page')]){if(!b)continue;b.innerHTML=on?FS_OFF:FS_ON;b.setAttribute('aria-label',on?'Salir de pantalla completa':'Pantalla completa');b.title=on?'Salir de pantalla completa (F)':'Pantalla completa (F)';}};
+  const toggleFs=()=>{if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else document.documentElement.requestFullscreen().catch(()=>{});};
+  const hudBtn=document.getElementById('btn-full');
+  if(hudBtn){hudBtn.hidden=false;hudBtn.type='button';hudBtn.innerHTML=FS_ON;hudBtn.addEventListener('click',toggleFs);}
+  const pageBtn=document.createElement('button');pageBtn.id='btn-full-page';pageBtn.type='button';pageBtn.className='hud-btn';pageBtn.setAttribute('aria-label','Pantalla completa');pageBtn.innerHTML=FS_ON;pageBtn.addEventListener('click',toggleFs);document.body.append(pageBtn);
+  document.addEventListener('fullscreenchange',syncFs);syncFs();
+  document.addEventListener('keydown',e=>{if(e.key!=='f'&&e.key!=='F')return;if(e.metaKey||e.ctrlKey||e.altKey)return;const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;e.preventDefault();toggleFs();});
 }

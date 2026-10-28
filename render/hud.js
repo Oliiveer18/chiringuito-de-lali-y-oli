@@ -1,12 +1,12 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { W } from "../config.js?v=27.82";
-import { rr } from "../icons.js?v=27.82";
-import { Game } from "../state.js?v=27.82";
-import { Net } from "../state.js?v=27.82";
-import { guestCust } from "../state.js?v=27.82";
-import { isGuest } from "../state.js?v=27.82";
-import { canvas } from "../canvas.js?v=27.82";
-import { view } from "../canvas.js?v=27.82";
+import { W } from "../config.js?v=27.9";
+import { rr } from "../icons.js?v=27.9";
+import { Game } from "../state.js?v=27.9";
+import { Net } from "../state.js?v=27.9";
+import { guestCust } from "../state.js?v=27.9";
+import { isGuest } from "../state.js?v=27.9";
+import { canvas } from "../canvas.js?v=27.9";
+import { view } from "../canvas.js?v=27.9";
 
 export function drawPendingBadges(c,T){
   if(!isGuest() || !Net.pend.size) return;

@@ -2,8 +2,8 @@
    canvas.js
    Canvas principal: viewport, redimensionado y conversión de coordenadas.
    ========================================================= */
-import { H, W } from './config.js?v=27.82';
-import { $ } from './util.js?v=27.82';
+import { H, W } from './config.js?v=27.9';
+import { $ } from './util.js?v=27.9';
 
 // ---------- Entrada ----------
 export const canvas=$('#game'), ctx=canvas.getContext('2d');
@@ -28,10 +28,27 @@ export function resize(){
   const styles=getComputedStyle(root);
   const left=parseFloat(styles.getPropertyValue('--game-safe-left'))||0;
   const right=parseFloat(styles.getPropertyValue('--game-safe-right'))||0;
-  const availableW=Math.max(1,width-left-right),availableH=Math.max(1,height-top-bottom);
-  view.s=Math.min(availableW/W,availableH/H)*dpr;
-  view.ox=left*dpr+(availableW*dpr-W*view.s)/2;
-  view.oy=top*dpr+(availableH*dpr-H*view.s)/2;
+  const availableW=Math.max(1,width-left-right);
+  view.dpr=dpr;
+  if(width>=height){
+    /* Horizontal: el juego llena el ancho y solo se recorta cielo/arena.
+       Banda jugable protegida: por encima del rótulo del chiringuito (y≈186)
+       hasta el suelo (y=720) => 530 unidades. El HUD flotante no debe tapar
+       el rótulo: s <= (alto - HUD)/530. Y nunca se recortan más de 140
+       unidades de cielo: s <= alto/580. */
+    const fitW=availableW/W;
+    const sCss=Math.min(fitW,height/580,(height-top)/530);
+    view.s=sCss*dpr;
+    const worldH=H*sCss;
+    /* Si el mundo no cabe en vertical: fondo anclado abajo (solo se pierde
+       cielo). Si sobra pantalla: centrado (se extiende cielo y arena). */
+    view.oy=worldH>=height?(height-worldH)*dpr:(height-worldH)/2*dpr;
+  }else{
+    /* Vertical: encajar por ancho, igual que antes. */
+    view.s=availableW/W*dpr;
+    view.oy=(height-H*(availableW/W))/2*dpr;
+  }
+  view.ox=(availableW-W*(view.s/dpr))/2*dpr;
   document.body.classList.toggle('portrait',width<height);
 }
 export let viewportResizeFrame=0;
