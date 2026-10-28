@@ -1,5 +1,5 @@
-export const VERSION='v27.7';
-export const LABEL='v27.7 · agenda con clima, informe profesional y reseñas mejoradas';
+export const VERSION='v27.8';
+export const LABEL='v27.8 · equilibrio de reseñas y afluencia';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
