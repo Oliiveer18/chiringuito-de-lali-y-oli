@@ -33,7 +33,7 @@
     <button data-speed="0" aria-label="Pausa" title="Pausa (P)"><svg viewBox="0 0 16 16"><rect x="3.5" y="3" width="3" height="10" rx="1"/><rect x="9.5" y="3" width="3" height="10" rx="1"/></svg></button>
     <button data-speed="1" class="on" aria-label="Velocidad normal"><svg viewBox="0 0 16 16"><path d="M5 3l8 5-8 5z"/></svg></button>
     <button data-speed="2" aria-label="Doble velocidad"><svg viewBox="0 0 16 16"><path d="M2 3l6 5-6 5zM8 3l6 5-6 5z"/></svg></button>
-    <button data-speed="3" aria-label="Triple velocidad"><svg viewBox="0 0 16 16"><path d="M.5 3.5l4.5 4.5-8 5zM5.5 3.5L10 8l-4.5 4.5zM10.5 3.5L15 8l-4.5 4.5z"/></svg></button>
+    <button data-speed="3" aria-label="Triple velocidad"><svg viewBox="0 0 16 16"><path d="M1 3l6 5-6 5z"/><path d="M8 3l6 5-6 5z"/></svg></button>
   </div>
   <div class="hud-actions">
     <div class="ping-wrap"><button id="btn-ping" class="hud-btn hidden" aria-label="Enviar aviso a tu pareja"><svg viewBox="0 0 20 20"><path d="M3 4h14a1 1 0 011 1v8a1 1 0 01-1 1H9l-4 3.5V14H3a1 1 0 01-1-1V5a1 1 0 01-1-1z"/></svg><span>Avisar</span></button><div id="ping-menu" class="ping-menu hidden"><button data-ping="ayuda">¡Échame una mano!</button><button data-ping="mesas">Hay mesas sucias</button><button data-ping="genero">Se acaba el género</button><button data-ping="bien">¡Buen trabajo!</button></div></div>
@@ -86,6 +86,7 @@
     try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
   });
 </script>
+<script type="module" src="ui-polish.js?v=1"></script>
 <script type="module" src="game.js?v=27.6"></script>
 </body>
 </html>

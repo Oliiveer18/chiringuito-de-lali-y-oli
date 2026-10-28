@@ -5,7 +5,7 @@ import {factor} from './professional-model.mjs?v=27.6';
 import * as M from './service-tasks.mjs?v=27.6';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
-const endpoint=t=>({x:t.x+(t.x>1150?-80:80),y:t.y+42});
+const endpoint=t=>({x:t.x+(t.x>1150?-80:80),y:t.y+54});
 function route(a,p){
   const inside=q=>q.x>=20&&q.x<=540&&q.y>=150&&q.y<540;
   if(a.player&&(inside(a)||inside(p))){
