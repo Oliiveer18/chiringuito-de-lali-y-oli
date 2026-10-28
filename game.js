@@ -1,15 +1,15 @@
-import './tabguard.js?v=27.6';
-import { EXTRA } from './icons.js?v=27.6';
-import './main.js?v=27.6';
-import './saves.js?v=27.6';
-import './layout.js?v=27.6';
-import './reliability.js?v=27.6';
-import './coopbridge.js?v=27.6';
+import './tabguard.js?v=27.82';
+import { EXTRA } from './icons.js?v=27.82';
+import './main.js?v=27.82';
+import './saves.js?v=27.82';
+import './layout.js?v=27.82';
+import './reliability.js?v=27.82';
+import './coopbridge.js?v=27.82';
 Object.assign(EXTRA,{algodon:['#ffb7d5','#fff0f6'],agua:['#7fd4f2','#bfefff'],refresco:['#e8603c','#ffd0a8'],helado:['#f7a8c4','#ffe1ef'],gofre:['#d9a24a','#f6e2b8'],cocktail:['#5fd4d6','#d6fff4'],churros:['#b8792f','#f0c98a']});
 const loaded=[],failed=[],nativeInterval=window.setInterval;
 window.setInterval=(fn,ms,...args)=>nativeInterval(typeof fn==='function'&&fn.name==='tick'?function(){if(window.Net&&window.Net.role==='guest')return;fn();}:fn,ms,...args);
 try{
-  for(const [name,url] of [['v11','./features.js?v=27.6'],['v12','./v12.js?v=27.6'],['v14','./v14.js?v=27.6'],['v19','./chiringo-ui.js?v=27.6'],['cierre','./cierre-ui.js?v=27.6'],['carrera','./career-ui.js?v=27.6'],['progreso','./progression-ui.js?v=27.6'],['mercado','./market-ui.js?v=27.6']]){
+  for(const [name,url] of [['v11','./features.js?v=27.82'],['v12','./v12.js?v=27.82'],['v14','./v14.js?v=27.82'],['v19','./chiringo-ui.js?v=27.82'],['cierre','./cierre-ui.js?v=27.82'],['carrera','./career-ui.js?v=27.82'],['progreso','./progression-ui.js?v=27.82'],['mercado','./market-ui.js?v=27.82']]){
     try{await import(url);loaded.push(name);}
     catch(e){failed.push(name);console.error('Módulo '+name+' no cargó',e);
       const b=document.getElementById('errbox');if(b){b.style.display='block';b.textContent+='['+name+'] '+(e&&e.message||e)+'\n';}}

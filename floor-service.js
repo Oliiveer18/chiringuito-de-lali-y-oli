@@ -1,8 +1,8 @@
-import {Game,Net,isCoop} from './state.js?v=27.6';
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=27.6';
-import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=27.6';
-import {factor} from './professional-model.mjs?v=27.6';
-import * as M from './service-tasks.mjs?v=27.6';
+import {Game,Net,isCoop} from './state.js?v=27.82';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=27.82';
+import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=27.82';
+import {factor} from './professional-model.mjs?v=27.82';
+import * as M from './service-tasks.mjs?v=27.82';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
 const endpoint=t=>({x:t.x+(t.x>1150?-46:46),y:t.y+34});

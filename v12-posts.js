@@ -1,6 +1,6 @@
 /* Publicaciones e influencers de Chiringo. Lo importa v12.js. */
-import { Game, lvl } from './state.js?v=27.6';
-import { influCost } from './influencer-model.mjs?v=27.6';
+import { Game, lvl } from './state.js?v=27.82';
+import { influCost } from './influencer-model.mjs?v=27.82';
 export const FOL='socialFollowers', RAT='socialRating';
 export const POSTS={
  atardecer:{name:'Atardecer en el chiringuito',cost:0,arr:0.05,followers:2,desc:'Foto del atardecer. Gratis y siempre funciona.'},

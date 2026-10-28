@@ -1,10 +1,10 @@
-import { Game, Net } from "../state.js?v=27.6";
+import { Game, Net } from "../state.js?v=27.82";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { floorTableLabel } from "../floor-service.js?v=27.6";
-import { mixColor } from "../util.js?v=27.6";
-import { drawIcon } from "../icons.js?v=27.6";
-import { rr } from "../icons.js?v=27.6";
-import { drawBeachGuest } from "../scene-extras.js?v=27.6";
+import { floorTableLabel } from "../floor-service.js?v=27.82";
+import { mixColor } from "../util.js?v=27.82";
+import { drawIcon } from "../icons.js?v=27.82";
+import { rr } from "../icons.js?v=27.82";
+import { drawBeachGuest } from "../scene-extras.js?v=27.82";
 
 export function drawHamaca(c,x,y,i,T,weather,nt){
   // sombrilla

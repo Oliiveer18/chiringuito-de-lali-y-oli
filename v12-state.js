@@ -1,5 +1,5 @@
 /* Estado vivo de la jornada social. Lo importa v12.js. */
-import { Game } from './state.js?v=27.6';
+import { Game } from './state.js?v=27.82';
 export const rt = {
   lastDay: Game.day,
   puntaEnd: 0,

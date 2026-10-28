@@ -1,12 +1,12 @@
 /* Servicio, cierre, urgente y avisos. Lo importa ui.js. */
-import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=27.6';
-import { $, eur, hhmm, stars } from './util.js?v=27.6';
-import { ICON_URL } from './icons.js?v=27.6';
-import { Audio } from './audio.js?v=27.6';
-import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, weatherToday } from './state.js?v=27.6';
-import { buyStock, newSeason } from './sim.js?v=27.6';
-import { hideAll, Plan, showPlan } from './ui-plan.js?v=27.6';
-import { netAct, netDirty } from './net.js?v=27.6';
+import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=27.82';
+import { $, eur, hhmm, stars } from './util.js?v=27.82';
+import { ICON_URL } from './icons.js?v=27.82';
+import { Audio } from './audio.js?v=27.82';
+import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, weatherToday } from './state.js?v=27.82';
+import { buyStock, newSeason } from './sim.js?v=27.82';
+import { hideAll, Plan, showPlan } from './ui-plan.js?v=27.82';
+import { netAct, netDirty } from './net.js?v=27.82';
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
   $('#hud-role').classList.toggle('hidden', !isCoop()); $('#btn-ping').classList.toggle('hidden', !isCoop());

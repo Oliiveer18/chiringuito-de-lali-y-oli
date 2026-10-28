@@ -2,25 +2,25 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.6';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.6';
-import { ICON_URL } from './icons.js?v=27.6';
-import { Audio } from './audio.js?v=27.6';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.6';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.6';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.6';
-import { canvas, toWorld } from './canvas.js?v=27.6';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.6';
-import { drawPerson } from './render.js?v=27.6';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=27.82';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=27.82';
+import { ICON_URL } from './icons.js?v=27.82';
+import { Audio } from './audio.js?v=27.82';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=27.82';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=27.82';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=27.82';
+import { canvas, toWorld } from './canvas.js?v=27.82';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=27.82';
+import { drawPerson } from './render.js?v=27.82';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=27.6';
+} from './ui-plan.js?v=27.82';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=27.6';
+} from './ui-service.js?v=27.82';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
