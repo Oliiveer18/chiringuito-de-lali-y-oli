@@ -1,0 +1,124 @@
+name: Validate agenda isolation and deploy
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/agenda-isolation.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: agenda-isolation
+  cancel-in-progress: false
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded agenda-only patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('ui-polish.js');s=p.read_text()
+          assert 'PLACEHOLDER' not in s
+          start=s.index('function agenda(){');end=s.index('\nfunction norm(',start)
+          assert 'for(let i=0;i<7;i++)' in s[start:end]
+          s=s[:start]+'''function agenda(){
+            if(Game.mode!=='plan')return;
+            const fc=document.getElementById('forecast');
+            if(fc){const today=dayCard(Game.day,0);if(fc.innerHTML!==today)fc.innerHTML=today;}
+            const tabs=document.querySelector('#plan .tabs');
+            if(tabs&&!tabs.querySelector('[data-tab="agenda"]')){
+              const button=document.createElement('button');
+              button.type='button';button.className='tab';button.dataset.tab='agenda';
+              button.setAttribute('role','tab');button.textContent='Agenda';
+              button.addEventListener('click',()=>{Plan.tab='agenda';renderTab();agenda();});
+              tabs.append(button);
+            }
+            if(Plan.tab!=='agenda')return;
+            const body=document.getElementById('tab-body');if(!body)return;
+            let html='<section aria-label="Agenda meteorológica"><h3>Agenda</h3><div class="agenda">';
+            for(let i=0;i<8;i++){const d=Game.day+i;if(d>SEASON_DAYS)break;html+=dayCard(d,i);}
+            html+='</div></section>';
+            if(body.innerHTML!==html)body.innerHTML=html;
+          }
+          document.addEventListener('plan-tab-repaint',agenda);
+          '''+s[end:]
+          anchor="import { Game } from './state.js?v=27.82';"
+          assert anchor in s
+          s=s.replace(anchor,anchor+"\nimport { Plan, renderTab } from './ui.js?v=27.82';",1)
+          old="(Game.forecast&&Game.forecast[d])||'sol'"
+          assert old in s
+          s=s.replace(old,"(Game.forecast&&Game.forecast[d-1])||'sol'",1)
+          s=s.replace("i===0?'Hoy':'Día '+i","i===0?'Hoy · Día '+d:'Día '+d",1)
+          p.write_text(s)
+          p=Path('index.html');html=p.read_text()
+          html,n=re.subn(r'ui-polish\.js\?v=[0-9.]+','ui-polish.js?v=27.83',html)
+          assert n==1
+          p.write_text(html)
+          PY
+          node --check ui-polish.js
+      - name: Install browser
+        run: |
+          npm install --prefix /tmp/agenda-smoke playwright
+          /tmp/agenda-smoke/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify today-only header and exclusive agenda tab
+        run: |
+          python3 -m http.server 8765 >/tmp/agenda-server.log 2>&1 &
+          node <<'JS'
+          const assert=require('node:assert/strict');
+          const {chromium}=require('/tmp/agenda-smoke/node_modules/playwright');
+          (async()=>{
+            const browser=await chromium.launch();
+            try{for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+              const page=await browser.newPage({viewport});const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              await page.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
+              await page.waitForFunction(()=>document.querySelector('#ver-title')?.textContent.includes('activas:'),null,{timeout:45000});
+              await page.click('#btn-start');
+              await page.locator('.save-browser').getByRole('button',{name:'Nueva partida',exact:true}).click();
+              await page.locator('#plan.show').waitFor();
+              await page.waitForTimeout(1500);
+              assert.equal(await page.locator('#forecast .fc').count(),1);
+              assert.equal(await page.locator('#forecast .agenda').count(),0);
+              assert.equal(await page.locator('#tab-body .agenda').count(),0);
+              await page.click('#plan [data-tab="agenda"]');
+              await page.waitForTimeout(600);
+              assert.equal(await page.locator('#tab-body .agenda .fc').count(),8);
+              assert.equal(await page.locator('#tab-body .agenda .wicon').count(),8);
+              assert.equal(await page.locator('#forecast .fc').count(),1);
+              for(const tab of ['compras','carta','mejoras']){
+                await page.click('#plan [data-tab="'+tab+'"]');
+                await page.waitForTimeout(600);
+                assert.equal(await page.locator('#tab-body .agenda').count(),0);
+                assert.equal(await page.locator('#forecast .fc').count(),1);
+              }
+              assert.equal((await page.locator('#errbox').textContent()).trim(),'');
+              assert.deepEqual(errors,[]);await page.close();
+            }}finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - name: Commit verified patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ui-polish.js index.html
+          git diff --cached --quiet || git commit -m 'fix: semana solo en Agenda; cabecera solo hoy'
+          git push origin HEAD:main
+      - name: Stage website
+        run: |
+          mkdir -p /tmp/agenda-public
+          tar --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tools' --exclude='*.test.*' --exclude='*.py' -cf - . | tar -xf - -C /tmp/agenda-public
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/agenda-public
+      - uses: actions/deploy-pages@v4
