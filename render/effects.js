@@ -1,5 +1,5 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { lerp } from "../util.js?v=28.3";
+import { lerp } from "../util.js?v=28.4";
 
 export function drawLights(c,T,a){
   c.save(); c.globalCompositeOperation='lighter';

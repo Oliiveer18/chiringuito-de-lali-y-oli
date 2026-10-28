@@ -2,25 +2,25 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.3';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.3';
-import { ICON_URL } from './icons.js?v=28.3';
-import { Audio } from './audio.js?v=28.3';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.3';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.3';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.3';
-import { canvas, toWorld } from './canvas.js?v=28.3';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.3';
-import { drawPerson } from './render.js?v=28.3';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.4';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.4';
+import { ICON_URL } from './icons.js?v=28.4';
+import { Audio } from './audio.js?v=28.4';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.4';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.4';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.4';
+import { canvas, toWorld } from './canvas.js?v=28.4';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.4';
+import { drawPerson } from './render.js?v=28.4';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=28.3';
+} from './ui-plan.js?v=28.4';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=28.3';
+} from './ui-service.js?v=28.4';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -42,7 +42,7 @@ function planComprasCartaHtml(){
     const margin = Game.prices[id]-it.cost;
     h += `<div class="row plan-product"><img src="${ICON_URL[id]}" alt=""><div class="plan-product-main"><div class="name">${it.name}</div><div class="sub">Compra ${eur2(it.cost)} · almacén <b>${Game.stock[id]}</b> · referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
     <div class="ctrl plan-product-ctrl">
-      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span><div class="plan-buy-btns">${[10,25,50].map(n=>`<button class="btn sm primary" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n}</button>`).join('')}</div></div>
+      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span><div class="plan-buy-btns">${[10,25,50].map(n=>`<button class="btn sm primary stock-buy" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}><span class="stock-buy-qty">+${n}</span><span class="stock-buy-total">${eur(it.cost*n)}</span></button>`).join('')}</div></div>
       <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span><div class="price"><button type="button" data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button type="button" data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div></div>
       <div class="plan-ctrl-block plan-ctrl-carta"><button type="button" class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera de carta'}</button></div>
     </div></div>`;

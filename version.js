@@ -1,5 +1,5 @@
-export const VERSION='v28.3';
-export const LABEL='v28.3 · Compras y carta por producto';
+export const VERSION='v28.4';
+export const LABEL='v28.4 · compras legibles, personal y progreso pulidos';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

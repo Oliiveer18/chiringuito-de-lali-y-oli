@@ -1,14 +1,14 @@
-import {trackCost} from './bookkeeping.js?v=28.3';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.3';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.3';
-import * as Rankings from './market-model.mjs?v=28.3';
-import {Game,Net} from './state.js?v=28.3';
-import {STAFF,RENT} from './config.js?v=28.3';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.3';
-import {netDirty} from './net.js?v=28.3';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.3';
-import {escapeHtml as E,eur} from './util.js?v=28.3';
-import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.3';
+import {trackCost} from './bookkeeping.js?v=28.4';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.4';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.4';
+import * as Rankings from './market-model.mjs?v=28.4';
+import {Game,Net} from './state.js?v=28.4';
+import {STAFF,RENT} from './config.js?v=28.4';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.4';
+import {netDirty} from './net.js?v=28.4';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.4';
+import {escapeHtml as E,eur} from './util.js?v=28.4';
+import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.4';
 const day=()=>absoluteDay(Number(Game.upgrades.career?.season)||1,Game.day);
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}
@@ -26,14 +26,49 @@ function cvCard(c,current){
  const pres=c.presentation||'';
  return '<article class="wf-card cv" data-candidate="'+E(c.id)+'"><img src="'+portrait(c)+'" alt="Retrato del candidato"><h4>'+E(c.name)+'</h4><p class="cv-origin">'+E(age)+' · '+E(origin)+'</p><div class="cv-section"><span class="k">Puesto</span><b>'+roleName(c.role)+'</b></div><div class="cv-section"><span class="k">Experiencia</span><b>'+E(exp)+'</b></div><div class="cv-section"><span class="k">Disponibilidad</span><b>'+E(avail)+'</b></div><div class="cv-section"><span class="k">Pretensión</span><b>'+eur(c.wage)+'/día</b></div>'+(pres?'<p class="cv-text">'+E(pres)+'</p>':'')+'<p>Vigente hasta la jornada '+c.expires+' de carrera.</p>'+(current?'<p>Actual: '+E(current.name)+' · '+eur(current.wage)+'/día · ×'+current.workMultiplier.toFixed(2)+'</p>':'<p>Puesto actualmente vacante.</p>')+button('hire',c.id,current?'Sustituir a '+current.name:'Contratar')+button('discard',c.id,'Descartar')+'</article>';
 }
-function paint(){if(Game.mode!=='plan'||Plan.tab!=='personal')return;const w=workforce(),d=day();const wage=Object.values(w.team).reduce((n,e)=>n+(Game.staff[e.role]?e.wage:0),0);let h='<div class="workforce"><h3>Tu equipo</h3><p>Sueldos activos: '+eur(wage)+'/día · Licencia y sueldos: '+eur(RENT+wage)+'/día. No hay pago inicial de contratación.</p>'+(Game.money<RENT+wage?'<p class="wf-warning">La caja actual no cubre esos gastos de cierre. La contratación no queda bloqueada.</p>':'')+'<div class="wf-grid">';for(const s of STAFF){const e=w.team[s.id];h+='<article class="wf-card"><img src="'+(e?portrait(e):staffAvatar(s.id))+'" alt=""><h4>'+E(e?.name||'Puesto vacante')+'</h4><p>'+roleName(s.id)+'</p>';if(e){h+=e.dateUnknown?'<p>Antiguedad anterior no registrada.</p>':'';h+='<p>'+eur(e.wage)+'/día · '+(Game.upgrades['ausente_'+s.id]?'Ausente hoy':'Contratado')+'</p><p>Antigüedad desde la contratación registrada: '+Math.max(1,d-e.hiredDay+1)+' jornada(s). Formación '+e.training+'/2.</p><p>'+E(skillText(e))+'</p><p>Jornadas registradas trabajadas: '+(e.worked||0)+' · Ausencias registradas: '+(e.absences||0)+'</p>'+button('dismiss',s.id,'Despedir')+(e.training<2?button('train',s.id,'Rapidez: reduce un 5% el tiempo · '+eur(100*(e.training+1)))+(!['general','polivalente'].includes(e.specialty)?button('focus',s.id,'Especialidad: mejora su ventaja · '+eur(100*(e.training+1))):''):'<p>Formación completada.</p>');}else h+='<p>'+E(s.desc)+'</p>';h+='</article>';}h+='</div><p>Apoyo de terraza del limpiador: '+(Game.upgrades.floorCleanerSupport?'activado cuando no hay mesas sucias':'desactivado')+'</p><button class="btn sm" data-floor-setting="support">Cambiar apoyo de terraza</button><h3>Prioridades de trabajo</h3><p>Camarero: '+(w.priority.camarero==='arrival'?'orden de llegada':'menor paciencia primero')+'</p>'+button('priority','camarero','Cambiar prioridad')+'<p>Limpieza: '+(w.priority.limpiador==='near'?'mesas cercanas a la barra':'mesa que lleva más tiempo sucia')+'</p>'+button('priority','limpiador','Cambiar prioridad');if(w.performance)h+='<h3>Última jornada registrada · '+w.performance.day+'</h3><p>Clientes con intervención del camarero: '+w.performance.clients+' · Productos preparados con ayuda de cocina: '+w.performance.prepared+' · Mesas recogidas por el ayudante: '+w.performance.cleaned+'. No se atribuyen beneficios económicos estimados.</p>';h+='<h3>Candidaturas · '+w.applicants.length+'</h3><p>Las candidaturas llegan poco a poco según la jornada y la marcha del chiringuito. Cada ficha incluye experiencia, disponibilidad y pretensión salarial.</p><div class="wf-grid">';for(const c of w.applicants){const current=w.team[c.role];h+=cvCard(c,current);}h+='</div></div>';const b=document.getElementById('tab-body');if(b&&b.innerHTML!==h)b.innerHTML=h;}
+function paint(){
+  if(Game.mode!=='plan'||Plan.tab!=='personal')return;
+  const w=workforce(),d=day();
+  const wage=Object.values(w.team).reduce((n,e)=>n+(Game.staff[e.role]?e.wage:0),0);
+  let h='<div class="workforce">';
+  h+='<header class="wf-head"><h3>Tu equipo</h3></header>';
+  h+='<section class="wf-summary" aria-label="Resumen económico"><p class="wf-summary-line">Sueldos activos: '+eur(wage)+'/día · Licencia y sueldos: '+eur(RENT+wage)+'/día. No hay pago inicial de contratación.</p>';
+  if(Game.money<RENT+wage)h+='<p class="wf-warning">La caja actual no cubre esos gastos de cierre. La contratación no queda bloqueada.</p>';
+  h+='</section>';
+  h+='<section class="wf-team" aria-label="Plantilla"><div class="wf-grid">';
+  for(const s of STAFF){
+    const e=w.team[s.id];
+    h+='<article class="wf-card"><img src="'+(e?portrait(e):staffAvatar(s.id))+'" alt=""><div class="wf-card-body"><h4>'+E(e?.name||'Puesto vacante')+'</h4><p class="wf-role">'+roleName(s.id)+'</p>';
+    if(e){
+      if(e.dateUnknown)h+='<p>Antiguedad anterior no registrada.</p>';
+      h+='<p>'+eur(e.wage)+'/día · '+(Game.upgrades['ausente_'+s.id]?'Ausente hoy':'Contratado')+'</p><p>Antigüedad desde la contratación registrada: '+Math.max(1,d-e.hiredDay+1)+' jornada(s). Formación '+e.training+'/2.</p><p>'+E(skillText(e))+'</p><p>Jornadas registradas trabajadas: '+(e.worked||0)+' · Ausencias registradas: '+(e.absences||0)+'</p><div class="wf-card-actions">'+button('dismiss',s.id,'Despedir');
+      if(e.training<2){
+        h+=button('train',s.id,'Rapidez: reduce un 5% el tiempo · '+eur(100*(e.training+1)));
+        if(!['general','polivalente'].includes(e.specialty))h+=button('focus',s.id,'Especialidad: mejora su ventaja · '+eur(100*(e.training+1)));
+      }else h+='<p>Formación completada.</p>';
+      h+='</div>';
+    }else h+='<p>'+E(s.desc)+'</p>';
+    h+='</div></article>';
+  }
+  h+='</div></section>';
+  h+='<section class="wf-settings" aria-label="Apoyo de terraza"><p>Apoyo de terraza del limpiador: '+(Game.upgrades.floorCleanerSupport?'activado cuando no hay mesas sucias':'desactivado')+'</p><button class="btn sm" data-floor-setting="support">Cambiar apoyo de terraza</button></section>';
+  h+='<section class="wf-priorities" aria-label="Prioridades de trabajo"><h3>Prioridades de trabajo</h3>';
+  h+='<div class="wf-priority-row"><p>Camarero: '+(w.priority.camarero==='arrival'?'orden de llegada':'menor paciencia primero')+'</p>'+button('priority','camarero','Cambiar prioridad')+'</div>';
+  h+='<div class="wf-priority-row"><p>Limpieza: '+(w.priority.limpiador==='near'?'mesas cercanas a la barra':'mesa que lleva más tiempo sucia')+'</p>'+button('priority','limpiador','Cambiar prioridad')+'</div></section>';
+  if(w.performance){
+    h+='<section class="wf-performance" aria-label="Rendimiento reciente"><h3>Última jornada registrada · '+w.performance.day+'</h3><p>Clientes con intervención del camarero: '+w.performance.clients+' · Productos preparados con ayuda de cocina: '+w.performance.prepared+' · Mesas recogidas por el ayudante: '+w.performance.cleaned+'. No se atribuyen beneficios económicos estimados.</p></section>';
+  }
+  h+='<section class="wf-applicants" aria-label="Candidaturas"><h3>Candidaturas · '+w.applicants.length+'</h3><p class="wf-applicants-intro">Las candidaturas llegan poco a poco según la jornada y la marcha del chiringuito. Cada ficha incluye experiencia, disponibilidad y pretensión salarial.</p><div class="wf-grid">';
+  for(const c of w.applicants){const current=w.team[c.role];h+=cvCard(c,current);}
+  h+='</div></section></div>';
+  const b=document.getElementById('tab-body');
+  if(b&&b.innerHTML!==h)b.innerHTML=h;
+}
 function act(a){if(Net.role==='guest'||Game.mode!=='plan'||a.day!==day())return;const w=workforce();if(!a.requestId||typeof a.requestId!=='string'||a.requestId.length>128||(w.applied||[]).includes(a.requestId))return;const target=a.action==='hire'?w.applicants.find(c=>c.id===a.id)?.role:a.id;if(['hire','train','focus','dismiss'].includes(a.action)&&((w.team[target]?.id||'')!==a.expectedEmployee||(['train','focus'].includes(a.action)&&(w.team[target]?.training||0)!==a.expectedTraining)))return;try{if(a.action==='hire'){const r=hireCandidate(w.team,w.applicants,a.id,day());w.team=r.team;w.applicants=r.applicants;Game.staff[Object.values(w.team).find(e=>e.id===a.id).role]=true;}else if(a.action==='dismiss'){delete w.team[a.id];Game.staff[a.id]=false;}else if(a.action==='discard'){w.applicants=w.applicants.filter(c=>c.id!==a.id);}else if(a.action==='train'||a.action==='focus'){const r=trainChoice(w.team[a.id],Game.money,a.action==='focus'?'focus':'speed');w.team[a.id]=r.employee;Game.money=r.cash;trackCost(r.cost,'training',true);}else if(a.action==='priority'){if(a.id==='camarero')w.priority.camarero=w.priority.camarero==='arrival'?'patience':'arrival';if(a.id==='limpiador')w.priority.limpiador=w.priority.limpiador==='near'?'oldest':'near';}else if(a.action==='reply'){const p=Game.upgrades.chiringoArchive?.find(p=>p.id===a.id),c=p?.comments?.find(c=>c.id===a.comment);if(!c||c.reply)return;const option=replyOptions(c).find(o=>o.id===a.choice);if(!option||Game.money<option.cost||(option.id==='compensate'&&Game.upgrades.compensationRewardDay===day()))return;Game.money-=option.cost;trackCost(option.cost,'compensations');if(option.id==='compensate'){Game.upgrades.compensationRewardDay=day();Game.upgrades.socialPend=Game.upgrades.socialPend||[];Game.upgrades.socialPend.push({k:'Atencion a una queja en publicacion',n:1});Game.upgrades.socialRating=Math.min(5,(Game.upgrades.socialRating||3)+.05);}c.reply={day:day(),text:option.text,kind:option.id,cost:option.cost};}else return;w.applied=[...(w.applied||[]),a.requestId].slice(-256);refreshPlanMoney();netDirty();paint();}catch(e){toast('No se ha realizado la acción',e.message,'bad');}}
 onGuestAction('management',act);
 document.addEventListener('workforce-paint',paint);
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-manage]');if(!b||b.disabled)return;e.preventDefault();e.stopImmediatePropagation();const w=Game.upgrades.workforce;const action=b.dataset.manage,id=b.dataset.id,target=action==='hire'?w?.applicants.find(c=>c.id===id)?.role:id;const a={action,id,comment:b.dataset.comment||'',choice:b.dataset.choice||'',day:day(),requestId:crypto.randomUUID(),expectedEmployee:w?.team[target]?.id||'',expectedTraining:w?.team[target]?.training||0};if(Net.role==='guest')guestSend('management',a);else act(a);},true);
 setInterval(()=>{if(!['plan','service','report'].includes(Game.mode))return;if(Net.role!=='guest'){const w=workforce();if(Game.mode==='plan'){for(const [role,e] of Object.entries(w.team))if(!Game.upgrades['ausente_'+role])Game.staff[role]=true;const done=day()-1;if(!Game.upgrades.socialCalendar){const idle=Math.max(0,Math.min(Number(Game.upgrades.socialIdle)||0,done));Game.upgrades.socialCalendar={last:done,idle};Game.upgrades.socialIdle=idle;netDirty();}}if(Game.mode==='report'&&Game.dayStats&&w.performance?.day!==day()){const s=Game.dayStats;w.performance={day:day(),clients:s.staffClients||0,prepared:s.staffPrepared||0,cleaned:s.by?.acaymo?.clean||0};netDirty();}}paint();},350);
-const style=document.createElement('style');style.textContent='.wf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:12px;margin:12px 0 22px}.wf-card{border:1px solid var(--line);background:var(--paper);padding:16px;border-radius:16px;min-width:0}.wf-card img{width:48px;height:48px}.wf-card h4{font-size:17px;margin:8px 0}.wf-card p{font-size:13px;overflow-wrap:anywhere}.wf-card button{margin:4px 6px 4px 0;min-height:44px}.wf-warning{background:#fff0d0;padding:12px;border-radius:12px}.cv-origin{color:var(--ink-2);font-size:12.5px;margin:0 0 10px}.cv-section{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)}.cv-section .k{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}.cv-section b{font-size:13px;text-align:right}.cv-text{margin:10px 0;color:var(--ink);line-height:1.45}.photo-thread{border-top:1px solid var(--line);padding:12px 16px}.photo-thread article{padding:10px 0}.photo-thread p{margin:5px 0;font-size:13px}.photo-thread blockquote{background:#edf5f0;padding:10px;border-radius:12px;margin:8px 0 0 14px}.league-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:10px}.league-summary article{background:#eaf4ef;border:1px solid var(--line);border-radius:14px;padding:14px}.league-summary strong{display:block;font-size:18px}';document.head.append(style);
-
 export {act as applyManagementAction};
 function upgradeWorkforce(w){const u=Game.upgrades;if(!u.professionalSchema){u.managementMigrationBackup={workforce:JSON.parse(JSON.stringify(w)),calendar:u.socialCalendar?{...u.socialCalendar}:null,idle:u.socialIdle};for(const e of Object.values(w.team))if(String(e.id).startsWith('original-'))e.dateUnknown=true;const completed=day()-(u.socialSettledAbs===day()?0:1),posts=(u.chiringoArchive||[]).map(r=>(r.season-1)*30+r.day).filter(d=>d<=completed),lastPost=Math.max(0,...posts);u.socialCalendar=reconcileCalendar(u.socialCalendar||{last:completed,idle:u.socialIdle},completed,lastPost);u.socialIdle=u.socialCalendar.idle;u.professionalSchema=1;netDirty();}w.applicants=w.applicants.map(profile);for(const key of Object.keys(w.team))w.team[key]=profile(w.team[key]);}
 setInterval(()=>{if(Net.role==='guest'||Game.mode!=='report'||!Game.dayStats||!Game.upgrades.workforce)return;const w=Game.upgrades.workforce;let changed=false;for(const e of Object.values(w.team)){if(e.lastAuditDay===day())continue;e.lastAuditDay=day();if(Game.staff[e.role])e.worked=(e.worked||0)+1;else e.absences=(e.absences||0)+1;changed=true;}if(changed)netDirty();},400);
