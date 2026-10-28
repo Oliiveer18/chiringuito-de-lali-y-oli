@@ -32,7 +32,7 @@ export function recordComment(posts,postId,comment){
  return posts.map(p=>{if(p.id!==postId)return p;const comments=p.comments||[];if(comments.some(c=>c.id===comment.id))return p;return {...p,comments:[...comments,{id:String(comment.id),authorId:String(comment.authorId),text:comment.text.trim(),day:comment.day,reply:null}]};});
 }
 // Conserva las exportaciones auxiliares de la revisión anterior sin duplicar su implementación.
-export {hash32,decide,decideAll,opinionCounts,publicRating} from './opinions-model.mjs?v=28.2';
+export {hash32,decide,decideAll,opinionCounts,publicRating} from './opinions-model.mjs';
 function hash(text){let h=2166136261;for(const c of String(text))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 const NAMES=['Naira','Aday','Dacil','Jonay','Iballa','Nauzet','Nerea','Airam','Yaiza','Beneharo','Celia','Saul'];
 const ORIGINS=['Arona','Adeje','Los Cristianos','El Médano','Granadilla','San Isidro','Guía de Isora','La Laguna'];
