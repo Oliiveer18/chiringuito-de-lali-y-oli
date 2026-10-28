@@ -23,7 +23,11 @@ body.playing #hud{border-radius:14px!important}
 #stockbar .stock-list::-webkit-scrollbar{display:none}
 #stockbar .stock{flex:0 0 auto}
 #stockbar.mini .stock-list{min-height:26px;gap:5px}
-#stockbar.mini .stock{height:26px;font-size:11.5px;padding:0 7px}
+#stockbar.mini{padding:3px 6px;gap:4px}
+#stockbar.mini .stock-toggle{width:22px;height:22px;border-radius:7px}
+#stockbar.mini .stock-toggle svg{width:11px;height:11px}
+/* v10 fuerza .stock{height:32px!important} en partida: el modo mini necesita importante para compactar de verdad */
+body.playing #stockbar.mini .stock{height:26px!important;font-size:11.5px!important;padding:0 7px!important}
 #stockbar.mini .stock img{width:16px;height:16px}
 .stock-toggle{width:30px;height:30px;flex:none;border:0;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;cursor:pointer;transition:background .15s}
 .stock-toggle:hover{background:rgba(255,255,255,.24)}
@@ -31,9 +35,9 @@ body.playing #hud{border-radius:14px!important}
 body.portrait #stockbar{flex-wrap:wrap;justify-content:center}
 body.portrait #stockbar .stock-list{flex-wrap:wrap;justify-content:center}
 
-/* Aviso contextual por encima de la barra plegada (solo escritorio: en táctil la capa móvil ya fija top y bottom:auto) */
+/* Aviso contextual por encima de la barra plegada. La capa móvil fija top sin media query y se aplica también en escritorio: hay que restablecer top:auto para que el anclaje inferior funcione (con top+bottom a la vez la altura colapsa). */
 @media (hover:hover){
-  .hint{bottom:calc(58px + var(--sb))}
+  .hint{top:auto;bottom:calc(58px + var(--sb))}
 }
 
 /* ---------- Pantalla completa (escritorio / Mac) ---------- */
@@ -41,3 +45,5 @@ body.portrait #stockbar .stock-list{flex-wrap:wrap;justify-content:center}
 #btn-full-page{position:fixed;z-index:45;right:calc(10px + var(--sr));top:calc(10px + var(--st));width:40px;height:40px;display:none;place-items:center;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(6,44,48,.72);backdrop-filter:blur(8px);color:#fff;cursor:pointer;transition:background .15s}
 #btn-full-page:hover{background:rgba(15,90,95,.85)}
 body:not(.playing) #btn-full-page{display:grid}
+/* No flotar sobre paneles con contenido arriba a la derecha (plan, informe, lobby…) */
+body:has(.overlay.show:not(#title):not(#final)) #btn-full-page{display:none}
