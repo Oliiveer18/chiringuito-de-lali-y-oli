@@ -16,4 +16,4 @@ try{
   }
 }finally{window.setInterval=nativeInterval;}
 const title=document.getElementById('ver-title');
-if(title)title.textContent='v27.7 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
+if(title)title.textContent='v27.8 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
