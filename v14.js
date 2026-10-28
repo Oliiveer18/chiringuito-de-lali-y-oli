@@ -97,17 +97,20 @@ const tabs=document.querySelector('#plan .tabs');
 if(tabs&&!tabs.querySelector('[data-tab="informe"]')){const b=document.createElement('button');b.className='tab';b.dataset.tab='informe';b.setAttribute('role','tab');b.textContent='Informe';tabs.append(b);}
 function paint(b,h){if(b.innerHTML===h)return;b.innerHTML=h;b.dataset.v14=h;}
 function renderInforme(){const b=document.querySelector('#tab-body');if(!b||Plan.tab!=='informe')return;let rep=null;try{rep=JSON.parse(Game.upgrades.lastReport||'null');}catch(e){}
- const U=Game.upgrades, n=v=>Number(v)||0;
- const misionHtml=U.misionTxt?'<div class="row"><div class="name">Misión activa</div><div class="sub">'+U.misionTxt+' · recompensa '+n(U.misionReward)+' € y 10 seguidores · '+(U.misionHecha===1?'Cumplida':'En curso')+'</div></div>':'';
- const segHtml='<div class="row"><div class="name">Chiringo</div><div class="sub">'+n(U[FOL])+' seguidores · +'+Math.round(followerBonus()*100)+'% de afluencia</div></div>';
- const R=U.socialReport, lst=(a,sg)=>(a||[]).map(x=>x.k+' '+sg+x.n).join(', ')||'nada';
- const balHtml=R?'<div class="row"><div class="name">Seguidores del último cierre</div><div class="sub">'+(n(R.net)>=0?'+':'')+n(R.net)+' · Ganados: '+lst(R.gains,'+')+' · Perdidos: '+lst(R.losses,'−')+'</div></div>':'';
- if(!rep){paint(b,misionHtml+segHtml+balHtml+'<p class="muted">Aún no hay un informe del día anterior.</p>');return;}
- paint(b,misionHtml+segHtml+balHtml+'<h3 style="margin:4px 0">Día '+rep.day+'</h3>'+
- '<div class="row"><div class="name">Caja</div><div class="sub">Ingresos: '+n(rep.revenue).toFixed(2)+' € · Propinas: '+n(rep.tips).toFixed(2)+' € · Multas: '+n(rep.fines)+' € · Hamacas: '+n(rep.hamacas).toFixed(2)+' €</div></div>'+
- '<div class="row"><div class="name">Clientes</div><div class="sub">Servidos: '+n(rep.served)+' · Perdidos: '+n(rep.lost)+'</div></div>'+
- '<div class="row"><div class="name">Producto estrella</div><div class="sub">'+(rep.top||'—')+'</div></div>'+
- '<div class="row"><div class="name">Misión del día anterior</div><div class="sub">'+(rep.mission||'—')+' · '+(rep.missionOk?'Cumplida':'No cumplida')+'</div></div>');
+ const U=Game.upgrades,n=v=>Number(v)||0;
+ const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const mision=U.misionTxt?`<div class="info-card"><div class="k">Misión activa</div><div class="v">${esc(U.misionTxt)}</div><div class="d">${n(U.misionReward)} € y 10 seguidores · ${U.misionHecha===1?'Cumplida':'En curso'}</div></div>`:'';
+ const chiringo=`<div class="info-card"><div class="k">Chiringo</div><div class="v">${n(U[FOL])} seguidores</div><div class="d">+${Math.round(followerBonus()*100)}% de afluencia</div></div>`;
+ const R=U.socialReport,lst=(a,sg)=>(a||[]).map(x=>x.k+' '+sg+x.n).join(', ')||'nada';
+ const balance=R?`<div class="info-card"><div class="k">Seguidores del último cierre</div><div class="v">${n(R.net)>=0?'+':''}${n(R.net)}</div><div class="d">Ganados: ${esc(lst(R.gains,'+'))} · Perdidos: ${esc(lst(R.losses,'−'))}</div></div>`:'';
+ let dia='';
+ if(rep){dia=`<div class="info-section"><p class="eyebrow">Día ${n(rep.day)} · balance</p><div class="info-grid">
+  <div class="info-card"><div class="k">Ingresos</div><div class="v">${n(rep.revenue).toFixed(2)} €</div><div class="d">Propinas ${n(rep.tips).toFixed(2)} € · Hamacas ${n(rep.hamacas).toFixed(2)} € · Multas ${n(rep.fines)} €</div></div>
+  <div class="info-card"><div class="k">Clientes</div><div class="v">${n(rep.served)} atendidos</div><div class="d">${n(rep.lost)} perdidos</div></div>
+  <div class="info-card"><div class="k">Producto estrella</div><div class="v">${esc(rep.top||'—')}</div><div class="d">Más vendido del día</div></div>
+  <div class="info-card"><div class="k">Misión anterior</div><div class="v">${esc(rep.mission||'—')}</div><div class="d">${rep.missionOk?'Cumplida':'No cumplida'}</div></div>
+ </div></div>`;}else dia='<p class="muted" style="padding:0 24px">Aún no hay un informe del día anterior.</p>';
+ paint(b,`<div class="info-grid" style="padding-top:16px">${mision}${chiringo}${balance}</div>${dia}`);
 }
 new MutationObserver(renderInforme).observe(document.getElementById('tab-body'),{childList:true,subtree:true});
 setInterval(renderInforme,500);
