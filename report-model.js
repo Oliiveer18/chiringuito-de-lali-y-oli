@@ -37,7 +37,7 @@ export function opinionLine(s){
   return 'Satisfacción interna: '+(sat.avg==null?'sin datos':sat.avg.toFixed(2)+' / 5')+' · Valoración pública: '+(pub.count?pub.avg.toFixed(1)+' ★ ('+pub.count+')':'Sin valoraciones nuevas')+' · Reputación acumulada: '+Game.rep.toFixed(2)+'. Visitantes '+c.visitors+' · Atendidos '+c.served+' · Valoraciones '+c.rated+' · Comentarios '+c.comments+'.';
 }
 
-export function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=Math.imul(t^(t>>>7),61|t); return ((t^(t>>>14),0)/4294967296; }; }
+export function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=Math.imul(t^(t>>>7),61|t); return ((t^(t>>>14))>>>0)/4294967296; }; }
 export function pickPhrase(key, bank, rng){
   const used = Game.revUsed || (Game.revUsed={});
   const prev = Game.revPrev || {};
@@ -301,7 +301,6 @@ export function reviewText(v, trig, rng){
   return P.join(' ');
 }
 
-// ---------- v25.7: voz por tipo de cliente, intensidad y firma con pueblo ----------
 export const REV_RESP_MAX = 3;
 export const REV_INVITE_COST = 15;
 export const REV_INVITE_REP = 0.15;
