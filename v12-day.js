@@ -1,13 +1,13 @@
 /* Cierre y balance diario de Chiringo. Lo importa v12.js. */
-import { socialIdle, markSocial, closePhoto } from './management-ui.js?v=28.1';
-import { Game, Net, isCoop } from './state.js?v=28.1';
-import { ITEMS } from './config.js?v=28.1';
-import { rnd, clamp } from './util.js?v=28.1';
-import { toast } from './ui.js?v=28.1';
-import { netDirty } from './net.js?v=28.1';
-import { settle, postMetrics, reachFactor, engagement } from './social-model.js?v=28.1';
-import { FOL, RAT, INFLU, TRENDS } from './v12-posts.js?v=28.1';
-import { rt } from './v12-state.js?v=28.1';
+import { socialIdle, markSocial, closePhoto } from './management-ui.js?v=28.2';
+import { Game, Net, isCoop } from './state.js?v=28.2';
+import { ITEMS } from './config.js?v=28.2';
+import { rnd, clamp } from './util.js?v=28.2';
+import { toast } from './ui.js?v=28.2';
+import { netDirty } from './net.js?v=28.2';
+import { settle, postMetrics, reachFactor, engagement } from './social-model.js?v=28.2';
+import { FOL, RAT, INFLU, TRENDS } from './v12-posts.js?v=28.2';
+import { rt } from './v12-state.js?v=28.2';
 const absSocial=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
 export function migrate(){if(Game.upgrades[FOL]==null)Game.upgrades[FOL]=0;if(Game.upgrades[RAT]==null)Game.upgrades[RAT]=3;if(!Array.isArray(Game.upgrades.socialComments))Game.upgrades.socialComments=[];if(!Array.isArray(Game.upgrades.socialPend))Game.upgrades.socialPend=[];}
 export function addPend(k,n,o){const U=Game.upgrades;if(!Array.isArray(U.socialPend))U.socialPend=[];U.socialPend.push({k,n,...(o||{})});}

@@ -2,25 +2,25 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.1';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.1';
-import { ICON_URL } from './icons.js?v=28.1';
-import { Audio } from './audio.js?v=28.1';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.1';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.1';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.1';
-import { canvas, toWorld } from './canvas.js?v=28.1';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.1';
-import { drawPerson } from './render.js?v=28.1';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.2';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.2';
+import { ICON_URL } from './icons.js?v=28.2';
+import { Audio } from './audio.js?v=28.2';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.2';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.2';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.2';
+import { canvas, toWorld } from './canvas.js?v=28.2';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.2';
+import { drawPerson } from './render.js?v=28.2';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=28.1';
+} from './ui-plan.js?v=28.2';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=28.1';
+} from './ui-service.js?v=28.2';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -30,6 +30,18 @@ export {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
 };
+function planCartaSectionHtml(){
+  let h = `<section class="plan-panel plan-prices"><p class="plan-panel-k">Fijar precios y carta</p><p class="muted plan-panel-d">Los turistas pagan casi cualquier cosa; la gente del pueblo conoce los precios. Fíjate en el precio de referencia.</p>`;
+  for(const id of ITEM_IDS){
+    const it=ITEMS[id], un=itemUnlocked(id);
+    if(!un){ h+=`<div class="row locked"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Bloqueado</div></div></div>`; continue; }
+    const margin = Game.prices[id]-it.cost;
+    h += `<div class="row plan-price-row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
+    <div class="ctrl"><div class="price"><button data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div>
+    <button class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera'}</button></div></div>`;
+  }
+  return h + '</section>';
+}
 export function renderTab(){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   const b=$('#tab-body'); let h=''; if(Plan.tab==='personal'){document.dispatchEvent(new Event('workforce-paint'));return;}
@@ -44,17 +56,9 @@ export function renderTab(){
       <div class="ctrl">${un?[10,25,50].map(n=>`<button class="btn sm primary" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}>+${n} · ${eur(it.cost*n)}</button>`).join(''):''}</div></div>`;
     }
     h += '</section>';
+    h += planCartaSectionHtml();
   } else if(Plan.tab==='carta'){
-    h += `<section class="plan-panel plan-prices"><p class="plan-panel-k">Fijar precios y carta</p><p class="muted plan-panel-d">Los turistas pagan casi cualquier cosa; la gente del pueblo conoce los precios. Fíjate en el precio de referencia.</p>`;
-    for(const id of ITEM_IDS){
-      const it=ITEMS[id], un=itemUnlocked(id);
-      if(!un){ h+=`<div class="row locked"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Bloqueado</div></div></div>`; continue; }
-      const margin = Game.prices[id]-it.cost;
-      h += `<div class="row plan-price-row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
-      <div class="ctrl"><div class="price"><button data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div>
-      <button class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera'}</button></div></div>`;
-    }
-    h += '</section>';
+    h += planCartaSectionHtml();
   } else if(Plan.tab==='mejoras'){
     h += '<div class="up-grid">';
     for(const u of UPGRADES){
