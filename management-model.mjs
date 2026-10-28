@@ -1,49 +1,55 @@
-// Opiniones y candidaturas: curva progresiva y currículums con datos coherentes.
-const cap=(v,a,b)=>Math.max(a,Math.min(b,v));
-export function hash32(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777616);}return h>>>0;}
-const unit=(key,salt)=>hash32(key+'|'+salt)/4294967296;
-export function decide(v,day,index,starsFn){
- if(!v||v.lost==='caro')return {rated:false,comment:false,stars:null};
- const stars=starsFn(v),key=[day,index,v.type||'',v.hour==null?'':v.hour,v.regular||''].join(':'),extreme=Math.abs(stars-3)/2;
- const growth=Math.min(Math.max(day,1),12)/12;
- const pRate=cap(0.05+0.10*growth+0.18*extreme+(v.regular?0.05:0)+(v.lost?0.08:0),0.03,0.35);
- if(unit(key,'rate')>=pRate)return {rated:false,comment:false,stars:null};
- return {rated:true,comment:unit(key,'comment')<cap(0.25+0.35*extreme,0.15,0.6),stars};
+// Modelo de gestión: puntuaciones, actividad, comentarios y contratación.
+const finite=x=>Number.isFinite(x)?x:0;
+const cap=(x,a,b)=>Math.max(a,Math.min(b,x));
+export function absoluteDay(season,day){
+ if(!Number.isInteger(season)||season<1||!Number.isInteger(day)||day<1||day>30)throw new Error('Invalid season/day');
+ return (season-1)*30+day;
 }
-export function decideAll(visits,day,starsFn){
- const ops=visits.map((v,i)=>decide(v,day,i,starsFn));
- const maxReviews=3+Math.floor(Math.min(Math.max(day,1),12)/12*5);
- let n=0;
- return ops.map(o=>{if(o&&o.rated){if(n>=maxReviews)return {rated:false,comment:false,stars:null};n++;}return o;});
+export function dailyPoints(r){
+ const served=Math.max(0,finite(r.served)),lost=Math.max(0,finite(r.lost)),revenue=Math.max(0,finite(r.revenue));
+ const service=served+lost?served/(served+lost):0;
+ const parts={service:40*service,rating:25*cap(finite(r.rating)/5,0,1),margin:20*cap(finite(r.profit)/Math.max(1,revenue),0,1),community:15*cap(Math.log1p(Math.max(0,finite(r.followers)))/Math.log1p(1000),0,1)};
+ if(!served&&!revenue)return {total:0,parts:{service:0,rating:0,margin:0,community:0}};
+ return {total:Math.round(Object.values(parts).reduce((a,b)=>a+b,0)),parts};
 }
-export function opinionCounts(s){
- const vs=s.visits||[],o=s.opinions||[];
- return {visitors:vs.length,served:vs.filter(v=>!v.lost).length,rated:o.filter(x=>x&&x.rated).length,comments:o.filter(x=>x&&x.rated&&x.comment).length};
+export function weeklyPoints(history,day){
+ if(!Number.isInteger(day)||day<1)throw new Error('Invalid league day');
+ const first=Math.floor((day-1)/7)*7+1,byDay=new Map();
+ for(const r of history||[])if(Number.isInteger(r.day)&&r.day>=first&&r.day<=day)byDay.set(r.day,r);
+ const rows=[...byDay.values()].sort((a,b)=>a.day-b.day).map(r=>({day:r.day,...dailyPoints(r)}));
+ return {first,last:first+6,week:Math.floor((day-1)/7)+1,rows,total:rows.reduce((s,r)=>s+r.total,0)};
 }
-export function publicRating(visits,opinions,starsFn){
- const st=[];visits.forEach((v,i)=>{if(opinions[i]&&opinions[i].rated)st.push(starsFn(v));});
- return {count:st.length,avg:st.length?st.reduce((a,b)=>a+b,0)/st.length:null};
+export function closeActivity(state,day,published){
+ if(!Number.isInteger(day)||day<1)throw new Error('Invalid activity day');
+ const s=state||{last:0,idle:0};
+ if(day<=s.last)return {...s,applied:false};
+ if(day!==s.last+1)throw new Error('Activity gap requires migration, not invented days');
+ return {last:day,idle:published?0:s.idle+1,applied:true};
 }
+export function recordComment(posts,postId,comment){
+ if(!comment||!comment.id||!comment.authorId||typeof comment.text!=='string'||!comment.text.trim())throw new Error('Invalid comment');
+ if(!posts.some(p=>p.id===postId))throw new Error('Missing publication');
+ return posts.map(p=>{if(p.id!==postId)return p;const comments=p.comments||[];if(comments.some(c=>c.id===comment.id))return p;return {...p,comments:[...comments,{id:String(comment.id),authorId:String(comment.authorId),text:comment.text.trim(),day:comment.day,reply:null}]};});
+}
+// Conserva las exportaciones auxiliares de la revisión anterior sin duplicar su implementación.
+export {hash32,decide,decideAll,opinionCounts,publicRating} from './opinions-model.mjs?v=27.6';
 function hash(text){let h=2166136261;for(const c of String(text))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 const NAMES=['Naira','Aday','Dacil','Jonay','Iballa','Nauzet','Nerea','Airam','Yaiza','Beneharo','Celia','Saul'];
 const ORIGINS=['Arona','Adeje','Los Cristianos','El Médano','Granadilla','San Isidro','Guía de Isora','La Laguna'];
 const ROLES=[['camarero',55],['cocinero',65],['limpiador',30],['terraza',60]];
-const EXPERIENCE=[['Sin experiencia previa',0,1.15],['Una temporada en barra',2,1],['Experiencia en hostelería',5,0.85]];
 const AVAILABILITY=['Jornada completa','Fines de semana','Mañanas','Tardes'];
-const PRESENTATIONS=['Busco un puesto cerca del mar y me gusta el trato con la gente.','He trabajado en hostelería durante las vacaciones y quiero seguir en ello.','Vivo cerca de la costa y conozco bien el ritmo de los días de playa.','Me interesa aprender y poder crecer en un puesto de cara al público.','Busco un trabajo estable para la temporada y me adapto bien a los horarios.'];
 export function candidates(seed,day){
  if(!Number.isInteger(day)||day<1)throw new Error('Invalid recruitment day');
- const batch=Math.floor((day-1)/3);
- const h0=hash(seed+':'+batch+':count');
- const min=day<=3?0:day<=7?1:2;
- const max=day<=1?1:day<=4?2:day<=10?3:4;
- const count=min+(h0%Math.max(1,max-min+1));
- const out=[];
+ const batch=Math.floor((day-1)/3),h0=hash(seed+':'+batch+':count');
+ const min=day<=3?0:day<=7?1:2,max=day<=1?1:day<=4?2:day<=10?3:4;
+ const count=min+(h0%Math.max(1,max-min+1)),out=[];
  for(let i=0;i<count;i++){
   const h=hash(seed+':'+batch+':'+i),[role,base]=ROLES[i%ROLES.length];
-  const level=h%3,exp=EXPERIENCE[level],age=18+((h>>3)%23),origin=ORIGINS[(h>>6)%ORIGINS.length];
-  const wage=base+[-10,0,15][level];
-  out.push({id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],age,origin,experience:exp[1],experienceLabel:exp[0],availability:AVAILABILITY[(h>>9)%AVAILABILITY.length],presentation:PRESENTATIONS[(h>>12)%PRESENTATIONS.length],wage,workMultiplier:exp[2],received:batch*3+1,expires:batch*3+3,training:0});
+  const level=h%3,experience=[0,2,5][level];
+  const age=Math.max(18+((h>>>3)%23),18+experience),origin=ORIGINS[(h>>>6)%ORIGINS.length];
+  const experienceLabel=experience?experience+' años en '+({camarero:'servicio de barra',cocinero:'cocina',limpiador:'limpieza de establecimientos',terraza:'servicio de terraza'}[role]):'Sin experiencia previa';
+  const presentation=experience?'Busco trabajo de temporada en '+({camarero:'barra',cocinero:'cocina',limpiador:'limpieza',terraza:'terraza'}[role])+'. Tengo experiencia en el puesto.':'Busco mi primera oportunidad en este puesto y tengo disposición para aprender.';
+  out.push({id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],age,origin,experience,experienceLabel,availability:AVAILABILITY[(h>>>9)%AVAILABILITY.length],presentation,wage:base+[-10,0,15][level],workMultiplier:[1.15,1,0.85][level],received:batch*3+1,expires:batch*3+3,training:0});
  }
  return out;
 }
