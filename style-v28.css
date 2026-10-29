@@ -136,7 +136,7 @@ body:has(.overlay.show:not(#title):not(#final)) #btn-full-page{display:none}
 .league-summary article{background:#eaf4ef;border:1px solid var(--line);border-radius:14px;padding:14px}
 .league-summary strong{display:block;font-size:18px}
 
-/* ---------- Progreso / agenda / ligas ---------- */
+/* ---------- Progreso / agenda ---------- */
 .pg{padding-bottom:6px}
 .pg-card{margin:12px 0;padding:16px;background:var(--sand);border:1px solid var(--line);border-radius:16px}
 .pg-section-head{margin:0 0 10px}

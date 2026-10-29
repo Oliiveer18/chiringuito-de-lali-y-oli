@@ -1,19 +1,19 @@
-import {trackCost,operatingResult} from './bookkeeping.js?v=28.14.4';
-import {closeSocialDay} from './v12.js?v=28.14.4';
+import {trackCost,operatingResult} from './bookkeeping.js?v=28.14.5';
+import {closeSocialDay} from './v12.js?v=28.14.5';
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net,simProgressDay} from './state.js?v=28.14.4';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.14.4';
-import {Plan,toast} from './ui.js?v=28.14.4';
-import {refreshReportUI} from './report.js?v=28.14.4';
-import {netDirty} from './net.js?v=28.14.4';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.14.4';
-import {escapeHtml as E,eur} from './util.js?v=28.14.4';
-import * as M from './progression-model.mjs?v=28.14.4';
-import { iconFor } from './ui-polish.js?v=28.14.4';
-import { tabHtml as careerTabHtml } from './career-ui.js?v=28.14.4';
+import {Game,Net,simProgressDay} from './state.js?v=28.14.5';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.14.5';
+import {Plan,toast} from './ui.js?v=28.14.5';
+import {refreshReportUI} from './report.js?v=28.14.5';
+import {netDirty} from './net.js?v=28.14.5';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.14.5';
+import {escapeHtml as E,eur} from './util.js?v=28.14.5';
+import * as M from './progression-model.mjs?v=28.14.5';
+import { iconFor } from './ui-polish.js?v=28.14.5';
+import { tabHtml as careerTabHtml } from './career-ui.js?v=28.14.5';
 const day=()=>simProgressDay();
 const pget=()=>Game.upgrades.progression;
-let current=null,selectedArea=0,selectedTier=0,metric='cash',windowSize=30;
+let metric='cash',windowSize=30;
 function ensure(){if(!pget())Game.upgrades.progression=M.initial(Game.upgrades.career?.id||'charco');return pget();}
 function prepare(){if(Net.role==='guest')return;const p=ensure(),d=day();if(!p.goal||p.goal.day!==d){p.goal=M.goalFor(p,d);p.poster=false;netDirty();}}
 function buyPoster(expected){if(Net.role==='guest'||Game.mode!=='plan'||expected!==day())return;const p=ensure();if(!SPECIAL_DAYS[Game.day]||p.poster||Game.money<30)return;Game.money-=30;trackCost(30,'posters');p.poster=true;toast('Cartel instalado','30 € · preparación del evento mejorada.','good');netDirty();}
@@ -54,18 +54,11 @@ function agendaHtml(p){let h='';h+='<section class="pg-card pg-agenda-intro"><p 
  if(ev&&i===0){const checks=M.readiness(Game.stock,Game.staff,p.poster,product);h+='<div class="pg-checklist">'+checks.map(c=>`<p>${c.ok?'✅':'○'} ${E(c.label)}</p>`).join('')+'</div>';h+=`<button class="btn sm" data-pgposter="1" ${p.poster||Game.money<30?'disabled':''}>${p.poster?'Cartel preparado':'Preparar cartel · 30 €'}</button>`;}
  h+='</section>';}
  return h;}
-function rankingHtml(p){const unlocked=Math.floor(p.league/3),locked=selectedArea>unlocked;
- let h=`<section class="pg-card pg-league-intro"><header class="pg-section-head"><h3>Ligas de kioscos</h3></header><p>29 rivales por ámbito; diez puestos por tabla, incluido vuestro kiosco en su categoría.</p><p>Vuestra liga: ${M.areas[unlocked]} · ${M.tiers[p.league%3]}. Revisión cada siete jornadas cerradas: top 3 asciende; puestos 9–10 bajan categoría (sin retroceder de ámbito).</p><p>Puntos = 40 × valoración media + 0,12 × ventas medias + 0,08 × seguidores medios + clientes medios + nota media. Ventana: últimos 30 días registrados.</p><div class="pg-controls pg-controls-bar" role="toolbar" aria-label="Ámbito y categoría">${M.areas.map((a,i)=>`<button class="btn sm pg-ctrl" data-pgarea="${i}">${a}${i>unlocked?' 🔒':''}</button>`).join('')}${M.tiers.map((t,i)=>`<button class="btn sm pg-ctrl" data-pgtier="${i}">${t}</button>`).join('')}</div></section>`;
- if(locked)return h+'<section class="pg-card"><p>Ámbito bloqueado. Completad oro del ámbito anterior para ascender.</p></section>';
- const rows=M.table(p,selectedArea,selectedTier,p.last||day());
- h+=`<section class="pg-card pg-league-table"><header class="pg-section-head"><h4>${M.areas[selectedArea]} · ${M.tiers[selectedTier]}</h4></header><div class="pg-table-wrap"><table class="pg-table"><thead><tr><th>Puesto</th><th>Kiosco</th><th>Puntos</th></tr></thead><tbody>${rows.map(r=>`<tr class="${r.id==='player'?'pg-own':''}"><td>${r.rank}</td><td>${E(r.name)}<small>${E(r.style)}</small></td><td>${r.score}</td></tr>`).join('')}</tbody></table></div></section>`;
- h+=`<section class="pg-card pg-badges"><header class="pg-section-head"><h4>Fajines obtenidos</h4></header>${p.badges.map(b=>`<p class="pg-badge">🏅 ${M.areas[Math.floor(b.league/3)]} · ${M.tiers[b.league%3]} · día ${b.day}</p>`).join('')||'<p>Aún ninguno.</p>'}</section>`;
- return h;}
-function paint(){const p=pget();if(!p)return;const b=document.getElementById('tab-body');if(Game.mode==='plan'&&b&&['progreso','agenda','ligas'].includes(Plan.tab)){const c=Game.upgrades.career;const h='<div class="pg">'+(Plan.tab==='progreso'?((c&&c.obj?careerTabHtml(c):'')+progressHtml(p)):Plan.tab==='agenda'?agendaHtml(p):rankingHtml(p))+'</div>';if(b.__owner!=='progression'||b.__last!==h||!b.__pgNode||!b.contains(b.__pgNode)){b.__owner='progression';b.__last=h;b.innerHTML=h;b.__pgNode=b.firstElementChild;}}
+function paint(){const p=pget();if(!p)return;const b=document.getElementById('tab-body');if(Game.mode==='plan'&&b&&['progreso','agenda'].includes(Plan.tab)){const c=Game.upgrades.career;const h='<div class="pg">'+(Plan.tab==='progreso'?((c&&c.obj?careerTabHtml(c):'')+progressHtml(p)):agendaHtml(p))+'</div>';if(b.__owner!=='progression'||b.__last!==h||!b.__pgNode||!b.contains(b.__pgNode)){b.__owner='progression';b.__last=h;b.innerHTML=h;b.__pgNode=b.firstElementChild;}}
  if(Game.mode==='report'){const body=document.getElementById('rep-body');if(body){let el=body.querySelector('#pg-report');if(!el){el=document.createElement('div');el.id='pg-report';body.append(el);}const gh=gradeHtml(p);if(el.__h!==gh){el.__h=gh;el.innerHTML=gh;}}}}
 function tickProgress(){if(Game.mode==='title'||Game.mode==='lobby')return;if(Game.mode==='plan')prepare();if(Game.mode==='service')service();if(Game.mode==='report')close();paint();}
 for(const [key,label]of [['progreso','Progreso'],['agenda','Agenda']]){const tabs=document.querySelector('#plan .tabs');if(!tabs)continue;if(tabs.querySelector('[data-tab="'+key+'"]'))continue;const b=document.createElement('button');b.className='tab';b.dataset.tab=key;b.setAttribute('role','tab');b.textContent=label;tabs.append(b);}
 document.addEventListener('plan-tab-repaint',paint); // repintar Progreso/Agenda (con Carrera) al vuelo, sin esperar al intervalo
-document.addEventListener('click',e=>{const t=e.target.closest?.('[data-pgmetric],[data-pgwindow],[data-pgarea],[data-pgtier],[data-pgposter]');if(!t||t.disabled)return;if(t.dataset.pgmetric)metric=t.dataset.pgmetric;if(t.dataset.pgwindow)windowSize=Number(t.dataset.pgwindow);if(t.dataset.pgarea)selectedArea=Number(t.dataset.pgarea);if(t.dataset.pgtier)selectedTier=Number(t.dataset.pgtier);if(t.dataset.pgposter){if(Net.role==='guest')guestSend('progressPoster',day());else buyPoster(day());}paint();});
+document.addEventListener('click',e=>{const t=e.target.closest?.('[data-pgmetric],[data-pgwindow],[data-pgposter]');if(!t||t.disabled)return;if(t.dataset.pgmetric)metric=t.dataset.pgmetric;if(t.dataset.pgwindow)windowSize=Number(t.dataset.pgwindow);if(t.dataset.pgposter){if(Net.role==='guest')guestSend('progressPoster',day());else buyPoster(day());}paint();});
 setInterval(tickProgress,300);
 const report=document.getElementById('report');if(report)new MutationObserver(tickProgress).observe(report,{attributes:true,attributeFilter:['class']});

@@ -1,8 +1,8 @@
-import {Game,Net,itemUnlocked} from './state.js?v=28.14.4';
-import {ITEMS} from './config.js?v=28.14.4';
-import {ICON_URL} from './icons.js?v=28.14.4';
-import {escapeHtml,eur2} from './util.js?v=28.14.4';
-import {guestSend} from './coopbridge.js?v=28.14.4';
+import {Game,Net,itemUnlocked} from './state.js?v=28.14.5';
+import {ITEMS} from './config.js?v=28.14.5';
+import {ICON_URL} from './icons.js?v=28.14.5';
+import {escapeHtml,eur2} from './util.js?v=28.14.5';
+import {guestSend} from './coopbridge.js?v=28.14.5';
 let root=null,send=null,waiting=false,until=0,last='';
 function delBtn(id,p,q){
   const base=p.cost*q, bill=base*2;
