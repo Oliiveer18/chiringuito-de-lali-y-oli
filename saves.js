@@ -1,9 +1,9 @@
-import { Game, Net, gameTimers, guestCust } from './state.js?v=28.14.6';
-import { newSeason } from './sim.js?v=28.14.6';
-import { showPlan, Plan } from './ui.js?v=28.14.6';
-import { buildTables } from './world.js?v=28.14.6';
-import { netDirty } from './net.js?v=28.14.6';
-import { showReportUI } from './report.js?v=28.14.6';
+import { Game, Net, gameTimers, guestCust } from './state.js?v=28.14.7';
+import { newSeason } from './sim.js?v=28.14.7';
+import { showPlan, Plan } from './ui.js?v=28.14.7';
+import { buildTables } from './world.js?v=28.14.7';
+import { netDirty } from './net.js?v=28.14.7';
+import { showReportUI } from './report.js?v=28.14.7';
 const KEY='lali-oli.library.v2', BACK=KEY+'.backup';
 const fields=['day','money','rep','stock','prices','enabled','upgrades','staff','forecast','season','lastDebt','starsLog','revUsed','revPrev','regulars','regVisited','buzz','pendingPurchases'];
 const encode=x=>JSON.stringify(x,(_,v)=>v instanceof Set?{__laliSet:[...v]}:v);
@@ -11,9 +11,10 @@ const decode=s=>JSON.parse(s,(_,v)=>v&&Array.isArray(v.__laliSet)?new Set(v.__la
 const copy=x=>decode(encode(x));
 const valid=s=>s&&s.data&&Number.isInteger(s.data.day)&&s.data.day>=1&&s.data.day<=30&&Number.isFinite(s.data.money)&&Number.isFinite(s.data.rep)&&['solo','coop'].includes(s.kind)&&Array.isArray(s.data.forecast)&&['stock','prices','enabled','upgrades','staff','season','regulars'].every(k=>s.data[k]&&typeof s.data[k]==='object')&&(s.phase!=='report'||s.ui&&s.data.dayStats&&s.data.revModel);
 let library=[],active=null,pending=null,bypass=false,last='',locked=false;
-const note=document.createElement('p');note.className='save-state';note.setAttribute('role','status');document.querySelector('#plan .sheet-foot').before(note);
-const reportNote=note.cloneNode();document.querySelector('#report .sheet-foot').before(reportNote);
-function message(t){note.textContent=t;reportNote.textContent=t;}
+function message(t){
+  if(typeof t==='string'&&t.startsWith('✓ Guardado automático'))return;
+  if(t)console.warn('[guardado]',t);
+}
 function parse(raw){const a=decode(raw);if(!Array.isArray(a)||!a.every(valid))throw Error('Guardado incompatible');return a;}
 try{const raw=localStorage.getItem(KEY);if(raw!==null)library=parse(raw);else{for(const kind of ['solo','coop']){const rawOld=localStorage.getItem('lali-oli.save.v1.'+kind);if(rawOld){const s=decode(rawOld);if(valid(s))library.push({...s,id:uid()});}}}}catch(e){try{const raw=localStorage.getItem(BACK);if(!raw)throw e;library=parse(raw);message('Recuperada la copia anterior.');}catch(e){locked=true;message('No se pudieron leer las partidas. No se sobrescribirán los datos.');}}
 function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}

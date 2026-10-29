@@ -1,5 +1,5 @@
-export const VERSION='v28.14.6';
-export const LABEL='v28.14.6 · Chiringo realista (promesa/riesgo, coop, sin métricas garantizadas)';
+export const VERSION='v28.14.7';
+export const LABEL='v28.14.7 · pestaña Mejoras compacta; sin línea de autoguardado';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
