@@ -1,46 +1,115 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { H } from "../config.js?v=28.14.6";
-import { W } from "../config.js?v=28.14.6";
-import { WHO_COLOR } from "../config.js?v=28.14.6";
-import { clamp } from "../util.js?v=28.14.6";
-import { lerp } from "../util.js?v=28.14.6";
-import { mixColor } from "../util.js?v=28.14.6";
-import { rr } from "../icons.js?v=28.14.6";
-import { Game } from "../state.js?v=28.14.6";
-import { closeHour } from "../state.js?v=28.14.6";
-import { hamacaCount } from "../state.js?v=28.14.6";
-import { lvl } from "../state.js?v=28.14.6";
-import { weatherToday } from "../state.js?v=28.14.6";
-import { whoName } from "../state.js?v=28.14.6";
-import { HAMACA_POS } from "../world.js?v=28.14.6";
-import { canvas } from "../canvas.js?v=28.14.6";
-import { ctx } from "../canvas.js?v=28.14.6";
-import { view } from "../canvas.js?v=28.14.6";
-import { drawPurchasedProps } from "../scene-extras.js?v=28.14.6";
-import { drawBubble } from "./identity.js?v=28.14.6";
-import { drawClouds } from "./scene.js?v=28.14.6";
-import { drawCustomer } from "./characters.js?v=28.14.6";
-import { drawFloorWorker } from "./characters.js?v=28.14.6";
-import { drawHamaca } from "./tables.js?v=28.14.6";
-import { drawHut } from "./scene.js?v=28.14.6";
-import { drawLights } from "./effects.js?v=28.14.6";
-import { drawNetStatus } from "./hud.js?v=28.14.6";
-import { drawPalm } from "./scene.js?v=28.14.6";
-import { drawPendingBadges } from "./hud.js?v=28.14.6";
-import { drawSea } from "./scene.js?v=28.14.6";
-import { drawStationLabels } from "./identity.js?v=28.14.6";
-import { drawTable } from "./tables.js?v=28.14.6";
-import { drawTeide } from "./scene.js?v=28.14.6";
-import { nightness } from "./scene.js?v=28.14.6";
-import { skyAt } from "./scene.js?v=28.14.6";
+import { H } from "../config.js?v=28.16.0-vfx3d";
+import { W } from "../config.js?v=28.16.0-vfx3d";
+import { WHO_COLOR } from "../config.js?v=28.16.0-vfx3d";
+import { clamp } from "../util.js?v=28.16.0-vfx3d";
+import { lerp } from "../util.js?v=28.16.0-vfx3d";
+import { mixColor } from "../util.js?v=28.16.0-vfx3d";
+import { rr } from "../icons.js?v=28.16.0-vfx3d";
+import { Game } from "../state.js?v=28.16.0-vfx3d";
+import { closeHour } from "../state.js?v=28.16.0-vfx3d";
+import { hamacaCount } from "../state.js?v=28.16.0-vfx3d";
+import { lvl } from "../state.js?v=28.16.0-vfx3d";
+import { weatherToday } from "../state.js?v=28.16.0-vfx3d";
+import { whoName } from "../state.js?v=28.16.0-vfx3d";
+import { HAMACA_POS } from "../world.js?v=28.16.0-vfx3d";
+import { canvas } from "../canvas.js?v=28.16.0-vfx3d";
+import { ctx } from "../canvas.js?v=28.16.0-vfx3d";
+import { view } from "../canvas.js?v=28.16.0-vfx3d";
+import { drawPurchasedProps } from "../scene-extras.js?v=28.16.0-vfx3d";
+import { drawBubble, drawBubbleAt } from "./identity.js?v=28.16.0-vfx3d";
+import { drawClouds } from "./scene.js?v=28.16.0-vfx3d";
+import { drawCustomer } from "./characters.js?v=28.16.0-vfx3d";
+import { drawFloorWorker } from "./characters.js?v=28.16.0-vfx3d";
+import { drawHamaca } from "./tables.js?v=28.16.0-vfx3d";
+import { drawHut } from "./scene.js?v=28.16.0-vfx3d";
+import { drawLights } from "./effects.js?v=28.16.0-vfx3d";
+import { drawNetStatus } from "./hud.js?v=28.16.0-vfx3d";
+import { drawPalm } from "./scene.js?v=28.16.0-vfx3d";
+import { drawPendingBadges } from "./hud.js?v=28.16.0-vfx3d";
+import { drawSea } from "./scene.js?v=28.16.0-vfx3d";
+import { drawStationLabels } from "./identity.js?v=28.16.0-vfx3d";
+import { drawTable } from "./tables.js?v=28.16.0-vfx3d";
+import { drawTeide } from "./scene.js?v=28.16.0-vfx3d";
+import { nightness } from "./scene.js?v=28.16.0-vfx3d";
+import { skyAt } from "./scene.js?v=28.16.0-vfx3d";
+import { is3DReady } from "../render-3d.js?v=28.16.0-vfx3d";
 
 export function render(){
   const c=ctx; const h = Game.mode==='service'? Game.hour : (Game.mode==='report'? closeHour() : 11);
   const weather = Game.forecast.length? weatherToday() : 'sol';
+  const nt=nightness(h);
   c.setTransform(1,0,0,1,0,0);
+
+  if (is3DReady()) {
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    const T = Game.t;
+
+    // 1. Burbujas de pedidos y estados ancladas a las cabezas de los clientes 3D
+    if (Game.mode === 'service') {
+      for (const cu of Game.customers) {
+        if (cu._screenPos && cu._screenPos.visible) {
+          c.save();
+          c.translate(cu._screenPos.x, cu._screenPos.y);
+          const sc = cu._screenPos.scale || 1.0;
+          c.scale(sc, sc);
+          drawBubbleAt(c, cu, T, 0, -42);
+
+          // Emote emocional interactivo (Fase 4: ❤️, 😊, 😤)
+          if (cu._emote && cu._emote.timer > 0) {
+            const emoteY = -78 - Math.sin((2.5 - cu._emote.timer) * 3.5) * 6;
+            const text = cu._emote.text;
+            c.font = 'bold 15px sans-serif';
+            const tw = c.measureText(text).width;
+            const pw = tw + 18, ph = 26;
+            c.fillStyle = cu._emote.type === 'angry' ? 'rgba(211,47,47,0.94)' : 'rgba(15,139,141,0.94)';
+            c.beginPath();
+            if (c.roundRect) c.roundRect(-pw/2, emoteY - ph/2, pw, ph, 13);
+            else c.rect(-pw/2, emoteY - ph/2, pw, ph);
+            c.fill();
+            c.fillStyle = '#ffffff';
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.fillText(text, 0, emoteY);
+            cu._emote.timer -= 0.016;
+          }
+
+          c.restore();
+        }
+      }
+    }
+
+    // 2. Partículas
+    for (const p of Game.particles) {
+      c.globalAlpha = 1 - p.t / p.life;
+      c.fillStyle = p.color;
+      c.beginPath();
+      const px = view.ox + p.x * view.s;
+      const py = view.oy + p.y * view.s;
+      c.arc(px, py, 4 * view.s, 0, 7);
+      c.fill();
+    }
+    c.globalAlpha = 1;
+
+    // 3. Textos flotantes (Dopamina de dinero, propinas y cañas)
+    c.textAlign = 'center';
+    for (const f of Game.floaters) {
+      c.globalAlpha = 1 - f.t / 1.4;
+      c.font = '800 22px Chillax, sans-serif';
+      const fx = view.ox + f.x * view.s;
+      const fy = view.oy + (f.y - f.t * 40) * view.s;
+      c.lineWidth = 5;
+      c.strokeStyle = 'rgba(42,33,28,.85)';
+      c.strokeText(f.text, fx, fy);
+      c.fillStyle = f.color;
+      c.fillText(f.text, fx, fy);
+    }
+    c.globalAlpha = 1;
+    return;
+  } else {
   // fondo de relleno a pantalla completa (sin bandas negras en ningún recorte)
   const sky=skyAt(h);
-  const nt=nightness(h);
   let g=c.createLinearGradient(0,0,0,view.oy+330*view.s); g.addColorStop(0,sky.top); g.addColorStop(1,sky.bot);
   c.fillStyle=g; c.fillRect(0,0,canvas.width,view.oy+332*view.s);
   // banda de mar a todo el ancho con el mismo gradiente que drawSea
@@ -92,6 +161,7 @@ export function render(){
   if(Game.mode==='service') for(const cu of Game.customers) ents.push({y:cu.y,draw:()=>drawCustomer(c,cu,T)});
   if(Game.mode==='service'&&Game.floor)for(const a of Game.floor.actors)if(!(a.player&&!a.task&&!a.returning&&Math.hypot(a.x-a.home.x,a.y-a.home.y)<5))ents.push({y:a.y,draw:()=>drawFloorWorker(c,a,T)});
   ents.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
+  }
   // indicadores de cola por encima
   if(Game.mode==='service') for(const cu of Game.customers) drawBubble(c,cu,T);
   if(Game.mode==='service')for(const cu of Game.customers){
@@ -143,10 +213,12 @@ export function render(){
   c.textAlign='center';
   for(const f of Game.floaters){ c.globalAlpha=1-f.t/1.4; c.font='700 22px Chillax, sans-serif'; const fw=c.measureText(f.text).width; const fx=clamp(f.x,fw/2+10,W-fw/2-10); c.lineWidth=5; c.strokeStyle='rgba(42,33,28,.8)'; c.strokeText(f.text,fx,f.y-f.t*40); c.fillStyle=f.color; c.fillText(f.text,fx,f.y-f.t*40); } c.globalAlpha=1;
   // efectos de clima / noche
-  c.setTransform(1,0,0,1,0,0);
-  if(weather==='calima'){ c.fillStyle='rgba(222,160,90,.28)'; c.fillRect(0,0,canvas.width,canvas.height); }
-  if(weather==='panza'){ c.fillStyle='rgba(120,130,140,.18)'; c.fillRect(0,0,canvas.width,canvas.height); }
-  if(nt>0){ c.fillStyle=`rgba(20,16,50,${nt*0.45})`; c.fillRect(0,0,canvas.width,canvas.height); }
-  // luces nocturnas (aditivas)
-  if(lvl('luces') && h>18.8){ c.setTransform(view.s,0,0,view.s,view.ox,view.oy); drawLights(c,T,clamp((h-18.8)/1.2,0,1)); }
+  if (!is3DReady()) {
+    c.setTransform(1,0,0,1,0,0);
+    if(weather==='calima'){ c.fillStyle='rgba(222,160,90,.28)'; c.fillRect(0,0,canvas.width,canvas.height); }
+    if(weather==='panza'){ c.fillStyle='rgba(120,130,140,.18)'; c.fillRect(0,0,canvas.width,canvas.height); }
+    if(nt>0){ c.fillStyle=`rgba(20,16,50,${nt*0.45})`; c.fillRect(0,0,canvas.width,canvas.height); }
+    // luces nocturnas (aditivas)
+    if(lvl('luces') && h>18.8){ c.setTransform(view.s,0,0,view.s,view.ox,view.oy); drawLights(c,T,clamp((h-18.8)/1.2,0,1)); }
+  }
 }

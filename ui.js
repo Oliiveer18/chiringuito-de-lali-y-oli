@@ -2,26 +2,26 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.14.7';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.14.7';
-import { ICON_URL } from './icons.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=28.14.7';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=28.14.7';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.14.7';
-import { canvas, toWorld } from './canvas.js?v=28.14.7';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.14.7';
-import { drawPerson } from './render.js?v=28.14.7';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.16.0-vfx3d';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.16.0-vfx3d';
+import { ICON_URL } from './icons.js?v=28.16.0-vfx3d';
+import { Audio } from './audio.js?v=28.16.0-vfx3d';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=28.16.0-vfx3d';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=28.16.0-vfx3d';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.16.0-vfx3d';
+import { canvas, toWorld } from './canvas.js?v=28.16.0-vfx3d';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.16.0-vfx3d';
+import { drawPerson } from './render.js?v=28.16.0-vfx3d';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=28.14.7';
+} from './ui-plan.js?v=28.16.0-vfx3d';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=28.14.7';
-import { renderMejorasTab } from './ui-mejoras.js?v=28.14.7';
+} from './ui-service.js?v=28.16.0-vfx3d';
+import { renderMejorasTab } from './ui-mejoras.js?v=28.16.0-vfx3d';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -64,7 +64,7 @@ function planCartaSectionHtml(){
 }
 export function renderTab(){
   if(Plan.tab==='carta')Plan.tab='compras';
-  document.querySelectorAll('#plan .tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
+  document.querySelectorAll('#plan .plan-tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   const b=$('#tab-body'); let h=''; if(Plan.tab==='personal'){document.dispatchEvent(new Event('workforce-paint'));return;}
   // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
   if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
@@ -88,13 +88,13 @@ export function renderTab(){
 const PLAN_CORE_TABS=['compras','carta','mejoras','personal'];
 export function routePlanTab(){
   if(Plan.tab==='carta')Plan.tab='compras';
-  document.querySelectorAll('#plan .tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
+  document.querySelectorAll('#plan .plan-tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   if(PLAN_CORE_TABS.includes(Plan.tab)){ renderForecast(); renderTab(); return; }
   const b=$('#tab-body');
   if(b){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; delete b.__mkNode; }
   renderForecast();
-  if(Plan.tab==='show') import('./features.js?v=28.14.7').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
-  else if(Plan.tab==='red') import('./v12-ui.js?v=28.14.7').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
+  if(Plan.tab==='show') import('./features.js?v=28.16.0-vfx3d').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
+  else if(Plan.tab==='chiringo') import('./chiringo-ui.js?v=28.16.0-vfx3d').then(m=>{ if(Plan.tab==='chiringo') m.renderChiringo?.(); });
   document.dispatchEvent(new Event('plan-tab-repaint'));
 }
 export function estimateCustomers(){
@@ -117,8 +117,8 @@ $('#tab-body').addEventListener('click',e=>{
   const d={...t.dataset}; Audio.click();
   if(isGuest()) netAct({a:'plan', d}); else applyPlanAction('p1', d);
 });
-document.querySelector('#plan .tabs')?.addEventListener('click',e=>{
-  const t=e.target.closest('.tab'); if(!t||!t.dataset.tab) return;
+document.querySelector('#plan .plan-sidebar')?.addEventListener('click',e=>{
+  const t=e.target.closest('.plan-tab'); if(!t||!t.dataset.tab) return;
   Plan.tab=t.dataset.tab;
   Audio.click();
   routePlanTab();

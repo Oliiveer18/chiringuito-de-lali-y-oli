@@ -1,15 +1,15 @@
 /* Mensajes, snapshot y estado del invitado. Lo importa net.js. */
-import { floorCommand } from './floor-service.js?v=28.14.7';
-import { $, clamp, escapeHtml } from './util.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, Net, guestCust, hostLive, isGuest } from './state.js?v=28.14.7';
-import { TABLE_POS } from './world.js?v=28.14.7';
-import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.14.7';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.7';
-import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.7';
-import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.14.7';
-import { netDirty, netSend } from './net-link.js?v=28.14.7';
-import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.14.7';
+import { floorCommand } from './floor-service.js?v=28.16.0-vfx3d';
+import { $, clamp, escapeHtml } from './util.js?v=28.16.0-vfx3d';
+import { Audio } from './audio.js?v=28.16.0-vfx3d';
+import { Game, Net, guestCust, hostLive, isGuest } from './state.js?v=28.16.0-vfx3d';
+import { TABLE_POS } from './world.js?v=28.16.0-vfx3d';
+import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.16.0-vfx3d';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.16.0-vfx3d';
+import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.16.0-vfx3d';
+import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.16.0-vfx3d';
+import { netDirty, netSend } from './net-link.js?v=28.16.0-vfx3d';
+import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.16.0-vfx3d';
 export function onNet(m){
   switch(m.t){
     case 'created': Net.role='host'; Net.me='p1'; Net.code=m.code; renderLobby(); break;

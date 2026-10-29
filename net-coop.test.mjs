@@ -1,7 +1,7 @@
 /* Pruebas del enlace cooperativo (ICE, mensajes de error) sin WebRTC real. */
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus
-} from './net-rtc.js?v=28.14.7';
+} from './net-rtc.js?v=28.16.0-vfx3d';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {

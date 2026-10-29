@@ -2,12 +2,13 @@
    camera-beta · entrega 3
    Personaje del jugador en solitario: tocar para ir, interacción por cercanía y estaciones separadas.
    ========================================================= */
-import { H, W } from './config.js?v=28.14.7';
-import { Game } from './state.js?v=28.14.7';
-import { navFind, navStep } from './nav.js?v=28.14.7';
-import { drawPerson } from './render.js?v=28.14.7';
+import { H, W } from './config.js?v=28.16.0-vfx3d';
+import { Game } from './state.js?v=28.16.0-vfx3d';
+import { navFind, navStep } from './nav.js?v=28.16.0-vfx3d';
+import { drawPerson } from './render.js?v=28.16.0-vfx3d';
 
 export const PLAYER = { x: 260, y: 620, tx: 260, ty: 620, path: [], navIdx: 0, speed: 150, dir: 1, stridePh: 0, movingSpd: 0, look: { shirt: '#0f8b8d', skin: '#e0a97e', hair: { style: 'corto', color: '#2a211c' }, acc: [], build: 1, height: 1, walk: { stride: 1, bob: 1, sway: false } }, hat: null, type: 'staff' };
+if (typeof window !== 'undefined') window.PLAYER = PLAYER;
 export const STATIONS = [
   { id: 'barra', x: 260, y: 560, r: 70 },
   { id: 'plancha', x: 420, y: 560, r: 70 },

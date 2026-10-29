@@ -1,12 +1,12 @@
 /* Servicio, cierre, urgente y avisos. Lo importa ui.js. */
-import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=28.14.7';
-import { $, eur, hhmm, stars } from './util.js?v=28.14.7';
-import { ICON_URL } from './icons.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, simProgressDay, weatherToday } from './state.js?v=28.14.7';
-import { buyStock, newSeason } from './sim.js?v=28.14.7';
-import { hideAll, Plan, showPlan } from './ui-plan.js?v=28.14.7';
-import { netAct, netDirty } from './net.js?v=28.14.7';
+import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=28.16.0-vfx3d';
+import { $, eur, hhmm, stars } from './util.js?v=28.16.0-vfx3d';
+import { ICON_URL } from './icons.js?v=28.16.0-vfx3d';
+import { Audio } from './audio.js?v=28.16.0-vfx3d';
+import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, simProgressDay, weatherToday } from './state.js?v=28.16.0-vfx3d';
+import { buyStock, newSeason } from './sim.js?v=28.16.0-vfx3d';
+import { hideAll, Plan, showPlan } from './ui-plan.js?v=28.16.0-vfx3d';
+import { netAct, netDirty } from './net.js?v=28.16.0-vfx3d';
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
   $('#hud-role').classList.toggle('hidden', !isCoop()); $('#btn-ping').classList.toggle('hidden', !isCoop());
@@ -55,11 +55,12 @@ export function applyUrgent(id){ if(Game.mode!=='service') return; const c=buySt
 
 export function updateHud(){
   if(!Game.dayStats) return;
-  $('#hud-day').textContent=`Día ${Game.day} · ${dayName(Game.day)}`;
-  $('#hud-clock').textContent=hhmm(Game.hour);
-  $('#hud-weather').textContent=WEATHER[weatherToday()].label;
-  $('#hud-money').textContent=eur(Game.money);
-  $('#hud-rep').textContent=stars(Game.rep);
+  if($('#hud-day')) $('#hud-day').textContent=`Día ${Game.day} · ${dayName(Game.day)}`;
+  if($('#hud-clock')) $('#hud-clock').textContent=hhmm(Game.hour);
+  const w = WEATHER[weatherToday()];
+  if($('#hud-weather')) $('#hud-weather').textContent = w ? w.label : 'Sol';
+  if($('#hud-money')) $('#hud-money').textContent=eur(Game.money);
+  if($('#hud-rep')) $('#hud-rep').textContent=stars(Game.rep);
 }
 /* v28: barra de inventario plegable. Se despliega sola cuando un producto
    pasa a estado bajo o agotado; la preferencia manual se recuerda. */

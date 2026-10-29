@@ -1,35 +1,35 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { requestFloorClean } from "../floor-service.js?v=28.14.6";
-import { requestFloorCustomer } from "../floor-service.js?v=28.14.6";
-import { floorAway } from "../floor-service.js?v=28.14.6";
-import { releaseFloorCustomer } from "../floor-service.js?v=28.14.6";
-import { factor } from "../professional-model.mjs?v=28.14.6";
-import { ITEMS } from "../config.js?v=28.14.6";
-import { PERSONALITIES } from "../config.js?v=28.14.6";
-import { TYPES } from "../config.js?v=28.14.6";
-import { stationOf } from "../config.js?v=28.14.6";
-import { clamp } from "../util.js?v=28.14.6";
-import { eur2 } from "../util.js?v=28.14.6";
-import { rand } from "../util.js?v=28.14.6";
-import { rnd } from "../util.js?v=28.14.6";
-import { Audio } from "../audio.js?v=28.14.6";
-import { satisfaction } from "../ratings-model.mjs?v=28.14.6";
-import { Game } from "../state.js?v=28.14.6";
-import { Net } from "../state.js?v=28.14.6";
-import { hostLive } from "../state.js?v=28.14.6";
-import { isCoop } from "../state.js?v=28.14.6";
-import { lvl } from "../state.js?v=28.14.6";
-import { navSetTarget } from "../nav.js?v=28.14.6";
-import { recordVisit } from "../report.js?v=28.14.6";
-import { updateStockbar } from "../ui.js?v=28.14.6";
-import { addSat } from "./economy.js?v=28.14.6";
-import { announceSub } from "./orders.js?v=28.14.6";
-import { charge } from "./economy.js?v=28.14.6";
-import { chooseSubstitute } from "./orders.js?v=28.14.6";
-import { leaveQueue } from "./customers.js?v=28.14.6";
-import { pendingIdx } from "./orders.js?v=28.14.6";
-import { regularOutcome } from "./customers.js?v=28.14.6";
-import { servable } from "./day.js?v=28.14.6";
+import { requestFloorClean } from "../floor-service.js?v=28.16.0-vfx3d";
+import { requestFloorCustomer } from "../floor-service.js?v=28.16.0-vfx3d";
+import { floorAway } from "../floor-service.js?v=28.16.0-vfx3d";
+import { releaseFloorCustomer } from "../floor-service.js?v=28.16.0-vfx3d";
+import { factor } from "../professional-model.mjs?v=28.16.0-vfx3d";
+import { ITEMS } from "../config.js?v=28.16.0-vfx3d";
+import { PERSONALITIES } from "../config.js?v=28.16.0-vfx3d";
+import { TYPES } from "../config.js?v=28.16.0-vfx3d";
+import { stationOf } from "../config.js?v=28.16.0-vfx3d";
+import { clamp } from "../util.js?v=28.16.0-vfx3d";
+import { eur2 } from "../util.js?v=28.16.0-vfx3d";
+import { rand } from "../util.js?v=28.16.0-vfx3d";
+import { rnd } from "../util.js?v=28.16.0-vfx3d";
+import { Audio } from "../audio.js?v=28.16.0-vfx3d";
+import { satisfaction } from "../ratings-model.mjs?v=28.16.0-vfx3d";
+import { Game } from "../state.js?v=28.16.0-vfx3d";
+import { Net } from "../state.js?v=28.16.0-vfx3d";
+import { hostLive } from "../state.js?v=28.16.0-vfx3d";
+import { isCoop } from "../state.js?v=28.16.0-vfx3d";
+import { lvl } from "../state.js?v=28.16.0-vfx3d";
+import { navSetTarget } from "../nav.js?v=28.16.0-vfx3d";
+import { recordVisit } from "../report.js?v=28.16.0-vfx3d";
+import { updateStockbar } from "../ui.js?v=28.16.0-vfx3d";
+import { addSat } from "./economy.js?v=28.16.0-vfx3d";
+import { announceSub } from "./orders.js?v=28.16.0-vfx3d";
+import { charge } from "./economy.js?v=28.16.0-vfx3d";
+import { chooseSubstitute } from "./orders.js?v=28.16.0-vfx3d";
+import { leaveQueue } from "./customers.js?v=28.16.0-vfx3d";
+import { pendingIdx } from "./orders.js?v=28.16.0-vfx3d";
+import { regularOutcome } from "./customers.js?v=28.16.0-vfx3d";
+import { servable } from "./day.js?v=28.16.0-vfx3d";
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
@@ -103,6 +103,10 @@ export function payAndSeat(c, total, s, t){
   c.eatT=rand(9,15);
   if(c.sat>0.8){ c.mood='feliz'; c.moodT=2; c.moodTxt=null; }
   else if(c.sat<0.45){ c.mood='meh'; c.moodT=2.5; c.moodTxt=null; }
+  if(Audio && Audio.voiceThanks){
+    const pan = Math.max(-1, Math.min(1, ((c.x || 650) - 650) / 450));
+    Audio.voiceThanks(pan);
+  }
 }
 
 export function payAndGo(c, total, s, upset){
@@ -115,6 +119,9 @@ export function payAndGo(c, total, s, upset){
   const P=PERSONALITIES[c.personality]||PERSONALITIES.tranquilo;
   c.moodTxt = P.takeaway==='prefiere' ? '¡Para llevar, genial!' : upset ? '¡Ni mesa! Para llevar…' : 'Para llevar, gracias';
   leaveQueue(c);
+  const pan = Math.max(-1, Math.min(1, ((c.x || 650) - 650) / 450));
+  if(c.sat > 0.45 && Audio && Audio.voiceThanks) Audio.voiceThanks(pan);
+  else if(Audio && Audio.voiceGrumble) Audio.voiceGrumble(pan);
 }
 
 export function completeOrder(c){

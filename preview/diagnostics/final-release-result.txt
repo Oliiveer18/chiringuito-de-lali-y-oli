@@ -1,1 +1,0 @@
-PASS: menu, solo service and end-day report.

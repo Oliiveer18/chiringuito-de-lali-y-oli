@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY } from './config.js?v=28.14.7';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY } from './config.js?v=28.16.0-vfx3d';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -37,7 +37,7 @@ export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('te
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Game.upgrades.workforce?.team?.[st.id]?.wage??st.wage):0), 0); }
 
-export function weatherToday(){ return Game.forecast[Game.day-1]; }
+export function weatherToday(){ return (Game.forecast && Game.forecast[Game.day-1]) || 'sol'; }
 export function dayName(d){ return DAY_NAMES[(d-1)%7]; }
 export function isWeekend(d){ return (d-1)%7>=5; }
 

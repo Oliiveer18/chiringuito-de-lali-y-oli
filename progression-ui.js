@@ -1,16 +1,16 @@
-import {trackCost,operatingResult} from './bookkeeping.js?v=28.14.7';
-import {closeSocialDay} from './v12.js?v=28.14.7';
+import {trackCost,operatingResult} from './bookkeeping.js?v=28.16.0-vfx3d';
+import {closeSocialDay} from './v12.js?v=28.16.0-vfx3d';
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net,simProgressDay} from './state.js?v=28.14.7';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.14.7';
-import {Plan,toast} from './ui.js?v=28.14.7';
-import {refreshReportUI} from './report.js?v=28.14.7';
-import {netDirty} from './net.js?v=28.14.7';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.14.7';
-import {escapeHtml as E,eur} from './util.js?v=28.14.7';
-import * as M from './progression-model.mjs?v=28.14.7';
-import { iconFor } from './ui-polish.js?v=28.14.7';
-import { tabHtml as careerTabHtml } from './career-ui.js?v=28.14.7';
+import {Game,Net,simProgressDay} from './state.js?v=28.16.0-vfx3d';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.16.0-vfx3d';
+import {Plan,toast} from './ui.js?v=28.16.0-vfx3d';
+import {refreshReportUI} from './report.js?v=28.16.0-vfx3d';
+import {netDirty} from './net.js?v=28.16.0-vfx3d';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.16.0-vfx3d';
+import {escapeHtml as E,eur} from './util.js?v=28.16.0-vfx3d';
+import * as M from './progression-model.mjs?v=28.16.0-vfx3d';
+import { iconFor } from './ui-polish.js?v=28.16.0-vfx3d';
+import { tabHtml as careerTabHtml } from './career-ui.js?v=28.16.0-vfx3d';
 const day=()=>simProgressDay();
 const pget=()=>Game.upgrades.progression;
 let metric='cash',windowSize=30;
@@ -57,7 +57,9 @@ function agendaHtml(p){let h='';h+='<section class="pg-card pg-agenda-intro"><p 
 function paint(){const p=pget();if(!p)return;const b=document.getElementById('tab-body');if(Game.mode==='plan'&&b&&['progreso','agenda'].includes(Plan.tab)){const c=Game.upgrades.career;const h='<div class="pg">'+(Plan.tab==='progreso'?((c&&c.obj?careerTabHtml(c):'')+progressHtml(p)):agendaHtml(p))+'</div>';if(b.__owner!=='progression'||b.__last!==h||!b.__pgNode||!b.contains(b.__pgNode)){b.__owner='progression';b.__last=h;b.innerHTML=h;b.__pgNode=b.firstElementChild;}}
  if(Game.mode==='report'){const body=document.getElementById('rep-body');if(body){let el=body.querySelector('#pg-report');if(!el){el=document.createElement('div');el.id='pg-report';body.append(el);}const gh=gradeHtml(p);if(el.__h!==gh){el.__h=gh;el.innerHTML=gh;}}}}
 function tickProgress(){if(Game.mode==='title'||Game.mode==='lobby')return;if(Game.mode==='plan')prepare();if(Game.mode==='service')service();if(Game.mode==='report')close();paint();}
+/* F3: tabs progreso/agenda now in HTML sidebar
 for(const [key,label]of [['progreso','Progreso'],['agenda','Agenda']]){const tabs=document.querySelector('#plan .tabs');if(!tabs)continue;if(tabs.querySelector('[data-tab="'+key+'"]'))continue;const b=document.createElement('button');b.className='tab';b.dataset.tab=key;b.setAttribute('role','tab');b.textContent=label;tabs.append(b);}
+*/
 document.addEventListener('plan-tab-repaint',paint); // repintar Progreso/Agenda (con Carrera) al vuelo, sin esperar al intervalo
 document.addEventListener('click',e=>{const t=e.target.closest?.('[data-pgmetric],[data-pgwindow],[data-pgposter]');if(!t||t.disabled)return;if(t.dataset.pgmetric)metric=t.dataset.pgmetric;if(t.dataset.pgwindow)windowSize=Number(t.dataset.pgwindow);if(t.dataset.pgposter){if(Net.role==='guest')guestSend('progressPoster',day());else buyPoster(day());}paint();});
 setInterval(tickProgress,300);

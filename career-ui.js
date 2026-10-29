@@ -1,14 +1,14 @@
 /* Carrera infinita: interfaz. Pestaña «Carrera», pantalla de cierre de temporada / traspaso, ventajas y Legado.
    Funciona en solitario y en cooperativo: el anfitrión decide y la invitada envía sus clics por el canal de acciones. */
-import { Game, Net } from './state.js?v=28.14.7';
-import { SEASON_DAYS } from './config.js?v=28.14.7';
-import { Plan, showPlan, toast } from './ui.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { netDirty } from './net.js?v=28.14.7';
-import { newSeason } from './sim.js?v=28.14.7';
-import { guestSend, onGuestAction } from './coopbridge.js?v=28.14.7';
-import { escapeHtml, eur } from './util.js?v=28.14.7';
-import * as C from './career.js?v=28.14.7';
+import { Game, Net } from './state.js?v=28.16.0-vfx3d';
+import { SEASON_DAYS } from './config.js?v=28.16.0-vfx3d';
+import { Plan, showPlan, toast } from './ui.js?v=28.16.0-vfx3d';
+import { Audio } from './audio.js?v=28.16.0-vfx3d';
+import { netDirty } from './net.js?v=28.16.0-vfx3d';
+import { newSeason } from './sim.js?v=28.16.0-vfx3d';
+import { guestSend, onGuestAction } from './coopbridge.js?v=28.16.0-vfx3d';
+import { escapeHtml, eur } from './util.js?v=28.16.0-vfx3d';
+import * as C from './career.js?v=28.16.0-vfx3d';
 
 const TAB = 'carrera';
 const $ = id => document.getElementById(id);
@@ -150,27 +150,3 @@ for (const id of ['final-card', 'tab-body']) { const el = $(id); if (el) new Mut
 
 // v27.9: la pestaña Carrera se fusionó con Progreso; progression-ui pinta tabHtml dentro de su pestaña.
 
-const css = `
-.cr-offers{display:grid;gap:8px;margin:8px 0 14px;text-align:left}
-.cr-offer{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:14px;border:2px solid var(--line-2);background:var(--paper);color:var(--ink);text-align:left;min-height:44px}
-.cr-offer b{font:600 15px var(--font-d)}.cr-offer span{font-size:12.5px;color:var(--ink-2)}
-.cr-offer:hover:not(:disabled){border-color:var(--teal)}
-.cr-offer.on{border-color:var(--good);background:#eaf5e7}
-.cr-offer:disabled:not(.on){opacity:.5}
-.cr-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,var(--teal-d),var(--teal));color:#fff}
-.cr-t{font:600 20px var(--font-d)}.cr-s{font-size:12.5px;opacity:.9}
-.cr-leg{text-align:center;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.16);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-.cr-leg b{display:block;font:600 22px var(--font-d);letter-spacing:0}
-.cr-card{margin-top:10px;padding:12px 14px;border-radius:16px;background:var(--sand);border:1px solid var(--line)}
-.cr-k{font:800 11px var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
-.cr-o{margin:4px 0 8px;font-size:14px}
-.cr-bar{height:10px;border-radius:99px;background:var(--sand-2);overflow:hidden;border:1px solid var(--line)}
-.cr-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--coral));transition:width .6s}
-.cr-p{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:4px}
-.cr-h{margin:14px 0 6px;font:800 11px var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
-.cr-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.cr-list li{display:flex;flex-direction:column;padding:8px 12px;border-radius:12px;background:var(--paper);border:1px solid var(--line)}
-.cr-list li span{font-size:12.5px;color:var(--ink-2)}
-.cr-m{margin:8px 0;font-size:12.5px;color:var(--ink-2)}
-`;
-const st = document.createElement('style'); st.id = 'cr-style'; st.textContent = css; document.head.append(st);

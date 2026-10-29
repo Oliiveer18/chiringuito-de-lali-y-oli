@@ -2,7 +2,7 @@
    audio.js
    Sonidos sintetizados con WebAudio; en coop el anfitrión reenvía los del invitado.
    ========================================================= */
-import { Game, Net, hostLive } from './state.js?v=28.14.7';
+import { Game, Net, hostLive } from './state.js?v=28.16.0-vfx3d';
 
 // ---------- Audio ----------
 export const Audio = {
@@ -52,6 +52,88 @@ export const Audio = {
   clean(){ this.noise(0.18,1800,0.18,1.5); this.tone(990,0.08,'sine',0.1,0.12); },
   bad(){ this.tone(330,0.18,'square',0.1); this.tone(247,0.3,'square',0.1,0.15); },
   good(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,0.2,'triangle',0.15,i*0.08)); },
+  // Espacialización Stereo Panner (Fase AAA)
+  getPanner(pan = 0){
+    if(!this.ctx) return null;
+    try{
+      if(this.ctx.createStereoPanner){
+        const p = this.ctx.createStereoPanner();
+        p.pan.value = Math.max(-1, Math.min(1, pan));
+        p.connect(this.sfxGain);
+        return p;
+      }
+    }catch(e){}
+    return this.sfxGain;
+  },
+  // Expresiones vocales sintéticas estilo Animal Crossing
+  voiceGreet(pan = 0){
+    if(!this.ctx || !this.on) return;
+    const dest = this.getPanner(pan);
+    const pitches = [560 + Math.random()*40, 740 + Math.random()*50];
+    pitches.forEach((f, i) => this.tone(f, 0.055, 'triangle', 0.16, i * 0.05, 1.12, dest));
+  },
+  voiceThanks(pan = 0){
+    if(!this.ctx || !this.on) return;
+    const dest = this.getPanner(pan);
+    const pitches = [620, 800, 1040, 1280];
+    pitches.forEach((f, i) => this.tone(f, 0.065, 'triangle', 0.15, i * 0.05, 1.05, dest));
+  },
+  voiceGrumble(pan = 0){
+    if(!this.ctx || !this.on) return;
+    const dest = this.getPanner(pan);
+    const pitches = [310, 260, 200];
+    pitches.forEach((f, i) => this.tone(f, 0.08, 'sawtooth', 0.12, i * 0.065, 0.75, dest));
+  },
+  voiceChirp(type = 'greet', pan = 0){
+    if(type === 'thanks') this.voiceThanks(pan);
+    else if(type === 'grumble') this.voiceGrumble(pan);
+    else this.voiceGreet(pan);
+  },
+  // Chime celestial de estrellas de fin de jornada
+  starChime(i = 0){
+    if(!this.ctx || !this.on) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+    const freq = notes[Math.min(i, notes.length - 1)];
+    this.tone(freq, 0.35, 'sine', 0.18, 0, 0);
+    this.tone(freq * 2, 0.22, 'sine', 0.06, 0.02, 0);
+  },
+  // Fanfarria triunfal por nuevo récord de la temporada
+  fanfare(){
+    if(!this.ctx || !this.on) return;
+    const fan = [
+      {f: 523.25, d: 0.12, t: 0},
+      {f: 659.25, d: 0.12, t: 0.10},
+      {f: 783.99, d: 0.12, t: 0.20},
+      {f: 1046.50, d: 0.40, t: 0.32},
+      {f: 1318.51, d: 0.55, t: 0.50}
+    ];
+    fan.forEach(n => {
+      this.tone(n.f, n.d, 'triangle', 0.22, n.t, 1.02);
+      this.tone(n.f * 1.5, n.d * 0.8, 'sine', 0.08, n.t + 0.01, 1.0);
+    });
+  },
+  // Sonido costero de gaviota procedural con paneo espacial
+  seagullCall(pan = 0){
+    if(!this.ctx || !this.on) return;
+    const dest = this.getPanner(pan);
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(820, t);
+    o.frequency.exponentialRampToValueAtTime(1420, t + 0.14);
+    o.frequency.exponentialRampToValueAtTime(960, t + 0.38);
+    o.frequency.exponentialRampToValueAtTime(740, t + 0.55);
+
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.065, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.055, t + 0.28);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+
+    o.connect(g).connect(dest || this.sfxGain);
+    o.start(t);
+    o.stop(t + 0.58);
+  },
   // música: punteo tipo timple en 3/4, sol mayor
   schedule(){
     if(!this.ctx || !this.on || Game.mode!=='service' || Game.speed===0){ if(this.ctx) this.nextNote=this.ctx.currentTime+0.1; return; }
@@ -72,7 +154,7 @@ export const Audio = {
 
 // Sonidos compartidos: el anfitrión los reenvía al otro móvil
 Audio._raw = {};
-['coin','start','sizzle','angry','clean','bad','good','protest'].forEach(n=>{
+['coin','start','sizzle','angry','clean','bad','good','protest','voiceGreet','voiceThanks','voiceGrumble','voiceChirp','starChime','fanfare','seagullCall'].forEach(n=>{
   const f = Audio[n].bind(Audio); Audio._raw[n]=f;
   Audio[n] = (...a)=>{ f(...a); if(hostLive()) Net.events.push({e:'sfx',n}); };
 });

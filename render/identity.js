@@ -1,19 +1,51 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { STATION_LABEL } from "../config.js?v=28.14.6";
-import { W } from "../config.js?v=28.14.6";
-import { WHO_COLOR } from "../config.js?v=28.14.6";
-import { clamp } from "../util.js?v=28.14.6";
-import { rr } from "../icons.js?v=28.14.6";
-import { Game } from "../state.js?v=28.14.6";
-import { Net } from "../state.js?v=28.14.6";
-import { isCoop } from "../state.js?v=28.14.6";
-import { drawAngerCue } from "./scene.js?v=28.14.6";
-import { drawOrderIcons } from "./scene.js?v=28.14.6";
-import { drawPersonalityBadge } from "./characters.js?v=28.14.6";
+import { STATION_LABEL } from "../config.js?v=28.16.0-vfx3d";
+import { W } from "../config.js?v=28.16.0-vfx3d";
+import { WHO_COLOR } from "../config.js?v=28.16.0-vfx3d";
+import { clamp } from "../util.js?v=28.16.0-vfx3d";
+import { rr } from "../icons.js?v=28.16.0-vfx3d";
+import { Game } from "../state.js?v=28.16.0-vfx3d";
+import { Net } from "../state.js?v=28.16.0-vfx3d";
+import { isCoop } from "../state.js?v=28.16.0-vfx3d";
+import { drawAngerCue } from "./scene.js?v=28.16.0-vfx3d";
+import { drawOrderIcons } from "./scene.js?v=28.16.0-vfx3d";
+import { drawPersonalityBadge } from "./characters.js?v=28.16.0-vfx3d";
 
 export const STATION_ZONE = { cocina:248, barra:410 };
 
 export const MOODS = {caro:'¡Qué caro!', lleno:'Mucha cola…', nohay:'¿No queda?', enfado:'¡Me voy!', llevar:'Para llevar', feliz:'¡Riquísimo!', meh:'Bueno…', cambio:'Cambio', mesa:'¿Mesa?'};
+
+export function drawBubbleAt(c, cu, T, bx, by) {
+  if (cu.state === 'queue' || cu.state === 'arrive' || cu.state === 'prep') {
+    const n = cu.order.length, bw = 14 + n * 34;
+    const grace = cu.patience <= 0 && cu.maxPatience > 0;
+    c.fillStyle = '#fff6e6'; rr(c, bx - bw / 2, by, bw, 40, 12); c.fill();
+    c.strokeStyle = grace ? (Math.sin(T * 10) > 0 ? '#e8473c' : '#7d2f24') : '#2a211c'; c.lineWidth = 2; c.stroke();
+    // Rabito
+    c.beginPath(); c.moveTo(bx - 6, by + 40); c.lineTo(bx, by + 48); c.lineTo(bx + 6, by + 40); c.fillStyle = '#fff6e6'; c.fill();
+    drawOrderIcons(c, cu, bx - bw / 2, by);
+    if (cu.state === 'queue' || (cu.state === 'prep' && !cu.inPrep)) {
+      const p = clamp(cu.patience / (cu.maxPatience || 1), 0, 1);
+      const sw = Math.min(50, bw - 12);
+      c.fillStyle = 'rgba(42,33,28,.18)'; rr(c, bx - sw / 2, by + 33, sw, 7, 3.5); c.fill();
+      c.fillStyle = p > 0.5 ? '#5cc35a' : p > 0.25 ? '#f5b82e' : '#e8473c'; rr(c, bx - sw / 2, by + 33, Math.max(2, sw * p), 7, 3.5); c.fill();
+      if (cu.anger > 0) drawAngerCue(c, bx - sw / 2 + 7, by + 36.5, cu.anger, T);
+    }
+    drawPersonalityBadge(c, cu, bx, by, bw);
+  } else if (cu.mood && cu.moodT > 0) {
+    const txt = cu.moodTxt || MOODS[cu.mood]; if (!txt) return;
+    c.font = '700 13px Satoshi, sans-serif'; const tw = c.measureText(txt).width + 18;
+    const good = cu.mood === 'feliz';
+    c.globalAlpha = clamp(cu.moodT, 0, 1);
+    c.fillStyle = good ? '#dff3d6' : (cu.mood === 'llevar' || cu.mood === 'meh' || cu.mood === 'cambio' || cu.mood === 'mesa') ? '#fff6e6' : '#ffd9cf';
+    rr(c, bx - tw / 2, by, tw, 26, 13); c.fill(); c.strokeStyle = '#2a211c'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#2a211c'; c.textAlign = 'center'; c.fillText(txt, bx, by + 18); c.globalAlpha = 1;
+  } else if (cu.state === 'waitTable') {
+    c.font = '700 13px Satoshi, sans-serif'; const txt = cu.moodTxt || '¿Mesa?'; const tw = c.measureText(txt).width + 18;
+    c.fillStyle = '#fff6e6'; rr(c, bx - tw / 2, by, tw, 26, 13); c.fill(); c.strokeStyle = '#2a211c'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#2a211c'; c.textAlign = 'center'; c.fillText(txt, bx, by + 18);
+  }
+}
 
 export function drawBubble(c,cu,T){
   if(cu.state==='queue' || cu.state==='arrive' || cu.state==='prep'){
@@ -22,38 +54,18 @@ export function drawBubble(c,cu,T){
     const prepActive = Game.slots.some(s=>s.cust);
     const by = cu.y - (stag?(prepActive?224:214):142);
     const bx = clamp(cu.x, bw/2+6, W-bw/2-6);
-    const grace = cu.patience<=0 && cu.maxPatience>0;
-    c.fillStyle='#fff6e6'; rr(c,bx-bw/2,by,bw,40,12); c.fill();
-    c.strokeStyle = grace ? (Math.sin(T*10)>0?'#e8473c':'#7d2f24') : '#2a211c'; c.lineWidth=2; c.stroke();
-    const ax=clamp(cu.x,bx-bw/2+16,bx+bw/2-16);
-    c.beginPath(); c.moveTo(ax-6,by+40); c.lineTo(ax,by+48); c.lineTo(ax+6,by+40); c.fillStyle='#fff6e6'; c.fill();
-    drawOrderIcons(c,cu,bx-bw/2,by);
-    // franja de paciencia dentro de la burbuja (cabe siempre: burbuja de 1 item incluida)
-    if(cu.state==='queue' || (cu.state==='prep' && !cu.inPrep)){
-      const p=clamp(cu.patience/(cu.maxPatience||1),0,1);
-      const sw=Math.min(50,bw-12);
-      c.fillStyle='rgba(42,33,28,.18)'; rr(c,bx-sw/2,by+33,sw,7,3.5); c.fill();
-      c.fillStyle = p>0.5?'#5cc35a': p>0.25?'#f5b82e':'#e8473c'; rr(c,bx-sw/2,by+33,Math.max(2,sw*p),7,3.5); c.fill();
-      if(cu.anger>0) drawAngerCue(c, bx-sw/2+7, by+36.5, cu.anger, T);
-    }
-    // número de puesto (cola o esperando en mostrador, no al llegar)
+    drawBubbleAt(c, cu, T, bx, by);
     const atCounter = cu.state==='queue' || (cu.state==='prep' && cu.inPrep===0);
     if(cu.spot>=0 && atCounter){ c.fillStyle='rgba(42,33,28,.85)'; c.beginPath(); c.arc(cu.x,cu.y+20,11,0,7); c.fill(); c.fillStyle='#fff6e6'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(String(cu.spot+1),cu.x,cu.y+25); }
-    drawPersonalityBadge(c,cu,bx,by,bw);
-    // nameplate omitido aquí: compite con iconos de pedido (habitual identificado al salir de cola)
   } else if(cu.mood && cu.moodT>0){
     const txt=cu.moodTxt || MOODS[cu.mood]; if(!txt) return;
     c.font='700 13px Satoshi, sans-serif'; const tw=c.measureText(txt).width+18;
-    const good = cu.mood==='feliz';
-    const mx=clamp(cu.x,tw/2+4,W-tw/2-4); // no cortarse en los bordes
-    c.globalAlpha=clamp(cu.moodT,0,1);
-    c.fillStyle= good?'#dff3d6': (cu.mood==='llevar'||cu.mood==='meh'||cu.mood==='cambio'||cu.mood==='mesa')?'#fff6e6':'#ffd9cf'; rr(c,mx-tw/2,cu.y-132,tw,26,13); c.fill(); c.strokeStyle='#2a211c'; c.lineWidth=2; c.stroke();
-    c.fillStyle='#2a211c'; c.textAlign='center'; c.fillText(txt,mx,cu.y-114); c.globalAlpha=1;
+    const mx=clamp(cu.x,tw/2+4,W-tw/2-4);
+    drawBubbleAt(c, cu, T, mx, cu.y - 132);
   } else if(cu.state==='waitTable'){
     c.font='700 13px Satoshi, sans-serif'; const txt=cu.moodTxt||'¿Mesa?'; const tw=c.measureText(txt).width+18;
     const mx=clamp(cu.x,tw/2+4,W-tw/2-4);
-    c.fillStyle='#fff6e6'; rr(c,mx-tw/2,cu.y-132,tw,26,13); c.fill(); c.strokeStyle='#2a211c'; c.lineWidth=2; c.stroke();
-    c.fillStyle='#2a211c'; c.textAlign='center'; c.fillText(txt,mx,cu.y-114);
+    drawBubbleAt(c, cu, T, mx, cu.y - 132);
   }
 }
 

@@ -1,15 +1,15 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.7';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.7';
-import { showReportUI } from './report.js?v=28.14.7';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.7';
-import { onNet } from './net-sync.js?v=28.14.7';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.7';
+import { $ } from './util.js?v=28.16.0-vfx3d';
+import { Audio } from './audio.js?v=28.16.0-vfx3d';
+import { Game, NET_SIM, Net } from './state.js?v=28.16.0-vfx3d';
+import { pendingIdx, slotOf } from './sim.js?v=28.16.0-vfx3d';
+import { showReportUI } from './report.js?v=28.16.0-vfx3d';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.16.0-vfx3d';
+import { onNet } from './net-sync.js?v=28.16.0-vfx3d';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.16.0-vfx3d';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus
-} from './net-rtc.js?v=28.14.7';
+} from './net-rtc.js?v=28.16.0-vfx3d';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------

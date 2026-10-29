@@ -3,7 +3,7 @@
    Constantes del juego: dimensiones, calendario, economía, productos,
 clientes habituales, clima, mejoras y personal.
    ========================================================= */
-import { rnd } from './util.js?v=28.14.7';
+import { rnd } from './util.js?v=28.16.0-vfx3d';
 
 // ---------- Constantes ----------
 export const W = 1280, H = 720;
@@ -104,6 +104,6 @@ export const NAMES = {
   surfista:['Dácil, El Médano','Kike, Las Américas','Nauzet, Playa Paraíso','Iker, Mundaka','Sara, Corralejo','Toni, Pozo Izquierdo','Vera, Sotavento'],
 };
 export const REG_TOWN = {chano:'Arona', mari:'Adeje', fefo:'Los Cristianos', dacil:'El Médano', kike:'Las Américas', hannah:'Hamburgo'};
-export function who(type){ const a=NAMES[type]; return a[Math.floor(rnd()*a.length)]; }
+export function who(type){ const a=NAMES[type]||NAMES.turista; return a[Math.floor(rnd()*a.length)]; }
 
 STAFF.push({id:'terraza',name:'Camarero de terraza',desc:'Acompaña, toma pedidos, recoge y entrega las comandas. Puede ayudar a limpiar.',wage:60});

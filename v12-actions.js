@@ -1,17 +1,17 @@
 /* Incidentes, publicaciones y pedidos. Lo importa v12.js. */
-import { trackCost } from './bookkeeping.js?v=28.14.7';
-import { capturePhoto } from './management-ui.js?v=28.14.7';
-import { Game, Net, itemUnlocked, setTimeoutGame } from './state.js?v=28.14.7';
-import { ITEMS } from './config.js?v=28.14.7';
-import { rnd, clamp } from './util.js?v=28.14.7';
-import { toast } from './ui.js?v=28.14.7';
-import { netDirty } from './net.js?v=28.14.7';
-import { spawnCustomer } from './sim.js?v=28.14.7';
-import { onGuestAction } from './coopbridge.js?v=28.14.7';
-import { postEffect, influEffect } from './social-model.js?v=28.14.7';
-import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=28.14.7';
-import { addPend } from './v12-day.js?v=28.14.7';
-import { rt } from './v12-state.js?v=28.14.7';
+import { trackCost } from './bookkeeping.js?v=28.16.0-vfx3d';
+import { capturePhoto } from './management-ui.js?v=28.16.0-vfx3d';
+import { Game, Net, itemUnlocked, setTimeoutGame } from './state.js?v=28.16.0-vfx3d';
+import { ITEMS } from './config.js?v=28.16.0-vfx3d';
+import { rnd, clamp } from './util.js?v=28.16.0-vfx3d';
+import { toast } from './ui.js?v=28.16.0-vfx3d';
+import { netDirty } from './net.js?v=28.16.0-vfx3d';
+import { spawnCustomer } from './sim.js?v=28.16.0-vfx3d';
+import { onGuestAction } from './coopbridge.js?v=28.16.0-vfx3d';
+import { postEffect, influEffect } from './social-model.js?v=28.16.0-vfx3d';
+import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=28.16.0-vfx3d';
+import { addPend } from './v12-day.js?v=28.16.0-vfx3d';
+import { rt } from './v12-state.js?v=28.16.0-vfx3d';
 export function runIncident(){
  const t=Game.upgrades.incidentTipo;delete Game.upgrades.incidentHora;if(!t)return;
  if(t==='batidora'){Game.upgrades.batidoraRota=1;Game.enabled.batido=false;toast('Se rompe la batidora','Los batidos quedan bloqueados. Reparadla (120 €) o quitadlos hoy.','bad');}

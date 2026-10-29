@@ -1,61 +1,61 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { beginLedgerDay } from "../bookkeeping.js?v=28.14.6";
-import { initFloor } from "../floor-service.js?v=28.14.6";
-import { updateFloor } from "../floor-service.js?v=28.14.6";
-import { updateFloorCustomer } from "../floor-service.js?v=28.14.6";
-import { floorHasWork } from "../floor-service.js?v=28.14.6";
-import { abortFloor } from "../floor-service.js?v=28.14.6";
-import { ANGER_MIN_STAGE } from "../config.js?v=28.14.6";
-import { DRINKS } from "../config.js?v=28.14.6";
-import { HOUR_CURVE } from "../config.js?v=28.14.6";
-import { PERSONALITIES } from "../config.js?v=28.14.6";
-import { SEC_PER_HOUR } from "../config.js?v=28.14.6";
-import { SPECIAL_DAYS } from "../config.js?v=28.14.6";
-import { W } from "../config.js?v=28.14.6";
-import { WAIT_TABLE_MAX } from "../config.js?v=28.14.6";
-import { WEATHER } from "../config.js?v=28.14.6";
-import { rand } from "../util.js?v=28.14.6";
-import { rnd } from "../util.js?v=28.14.6";
-import { Audio } from "../audio.js?v=28.14.6";
-import { startBeach } from "../beach.js?v=28.14.6";
-import { updateBeach } from "../beach.js?v=28.14.6";
-import { Game } from "../state.js?v=28.14.6";
-import { Net } from "../state.js?v=28.14.6";
-import { closeHour } from "../state.js?v=28.14.6";
-import { gameTimers } from "../state.js?v=28.14.6";
-import { isCoop } from "../state.js?v=28.14.6";
-import { isWeekend } from "../state.js?v=28.14.6";
-import { lvl } from "../state.js?v=28.14.6";
-import { simProgressDay } from "../state.js?v=28.14.6";
-import { weatherToday } from "../state.js?v=28.14.6";
-import { QUEUE_POS } from "../world.js?v=28.14.6";
-import { buildTables } from "../world.js?v=28.14.6";
-import { navSetTarget } from "../nav.js?v=28.14.6";
-import { navStep } from "../nav.js?v=28.14.6";
-import { endDay } from "../report.js?v=28.14.6";
-import { recordVisit } from "../report.js?v=28.14.6";
-import { setSpeed } from "../ui.js?v=28.14.6";
-import { showServiceUI } from "../ui.js?v=28.14.6";
-import { toast } from "../ui.js?v=28.14.6";
-import { updateHud } from "../ui.js?v=28.14.6";
-import { RANDOM_EVENTS } from "./season.js?v=28.14.6";
-import { abandonFloor } from "./service.js?v=28.14.6";
-import { addSat } from "./economy.js?v=28.14.6";
-import { commitClean } from "./service.js?v=28.14.6";
-import { completeFloorOrder } from "./service.js?v=28.14.6";
-import { difficultyProfile } from "./season.js?v=28.14.6";
-import { difficultyRush } from "./season.js?v=28.14.6";
-import { repArrivalMult } from "./season.js?v=28.14.6";
-import { finishSlot } from "./service.js?v=28.14.6";
-import { giveUpPending } from "./service.js?v=28.14.6";
-import { leaveQueue } from "./customers.js?v=28.14.6";
-import { payAndGo } from "./service.js?v=28.14.6";
-import { payAndSeat } from "./service.js?v=28.14.6";
-import { pendingIdx } from "./orders.js?v=28.14.6";
-import { regularOutcome } from "./customers.js?v=28.14.6";
-import { scheduleRegulars } from "./customers.js?v=28.14.6";
-import { spawnCustomer } from "./customers.js?v=28.14.6";
-import { startPart } from "./service.js?v=28.14.6";
+import { beginLedgerDay } from "../bookkeeping.js?v=28.16.0-vfx3d";
+import { initFloor } from "../floor-service.js?v=28.16.0-vfx3d";
+import { updateFloor } from "../floor-service.js?v=28.16.0-vfx3d";
+import { updateFloorCustomer } from "../floor-service.js?v=28.16.0-vfx3d";
+import { floorHasWork } from "../floor-service.js?v=28.16.0-vfx3d";
+import { abortFloor } from "../floor-service.js?v=28.16.0-vfx3d";
+import { ANGER_MIN_STAGE } from "../config.js?v=28.16.0-vfx3d";
+import { DRINKS } from "../config.js?v=28.16.0-vfx3d";
+import { HOUR_CURVE } from "../config.js?v=28.16.0-vfx3d";
+import { PERSONALITIES } from "../config.js?v=28.16.0-vfx3d";
+import { SEC_PER_HOUR } from "../config.js?v=28.16.0-vfx3d";
+import { SPECIAL_DAYS } from "../config.js?v=28.16.0-vfx3d";
+import { W } from "../config.js?v=28.16.0-vfx3d";
+import { WAIT_TABLE_MAX } from "../config.js?v=28.16.0-vfx3d";
+import { WEATHER } from "../config.js?v=28.16.0-vfx3d";
+import { rand } from "../util.js?v=28.16.0-vfx3d";
+import { rnd } from "../util.js?v=28.16.0-vfx3d";
+import { Audio } from "../audio.js?v=28.16.0-vfx3d";
+import { startBeach } from "../beach.js?v=28.16.0-vfx3d";
+import { updateBeach } from "../beach.js?v=28.16.0-vfx3d";
+import { Game } from "../state.js?v=28.16.0-vfx3d";
+import { Net } from "../state.js?v=28.16.0-vfx3d";
+import { closeHour } from "../state.js?v=28.16.0-vfx3d";
+import { gameTimers } from "../state.js?v=28.16.0-vfx3d";
+import { isCoop } from "../state.js?v=28.16.0-vfx3d";
+import { isWeekend } from "../state.js?v=28.16.0-vfx3d";
+import { lvl } from "../state.js?v=28.16.0-vfx3d";
+import { simProgressDay } from "../state.js?v=28.16.0-vfx3d";
+import { weatherToday } from "../state.js?v=28.16.0-vfx3d";
+import { QUEUE_POS } from "../world.js?v=28.16.0-vfx3d";
+import { buildTables } from "../world.js?v=28.16.0-vfx3d";
+import { navSetTarget } from "../nav.js?v=28.16.0-vfx3d";
+import { navStep } from "../nav.js?v=28.16.0-vfx3d";
+import { endDay } from "../report.js?v=28.16.0-vfx3d";
+import { recordVisit } from "../report.js?v=28.16.0-vfx3d";
+import { setSpeed } from "../ui.js?v=28.16.0-vfx3d";
+import { showServiceUI } from "../ui.js?v=28.16.0-vfx3d";
+import { toast } from "../ui.js?v=28.16.0-vfx3d";
+import { updateHud } from "../ui.js?v=28.16.0-vfx3d";
+import { RANDOM_EVENTS } from "./season.js?v=28.16.0-vfx3d";
+import { abandonFloor } from "./service.js?v=28.16.0-vfx3d";
+import { addSat } from "./economy.js?v=28.16.0-vfx3d";
+import { commitClean } from "./service.js?v=28.16.0-vfx3d";
+import { completeFloorOrder } from "./service.js?v=28.16.0-vfx3d";
+import { difficultyProfile } from "./season.js?v=28.16.0-vfx3d";
+import { difficultyRush } from "./season.js?v=28.16.0-vfx3d";
+import { repArrivalMult } from "./season.js?v=28.16.0-vfx3d";
+import { finishSlot } from "./service.js?v=28.16.0-vfx3d";
+import { giveUpPending } from "./service.js?v=28.16.0-vfx3d";
+import { leaveQueue } from "./customers.js?v=28.16.0-vfx3d";
+import { payAndGo } from "./service.js?v=28.16.0-vfx3d";
+import { payAndSeat } from "./service.js?v=28.16.0-vfx3d";
+import { pendingIdx } from "./orders.js?v=28.16.0-vfx3d";
+import { regularOutcome } from "./customers.js?v=28.16.0-vfx3d";
+import { scheduleRegulars } from "./customers.js?v=28.16.0-vfx3d";
+import { spawnCustomer } from "./customers.js?v=28.16.0-vfx3d";
+import { startPart } from "./service.js?v=28.16.0-vfx3d";
 
 export function servable(c){return c&&(['floorWaitEscort','floorMenu','floorReady'].includes(c.state)||(['queue','prep','floorWaitingPrep'].includes(c.state)&&pendingIdx(c).length>0));}
 
@@ -93,7 +93,7 @@ export function update(dt){
   const prevHour=Game.hour;
   if(!Game.closing){
     Game.hour += dt/SEC_PER_HOUR;
-    const w=WEATHER[weatherToday()];
+    const w = WEATHER[weatherToday()] || WEATHER.sol;
     let mult = w.arr*repArrivalMult()*Game.mods.arr;
     if(lvl('sombrillas')&&(weatherToday()==='sol'||weatherToday()==='calima')) mult*=1.15;
     if(lvl('redes')) mult*=1.15;
@@ -142,7 +142,13 @@ export function update(dt){
       const want = frac<P.stages[2]?3 : frac<P.stages[1]?2 : frac<P.stages[0]?1 : 0;
       if(want>c.anger && c.angerT>=ANGER_MIN_STAGE){
         c.anger=want; c.angerT=0;
-        if(want===3 && !c.protested){ c.protested=true; Audio.protest(); }
+        if(want===3 && !c.protested){
+          c.protested=true; Audio.protest();
+          if(Audio.voiceGrumble) {
+            const pan = Math.max(-1, Math.min(1, ((c.x || 650) - 650) / 450));
+            Audio.voiceGrumble(pan);
+          }
+        }
       }
     }
     if(c.patience<=0){
@@ -179,7 +185,13 @@ export function update(dt){
           navStep(c,dt,1);
         }
         c.waited+=dt; c.actT+=dt;
-        if(c.act==='menu' && c.actT>c.menuDur){ c.act='order'; c.actT=0; }
+        if(c.act==='menu' && c.actT>c.menuDur){
+          c.act='order'; c.actT=0;
+          if(c.spot===0 && Audio && Audio.voiceGreet) {
+            const pan = Math.max(-1, Math.min(1, ((c.x || 650) - 650) / 450));
+            Audio.voiceGreet(pan);
+          }
+        }
         else if(c.act==='order' && c.actT>0.9){ c.act='wait'; c.actT=0; }
         if(Game.closing){ c.state='leave'; c.act='walk'; leaveQueue(c); break; }
         if(angerUpdate(c,dt,1)){ c.state='leave'; c.act='walk'; c.mood='enfado'; c.moodT=3; c.moodTxt='¡Me largo!'; leaveQueue(c); c.tLeave=Game.t; Game.dayStats.lostPatience++; Game.dayStats.lost++; recordVisit(c,{lost:'espera'}); regularOutcome(c,0); addSat(0); Audio.angry(); }

@@ -1,17 +1,16 @@
 /* Pantalla de Chiringo: banner, pestaña Red y reparto. Lo importa v12.js. */
-import { Game, Net, hostLive } from './state.js?v=28.14.7';
-import { ITEMS } from './config.js?v=28.14.7';
-import { Plan } from './ui.js?v=28.14.7';
-import { guestSend } from './coopbridge.js?v=28.14.7';
-import { openDelivery } from './delivery-panel.js?v=28.14.7';
-import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=28.14.7';
-import { publish, hireInflu, respond, repairBatidora, quitBatidos, orderDelivery } from './v12-actions.js?v=28.14.7';
+import { Game, Net, hostLive } from './state.js?v=28.16.0-vfx3d';
+import { ITEMS } from './config.js?v=28.16.0-vfx3d';
+import { Plan } from './ui.js?v=28.16.0-vfx3d';
+import { guestSend } from './coopbridge.js?v=28.16.0-vfx3d';
+import { openDelivery } from './delivery-panel.js?v=28.16.0-vfx3d';
+import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=28.16.0-vfx3d';
+import { publish, hireInflu, respond, repairBatidora, quitBatidos, orderDelivery } from './v12-actions.js?v=28.16.0-vfx3d';
 /* UI */
 function banner(){let b=document.getElementById('v12-banner');if(Game.upgrades.batidoraRota&&Game.mode==='service'){if(!b){b=document.createElement('div');b.id='v12-banner';b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:64px;z-index:70;background:#7a1f1f;color:#fff;padding:10px 14px;border-radius:12px;font:600 13px Satoshi,system-ui;box-shadow:0 6px 18px rgba(0,0,0,.4);display:flex;gap:8px;align-items:center';document.body.append(b);}b.innerHTML='<span>🛑 Batidora rota · sin batidos</span><button id="v12-fix" style="background:#ffd36b;border:0;border-radius:8px;padding:6px 10px;font-weight:700">Reparar 120 €</button><button id="v12-quit" style="background:transparent;border:1px solid #fff;color:#fff;border-radius:8px;padding:6px 10px">Quitar hoy</button>';}else if(b)b.remove();}
 setInterval(banner,400);
 document.addEventListener('click',e=>{const id=e.target.id;if(id!=='v12-fix'&&id!=='v12-quit')return;if(Net.role==='guest'){guestSend(id==='v12-fix'?'fix':'quit');return;}if(id==='v12-fix')repairBatidora();else quitBatidos();});
-const tabs=document.querySelector('#plan .tabs');
-if(tabs&&!tabs.querySelector('[data-tab="red"]')){const b=document.createElement('button');b.className='tab';b.dataset.tab='red';b.setAttribute('role','tab');b.textContent='Red';tabs.append(b);}
+/* F3: tab 'red' removed — chiringo-ui handles 'chiringo' tab now */
 function stars(r){const n=Math.round(r);return '★'.repeat(n)+'☆'.repeat(5-n);}
 export function renderRed(){const b=document.querySelector('#tab-body');if(!b||Plan.tab!=='red')return;const f=Game.upgrades[FOL]||0,r=Game.upgrades[RAT]||3;const posted=Game.upgrades.socialPostDia===Game.day;let h='<p class="muted" style="margin:0 0 6px"><b>Chiringo</b> · '+f+' seguidores · valoración pública '+stars(r)+' ('+r.toFixed(1)+')</p>';
  const tr=Game.upgrades.socialTrend;if(tr&&ITEMS[tr]&&Game.upgrades.socialTrendDia===Game.day)h+='<p class="muted">📈 Tendencia hoy: <b>'+ITEMS[tr].name+'</b>. Vende 3 o más y publicadlo para ganar seguidores.</p>';

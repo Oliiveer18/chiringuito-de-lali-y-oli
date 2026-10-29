@@ -2,10 +2,10 @@
    world.js
    Geometría de la escena (mesas, hamacas, cola, mostrador) y aspecto de los clientes.
    ========================================================= */
-import { QUEUE_SPOTS } from './config.js?v=28.14.7';
-import { rand, rnd } from './util.js?v=28.14.7';
-import { Game, tableCount } from './state.js?v=28.14.7';
-import { navRebuild } from './nav.js?v=28.14.7';
+import { QUEUE_SPOTS } from './config.js?v=28.16.0-vfx3d';
+import { rand, rnd } from './util.js?v=28.16.0-vfx3d';
+import { Game, tableCount } from './state.js?v=28.16.0-vfx3d';
+import { navRebuild } from './nav.js?v=28.16.0-vfx3d';
 
 // ---------- Geometría de la escena ----------
 export const TABLE_POS = [];
@@ -21,6 +21,14 @@ export function buildTables(){
   Game.tables = [];
   for(let i=0;i<n;i++){ const p=TABLE_POS[i]; Game.tables.push(old[i] ? old[i] : {x:p.x,y:p.y,state:'free',cust:null,dirtyT:0,color:['#e8603c','#f5b82e','#0f8b8d','#3f8a3a'][i%4]}); }
   if(typeof navRebuild==='function') navRebuild();
+}
+
+/** Convierte coordenadas de mesa 2D a coordenadas mundiales 3D en la terraza */
+export function tablePosTo3D(table) {
+  if (!table) return { x: 5.2, z: -0.6 };
+  const tx = 5.2 + ((table.x - 600) / 600) * 6.2;
+  const tz = -0.6 + ((table.y - 528) / 112) * 2.8;
+  return { x: tx, z: tz };
 }
 
 // ---------- Clientes ----------

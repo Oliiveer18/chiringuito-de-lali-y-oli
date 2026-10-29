@@ -1,14 +1,14 @@
-import {trackCost} from './bookkeeping.js?v=28.14.7';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.14.7';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.14.7';
-import * as Rankings from './market-model.mjs?v=28.14.7';
-import {Game,Net,simProgressDay} from './state.js?v=28.14.7';
-import {STAFF,RENT} from './config.js?v=28.14.7';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.14.7';
-import {netDirty} from './net.js?v=28.14.7';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.14.7';
-import {escapeHtml as E,eur} from './util.js?v=28.14.7';
-import {candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.14.7';
+import {trackCost} from './bookkeeping.js?v=28.16.0-vfx3d';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.16.0-vfx3d';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.16.0-vfx3d';
+import * as Rankings from './market-model.mjs?v=28.16.0-vfx3d';
+import {Game,Net,simProgressDay} from './state.js?v=28.16.0-vfx3d';
+import {STAFF,RENT} from './config.js?v=28.16.0-vfx3d';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.16.0-vfx3d';
+import {netDirty} from './net.js?v=28.16.0-vfx3d';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.16.0-vfx3d';
+import {escapeHtml as E,eur} from './util.js?v=28.16.0-vfx3d';
+import {candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.16.0-vfx3d';
 const day=()=>simProgressDay();
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}

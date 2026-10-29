@@ -1,30 +1,30 @@
-import {floorCommand} from './floor-service.js?v=28.14.7';
+import {floorCommand} from './floor-service.js?v=28.16.0-vfx3d';
 /* =========================================================
    net.js
    Red: WebRTC con PeerJS (sin servidor propio), sala compartida,
    sincronización anfitrión→invitado y acciones pendientes del invitado.
    ========================================================= */
-import { STATION_LABEL, who } from './config.js?v=28.14.7';
-import { $, clamp, escapeHtml } from './util.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=28.14.7';
-import { TABLE_POS } from './world.js?v=28.14.7';
-import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=28.14.7';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.7';
-import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.7';
+import { STATION_LABEL, who } from './config.js?v=28.16.0-vfx3d';
+import { $, clamp, escapeHtml } from './util.js?v=28.16.0-vfx3d';
+import { Audio } from './audio.js?v=28.16.0-vfx3d';
+import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=28.16.0-vfx3d';
+import { TABLE_POS } from './world.js?v=28.16.0-vfx3d';
+import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=28.16.0-vfx3d';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.16.0-vfx3d';
+import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.16.0-vfx3d';
 
 import {
   REJECT_MSG, pendHas, guestServe, guestClean, guestPendTick,
-} from './net-guest.js?v=28.14.7';
+} from './net-guest.js?v=28.16.0-vfx3d';
 import {
   netOpen, netSimDelay, netSend, netAct, netDirty, leaveCoop, goSolo,
-} from './net-link.js?v=28.14.7';
+} from './net-link.js?v=28.16.0-vfx3d';
 import {
   onNet, applyAct, pushAck, snapshot, netTick, applyState, guestTick,
-} from './net-sync.js?v=28.14.7';
+} from './net-sync.js?v=28.16.0-vfx3d';
 import {
   PINGS, sendPing, showPing, showLobby, lobbyStatus, lobbyError, myName, renderLobby, netLost, hideNetMsg,
-} from './net-lobby.js?v=28.14.7';
+} from './net-lobby.js?v=28.16.0-vfx3d';
 export {
   REJECT_MSG, pendHas, guestServe, guestClean, guestPendTick,
   netOpen, netSimDelay, netSend, netAct, netDirty, leaveCoop, goSolo,

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QA Visual — Chiringuito de Lali y Oli</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="style.css?v=28.16.0-vfx3d">
+<style>
+  /* QA layout overrides — no se incluyen en el juego */
+  html,body{height:auto;overflow:auto;background:#073c40}
+  .qa-section{padding:24px;border-bottom:2px dashed rgba(255,255,255,.15)}
+  .qa-label{color:rgba(255,255,255,.5);font:700 11px/1 system-ui;letter-spacing:.15em;text-transform:uppercase;margin:0 0 14px}
+  /* Para la pantalla de title: simular overlay visible */
+  .sim-title{position:relative;height:390px;overflow:hidden;border-radius:16px}
+  .sim-lobby{position:relative;height:390px;overflow:hidden;border-radius:16px}
+  .sim-plan{position:relative;height:390px;overflow:hidden;border-radius:16px;display:flex}
+  .sim-report{position:relative;height:500px;overflow:hidden;border-radius:16px}
+  .sim-final{position:relative;height:390px;overflow:hidden;border-radius:16px}
+  /* Anular el overflow:hidden del body para esta página */
+  .screen{position:relative;left:auto;top:auto;width:100%;height:100%}
+  .overlay{position:relative;left:auto;top:auto;width:100%;height:100%;display:block}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 1: PANTALLA TÍTULO
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-title">
+  <p class="qa-label">F4 · Título — 844×390 landscape</p>
+  <div class="sim-title">
+    <section id="title" class="overlay show" style="position:relative;display:block">
+      <div class="screen center" style="background:radial-gradient(ellipse 140% 60% at 50% 110%,rgba(15,139,141,.45) 0%,transparent 70%),radial-gradient(ellipse 80% 50% at 80% 0%,rgba(232,96,60,.18) 0%,transparent 60%),linear-gradient(175deg,#083f43 0%,#0b5f63 40%,#0f8b8d 100%)">
+        <div class="title-card">
+          <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0f8b8d"/><path d="M8 40c6-4 10-4 16 0s10 4 16 0 10-4 16 0v16H8z" fill="#fffdf8" opacity=".92"/><path d="M32 12v26" stroke="#fffdf8" stroke-width="3" stroke-linecap="round"/><path d="M14 24c4-10 14-13 18-12-1 8-8 14-18 12zM50 24c-4-10-14-13-18-12 1 8 8 14 18 12z" fill="#e8603c"/></svg></div>
+          <p class="eyebrow">Chiringuito Charco Azul · Tenerife</p>
+          <h1>Chiringuito de Lali y Oli</h1>
+          <p class="lead">Compra el género, ajusta la carta y sirve a turistas y vecinos antes de que pierdan la paciencia. Treinta días para comprar la concesión.</p>
+          <div class="title-actions">
+            <button class="btn primary big">Jugar en solitario</button>
+            <button class="btn big ghost"><svg viewBox="0 0 20 20" class="ico"><path d="M7 9a3 3 0 100-6 3 3 0 000 6zm7 1a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1 17c0-3 2.7-5 6-5s6 2 6 5zm12.5-4.6c2.9.1 5.5 1.7 5.5 4.6h-4.3c0-1.8-.5-3.4-1.2-4.6z"/></svg>Jugar online con tu pareja</button>
+          </div>
+          <p class="fine">Cada uno en su móvil · Mejor en horizontal</p>
+          <p class="fine ver-line">v28.16.0</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 2: LOBBY
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-lobby">
+  <p class="qa-label">F4 · Lobby</p>
+  <div class="sim-lobby">
+    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(170deg,#083f43,#0b5f63 60%,#0f8b8d);padding:16px">
+      <div class="panel lobby-card">
+        <p class="eyebrow">Cooperativo online</p>
+        <h2>Sala de juego</h2>
+        <div class="field"><label for="qa-name">Tu nombre</label><input id="qa-name" type="text" placeholder="Cómo te llamas"></div>
+        <button class="btn primary big block">Crear partida</button>
+        <div class="or"><span>o únete a la de tu pareja</span></div>
+        <div class="join-row">
+          <input type="text" placeholder="CÓDIGO" style="letter-spacing:.35em;font-weight:700;text-transform:uppercase">
+          <button class="btn big">Unirme</button>
+        </div>
+        <p class="lobby-status">Conectando…</p>
+        <button class="btn text" style="display:flex;margin:0 auto">← Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 3: PLAN — DOS COLUMNAS
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-plan">
+  <p class="qa-label">F3 · Plan — dos columnas (844×390)</p>
+  <div class="sim-plan" style="height:390px">
+    <div class="screen plan-screen" style="position:relative;width:100%;height:100%;display:flex">
+      <!-- Sidebar -->
+      <div class="plan-sidebar">
+        <div class="plan-sidebar-inner">
+          <div class="plan-group">
+            <p class="plan-group-label">Negocio</p>
+            <nav class="plan-tabs">
+              <button class="plan-tab on" data-tab="compras"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12l-1.5 9H5.5L4 6z"/><path d="M8 6V4a2 2 0 0 1 4 0v2"/></svg><span>Compras</span></button>
+              <button class="plan-tab" data-tab="mejoras"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2"/></svg><span>Mejoras</span></button>
+              <button class="plan-tab" data-tab="personal"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><path d="M2 17c0-3 2.7-5 6-5s6 2 6 5"/></svg><span>Personal</span></button>
+              <button class="plan-tab" data-tab="show"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.4l-4.8 2.5.9-5.4L2.2 7.7l5.4-.8z"/></svg><span>Show</span></button>
+            </nav>
+          </div>
+          <div class="plan-group">
+            <p class="plan-group-label">Crecimiento</p>
+            <nav class="plan-tabs">
+              <button class="plan-tab" data-tab="chiringo"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h14M3 10l4-6h6l4 6"/><path d="M5 10v6h10v-6"/></svg><span>Chiringo</span></button>
+              <button class="plan-tab" data-tab="progreso"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-5 3 3 4-7 3 4"/></svg><span>Progreso</span></button>
+              <button class="plan-tab" data-tab="mercado"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l8-5 8 5v9H2z"/><path d="M8 17v-5h4v5"/></svg><span>Ligas</span></button>
+            </nav>
+          </div>
+          <div class="plan-group">
+            <p class="plan-group-label">Agenda</p>
+            <nav class="plan-tabs">
+              <button class="plan-tab" data-tab="agenda"><svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14M7 2v3M13 2v3"/></svg><span>Agenda</span></button>
+            </nav>
+          </div>
+        </div>
+        <div class="plan-open"><button class="btn primary plan-open-btn">Abrir</button></div>
+      </div>
+      <!-- Main -->
+      <div class="plan-main">
+        <div class="plan-main-head">
+          <div class="plan-head-info">
+            <p class="eyebrow" style="margin:0">Día 3 de 30 · Miércoles · 8:30</p>
+            <h2 style="margin:0;font-size:18px;line-height:1.2">Buenos días</h2>
+          </div>
+          <div class="plan-head-cash">
+            <span class="plan-cash-label">Caja</span>
+            <b class="plan-cash-value">1.240 €</b>
+          </div>
+        </div>
+        <div class="forecast plan-forecast">
+          <div class="fc today"><div class="k">Hoy</div><div class="v">☀️ <span>Sol</span></div><div class="d">Día despejado. Buena afluencia de turistas.</div></div>
+          <div class="fc event"><div class="k">Evento</div><div class="v">🎵 Mercadillo</div><div class="d">+20% afluencia local</div></div>
+          <div class="fc"><div class="k">Mañana</div><div class="v">🌤 Nubes</div><div class="d">Jueves</div></div>
+          <div class="fc"><div class="k">Objetivo</div><div class="v">8.000 €</div><div class="d">Quedan 28 días · valoración 4.2/5</div></div>
+        </div>
+        <p class="plan-costs-note">Al cierre pagarás <b>420 €</b> (licencia y sueldos).</p>
+        <div class="plan-tab-body">
+          <div class="plan-panel plan-unified">
+            <p class="plan-panel-k">Compras y carta</p>
+            <p class="muted plan-panel-d" style="margin:0 0 8px;font-size:12.5px">Unas 48 visitas previstas hoy.</p>
+            <div class="row plan-product">
+              <img src="icon-beer.svg" alt="" style="width:44px;height:44px;background:var(--sand-2);border-radius:12px;padding:6px;border:1px solid var(--line)">
+              <div class="plan-product-main"><div class="name">Cerveza</div><div class="sub">Compra 0,80 € · almacén <b>12</b> · referencia 2,50 € <span class="tag">Precio justo</span></div></div>
+              <div class="ctrl plan-product-ctrl">
+                <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span>
+                  <div class="plan-buy-btns">
+                    <button class="btn sm primary stock-buy"><span class="stock-buy-qty">+10</span><span class="stock-buy-total">8 €</span></button>
+                    <button class="btn sm primary stock-buy"><span class="stock-buy-qty">+25</span><span class="stock-buy-total">20 €</span></button>
+                  </div>
+                </div>
+                <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span>
+                  <div class="price" style="background:var(--sand);border-radius:12px;border:1px solid var(--line-2)"><button>−</button><span class="val">2,50 €</span><button>+</button></div>
+                </div>
+                <div class="plan-ctrl-block plan-ctrl-carta"><button class="btn sm teal">En carta</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 4: COMPONENTES (F1/F2)
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-components" style="background:var(--sand)">
+  <p class="qa-label" style="color:var(--ink-2)">F1/F2 · Componentes</p>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+    <!-- Botones -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn primary">Primario</button>
+      <button class="btn teal">Teal</button>
+      <button class="btn gold">Gold</button>
+      <button class="btn">Normal</button>
+      <button class="btn ghost" style="background:var(--teal-d)">Ghost</button>
+      <button class="btn text">Texto</button>
+      <button class="btn primary waiting">Esperando…</button>
+      <button class="btn" disabled>Desactivado</button>
+    </div>
+    <!-- Tags y chips -->
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:280px">
+      <div><span class="tag">Normal</span><span class="tag good">Barato</span><span class="tag mid">Caro</span><span class="tag bad">Nadie</span></div>
+      <div class="chip-row">
+        <button class="chip on">Compras</button>
+        <button class="chip">Mejoras</button>
+        <button class="chip coral">Urgente</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="badge">3</span>
+        <span class="badge teal">12</span>
+        <span class="badge gold">🏆</span>
+      </div>
+    </div>
+    <!-- Avisos -->
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:320px">
+      <div class="aviso info"><span class="aviso-ico">ℹ️</span><p><strong>Info:</strong> La batidora está funcionando correctamente.</p></div>
+      <div class="aviso warn"><span class="aviso-ico">⚠️</span><p><strong>Atención:</strong> Stock de cerveza por debajo del mínimo.</p></div>
+      <div class="aviso good"><span class="aviso-ico">✅</span><p><strong>Bien:</strong> Has alcanzado la valoración objetivo.</p></div>
+      <div class="aviso bad"><span class="aviso-ico">🛑</span><p><strong>Error:</strong> No tienes saldo suficiente para esta compra.</p></div>
+    </div>
+    <!-- Toasts -->
+    <div style="display:flex;flex-direction:column;gap:6px;max-width:320px">
+      <div class="toast">🍺 <b>Venta realizada</b> · 3 cervezas</div>
+      <div class="toast good">✅ <b>¡Logro!</b> Primera reseña de 5 estrellas</div>
+      <div class="toast bad">🛑 <b>Sin stock</b> · Cerveza agotada</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 5: INFORME DEL DÍA
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-report">
+  <p class="qa-label">F6 · Informe del día</p>
+  <div class="sim-report" style="background:rgba(5,40,44,.78)">
+    <div class="panel sheet" style="max-width:720px;margin:20px auto;border-radius:22px">
+      <div class="sheet-head" style="background:linear-gradient(160deg,#083f43,#0b5f63);color:#fff;border-radius:22px 22px 0 0">
+        <div><p class="eyebrow" style="color:rgba(159,230,228,.9)">Día 3 de 30 · Miércoles</p><h2 style="color:#fff">Informe de cierre</h2></div>
+      </div>
+      <div class="rep-body">
+        <div class="kpis">
+          <div class="kpi"><span class="k">Ingresos</span><span class="v pos">847 €</span></div>
+          <div class="kpi"><span class="k">Gastos</span><span class="v neg">−420 €</span></div>
+          <div class="kpi"><span class="k">Beneficio</span><span class="v pos">427 €</span></div>
+        </div>
+        <div class="stats">
+          <span>Cervezas vendidas</span><span class="pos">38</span>
+          <span>Pinchos vendidos</span><span>22</span>
+          <span>Clientes atendidos</span><span>51</span>
+          <span>Clientes perdidos</span><span class="neg">4</span>
+          <span class="total">Caja final</span><span class="total pos">1.667 €</span>
+        </div>
+        <div class="rev-summary">
+          <div><span class="k">Valoración media</span><b>4.2 / 5</b></div>
+          <div class="stars"><b>★★★★</b><span>☆</span></div>
+        </div>
+        <div class="review">
+          <div class="rev-head"><div class="rev-who"><b>María T.</b><span class="rev-loc">Pueblo</span></div><div class="stars"><b>★★★★★</b></div></div>
+          <p class="rev-text">¡Qué bien se come aquí! Las cervezas muy frías y el servicio rapidísimo. Volveremos seguro.</p>
+        </div>
+      </div>
+      <div class="sheet-foot">
+        <button class="btn primary big" style="background:linear-gradient(180deg,#ee6d49,#e8603c);border-color:#c84a29;color:#fff;box-shadow:0 4px 14px rgba(232,96,60,.35)">Siguiente día →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 6: PANTALLA FINAL + MODAL NETMSG
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-final">
+  <p class="qa-label">F6 · Final + Modal netmsg</p>
+  <div style="display:flex;gap:20px;flex-wrap:wrap">
+    <div class="sim-final" style="flex:1;min-width:300px;background:linear-gradient(170deg,#083f43,#0b5f63 55%,#0f8b8d);display:flex;align-items:center;justify-content:center;padding:16px">
+      <div class="panel final-card">
+        <span class="final-emoji">🏆</span>
+        <h1>¡Temporada completada!</h1>
+        <p>Has reunido <b>9.240 €</b> en 30 días y conseguido una valoración de <b>4.6/5</b>.</p>
+        <p class="final-score">+9.240 €</p>
+        <div class="title-actions" style="margin-top:14px">
+          <button class="btn primary big">Nueva temporada</button>
+          <button class="btn">Volver al inicio</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;background:rgba(5,30,33,.7);padding:24px;border-radius:16px;flex:0 0 auto">
+      <div class="panel netmsg-card">
+        <div class="net-ico"><svg viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0120 0M5 12a10.5 10.5 0 0114 0M8.5 15.5a5.5 5.5 0 017 0"/><circle cx="12" cy="19" r="1.3"/><path d="M3 3l18 18"/></svg></div>
+        <h3>Problema de conexión</h3>
+        <p>No se puede conectar con tu pareja. Comprueba la conexión a internet.</p>
+        <div class="net-actions">
+          <button class="btn primary">Seguir esperando</button>
+          <button class="btn text">Ir al inicio</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 7: SELECTOR DE PARTIDAS
+═══════════════════════════════════════════════════ -->
+<div class="qa-section" id="qa-saves">
+  <p class="qa-label">F2 · Selector de partidas (.save-browser)</p>
+  <div style="background:rgba(3,39,43,.94);padding:24px;border-radius:16px">
+    <div class="save-sheet">
+      <p class="eyebrow">Tus partidas guardadas</p>
+      <h2>Vuestras partidas</h2>
+      <div class="save-row">
+        <strong>El Charco Azul · Lali y Oli</strong>
+        <small>Temporada 2 · Día 18 · 3.420 € en caja · hace 2 días</small>
+      </div>
+      <div class="save-actions">
+        <button class="save-action main">Continuar</button>
+        <button class="save-action">Ver detalles</button>
+        <button class="save-action danger">Borrar</button>
+      </div>
+      <div class="save-row">
+        <strong>Chiringuito Nuevo</strong>
+        <small>Temporada 1 · Día 7 · 890 € en caja · hace 5 días</small>
+      </div>
+      <div class="save-actions">
+        <button class="save-action main">Continuar</button>
+        <button class="save-action danger">Borrar</button>
+      </div>
+      <div class="save-actions" style="border-top:1px solid var(--line);padding-top:12px;margin-top:4px">
+        <button class="save-action main">Nueva partida</button>
+      </div>
+      <div class="save-state">💾 Guardado automáticamente cada vez que cierras el día.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

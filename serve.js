@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
   let url;
   try { url = decodeURIComponent((req.url || '/').split('?')[0]); } catch (e) { return send(res, 400, 'text/plain; charset=utf-8', 'Petición no válida'); }
   const name = url === '/' ? 'index.html' : url.slice(1);
-  if (!/^[\w.-]+$/.test(name) || PRIVATE.test(name)) return send(res, 404, 'text/plain; charset=utf-8', 'No encontrado');
+  if (!/^[\w./-]+$/.test(name) || name.includes('..') || PRIVATE.test(path.basename(name))) return send(res, 404, 'text/plain; charset=utf-8', 'No encontrado');
   fs.readFile(path.join(ROOT, name), (err, data) => {
     if (err) return send(res, 404, 'text/plain; charset=utf-8', 'No encontrado');
     send(res, 200, MIME[path.extname(name)] || 'application/octet-stream', req.method === 'HEAD' ? undefined : data);

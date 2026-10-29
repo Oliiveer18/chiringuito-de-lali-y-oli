@@ -2,16 +2,17 @@
    main.js
    Arranque: bucle principal, exposición de pruebas (window.__api/__test) y arranque inicial.
    ========================================================= */
-import { ITEMS, UPGRADES } from './config.js?v=28.14.7';
-import { buildIcons } from './icons.js?v=28.14.7';
-import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=28.14.7';
-import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=28.14.7';
-import { endDay } from './report.js?v=28.14.7';
-import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=28.14.7';
-import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=28.14.7';
-import { render } from './render.js?v=28.14.7';
-import { ctx } from './canvas.js?v=28.14.7';
-import './variety.js?v=28.14.7';
+import { ITEMS, UPGRADES } from './config.js?v=28.16.0-vfx3d';
+import { buildIcons } from './icons.js?v=28.16.0-vfx3d';
+import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=28.16.0-vfx3d';
+import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=28.16.0-vfx3d';
+import { endDay } from './report.js?v=28.16.0-vfx3d';
+import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=28.16.0-vfx3d';
+import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=28.16.0-vfx3d';
+import { render } from './render.js?v=28.16.0-vfx3d';
+import { ctx } from './canvas.js?v=28.16.0-vfx3d';
+import { init3D, is3DReady, render3D } from './render-3d.js?v=28.16.0-vfx3d';
+import './variety.js?v=28.16.0-vfx3d';
 
 // ---------- Bucle ----------
 let last=performance.now(), acc=0; const STEP=1/60;
@@ -20,6 +21,7 @@ function frame(now){
   if(isGuest()) guestTick(dt);
   else if(!manualTime){ acc+=dt*(Game.mode==='service'?Game.speed:1); while(acc>=STEP){ update(STEP); acc-=STEP; } }
   netTick(dt);
+  if(is3DReady()){ render3D(dt); }
   render();
   if(window.__betaDraw){ try{ window.__betaDraw(ctx); }catch(e){ console.error('betaDraw', e); } }
   requestAnimationFrame(frame);
@@ -42,6 +44,7 @@ window.__api = {serve:(c)=>tryServe(c), clean:t=>cleanTable(t,false), startDay, 
 
 buildIcons();
 document.fonts && document.fonts.ready.then(()=>render());
+if (typeof window !== 'undefined') { init3D(); }
 requestAnimationFrame(frame);
 
 window.__test = { netOpen, netSend, newSeason, showPlan, toggleReady, pressReady,
