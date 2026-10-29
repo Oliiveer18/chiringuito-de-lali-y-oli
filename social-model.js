@@ -37,6 +37,63 @@ export function influEffect({ I, f, rating }) {
   return { arr: r3(I.arr * reach * eng), followers: I.followers, reach, eng };
 }
 
+const STOCK_POST = new Set(['papas', 'barraquito', 'algodon', 'concurso']);
+const SHOW_POST = new Set(['show']);
+const RISK = { bajo: 'bajo', medio: 'medio', alto: 'alto' };
+
+/** Texto de planificación (sin números garantizados) para la pestaña Chiringo. */
+export function postBrief({ id, P, match = false, fat = 1, prevId = null }) {
+  const promesa = P?.desc || 'Más visibilidad si el día acompaña.';
+  let riesgo = RISK.bajo;
+  if (SHOW_POST.has(id)) riesgo = RISK.alto;
+  else if (STOCK_POST.has(id)) riesgo = RISK.medio;
+  else if (id === 'viral') riesgo = RISK.medio;
+  const fail = [];
+  if (STOCK_POST.has(id) && id !== 'concurso') fail.push('Si promocionáis un producto y no hay stock durante la jornada, la gente se enfada y perdéis seguidores.');
+  if (id === 'algodon') fail.push('Si se agota el algodón, la promesa se considera incumplida al cierre.');
+  if (id === 'show') fail.push('Si el show no se celebra o decepciona, perdéis credibilidad y seguidores pendientes.');
+  else fail.push('Si incumplís lo que prometéis en la publicación, al cierre se pierden seguidores pendientes.');
+  if (fat < 1 || (prevId && prevId === id)) fail.push('Repetir la misma publicación que ayer reduce el margen de maniobra.');
+  const trend =
+    match === true ? 'encaja' : match === false && id ? 'no encaja' : '—';
+  return { promesa, riesgo, siFallas: fail.slice(0, 2).join(' '), trend, repetida: fat < 1 };
+}
+
+export function influBrief() {
+  return {
+    promesa: 'Visibilidad extra y visitantes curiosos mientras dura la colaboración.',
+    riesgo: RISK.medio,
+    siFallas: 'Muchos seguidores son prestados: se irán antes si la jornada decepciona.',
+  };
+}
+
+export function trendFitLabel(match) {
+  if (match === true) return 'encaja';
+  if (match === false) return 'no encaja';
+  return '—';
+}
+
+/** Una línea de rival del mercado (copy + presión opcional de afluencia). */
+export function chiringoRivalLine(rivals, day, seed) {
+  if (!rivals?.npcs?.length || !Number.isFinite(day)) return null;
+  const h = hashStr(String(seed ?? '') + ':' + day);
+  const pool = rivals.npcs.filter(n => n.area === 0);
+  const npc = pool[h % Math.max(1, pool.length)] || rivals.npcs[h % rivals.npcs.length];
+  if (!npc) return null;
+  const short = String(npc.name || 'Otro kiosco').split(' ·')[0].trim();
+  const campaign = h % 4 === 0;
+  const text = campaign
+    ? `En el pueblo, ${short} también ha movido ficha en redes hoy.`
+    : `${short} compite por la misma clientela de playa.`;
+  return { text, pressure: campaign ? 0.985 : 1 };
+}
+
+function hashStr(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
 // 4 % diario con 1 estrella, 0,5 % con 5
 export const churnRate = rep => clamp(0.04 - (num(rep) - 1) * 0.00875, 0.005, 0.04);
 

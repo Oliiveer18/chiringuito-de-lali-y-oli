@@ -1,5 +1,5 @@
 /* Pruebas del modelo de seguidores (puro, sin navegador). Uso: node social-model.test.mjs */
-import { settle, postEffect, reachFactor, engagement, churnRate } from './social-model.js';
+import { settle, postEffect, reachFactor, engagement, churnRate, postBrief, chiringoRivalLine } from './social-model.js';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => { if (cond) { ok++; console.log('  ok  ' + name); } else { ko++; console.log('  FALLO  ' + name + (extra !== undefined ? ' → ' + JSON.stringify(extra) : '')); } };
@@ -17,6 +17,11 @@ const c = postEffect({ id: 'papas', P, f: 50, rating: 3, trendId: 'papas', prevI
 check('repetir la publicación de ayer reduce el efecto', b.arr < a.arr && b.followers <= a.followers, [a, b]);
 check('encajar con la tendencia aumenta el efecto', c.arr > a.arr, [a, c]);
 check('una publicación puede no sumar seguidores con mala nota', postEffect({ id: 'x', P: { arr: 0.05, followers: 1 }, f: 0, rating: 1, prevId: 'x' }).followers >= 0);
+
+console.log('Planificación Chiringo (sin números garantizados)');
+const brief = postBrief({ id: 'show', P: { desc: 'Show esta tarde' }, match: false, fat: 1 });
+check('postBrief incluye promesa y riesgo alto en show', brief.promesa && brief.riesgo === 'alto', brief);
+check('rival line determinista', chiringoRivalLine({ npcs: [{ id: 'n0', name: 'La Brisa · Pueblo', area: 0 }] }, 3, 'seed')?.text?.includes('La Brisa'));
 
 console.log('Abandono');
 check('1 estrella pierde 4 % y 5 estrellas 0,5 %', Math.abs(churnRate(1) - 0.04) < 1e-9 && Math.abs(churnRate(5) - 0.005) < 1e-9);

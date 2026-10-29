@@ -1,5 +1,5 @@
 /* Reseñas: habituales, pedido, servicio, calima y templado. Lo importa variety.js. */
-import { REVIEW_BANK } from './report.js?v=28.14.5';
+import { REVIEW_BANK } from './report.js?v=28.14.6';
 const add = (arr, items) => { for (const it of items) if (!arr.includes(it)) arr.push(it); };
 // Habituales: desde “ya somos de la casa” hasta “no falla”
 add(REVIEW_BANK.habitual, [

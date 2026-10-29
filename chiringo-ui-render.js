@@ -1,11 +1,11 @@
-import {photoThread} from './management-ui.js?v=28.14.5';
-import { Game } from './state.js?v=28.14.5';
-import { ITEMS } from './config.js?v=28.14.5';
-import { ICON_URL } from './icons.js?v=28.14.5';
-import { drawPerson } from './render.js?v=28.14.5';
-import { escapeHtml, eur } from './util.js?v=28.14.5';
-import { influEffect } from './social-model.js?v=28.14.5';
-import { POSTS, INFLU } from './v12.js?v=28.14.5';
+import {photoThread} from './management-ui.js?v=28.14.6';
+import { Game } from './state.js?v=28.14.6';
+import { ITEMS } from './config.js?v=28.14.6';
+import { ICON_URL } from './icons.js?v=28.14.6';
+import { drawPerson } from './render.js?v=28.14.6';
+import { escapeHtml, eur } from './util.js?v=28.14.6';
+import { influBrief } from './social-model.js?v=28.14.6';
+import { POSTS, INFLU } from './v12.js?v=28.14.6';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';
@@ -25,17 +25,10 @@ const ICONS = {
 const icon = n => '<svg class="ci" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[n] || '') + '</svg>';
 const brandMark = '<svg class="ci bm" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#0f8b8d"/><path d="M8 40c6-4 10-4 16 0s10 4 16 0 10-4 16 0v16H8z" fill="#fffdf8" opacity=".92"/><path d="M32 12v26" stroke="#fffdf8" stroke-width="3" stroke-linecap="round"/><path d="M14 24c4-10 14-13 18-12-1 8-8 14-18 12zM50 24c-4-10-14-13-18-12 1 8 8 14 18 12z" fill="#e8603c"/></svg>';
 
-/* Reacciones personales (solo locales, sin efecto económico). */
-let LIKES = new Set();
-try { LIKES = new Set(JSON.parse(sessionStorage.getItem('lalioli-likes') || '[]')); } catch (e) {}
-document.addEventListener('click', e => {
-  const b = e.target.closest?.('[data-like]'); if (!b) return;
-  const key = b.dataset.like, on = !b.classList.contains('on');
-  b.classList.toggle('on', on);
-  const n = b.querySelector('span'); if (n) n.textContent = Math.max(0, Number(n.textContent) + (on ? 1 : -1));
-  on ? LIKES.add(key) : LIKES.delete(key);
-  try { sessionStorage.setItem('lalioli-likes', JSON.stringify([...LIKES])); } catch (err) {}
-});
+function riskTag(level) {
+  const cls = level === 'alto' ? 'bad' : level === 'medio' ? 'mid' : 'good';
+  return '<span class="rd-risk rd-risk-' + cls + '">Riesgo ' + level + '</span>';
+}
 
 /* Gráfica de seguidores con datos reales de la progresión. */
 function sparkline(u) {
@@ -94,8 +87,6 @@ function review(text) {
   return { neg, tag, cls: neg ? 'bad' : trend ? 'trend' : 'good', st, name: pick(NAMES, text, 'n'), city: pick(CITIES, text, 'y') };
 }
 
-function setStatus(msg, kind) { status = { msg, kind: kind || '', t: Date.now() }; }
-function flash(id) { flashId = id; flashT = Date.now(); }
 function milestone(f) {
   const next = MIL.find(m => m > f) || f;
   const before = [0, ...MIL].filter(m => m <= f).pop();
@@ -118,14 +109,16 @@ function ctxOf(u) {
 }
 
 function header(u) {
-  const f = u[FOL] || 0, r = u[RAT] || 3, m = milestone(f), a = Math.round(arrToday(u) * 100), pend = pendSum(u);
+  const f = u[FOL] || 0, m = milestone(f), pend = pendSum(u);
   const prize = MIL_PRIZE[m.next] && m.next > f ? ' · desbloquea ' + MIL_PRIZE[m.next] : '';
   const kiosk = escapeHtml(u.kioskName || KIOSCO);
   const spark = sparkline(u);
+  const posted = u.socialPostDia === Game.day;
+  const pulse = posted ? 'Publicado hoy' : arrToday(u) > 0 ? 'Impulso activo' : 'Sin impulso';
   return '<div class="rd-head"><div class="rd-logo">' + brandMark + '</div><div><div class="rd-n1">' + kiosk + '</div>' +
-    '<div class="rd-sub"><span>' + icon('followers') + ' <b>' + f + '</b> seguidores' + (pend ? ' <span class="rd-pend">(+' + pend + ' al cierre)</span>' : '') + '</span><span>' + icon('reach') + ' <b>' + ((u.socialStats && u.socialStats.reach) || 0) + '</b> alcance</span><span>' + icon('chat') + ' <b>' + ((u.socialStats && u.socialStats.interactions) || 0) + '</b> interacciones</span></div></div>' +
+    '<div class="rd-sub"><span>' + icon('followers') + ' <b>' + f + '</b> seguidores' + (pend ? ' <span class="rd-pend">(+' + pend + ' al cierre)</span>' : '') + '</span><span>' + icon('reach') + ' <b>' + ((u.socialStats && u.socialStats.reach) || 0) + '</b> alcance (último cierre)</span><span>' + icon('chat') + ' <b>' + ((u.socialStats && u.socialStats.interactions) || 0) + '</b> interacciones (último cierre)</span></div></div>' +
     (spark ? '<div class="rd-spark-wrap"><small>Evolución de seguidores</small>' + spark + '</div>' : '') +
-    '<div class="rd-aff"><small>Afluencia hoy</small>' + (a ? '+' + a + '%' : '—') + '</div></div>' +
+    '<div class="rd-aff"><small>Visibilidad hoy</small>' + pulse + '</div></div>' +
     '<div class="rd-prog"><div class="rd-prog-t"><span>Siguiente hito: <b>' + m.next + '</b> seguidores' + prize + '</span><span>' + (m.next > f ? 'faltan ' + (m.next - f) : '¡máximo!') + '</span></div>' +
     '<div class="rd-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + m.pct + '"><i style="width:' + m.pct + '%"></i></div></div>';
 }
@@ -134,21 +127,23 @@ function todayCard(u, posted) {
   const money = Game.money, day = Game.day;
   const tr = u.socialTrend;
   let h = '<div class="rd-today"><div class="rd-h">Hoy · día ' + day + '</div>';
+  if (u.chiringoRivalLine) h += '<div class="rd-line rd-rival"><span>' + icon('reach') + '</span><div><span class="rd-mut">Competencia</span><br>' + escapeHtml(u.chiringoRivalLine) + '</div></div>';
   h += '<div class="rd-line trend"><span>' + icon('flame') + '</span><div>' + (tr && ITEMS[tr] && u.socialTrendDia === day
-    ? 'Tendencia: <b>' + ITEMS[tr].name + '</b>. Vende 3 o más y publícalo para ganar seguidores.'
-    : 'Hoy no hay ninguna tendencia.') + '</div></div>';
+    ? 'Tendencia del día: <b>' + ITEMS[tr].name + '</b>. Si lo reflejáis en carta y redes, algunas publicaciones pueden encajar mejor (sin garantía).'
+    : 'Hoy no hay tendencia marcada en la playa.') + '</div></div>';
   const ik = u.socialInflu, I = ik && INFLU[ik];
+  const ib = influBrief();
   if (I && u.socialInfluDia === day && !u.socialInfluContratado) {
-    const okReq = I.req(), poor = money < I.cost, c = ctxOf(u), ie = influEffect({ I, f: c.f, rating: c.rating });
-    h += '<div class="rd-line rd-influ"><span>' + icon('hand') + '</span><div><b>Influencer · ' + I.name + '</b><br><span class="rd-mut">' + I.cost + ' € · +' + Math.round(ie.arr * 100) + '% afluencia · +' + ie.followers + ' seguidores (prestados: se van antes)' +
-      (okReq ? '' : ' · 🔒 ' + I.reqTxt) + '</span></div><button class="btn sm primary" data-influ="1" ' + (poor || !okReq ? 'disabled' : '') + '>' + (poor && okReq ? 'Faltan ' + (I.cost - money) + ' €' : 'Contratar') + '</button></div>';
+    const okReq = I.req(), poor = money < I.cost;
+    h += '<div class="rd-line rd-influ"><span>' + icon('hand') + '</span><div><b>Influencer · ' + I.name + '</b><br><span class="rd-mut">' + I.cost + ' € · ' + ib.promesa + ' ' + riskTag(ib.riesgo) +
+      (okReq ? '' : ' · 🔒 ' + I.reqTxt) + '</span><br><span class="rd-mut rd-fail">Si fallas: ' + escapeHtml(ib.siFallas) + '</span></div><button class="btn sm primary" data-influ="1" ' + (poor || !okReq ? 'disabled' : '') + '>' + (poor && okReq ? 'Faltan ' + (I.cost - money) + ' €' : 'Contratar') + '</button></div>';
   } else if (u.socialInfluContratado && I) {
     h += '<div class="rd-line rd-influ ok"><span>' + icon('hand') + '</span><div>' + icon('check') + ' Colaboración cerrada con <b>' + I.name + '</b>.</div></div>';
   } else h += '<div class="rd-line rd-influ"><span>' + icon('hand') + '</span><div>Hoy no hay ofertas de influencers.</div></div>';
   const P = posted && POSTS[u.socialPost];
   h += '<div class="rd-line rd-pub ' + (posted ? 'ok' : '') + '"><span>' + (posted ? icon('check') : icon('poll')) + '</span><div>' +
     (posted ? '<b>Ya has publicado hoy</b> · ' + (P ? P.name : '') : '<b>Aún no has publicado hoy</b><br><span class="rd-mut">Elige una publicación abajo.</span>') + '</div></div>';
-  if (posted && u.socialPost === 'encuesta' && ITEMS[u.socialPoll]) h += '<div class="rd-line rd-pollwin"><span>' + icon('poll') + '</span><div>Encuesta cerrada · ha ganado <b>' + ITEMS[u.socialPoll].name + '</b>. Vended 3 o más.</div></div>';
+  if (posted && u.socialPost === 'encuesta' && ITEMS[u.socialPoll]) h += '<div class="rd-line rd-pollwin"><span>' + icon('poll') + '</span><div>Encuesta cerrada · opción más votada: <b>' + ITEMS[u.socialPoll].name + '</b>.</div></div>';
   if ((u.socialIdle || 0) >= 1 && !posted) h += '<div class="rd-line rd-warn"><span>' + icon('warn') + '</span><div>Lleváis ' + u.socialIdle + ' día(s) sin publicar: desde el segundo se pierden seguidores.</div></div>';
   return h + '</div>';
 }
@@ -166,9 +161,24 @@ function postIcon(id) {
   return k && ICON_URL[k] ? '<img src="' + ICON_URL[k] + '" alt="">' : '<span>' + (POST_ICON[id] || '📣') + '</span>';
 }
 
-function feed(_u) {
-  // Comentarios interactivos solo en hilos de «Tu perfil · Publicaciones» (photoThread).
-  return '';
+function feed(u) {
+  const cms = u.socialComments || [];
+  if (!cms.length) return '<div class="rd-h">Comentarios</div><p class="rd-mut">Todavía no hay comentarios. Aparecerán al cerrar el primer día.</p>';
+  const rep = u.socialReply, ayer = (u.socialPostDia === Game.day - 1 && POSTS[u.socialPost]) ? POSTS[u.socialPost].name : null;
+  let h = '<div class="rd-h">Reseñas generales y respuestas</div><div class="rd-feed">';
+  cms.forEach((c, i) => {
+    const r = review(c), av = avatar(c);
+    const about = r.neg ? 'el servicio de ayer' : r.trend ? 'la tendencia de ayer' : ayer ? 'tu publicación «' + ayer + '»' : 'la jornada de ayer';
+    const replied = rep && rep.text === c && cms.indexOf(c) === i && REPLY[rep.kind];
+    const canReply = i === 0 && r.neg && !u.socialRespondido && !replied;
+    h += '<div class="rd-rev"><div class="rd-rev-top">' + (av ? '<img class="rd-av" src="' + av + '" alt="">' : '<div class="rd-av">' + icon('followers') + '</div>') +
+      '<div class="rd-who"><b>' + r.name + '</b><span class="rd-mut">' + r.city + ' · sobre ' + escapeHtml(about) + '</span></div>' +
+      '<span class="rd-tag ' + r.cls + '">' + r.tag + '</span></div><p class="rd-txt">“' + escapeHtml(c) + '”</p>';
+    if (replied) h += '<div class="rd-reply"><b>' + brandMark + ' ' + KIOSCO + '</b><br>' + REPLY[rep.kind] + '</div>';
+    if (canReply) h += '<div class="rd-reply-do"><span class="rd-mut">Responder (si no, perdéis seguidores mañana):</span><button class="btn sm teal" data-resp="disculpa">Disculparos</button><button class="btn sm primary" data-resp="descuento" ' + (Game.money < 50 ? 'disabled' : '') + '>Descuento · 50 €</button></div>';
+    h += '</div>';
+  });
+  return h + '</div>';
 }
 
 function archiveHtml(u) {
@@ -182,7 +192,7 @@ function archiveHtml(u) {
     h += '<article class="cs-post"><header><div class="cs-avatar">' + brandMark + '</div><div><b>' + business + '</b><small>Temporada ' + r.season + ' · Día ' + r.day + ' · ' + (r.cost ? 'Campaña' : 'Orgánica') + '</small></div></header>';
     h += '<div class="cs-art cs-art-' + r.post + '"><span>' + postIcon(r.post) + '</span><strong>' + label + '</strong><small>Tenerife · Ilustración de la publicación</small></div>';
     h += '<div class="cs-post-body"><p>' + escapeHtml(P.desc) + '</p><p class="cs-metrics">' + (m ? '♡ ' + m.likes + ' me gusta · Alcance ' + m.reach + ' · Interacciones estimadas ' + m.interactions + ' (el hilo de abajo muestra ' + (r.comments || []).length + ' comentario' + ((r.comments || []).length === 1 ? '' : 's') + ' visibles)' : 'Resultados pendientes del cierre') + '</p>';
-    h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Previsión de afluencia: +' + Math.round(r.arr * 100) + '%') + '</p></div>' + photoThread(r) + '</article>';
+    h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Promesa registrada (resultado real al cierre)') + '</p></div>' + photoThread(r) + '</article>';
   }
   return h + '</section>';
 }

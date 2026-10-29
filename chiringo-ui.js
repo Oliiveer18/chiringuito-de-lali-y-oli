@@ -1,33 +1,42 @@
-import {photoThread} from './management-ui.js?v=28.14.5';
+import {photoThread} from './management-ui.js?v=28.14.6';
 /* v19: Chiringo (cabecera, tarjeta «Hoy», publicaciones en tarjetas, balance de seguidores, feed de reseñas y respuesta inmediata).
    Sustituye la pestaña «Red» de v12.js por «Chiringo». Reutiliza las acciones de v12 (data-post, data-influ, data-resp).
-   Los efectos mostrados salen de social-model.js, el mismo cálculo que aplica v12.js. */
-import { Game, Net } from './state.js?v=28.14.5';
-import { ITEMS } from './config.js?v=28.14.5';
-import { Plan, toast, estimateCustomers } from './ui.js?v=28.14.5';
-import { Audio } from './audio.js?v=28.14.5';
-import { ICON_URL } from './icons.js?v=28.14.5';
-import { drawPerson } from './render.js?v=28.14.5';
-import { netDirty } from './net.js?v=28.14.5';
-import { escapeHtml, eur, stars } from './util.js?v=28.14.5';
-import { postEffect, influEffect, postMetrics } from './social-model.js?v=28.14.5';
-// Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=28.14.5';
-import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=28.14.5';
+   Planificación sin métricas garantizadas; efectos reales en social-model.js / cierre. */
+import { Game, Net, hostLive } from './state.js?v=28.14.6';
+import { ITEMS } from './config.js?v=28.14.6';
+import { Plan, toast } from './ui.js?v=28.14.6';
+import { Audio } from './audio.js?v=28.14.6';
+import { netDirty } from './net.js?v=28.14.6';
+import { eur } from './util.js?v=28.14.6';
+import { postEffect, postBrief, trendFitLabel } from './social-model.js?v=28.14.6';
+import { guestSend } from './coopbridge.js?v=28.14.6';
+import { respond } from './v12-actions.js?v=28.14.6';
+import { POSTS, INFLU } from './v12.js?v=28.14.6';
+import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=28.14.6';
 
 let sel = null, status = null, flashId = null, flashT = 0, prev = { init: false }, prevDay = null;
 
 function setStatus(msg, kind) { status = { msg, kind: kind || '', t: Date.now() }; }
 function flash(id) { flashId = id; flashT = Date.now(); }
 
+function riskTag(level) {
+  const cls = level === 'alto' ? 'bad' : level === 'medio' ? 'mid' : 'good';
+  return '<span class="rd-risk rd-risk-' + cls + '">' + level + '</span>';
+}
+
 function postCard(id, P, posted, money, c) {
   const ok = P.req ? P.req() : true, poor = money < P.cost;
   const fx = postEffect({ id, P, f: c.f, rating: c.rating, trendId: c.trendId, prevId: c.prevId });
+  const hasTrend = c.trendId != null;
+  const brief = postBrief({ id, P, match: hasTrend ? fx.match : undefined, fat: fx.fat, prevId: c.prevId });
   const cls = ['rd-card', !ok ? 'locked' : '', posted ? 'done' : '', sel === id ? 'sel' : '', flashId === id ? 'flash' : ''].join(' ');
+  let meta = '<span>' + (P.cost ? P.cost + ' €' : 'Gratis') + '</span><span>' + (P.cost ? 'Campaña' : 'Orgánica') + '</span><span>' + riskTag(brief.riesgo) + '</span>';
+  if (hasTrend) meta += '<span title="Encaje con tendencia">🔥 ' + trendFitLabel(fx.match) + '</span>';
+  if (brief.repetida) meta += '<span title="Repetida">😴 repetida</span>';
   return '<div class="' + cls + '" role="button" tabindex="0" data-sel="' + id + '" aria-disabled="' + (!ok || posted) + '">' +
     '<div class="rd-ico">' + postIcon(id) + '</div><div class="rd-pn">' + P.name + '</div>' +
-    '<div class="rd-meta"><span>' + (P.cost ? P.cost + ' €' : 'Gratis') + '</span><span>' + (P.cost ? 'Campaña' : 'Orgánica') + '</span><span>+' + Math.round(fx.arr * 100) + '%</span><span>+' + fx.followers + ' 👥</span>' +
-    (fx.match ? '<span title="Encaja con la tendencia">🔥</span>' : '') + (fx.fat < 1 ? '<span title="Repetida: efecto reducido">😴 −40%</span>' : '') + '</div>' +
+    '<div class="rd-meta">' + meta + '</div>' +
+    '<p class="rd-card-prom">' + brief.promesa + '</p>' +
     (!ok ? '<div class="rd-lock">🔒 ' + (P.reqTxt || 'No disponible') + '</div>' : posted ? (flashId === id || Game.upgrades.socialPost === id ? '<div class="rd-ok">✅ Publicado</div>' : '') : poor ? '<div class="rd-warn">Faltan ' + (P.cost - money) + ' €</div>' : '') + '</div>';
 }
 
@@ -35,15 +44,14 @@ function previewPanel(u, posted, c) {
   if (!sel || !POSTS[sel] || posted) return '';
   const P = POSTS[sel], money = Game.money, poor = money < P.cost, ok = P.req ? P.req() : true;
   const fx = postEffect({ id: sel, P, f: c.f, rating: c.rating, trendId: c.trendId, prevId: c.prevId });
-  let visits = 0; try { visits = Math.round(estimateCustomers() * fx.arr); } catch (e) { }
-  const mx = postMetrics({ fx, f: c.f });
+  const hasTrend = c.trendId != null;
+  const brief = postBrief({ id: sel, P, match: hasTrend ? fx.match : undefined, fat: fx.fat, prevId: c.prevId });
   return '<div class="rd-prev"><div class="rd-prev-h"><b>' + P.name + '</b><span class="rd-mut">' + P.desc + '</span></div><ul>' +
     '<li>💶 Coste: <b>' + (P.cost ? P.cost + ' €' : 'gratis') + '</b> · te quedarán <b>' + eur(money - P.cost) + '</b></li>' +
-    '<li>📈 Afluencia hoy: <b>+' + Math.round(fx.arr * 100) + '%</b>' + (visits ? ' (≈ ' + visits + ' visitas más)' : '') + '</li>' +
-      '<li>👁️ Alcance estimado: <b>≈ ' + mx.reach + '</b> personas · 💬 interacciones: <b>≈ ' + mx.interactions + '</b></li>' +
-    '<li>👥 Seguidores: <b>+' + fx.followers + '</b> esperados; el resultado final depende de cómo responda el público hoy (ahora ' + c.f + ')</li>' +
-    '<li>🏷️ Tipo: <b>' + (P.cost ? 'campaña pagada' : 'publicación orgánica') + '</b></li>' +
-    '<li>📊 Alcance ×' + fx.reach.toFixed(2).replace('.', ',') + ' · interacción ×' + fx.eng.toFixed(2).replace('.', ',') + (fx.match ? ' · encaja con la tendencia 🔥' : '') + (fx.fat < 1 ? ' · repetida: ×0,6' : '') + '</li></ul>' +
+    '<li>📣 Promesa: <b>' + brief.promesa + '</b></li>' +
+    '<li>⚖️ Riesgo: <b>' + brief.riesgo + '</b> · tendencia 🔥: <b>' + (hasTrend ? trendFitLabel(fx.match) : 'sin tendencia hoy') + '</b></li>' +
+    '<li>⛔ Si fallas: ' + brief.siFallas + '</li>' +
+    '<li>🏷️ Tipo: <b>' + (P.cost ? 'campaña pagada' : 'publicación orgánica') + '</b> · el impacto real lo veréis al cerrar la jornada</li></ul>' +
     '<div class="rd-prev-b"><button class="btn sm primary" data-post="' + sel + '" ' + (poor || !ok ? 'disabled' : '') + '>' + (poor ? 'Faltan ' + (P.cost - money) + ' €' : 'Confirmar y publicar') + '</button>' +
     '<button class="btn sm" data-selx="1">Cancelar</button></div></div>';
 }
@@ -78,19 +86,33 @@ function render(force) {
 function buzz() { try { navigator.vibrate && navigator.vibrate(25); } catch (e) { } }
 
 function afterAction(t) {
-  const k = t.dataset.post ? 'post' : 'influ';
-  if (Net.role === 'guest') { Audio.click(); setStatus('📨 Enviado al anfitrión…', ''); render(true); return; }
+  const k = t.dataset.post ? 'post' : t.dataset.influ ? 'influ' : 'resp';
+  const v = t.dataset.post || t.dataset.resp || '1';
+  if (Net.role === 'guest') {
+    Audio.click();
+    guestSend(k, k === 'influ' ? undefined : v);
+    setStatus('📨 Enviado al anfitrión…', '');
+    render(true);
+    return;
+  }
+  if (!(hostLive() || Net.role === 'solo')) return;
   const u = Game.upgrades;
+  if (k === 'resp') {
+    respond(v);
+    if (!u.socialRespondido) { Audio.bad(); buzz(); setStatus('⚠️ No se ha podido responder.', 'bad'); render(true); return; }
+    setStatus('✅ Respuesta publicada · evitáis perder seguidores por la queja', 'good');
+    setTimeout(() => Audio.good(), 130); buzz(); render(true);
+    return;
+  }
   const ok = k === 'post' ? u.socialPostDia === Game.day : !!u.socialInfluContratado;
   if (!ok) { Audio.bad(); buzz(); setStatus('⚠️ No se ha podido registrar. Revisa la caja y los requisitos.', 'bad'); render(true); return; }
-  const lastPend = (pred) => [...(u.socialPend || [])].reverse().find(pred);
   if (k === 'post') {
-    const P = POSTS[t.dataset.post], e = lastPend(x => x.post); flash(t.dataset.post); sel = null;
-    setStatus('✅ Publicado: ' + P.name + ' · +' + (e ? e.n : P.followers) + ' seguidores esperados · +' + Math.round((u.socialArr != null ? u.socialArr : P.arr) * 100) + '% afluencia hoy', 'good');
+    const P = POSTS[t.dataset.post]; flash(t.dataset.post); sel = null;
+    setStatus('✅ Publicado: ' + P.name + '. Cumplid la promesa durante la jornada.', 'good');
     if (P.cost) Audio.coin();
   } else {
-    const I = INFLU[u.socialInflu], e = lastPend(x => x.prest);
-    setStatus('✅ Colaboración cerrada con ' + I.name + ' · +' + (e ? e.n : I.followers) + ' seguidores al cierre (prestados)', 'good'); Audio.coin();
+    const I = INFLU[u.socialInflu];
+    setStatus('✅ Colaboración cerrada con ' + I.name + '.', 'good'); Audio.coin();
   }
   setTimeout(() => Audio.good(), 130); buzz(); render(true);
 }
@@ -117,7 +139,7 @@ document.addEventListener('click', e => {
     else { Audio.click(); sel = sel === id ? null : id; }
     render(true); return;
   }
-  const t = el.closest('[data-post],[data-influ]');
+  const t = el.closest('[data-post],[data-influ],[data-resp]');
   if (t && !t.disabled && t.closest('.rd')) afterAction(t);
 }, true);
 document.addEventListener('keydown', e => {
@@ -141,7 +163,7 @@ setInterval(() => { if (Net.role !== 'guest') hito(); }, 1000);
 const rdSheet = document.createElement('link');
 rdSheet.id = 'rd-style';
 rdSheet.rel = 'stylesheet';
-rdSheet.href = 'chiringo-ui-css.css?v=28.14.5';
+rdSheet.href = 'chiringo-ui-css.css?v=28.14.6';
 document.head.append(rdSheet);
 
 function captureArchive() {
@@ -167,5 +189,5 @@ setInterval(captureArchive, 500);
 
 const csSheet = document.createElement('link');
 csSheet.rel = 'stylesheet';
-csSheet.href = 'chiringo-ui-archive.css?v=28.14.5';
+csSheet.href = 'chiringo-ui-archive.css?v=28.14.6';
 document.head.append(csSheet);
