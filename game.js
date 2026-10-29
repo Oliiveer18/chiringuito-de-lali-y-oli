@@ -1,4 +1,5 @@
 import './tabguard.js?v=28.6';
+import { LABEL } from './version.js?v=29.0';
 import { EXTRA } from './icons.js?v=28.6';
 import './main.js?v=28.6';
 import './saves.js?v=28.6';
@@ -16,4 +17,4 @@ try{
   }
 }finally{window.setInterval=nativeInterval;}
 const title=document.getElementById('ver-title');
-if(title)title.textContent='v28.6 · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
+if(title)title.textContent=LABEL+' · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):'');
