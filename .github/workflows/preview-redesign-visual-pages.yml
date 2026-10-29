@@ -2,35 +2,32 @@ name: Preview rediseño v29 (Pages)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
-    paths:
-      - .github/workflows/preview-redesign-visual-pages.yml
-      - .github/preview-redesign-revision
+    branches: [project/redesign-visual]
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages-preview-redesign
+  group: preview-redesign-publish-main
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  publish-preview-on-main:
     runs-on: ubuntu-latest
-    environment: github-pages
     steps:
-      - name: Checkout main (site root)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: main
-          path: site
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve preview source revision
+      - name: Resolve redesign source SHA
         id: rev
         run: |
-          sha="$(tr -d '[:space:]' < site/.github/preview-redesign-revision)"
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/project/redesign-visual" ]; then
+            sha="${{ github.sha }}"
+          else
+            sha="$(tr -d '[:space:]' < .github/preview-redesign-revision)"
+          fi
           test -n "$sha"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
@@ -40,26 +37,28 @@ jobs:
           ref: ${{ steps.rev.outputs.sha }}
           path: preview-src
 
-      - name: Compose site with preview subfolder
+      - name: Sync preview/ on main (keep root game unchanged)
         run: |
-          rsync -a --delete --exclude='.git' preview-src/ site/preview/
-          if rg -q 'href="/|src="/|fetch\(\x27/|fetch\("/' site/preview/index.html site/preview/game.js 2>/dev/null; then
-            sed -i 's|<head>|<head>\n<base href="/chiringuito-de-lali-y-oli/preview/">|' site/preview/index.html
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            preview-src/ preview/
+          if rg -q 'href="/|src="/|fetch\(\x27/|fetch\("/' preview/index.html preview/game.js 2>/dev/null; then
+            sed -i 's|<head>|<head>\n<base href="/chiringuito-de-lali-y-oli/preview/">|' preview/index.html
           fi
-          test -f site/index.html
-          test -f site/preview/index.html
-          grep -q 'style.css?v=28.' site/index.html
-          grep -q 'style.css?v=29.1' site/preview/index.html
+          touch .nojekyll
+          echo "${{ steps.rev.outputs.sha }}" > .github/preview-redesign-revision
+          test -f index.html
+          test -f preview/index.html
+          grep -q 'style.css?v=28.' index.html
+          grep -q 'style.css?v=29.1' preview/index.html
+          ! cmp -s index.html preview/index.html
 
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - uses: actions/deploy-pages@v4
-        id: deployment
-
-      - run: |
-          echo "page_url=${{ steps.deployment.outputs.page_url }}"
-          echo "preview=${{ steps.deployment.outputs.page_url }}/preview/index.html"
+      - name: Commit and push to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add preview/ .github/preview-redesign-revision .nojekyll
+          git diff --cached --quiet && echo "No preview changes to publish" && exit 0
+          git commit -m "chore: publish preview redesign at preview/ (${{ steps.rev.outputs.sha }})"
+          git push origin HEAD:main
