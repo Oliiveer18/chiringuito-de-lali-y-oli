@@ -1575,6 +1575,32 @@ export function getPartnerMesh() {
   return partnerMesh;
 }
 
+const tripoPlaced = [];
+
+/** Añade un Object3D generado por Tripo a la escena diorama (acción explícita del jugador). */
+export function addTripoModelToScene(object3D, options = {}) {
+  if (!isInitialized || !scene || !object3D) return null;
+  const scale = options.scale ?? 1;
+  object3D.scale.setScalar(scale);
+  const x = options.x ?? 4.5;
+  const y = options.y ?? 0;
+  const z = options.z ?? -2;
+  object3D.position.set(x, y, z);
+  object3D.name = options.name || `tripo_${Date.now()}`;
+  object3D.userData.tripo = true;
+  scene.add(object3D);
+  tripoPlaced.push(object3D);
+  return object3D;
+}
+
+export function getScene3D() {
+  return scene;
+}
+
+export function listTripoModelsInScene() {
+  return tripoPlaced.slice();
+}
+
 if (typeof window !== 'undefined') {
   window.scene3D = scene;
   window.camera3D = camera;
@@ -1589,4 +1615,6 @@ if (typeof window !== 'undefined') {
   window.check3DCollision = check3DCollision;
   window.spawnCleanSparkles3D = spawnCleanSparkles3D;
   window.triggerBeerPourVFX = triggerBeerPourVFX;
+  window.addTripoModelToScene = addTripoModelToScene;
+  window.getScene3D = getScene3D;
 }

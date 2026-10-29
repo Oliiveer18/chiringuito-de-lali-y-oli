@@ -19,3 +19,8 @@ try{
 }finally{window.setInterval=nativeInterval;}
 const title=document.getElementById('ver-title');
 if(title)title.textContent=window.DEBUG?VERSION+' · activas: '+(loaded.join(', ')||'ninguna')+(failed.length?' · con error: '+failed.join(', '):''):VERSION;
+try{
+  const tripo=await import('./tripo-panel.js?v=28.16.0-vfx3d');
+  tripo.mountTripoHudButton();
+  await tripo.initTripoPanel();
+}catch(e){console.warn('Panel Tripo no cargó',e);}
