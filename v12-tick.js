@@ -1,13 +1,13 @@
 /* Reloj de la jornada social. Lo importa v12.js. */
-import { Game, Net, lvl } from './state.js?v=28.14';
-import { ITEMS } from './config.js?v=28.14';
-import { clamp } from './util.js?v=28.14';
-import { toast, updateStockbar } from './ui.js?v=28.14';
-import { netDirty } from './net.js?v=28.14';
-import { POSTS, INFLU } from './v12-posts.js?v=28.14';
-import { migrate, newDay } from './v12-day.js?v=28.14';
-import { runIncident } from './v12-actions.js?v=28.14';
-import { rt } from './v12-state.js?v=28.14';
+import { Game, Net, lvl } from './state.js?v=28.14.1';
+import { ITEMS } from './config.js?v=28.14.1';
+import { clamp } from './util.js?v=28.14.1';
+import { toast, updateStockbar } from './ui.js?v=28.14.1';
+import { netDirty } from './net.js?v=28.14.1';
+import { POSTS, INFLU } from './v12-posts.js?v=28.14.1';
+import { migrate, newDay } from './v12-day.js?v=28.14.1';
+import { runIncident } from './v12-actions.js?v=28.14.1';
+import { rt } from './v12-state.js?v=28.14.1';
 function tick(){
  migrate();
  if(Game.mode==='title'){rt.lastDay=Game.day;rt.lastT=null;return;}

@@ -1,16 +1,16 @@
-import {trackCost,operatingResult} from './bookkeeping.js?v=28.14';
-import {closeSocialDay} from './v12.js?v=28.14';
+import {trackCost,operatingResult} from './bookkeeping.js?v=28.14.1';
+import {closeSocialDay} from './v12.js?v=28.14.1';
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net,simProgressDay} from './state.js?v=28.14';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.14';
-import {Plan,toast} from './ui.js?v=28.14';
-import {refreshReportUI} from './report.js?v=28.14';
-import {netDirty} from './net.js?v=28.14';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.14';
-import {escapeHtml as E,eur} from './util.js?v=28.14';
-import * as M from './progression-model.mjs?v=28.14';
-import { iconFor } from './ui-polish.js?v=28.14';
-import { tabHtml as careerTabHtml } from './career-ui.js?v=28.14';
+import {Game,Net,simProgressDay} from './state.js?v=28.14.1';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=28.14.1';
+import {Plan,toast} from './ui.js?v=28.14.1';
+import {refreshReportUI} from './report.js?v=28.14.1';
+import {netDirty} from './net.js?v=28.14.1';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.14.1';
+import {escapeHtml as E,eur} from './util.js?v=28.14.1';
+import * as M from './progression-model.mjs?v=28.14.1';
+import { iconFor } from './ui-polish.js?v=28.14.1';
+import { tabHtml as careerTabHtml } from './career-ui.js?v=28.14.1';
 const day=()=>simProgressDay();
 const pget=()=>Game.upgrades.progression;
 let current=null,selectedArea=0,selectedTier=0,metric='cash',windowSize=30;

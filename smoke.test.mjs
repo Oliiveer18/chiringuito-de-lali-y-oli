@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.14');
-await import('./coopbridge.js?v=28.14');
-const ui = await import('./ui.js?v=28.14'), net = await import('./net.js?v=28.14'), sim = await import('./sim.js?v=28.14');
-await import('./features.js?v=28.14'); await import('./v12.js?v=28.14'); await import('./v14.js?v=28.14');
-const cfg = await import('./config.js?v=28.14');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.14.1');
+await import('./coopbridge.js?v=28.14.1');
+const ui = await import('./ui.js?v=28.14.1'), net = await import('./net.js?v=28.14.1'), sim = await import('./sim.js?v=28.14.1');
+await import('./features.js?v=28.14.1'); await import('./v12.js?v=28.14.1'); await import('./v14.js?v=28.14.1');
+const cfg = await import('./config.js?v=28.14.1');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -103,7 +103,7 @@ check('curva afluencia día1 < día10', mirrorDifficultyArrivals(1) < mirrorDiff
 check('días 1–2 sin pico mediodía', mirrorDifficultyPeak(1) === 0 && mirrorDifficultyPeak(2) === 0);
 
 console.log('Curva carrera continua (v28.13)');
-const { simProgressDay } = await import('./state.js?v=28.14');
+const { simProgressDay } = await import('./state.js?v=28.14.1');
 function mirrorRepMult(d, rep = 3.6) {
   const day = Math.max(1, Number(d) || 1);
   if (day <= 2) return 0.50 + 0.05 * (day - 1);
