@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY } from './config.js?v=28.14.3';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY } from './config.js?v=28.14.4';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -17,7 +17,7 @@ export const Game = {
 window.Game = Game;
 
 // ---------- Red (modo 2 jugadores) ----------
-export const Net = { role:'solo', me:'p1', ws:null, code:null, peer:false, names:{p1:'Jugador 1',p2:'Jugador 2'}, roles:{p1:'barra',p2:'cocina'},
+export const Net = { role:'solo', me:'p1', ws:null, code:null, peer:false, signalingReady:false, names:{p1:'Jugador 1',p2:'Jugador 2'}, roles:{p1:'barra',p2:'cocina'},
   ready:{p1:false,p2:false}, events:[], sendT:0, ui:null, planSig:'', lastMode:null, status:'', revDirty:false, lastRevSig:'', lastBody:'',
   // latencia percibida: acciones enviadas que esperan confirmación del anfitrión
   seq:0, pend:new Map(), acks:[], ackLog:[], confMs:null, readySent:false, pendTimeout:2500, pendDrop:10000 };

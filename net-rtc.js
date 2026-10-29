@@ -34,6 +34,24 @@ export function peerRtcConfig(turnConfig){
   return { iceServers: ice, iceCandidatePoolSize: 10 };
 }
 
+export const LOBBY_PREFIX = 'chiringuito-lali-oli-';
+
+export function hostPeerId(code){
+  return LOBBY_PREFIX + String(code || '').toUpperCase();
+}
+
+/** Errores PeerJS que el enlace reintenta solo; no mostrar fallo definitivo en la sala. */
+export function isTransientJoinPeerError(e){
+  const t = e && (e.type || e.message);
+  return t === 'peer-unavailable' || t === 'network' || t === 'server-error';
+}
+
+export function guestSearchStatus(cloudTry, cloudsTotal, attemptSec){
+  const srv = cloudsTotal > 1 ? ` (servidor ${cloudTry + 1}/${cloudsTotal})` : '';
+  const wait = attemptSec > 0 ? ` · ${attemptSec}s` : '';
+  return `Buscando anfitrión…${srv}${wait} Comprueba el código o espera a que pulse «Crear partida».`;
+}
+
 export function peerErrorMessage(e, role = 'guest'){
   const t = (e && (e.type || e.message)) || 'error';
   if (t === 'peer-unavailable') {

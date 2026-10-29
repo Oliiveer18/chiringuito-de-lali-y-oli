@@ -1,5 +1,5 @@
-export const VERSION='v28.14.3';
-export const LABEL='v28.14.3 · cooperativo: señalización alternativa, errores claros y TURN';
+export const VERSION='v28.14.4';
+export const LABEL='v28.14.4 · cooperativo: reintentos al unirse y mismo servidor de señalización';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

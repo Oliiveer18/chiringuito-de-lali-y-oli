@@ -1,17 +1,19 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.3';
-import { Audio } from './audio.js?v=28.14.3';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.3';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.3';
-import { showReportUI } from './report.js?v=28.14.3';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.3';
-import { onNet } from './net-sync.js?v=28.14.3';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.3';
-import { peerRtcConfig, peerErrorMessage } from './net-rtc.js?v=28.14.3';
-export { peerRtcConfig, peerErrorMessage };
+import { $ } from './util.js?v=28.14.4';
+import { Audio } from './audio.js?v=28.14.4';
+import { Game, NET_SIM, Net } from './state.js?v=28.14.4';
+import { pendingIdx, slotOf } from './sim.js?v=28.14.4';
+import { showReportUI } from './report.js?v=28.14.4';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.4';
+import { onNet } from './net-sync.js?v=28.14.4';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.4';
+import {
+  peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus
+} from './net-rtc.js?v=28.14.4';
+export { peerRtcConfig, peerErrorMessage, hostPeerId };
+
 // ---------- Red: PeerJS (WebRTC) ----------
-let peer = null, conn = null, joinGen = 0;
-const PREFIX = 'chiringuito-lali-oli-';
+let peer = null, conn = null, joinGen = 0, searchTimer = null;
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 function newCode(){ let c = ''; for (let i = 0; i < 4; i++) c += LETTERS[Math.floor(Math.random() * LETTERS.length)]; return c; }
 
@@ -19,7 +21,16 @@ const PEERJS_CLOUDS = [
   { host: '0.peerjs.com', port: 443, path: '/', secure: true },
   { host: 'peerjs-server.herokuapp.com', port: 443, path: '/', secure: true }
 ];
+const CLOUD_KEY = 'lali-oli.peerjs-cloud';
 let cloudIdx = 0;
+try {
+  const saved = parseInt(sessionStorage.getItem(CLOUD_KEY), 10);
+  if (saved >= 0 && saved < PEERJS_CLOUDS.length) cloudIdx = saved;
+} catch (e) {}
+
+function saveCloudIdx(){
+  try { sessionStorage.setItem(CLOUD_KEY, String(cloudIdx)); } catch (e) {}
+}
 
 function peerOptions(id){
   const cloud = PEERJS_CLOUDS[cloudIdx] || PEERJS_CLOUDS[0];
@@ -42,10 +53,26 @@ function connectOptions(extra = {}){
   };
 }
 
+function clearGuestSearch(){
+  if (searchTimer) { clearInterval(searchTimer); searchTimer = null; }
+}
+
+function startGuestSearch(cloudTry){
+  clearGuestSearch();
+  const started = Date.now();
+  const tick = () => {
+    const sec = Math.floor((Date.now() - started) / 1000);
+    lobbyStatus(guestSearchStatus(cloudTry, PEERJS_CLOUDS.length, sec));
+  };
+  tick();
+  searchTimer = setInterval(tick, 2000);
+}
+
 function attachConn(c, { onOpen, onFail }){
   let opened = false;
   c.on('open', () => {
     opened = true;
+    clearGuestSearch();
     onOpen && onOpen();
   });
   c.on('data', d => { try { onNet(typeof d === 'string' ? JSON.parse(d) : d); } catch (e) {} });
@@ -76,12 +103,16 @@ export function netOpen(onOpen){
   if (!window.Peer) { lobbyError('No se ha podido cargar el módulo de conexión (PeerJS). Recarga la página.'); return; }
   lobbyStatus('Conectando al servidor de señalización…');
   makePeer(null, {
-    open: () => { lobbyStatus(''); onOpen(); },
+    open: () => { saveCloudIdx(); lobbyStatus(''); onOpen(); },
     error: e => {
-      if (cloudIdx + 1 < PEERJS_CLOUDS.length) {
+      if (cloudIdx + 1 < PEERJS_CLOUDS.length && (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error')) {
         cloudIdx++;
+        saveCloudIdx();
         lobbyStatus('Reintentando con otro servidor…');
-        makePeer(null, { open: () => { lobbyStatus(''); onOpen(); }, error: () => lobbyError(peerErrorMessage(e, 'guest')) });
+        makePeer(null, {
+          open: () => { saveCloudIdx(); lobbyStatus(''); onOpen(); },
+          error: e2 => lobbyError(peerErrorMessage(e2, 'guest'))
+        });
         return;
       }
       lobbyError(peerErrorMessage(e, 'guest'));
@@ -91,10 +122,16 @@ export function netOpen(onOpen){
 
 function hostStart(attempt = 0){
   const code = newCode();
-  Net.role = 'host'; Net.me = 'p1'; Net.code = code;
+  Net.role = 'host'; Net.me = 'p1'; Net.code = code; Net.signalingReady = false;
   lobbyStatus('Creando sala…');
-  makePeer(PREFIX + code, {
-    open: () => { renderLobby(); lobbyStatus(''); },
+  const peerId = hostPeerId(code);
+  makePeer(peerId, {
+    open: () => {
+      Net.signalingReady = true;
+      saveCloudIdx();
+      renderLobby();
+      lobbyStatus('');
+    },
     connection: c => {
       conn = c;
       attachConn(c, {
@@ -108,42 +145,60 @@ function hostStart(attempt = 0){
         hostStart(attempt + 1);
         return;
       }
+      Net.signalingReady = false;
       lobbyError(peerErrorMessage(e, 'host'));
     }
   });
 }
 
-function guestJoin(code){
+function guestJoin(code, cloudTry = 0){
   Net.role = 'guest'; Net.me = 'p2'; Net.code = code;
+  cloudIdx = cloudTry;
   const gen = ++joinGen;
+  clearGuestSearch();
   lobbyStatus('Preparando conexión…');
+  const targetId = hostPeerId(code);
   makePeer(null, {
     open: () => {
       if (gen !== joinGen) return;
-      lobbyStatus('Uniendo a la partida… (entre redes distintas puede tardar hasta un minuto)');
-      conn = peer.connect(PREFIX + code, connectOptions());
+      saveCloudIdx();
+      startGuestSearch(cloudTry);
+      conn = peer.connect(targetId, connectOptions());
       attachConn(conn, {
         onOpen: () => {
+          if (gen !== joinGen) return;
           Net.peer = true;
           renderLobby();
           lobbyStatus('');
           netSend({ t: 'hello', name: Net.names.p2 });
           onNet({ t: 'peer', on: true });
         },
-        onFail: err => {
+        onFail: () => {
           if (gen !== joinGen) return;
-          lobbyError(peerErrorMessage(err || { type: 'connection-error' }, 'guest'));
+          clearGuestSearch();
+          if (cloudTry + 1 < PEERJS_CLOUDS.length) {
+            lobbyStatus('No encontrado en este servidor, probando otro…');
+            guestJoin(code, cloudTry + 1);
+            return;
+          }
+          lobbyError(peerErrorMessage({ type: 'peer-unavailable' }, 'guest'));
         }
       });
     },
     error: e => {
       if (gen !== joinGen) return;
-      if (cloudIdx + 1 < PEERJS_CLOUDS.length && (e.type === 'network' || e.type === 'server-error')) {
-        cloudIdx++;
-        lobbyStatus('Reintentando servidor…');
-        guestJoin(code);
+      if (isTransientJoinPeerError(e)) {
+        startGuestSearch(cloudTry);
         return;
       }
+      if (cloudIdx + 1 < PEERJS_CLOUDS.length && (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error')) {
+        cloudIdx++;
+        saveCloudIdx();
+        lobbyStatus('Reintentando servidor…');
+        guestJoin(code, cloudTry);
+        return;
+      }
+      clearGuestSearch();
       lobbyError(peerErrorMessage(e, 'guest'));
     }
   });
@@ -171,6 +226,8 @@ export function netDirty(){ Net.sendT = 1e9; Net.revDirty = true; }
 
 export function leaveCoop(){
   joinGen++;
+  clearGuestSearch();
+  Net.signalingReady = false;
   if (conn) { try { conn.close(); } catch (e) {} conn = null; }
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
   Net.role = 'solo'; Net.me = 'p1'; Net.code = null; Net.peer = false; Net.lastMode = null;
@@ -178,6 +235,7 @@ export function leaveCoop(){
 }
 export function goSolo(){
   joinGen++;
+  clearGuestSearch();
   if (conn) { try { conn.close(); } catch (e) {} conn = null; }
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
   Net.role = 'solo'; Net.me = 'p1'; Net.peer = false;

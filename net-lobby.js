@@ -1,10 +1,10 @@
 /* Sala, avisos y mensajes de desconexión. Lo importa net.js. */
-import { STATION_LABEL } from './config.js?v=28.14.3';
-import { $, escapeHtml } from './util.js?v=28.14.3';
-import { Audio } from './audio.js?v=28.14.3';
-import { Game, Net, hostLive, isGuest } from './state.js?v=28.14.3';
-import { hideAll, toastLocal } from './ui.js?v=28.14.3';
-import { netAct, netDirty, netOpen, netSend } from './net-link.js?v=28.14.3';
+import { STATION_LABEL } from './config.js?v=28.14.4';
+import { $, escapeHtml } from './util.js?v=28.14.4';
+import { Audio } from './audio.js?v=28.14.4';
+import { Game, Net, hostLive, isGuest } from './state.js?v=28.14.4';
+import { hideAll, toastLocal } from './ui.js?v=28.14.4';
+import { netAct, netDirty, netOpen, netSend } from './net-link.js?v=28.14.4';
 export const PINGS = { ayuda:'¡Échame una mano!', mesas:'Hay mesas sucias', genero:'Se acaba el género', bien:'¡Buen trabajo!' };
 export function sendPing(k){
   $('#ping-menu').classList.add('hidden');
@@ -26,7 +26,13 @@ export function renderLobby(){
   if(step==='host'){
     $('#lobby-code').textContent = Net.code||'····';
     $('#btn-lobby-go').disabled = !Net.peer;
-    $('#lobby-peer').innerHTML = Net.peer ? `<span class="dot on"></span><span><b>${escapeHtml(Net.names.p2)}</b> se ha unido a la partida</span>` : '<span class="dot"></span>Esperando a que tu pareja se una…';
+    if (Net.peer) {
+      $('#lobby-peer').innerHTML = `<span class="dot on"></span><span><b>${escapeHtml(Net.names.p2)}</b> se ha unido a la partida</span>`;
+    } else if (Net.signalingReady) {
+      $('#lobby-peer').innerHTML = `<span class="dot on"></span><span>Código <b>${escapeHtml(Net.code || '')}</b> activo — comparte estas 4 letras (no cierres esta pantalla)</span>`;
+    } else {
+      $('#lobby-peer').innerHTML = '<span class="dot"></span>Preparando código en la red…';
+    }
     document.querySelectorAll('#role-pick button').forEach(b=>b.classList.toggle('on', b.dataset.role===Net.roles.p1));
     $('#role-note').textContent = `${Net.names.p1}: ${STATION_LABEL[Net.roles.p1]} · ${Net.peer?Net.names.p2:'Tu pareja'}: ${STATION_LABEL[Net.roles.p2]}`;
     lobbyStatus('');
