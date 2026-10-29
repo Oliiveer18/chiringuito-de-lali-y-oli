@@ -199,7 +199,11 @@ export function drawFloorWorker(c,a,T){
   if(a.player){
     const col=WHO_COLOR[a.id]||'#ffd36b';
     c.strokeStyle=col; c.lineWidth=2.5;
+<<<<<<< HEAD
     c.beginPath(); c.ellipse(a.x,a.y,14,5,0,0,7); c.stroke();
+=======
+    c.beginPath(); c.ellipse(a.x,a.y+1,14,5,0,0,7); c.stroke();
+>>>>>>> 2488cad (v28.12: player feet on hut deck (HUT_BAR_FLOOR_Y=450))
   }
   // Bandeja con productos reales al llevar un pedido
   if(a.carry){

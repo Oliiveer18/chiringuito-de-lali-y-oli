@@ -1,6 +1,11 @@
 import {Game,Net,isCoop} from './state.js?v=28.12';
+<<<<<<< HEAD
 import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.12';
 import {HUT_BAR_FLOOR_Y} from './world.js?v=28.12';
+=======
+import {HUT_BAR_FLOOR_Y} from './world.js?v=28.12';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.12';
+>>>>>>> 2488cad (v28.12: player feet on hut deck (HUT_BAR_FLOOR_Y=450))
 import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=28.12';
 import {factor} from './professional-model.mjs?v=28.12';
 import * as M from './service-tasks.mjs?v=28.12';
