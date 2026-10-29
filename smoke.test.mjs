@@ -5,10 +5,10 @@
 import { register } from 'node:module';
 
 const STUBS = {
-  './ui.js': "export const Plan={tab:'compras'};export const toasts=[];export const toast=(t,x,k)=>{toasts.push([t,x,k]);};export const toastLocal=toast;export const updateStockbar=()=>{};export const refreshPlanMoney=()=>{};export const staffAvatar=()=>'data:x';export function renderTab(){};export function showPlan(){};export function hideAll(){};",
+  './ui.js': "export const Plan={tab:'compras'};export const toasts=[];export const toast=(t,x,k)=>{toasts.push([t,x,k]);};export const toastLocal=toast;export const updateStockbar=()=>{};export const refreshPlanMoney=()=>{};export const staffAvatar=()=>'data:x';export function renderTab(){};export function showPlan(){};export function hideAll(){};export function showFinal(){};export function updateReadyUI(){};",
   './net.js': "export const sent=[];export const netDirty=()=>{};export const netAct=o=>{sent.push(o);};",
-  './sim.js': "export const spawned=[];let n=0;export const spawnCustomer=t=>{spawned.push(t);globalThis.Game.customers.push({id:++n,type:t});};",
-  './icons.js': "export const ICON_URL={};export const EXTRA={};",
+  './sim.js': "export const spawned=[];let n=0;export const spawnCustomer=t=>{spawned.push(t);globalThis.Game.customers.push({id:++n,type:t});};export function buyStock(){};export function difficultyProfile(){return{arrivals:1,patience:1,peak:0,label:''};};export function difficultyRush(){return 1;};export function repArrivalMult(){return 1;};export function newSeason(){};export function startDay(){};",
+  './icons.js': "export const ICON_URL={};export const EXTRA={};export function rr(){};",
 };
 const hook = 'const S=' + JSON.stringify(STUBS) + ';export async function resolve(s,c,n){const base=s.split("?")[0];const stub=S[s]||S[base];if(stub)return{url:"data:text/javascript,"+encodeURIComponent(stub),shortCircuit:true};return n(s,c);}';
 register('data:text/javascript,' + encodeURIComponent(hook), import.meta.url);
@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.8');
-await import('./coopbridge.js?v=28.8');
-const ui = await import('./ui.js?v=28.8'), net = await import('./net.js?v=28.8'), sim = await import('./sim.js?v=28.8');
-await import('./features.js?v=28.8'); await import('./v12.js?v=28.8'); await import('./v14.js?v=28.8');
-const cfg = await import('./config.js?v=28.8');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.9');
+await import('./coopbridge.js?v=28.9');
+const ui = await import('./ui.js?v=28.9'), net = await import('./net.js?v=28.9'), sim = await import('./sim.js?v=28.9');
+await import('./features.js?v=28.9'); await import('./v12.js?v=28.9'); await import('./v14.js?v=28.9');
+const cfg = await import('./config.js?v=28.9');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -56,6 +56,26 @@ const stats = (o = {}) => ({ revenue: 1600, served: 45, lost: 2, tips: 5, tipsP:
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => { if (cond) { ok++; console.log('  ok  ' + name); } else { ko++; console.log('  FALLO  ' + name + (extra !== undefined ? ' → ' + JSON.stringify(extra) : '')); } };
+
+function mirrorDifficultyArrivals(day, seasonDays = cfg.SEASON_DAYS) {
+  const d = Math.max(1, Math.min(Number(day) || 1, seasonDays));
+  const t = (d - 1) / (seasonDays - 1);
+  const smooth = t * t * (3 - 2 * t);
+  if (d <= 2) return 0.38 + 0.07 * (d - 1);
+  if (d <= 7) {
+    const u = (d - 3) / 4;
+    const ramp = u * u * (3 - 2 * u);
+    return 0.50 + ramp * (0.72 - 0.50);
+  }
+  const endArrivals = 0.85 + 0.65 * smooth;
+  const u = Math.max(0, Math.min(1, (d - 7) / (seasonDays - 7)));
+  const blend = u * u * (3 - 2 * u);
+  return 0.72 + blend * (endArrivals - 0.72);
+}
+function mirrorDifficultyPeak(day, seasonDays = cfg.SEASON_DAYS) {
+  const d = Math.max(1, Math.min(Number(day) || 1, seasonDays));
+  return d <= 2 ? 0 : 0.22 * Math.max(0, Math.min(1, (d - 4) / (seasonDays - 4)));
+}
 
 // ---------- estado inicial ----------
 Game.money = 8000; Game.rep = 3.6; Game.hour = 10;
@@ -70,6 +90,8 @@ check('productos nuevos registrados', ['algodon', 'agua', 'refresco', 'helado', 
 check('bebidas nuevas cuentan como barra', ['agua', 'refresco', 'cocktail'].every(i => cfg.DRINKS.includes(i)));
 check('preferencias de clientes finitas', Object.values(cfg.TYPES).every(t => Object.values(t.pref).every(Number.isFinite)));
 check('terraza suma mesas con tope de 10', tableCount() === 5 && (Game.upgrades.mesas = 3, tableCount() === 10) && (Game.upgrades.mesas = 0, true));
+check('curva afluencia día1 < día10', mirrorDifficultyArrivals(1) < mirrorDifficultyArrivals(10), [mirrorDifficultyArrivals(1), mirrorDifficultyArrivals(10)]);
+check('días 1–2 sin pico mediodía', mirrorDifficultyPeak(1) === 0 && mirrorDifficultyPeak(2) === 0);
 
 console.log('Simulación de 15 días');
 for (let d = 1; d <= 15; d++) {

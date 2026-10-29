@@ -1,5 +1,5 @@
-export const VERSION='v28.8';
-export const LABEL='v28.8 · pulido cola/coop, Chiringo métricas, móvil portrait';
+export const VERSION='v28.9';
+export const LABEL='v28.9 · apertura suave, curva de afluencia realista';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

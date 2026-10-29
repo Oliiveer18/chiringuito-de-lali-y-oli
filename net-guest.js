@@ -1,6 +1,6 @@
 /* Acciones pendientes del invitado. Lo importa net.js. */
-import { Game, Net } from './state.js?v=28.8';
-import { netAct } from './net-link.js?v=28.8';
+import { Game, Net } from './state.js?v=28.9';
+import { netAct } from './net-link.js?v=28.9';
 export const REJECT_MSG = {
   busy:'Tu puesto ya estaba ocupado con otro pedido.',
   gone:'Ese cliente ya no esperaba el pedido.',

@@ -2,25 +2,25 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.8';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.8';
-import { ICON_URL } from './icons.js?v=28.8';
-import { Audio } from './audio.js?v=28.8';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.8';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, servable, startDay, tryServe } from './sim.js?v=28.8';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.8';
-import { canvas, toWorld } from './canvas.js?v=28.8';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.8';
-import { drawPerson } from './render.js?v=28.8';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=28.9';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=28.9';
+import { ICON_URL } from './icons.js?v=28.9';
+import { Audio } from './audio.js?v=28.9';
+import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.9';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=28.9';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=28.9';
+import { canvas, toWorld } from './canvas.js?v=28.9';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=28.9';
+import { drawPerson } from './render.js?v=28.9';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, toggleReady,
-} from './ui-plan.js?v=28.8';
+} from './ui-plan.js?v=28.9';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=28.8';
+} from './ui-service.js?v=28.9';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -98,14 +98,14 @@ export function routePlanTab(){
   const b=$('#tab-body');
   if(b){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; delete b.__mkNode; }
   renderForecast();
-  if(Plan.tab==='show') import('./features.js?v=28.8').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
-  else if(Plan.tab==='red') import('./v12-ui.js?v=28.8').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
+  if(Plan.tab==='show') import('./features.js?v=28.9').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
+  else if(Plan.tab==='red') import('./v12-ui.js?v=28.9').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
   document.dispatchEvent(new Event('plan-tab-repaint'));
 }
 export function estimateCustomers(){
   const w=WEATHER[weatherToday()]; let tot=0;
   for(let h=10;h<closeHour();h++) tot+=8*(HOUR_CURVE[h]||0.6)*((difficultyRush(h+0.25)+difficultyRush(h+0.75))/2);
-  tot*= w.arr*(0.35+Game.rep/5*0.95)*(lvl('redes')?1.15:1)*(isWeekend(Game.day)?1.25:1)*(SPECIAL_DAYS[Game.day]?SPECIAL_DAYS[Game.day].arr:1)*difficultyProfile().arrivals;
+  tot*= w.arr*repArrivalMult()*(lvl('redes')?1.15:1)*(isWeekend(Game.day)?1.25:1)*(SPECIAL_DAYS[Game.day]?SPECIAL_DAYS[Game.day].arr:1)*difficultyProfile().arrivals;
   if(lvl('sombrillas') && (weatherToday()==='sol'||weatherToday()==='calima')) tot*=1.15;
   if(isCoop()) tot*=1.4;
   return tot;

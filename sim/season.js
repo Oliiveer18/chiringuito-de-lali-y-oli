@@ -1,21 +1,21 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { ITEMS } from "../config.js?v=28.8";
-import { ITEM_IDS } from "../config.js?v=28.8";
-import { REGULARS } from "../config.js?v=28.8";
-import { SEASON_DAYS } from "../config.js?v=28.8";
-import { SPECIAL_DAYS } from "../config.js?v=28.8";
-import { START_MONEY } from "../config.js?v=28.8";
-import { clamp } from "../util.js?v=28.8";
-import { pickW } from "../util.js?v=28.8";
-import { rnd } from "../util.js?v=28.8";
-import { Audio } from "../audio.js?v=28.8";
-import { Game } from "../state.js?v=28.8";
-import { closeHour } from "../state.js?v=28.8";
-import { setTimeoutGame } from "../state.js?v=28.8";
-import { buildTables } from "../world.js?v=28.8";
-import { toast } from "../ui.js?v=28.8";
-import { updateStockbar } from "../ui.js?v=28.8";
-import { spawnCustomer } from "./customers.js?v=28.8";
+import { ITEMS } from "../config.js?v=28.9";
+import { ITEM_IDS } from "../config.js?v=28.9";
+import { REGULARS } from "../config.js?v=28.9";
+import { SEASON_DAYS } from "../config.js?v=28.9";
+import { SPECIAL_DAYS } from "../config.js?v=28.9";
+import { START_MONEY } from "../config.js?v=28.9";
+import { clamp } from "../util.js?v=28.9";
+import { pickW } from "../util.js?v=28.9";
+import { rnd } from "../util.js?v=28.9";
+import { Audio } from "../audio.js?v=28.9";
+import { Game } from "../state.js?v=28.9";
+import { closeHour } from "../state.js?v=28.9";
+import { setTimeoutGame } from "../state.js?v=28.9";
+import { buildTables } from "../world.js?v=28.9";
+import { toast } from "../ui.js?v=28.9";
+import { updateStockbar } from "../ui.js?v=28.9";
+import { spawnCustomer } from "./customers.js?v=28.9";
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -32,19 +32,45 @@ export function newSeason(){
   buildTables();
 }
 
+/** Reputation influence on spawn mult; soft opening days 1–2, ramp days 3–4. */
+export function repArrivalMult(day=Game.day, rep=Game.rep){
+  const d=clamp(Number(day)||1,1,SEASON_DAYS);
+  if(d<=2) return 0.25+0.15*(d-1);
+  const full=0.35+rep/5*0.95;
+  if(d<=4){
+    const t=(d-3)/(4-3);
+    const soft=0.40;
+    return soft+t*(full-soft);
+  }
+  return full;
+}
+
 export function difficultyProfile(day=Game.day){
   const d=clamp(Number(day)||1,1,SEASON_DAYS);
   const t=(d-1)/(SEASON_DAYS-1);
   const smooth=t*t*(3-2*t);
   const late=clamp((d-8)/(SEASON_DAYS-8),0,1);
+  let arrivals;
+  if(d<=2) arrivals=0.38+0.07*(d-1);
+  else if(d<=7){
+    const u=(d-3)/4;
+    const ramp=u*u*(3-2*u);
+    arrivals=0.50+ramp*(0.72-0.50);
+  } else {
+    const endArrivals=0.85+0.65*smooth;
+    const u=clamp((d-7)/(SEASON_DAYS-7),0,1);
+    const blend=u*u*(3-2*u);
+    arrivals=0.72+blend*(endArrivals-0.72);
+  }
+  const peak=d<=2?0:0.22*clamp((d-4)/(SEASON_DAYS-4),0,1);
   return {
-    label:d<=3?'Aprendizaje':d<=9?'Rodaje':d<=17?'Exigente':d<=24?'Hora de demostrar':'Recta final',
-    arrivals:0.85+0.65*smooth,
+    label:d<=2?'Apertura suave':d<=3?'Aprendizaje':d<=9?'Rodaje':d<=17?'Exigente':d<=24?'Hora de demostrar':'Recta final',
+    arrivals,
     patience:1.15-0.27*smooth,
     doubleBonus:-0.12+0.27*smooth,
     mixedChance:0.30+0.35*smooth,
     tripleChance:0.18*late*late,
-    peak:0.22*clamp((d-4)/(SEASON_DAYS-4),0,1)
+    peak
   };
 }
 

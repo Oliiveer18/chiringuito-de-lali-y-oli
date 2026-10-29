@@ -2,9 +2,9 @@
 globalThis.window = globalThis;
 const store = {};
 globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
-const { Game } = await import('./state.js?v=28.8');
-const cfg = await import('./config.js?v=28.8');
-const C = await import('./career.js?v=28.8');
+const { Game } = await import('./state.js?v=28.9');
+const cfg = await import('./config.js?v=28.9');
+const C = await import('./career.js?v=28.9');
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => { if (cond) { ok++; console.log('  ok  ' + name); } else { ko++; console.log('  FALLO  ' + name + (extra !== undefined ? ' → ' + JSON.stringify(extra) : '')); } };

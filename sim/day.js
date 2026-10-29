@@ -1,64 +1,65 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { beginLedgerDay } from "../bookkeeping.js?v=28.8";
-import { initFloor } from "../floor-service.js?v=28.8";
-import { updateFloor } from "../floor-service.js?v=28.8";
-import { updateFloorCustomer } from "../floor-service.js?v=28.8";
-import { floorHasWork } from "../floor-service.js?v=28.8";
-import { abortFloor } from "../floor-service.js?v=28.8";
-import { ANGER_MIN_STAGE } from "../config.js?v=28.8";
-import { DRINKS } from "../config.js?v=28.8";
-import { HOUR_CURVE } from "../config.js?v=28.8";
-import { PERSONALITIES } from "../config.js?v=28.8";
-import { SEC_PER_HOUR } from "../config.js?v=28.8";
-import { SPECIAL_DAYS } from "../config.js?v=28.8";
-import { W } from "../config.js?v=28.8";
-import { WAIT_TABLE_MAX } from "../config.js?v=28.8";
-import { WEATHER } from "../config.js?v=28.8";
-import { rand } from "../util.js?v=28.8";
-import { rnd } from "../util.js?v=28.8";
-import { Audio } from "../audio.js?v=28.8";
-import { startBeach } from "../beach.js?v=28.8";
-import { updateBeach } from "../beach.js?v=28.8";
-import { Game } from "../state.js?v=28.8";
-import { Net } from "../state.js?v=28.8";
-import { closeHour } from "../state.js?v=28.8";
-import { gameTimers } from "../state.js?v=28.8";
-import { isCoop } from "../state.js?v=28.8";
-import { isWeekend } from "../state.js?v=28.8";
-import { lvl } from "../state.js?v=28.8";
-import { weatherToday } from "../state.js?v=28.8";
-import { QUEUE_POS } from "../world.js?v=28.8";
-import { buildTables } from "../world.js?v=28.8";
-import { navSetTarget } from "../nav.js?v=28.8";
-import { navStep } from "../nav.js?v=28.8";
-import { endDay } from "../report.js?v=28.8";
-import { recordVisit } from "../report.js?v=28.8";
-import { setSpeed } from "../ui.js?v=28.8";
-import { showServiceUI } from "../ui.js?v=28.8";
-import { toast } from "../ui.js?v=28.8";
-import { updateHud } from "../ui.js?v=28.8";
-import { RANDOM_EVENTS } from "./season.js?v=28.8";
-import { abandonFloor } from "./service.js?v=28.8";
-import { addSat } from "./economy.js?v=28.8";
-import { commitClean } from "./service.js?v=28.8";
-import { completeFloorOrder } from "./service.js?v=28.8";
-import { difficultyProfile } from "./season.js?v=28.8";
-import { difficultyRush } from "./season.js?v=28.8";
-import { finishSlot } from "./service.js?v=28.8";
-import { giveUpPending } from "./service.js?v=28.8";
-import { leaveQueue } from "./customers.js?v=28.8";
-import { payAndGo } from "./service.js?v=28.8";
-import { payAndSeat } from "./service.js?v=28.8";
-import { pendingIdx } from "./orders.js?v=28.8";
-import { regularOutcome } from "./customers.js?v=28.8";
-import { scheduleRegulars } from "./customers.js?v=28.8";
-import { spawnCustomer } from "./customers.js?v=28.8";
-import { startPart } from "./service.js?v=28.8";
+import { beginLedgerDay } from "../bookkeeping.js?v=28.9";
+import { initFloor } from "../floor-service.js?v=28.9";
+import { updateFloor } from "../floor-service.js?v=28.9";
+import { updateFloorCustomer } from "../floor-service.js?v=28.9";
+import { floorHasWork } from "../floor-service.js?v=28.9";
+import { abortFloor } from "../floor-service.js?v=28.9";
+import { ANGER_MIN_STAGE } from "../config.js?v=28.9";
+import { DRINKS } from "../config.js?v=28.9";
+import { HOUR_CURVE } from "../config.js?v=28.9";
+import { PERSONALITIES } from "../config.js?v=28.9";
+import { SEC_PER_HOUR } from "../config.js?v=28.9";
+import { SPECIAL_DAYS } from "../config.js?v=28.9";
+import { W } from "../config.js?v=28.9";
+import { WAIT_TABLE_MAX } from "../config.js?v=28.9";
+import { WEATHER } from "../config.js?v=28.9";
+import { rand } from "../util.js?v=28.9";
+import { rnd } from "../util.js?v=28.9";
+import { Audio } from "../audio.js?v=28.9";
+import { startBeach } from "../beach.js?v=28.9";
+import { updateBeach } from "../beach.js?v=28.9";
+import { Game } from "../state.js?v=28.9";
+import { Net } from "../state.js?v=28.9";
+import { closeHour } from "../state.js?v=28.9";
+import { gameTimers } from "../state.js?v=28.9";
+import { isCoop } from "../state.js?v=28.9";
+import { isWeekend } from "../state.js?v=28.9";
+import { lvl } from "../state.js?v=28.9";
+import { weatherToday } from "../state.js?v=28.9";
+import { QUEUE_POS } from "../world.js?v=28.9";
+import { buildTables } from "../world.js?v=28.9";
+import { navSetTarget } from "../nav.js?v=28.9";
+import { navStep } from "../nav.js?v=28.9";
+import { endDay } from "../report.js?v=28.9";
+import { recordVisit } from "../report.js?v=28.9";
+import { setSpeed } from "../ui.js?v=28.9";
+import { showServiceUI } from "../ui.js?v=28.9";
+import { toast } from "../ui.js?v=28.9";
+import { updateHud } from "../ui.js?v=28.9";
+import { RANDOM_EVENTS } from "./season.js?v=28.9";
+import { abandonFloor } from "./service.js?v=28.9";
+import { addSat } from "./economy.js?v=28.9";
+import { commitClean } from "./service.js?v=28.9";
+import { completeFloorOrder } from "./service.js?v=28.9";
+import { difficultyProfile } from "./season.js?v=28.9";
+import { difficultyRush } from "./season.js?v=28.9";
+import { repArrivalMult } from "./season.js?v=28.9";
+import { finishSlot } from "./service.js?v=28.9";
+import { giveUpPending } from "./service.js?v=28.9";
+import { leaveQueue } from "./customers.js?v=28.9";
+import { payAndGo } from "./service.js?v=28.9";
+import { payAndSeat } from "./service.js?v=28.9";
+import { pendingIdx } from "./orders.js?v=28.9";
+import { regularOutcome } from "./customers.js?v=28.9";
+import { scheduleRegulars } from "./customers.js?v=28.9";
+import { spawnCustomer } from "./customers.js?v=28.9";
+import { startPart } from "./service.js?v=28.9";
 
 export function servable(c){return c&&(['floorWaitEscort','floorMenu','floorReady'].includes(c.state)||(['queue','prep','floorWaitingPrep'].includes(c.state)&&pendingIdx(c).length>0));}
 
 export function startDay(){
-  Game.mode='service'; Game.hour=10; Game.closing=false; Game.closeT=0; Game.spawnAcc=0;
+  Game.mode='service'; Game.hour=10; Game.closing=false; Game.closeT=0; Game.spawnAcc=0; Game.spawnThrottleUntil=0;
   Game.customers=[]; Game.floaters=[]; Game.mods={arr:1};
   Game.dayEvent = SPECIAL_DAYS[Game.day]||null;
   Game.eventDone = rnd()>0.45; Game.eventHour = rand(11.5,17.5);
@@ -92,7 +93,7 @@ export function update(dt){
   if(!Game.closing){
     Game.hour += dt/SEC_PER_HOUR;
     const w=WEATHER[weatherToday()];
-    let mult = w.arr*(0.35+Game.rep/5*0.95)*Game.mods.arr;
+    let mult = w.arr*repArrivalMult()*Game.mods.arr;
     if(lvl('sombrillas')&&(weatherToday()==='sol'||weatherToday()==='calima')) mult*=1.15;
     if(lvl('redes')) mult*=1.15;
     if(isWeekend(Game.day)) mult*=1.25;
@@ -102,10 +103,14 @@ export function update(dt){
     rate*=difficultyProfile().arrivals*difficultyRush(Game.hour);
     if(isCoop()) rate*=1.4;
     rate*=1+0.12*(Game.buzz||0);
+    if(Game.day<=2) rate=Math.min(rate,14);
+    const counterQueue=Game.customers.filter(c=>['arrive','queue','prep'].includes(c.state)).length;
+    if(counterQueue>=4) Game.spawnThrottleUntil=Math.max(Game.spawnThrottleUntil||0, Game.t+45);
+    if(Game.spawnThrottleUntil && Game.t<Game.spawnThrottleUntil) rate*=0.5;
     rate=Math.min(rate,30);
     Game.spawnAcc += rate*dt/SEC_PER_HOUR;
     while(Game.spawnAcc>=1){ Game.spawnAcc-=1; spawnCustomer(); }
-    if(!Game.eventDone && Game.hour>=Game.eventHour){ Game.eventDone=true; let e=RANDOM_EVENTS[0]; const tot=RANDOM_EVENTS.reduce((s,e)=>s+e.w,0); let r=rnd()*tot; for(const ev of RANDOM_EVENTS){ r-=ev.w; if(r<=0){e=ev;break;} } e.run(); }
+    if(!Game.eventDone && Game.hour>=Game.eventHour && Game.day>2){ Game.eventDone=true; let e=RANDOM_EVENTS[0]; const tot=RANDOM_EVENTS.reduce((s,e)=>s+e.w,0); let r=rnd()*tot; for(const ev of RANDOM_EVENTS){ r-=ev.w; if(r<=0){e=ev;break;} } e.run(); }
     if(Game.hour>=closeHour()){ Game.hour=closeHour(); beginClosing(); }
     if(Math.floor(prevHour)!==Math.floor(Game.hour)) updateHud();
   } else {
