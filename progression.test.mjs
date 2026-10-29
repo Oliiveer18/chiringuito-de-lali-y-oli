@@ -14,7 +14,9 @@ for(let d=1;d<=500;d++){
   assert.equal(new Set(rows.map(x=>x.id)).size,30);
   assert.equal(rows.filter(x=>x.id==='player').length,1);
  }
- const before=p.league,reviewBefore=p.rivals?.reviewDay??d;p=M.review(p,d);assert(p.league>=0&&p.league<=2);if(d-reviewBefore<7)assert.equal(p.league,before);
+ const before=p.league;p=M.review(p,d);assert(p.league>=0&&p.league<=2);
+ // Liga solo se recalcula en cierres semanales (d%7===0); el resto de días review es no-op.
+ if(d%7!==0) assert.equal(p.league,before);
  assert.deepEqual(p,JSON.parse(JSON.stringify(p)));
 }
 assert.equal(p.history.length,120);assert.equal(p.streaks.clean,500);

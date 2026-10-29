@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.10');
-await import('./coopbridge.js?v=28.10');
-const ui = await import('./ui.js?v=28.10'), net = await import('./net.js?v=28.10'), sim = await import('./sim.js?v=28.10');
-await import('./features.js?v=28.10'); await import('./v12.js?v=28.10'); await import('./v14.js?v=28.10');
-const cfg = await import('./config.js?v=28.10');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.11');
+await import('./coopbridge.js?v=28.11');
+const ui = await import('./ui.js?v=28.11'), net = await import('./net.js?v=28.11'), sim = await import('./sim.js?v=28.11');
+await import('./features.js?v=28.11'); await import('./v12.js?v=28.11'); await import('./v14.js?v=28.11');
+const cfg = await import('./config.js?v=28.11');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };

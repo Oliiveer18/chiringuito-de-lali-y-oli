@@ -1,12 +1,30 @@
-import { scheduleViewportResize, view } from './canvas.js?v=28.10';
-import { W, H } from './config.js?v=28.10';
-import { Game } from './state.js?v=28.10';
+import { scheduleViewportResize, view } from './canvas.js?v=28.11';
+import { W, H } from './config.js?v=28.11';
+import { Game } from './state.js?v=28.11';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 const CAM_SPAN=700,CAM_CX={barra:290,mesas:930};
 const cam={mode:'todo'};
 try{const m=sessionStorage.getItem('lali-oli.cam');if(m==='barra'||m==='mesas')cam.mode=m;}catch(e){}
-function applyCam(){
+let camInputsKey='';
+function camInputsKeyNow(){
+  const b=document.body,vp=window.visualViewport;
+  return [
+    cam.mode,
+    b.classList.contains('portrait')?1:0,
+    b.classList.contains('playing')?1:0,
+    uiTop,
+    uiBottom,
+    view.dpr||1,
+    vp?vp.width:innerWidth,
+    vp?vp.height:innerHeight,
+    Game.mode||'',
+  ].join('|');
+}
+function applyCam(force){
+  const key=camInputsKeyNow();
+  if(!force&&key===camInputsKey)return;
+  camInputsKey=key;
   const b=document.body;
   if(!(b.classList.contains('portrait')&&b.classList.contains('playing')&&CAM_CX[cam.mode]!=null))return;
   const vp=window.visualViewport,width=vp?vp.width:innerWidth,height=vp?vp.height:innerHeight,dpr=view.dpr||1;
@@ -21,7 +39,7 @@ function place(){
   if(k===lastScene)return;lastScene=k;
   root.style.setProperty('--scene-top',top+'px');root.style.setProperty('--scene-bottom',(top+H*s)+'px');root.style.setProperty('--scene-w',sw+'px');
 }
-function refresh(){scheduleViewportResize();requestAnimationFrame(()=>{applyCam();place();});}
+function refresh(){scheduleViewportResize();requestAnimationFrame(()=>{applyCam(true);place();});}
 function measure(){
   for(const [id,key]of [['hud','--top-ui'],['stockbar','--bottom-ui']]){
     const e=document.getElementById(id),v=e&&e.getClientRects().length?e.getBoundingClientRect().height:0;
@@ -48,8 +66,9 @@ setCam(cam.mode);
 if(window.ResizeObserver){const observer=new ResizeObserver(measure);for(const id of ['hud','stockbar'])observer.observe(document.getElementById(id));}
 window.addEventListener('resize',measure);window.addEventListener('orientationchange',measure);
 measure();
-(function loop(){applyCam();requestAnimationFrame(loop);})();
+if(window.visualViewport)visualViewport.addEventListener('resize',()=>{applyCam(true);place();});
 setInterval(()=>{
+  applyCam();
   place();
   const n=(Game.tables||[]).filter(t=>t.state==='dirty').length,el=bar.querySelector('.cam-badge');
   if(el){const v=cam.mode==='mesas'||!n?'':String(n);if(el.textContent!==v)el.textContent=v;}

@@ -1,21 +1,21 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { ITEMS } from "../config.js?v=28.10";
-import { ITEM_IDS } from "../config.js?v=28.10";
-import { REGULARS } from "../config.js?v=28.10";
-import { SEASON_DAYS } from "../config.js?v=28.10";
-import { SPECIAL_DAYS } from "../config.js?v=28.10";
-import { START_MONEY } from "../config.js?v=28.10";
-import { clamp } from "../util.js?v=28.10";
-import { pickW } from "../util.js?v=28.10";
-import { rnd } from "../util.js?v=28.10";
-import { Audio } from "../audio.js?v=28.10";
-import { Game } from "../state.js?v=28.10";
-import { closeHour } from "../state.js?v=28.10";
-import { setTimeoutGame } from "../state.js?v=28.10";
-import { buildTables } from "../world.js?v=28.10";
-import { toast } from "../ui.js?v=28.10";
-import { updateStockbar } from "../ui.js?v=28.10";
-import { spawnCustomer } from "./customers.js?v=28.10";
+import { ITEMS } from "../config.js?v=28.11";
+import { ITEM_IDS } from "../config.js?v=28.11";
+import { REGULARS } from "../config.js?v=28.11";
+import { SEASON_DAYS } from "../config.js?v=28.11";
+import { SPECIAL_DAYS } from "../config.js?v=28.11";
+import { START_MONEY } from "../config.js?v=28.11";
+import { clamp } from "../util.js?v=28.11";
+import { pickW } from "../util.js?v=28.11";
+import { rnd } from "../util.js?v=28.11";
+import { Audio } from "../audio.js?v=28.11";
+import { Game } from "../state.js?v=28.11";
+import { closeHour } from "../state.js?v=28.11";
+import { setTimeoutGame } from "../state.js?v=28.11";
+import { buildTables } from "../world.js?v=28.11";
+import { toast } from "../ui.js?v=28.11";
+import { updateStockbar } from "../ui.js?v=28.11";
+import { spawnCustomer } from "./customers.js?v=28.11";
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});

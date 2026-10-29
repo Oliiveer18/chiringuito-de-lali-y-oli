@@ -1,11 +1,11 @@
 /* v14: clima cambiante, nuevos productos, reservas, misiones, Chiringo por stock real, shows con público e informe del día. v20: los cambios de seguidores pasan por el balance. */
-import { Game, setTimeoutGame, weatherToday } from './state.js?v=28.10';
-import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js?v=28.10';
-import { rnd, clamp } from './util.js?v=28.10';
-import { Plan, toast } from './ui.js?v=28.10';
-import { netDirty } from './net.js?v=28.10';
-import { spawnCustomer } from './sim.js?v=28.10';
-import { ICON_URL } from './icons.js?v=28.10';
+import { Game, setTimeoutGame, weatherToday } from './state.js?v=28.11';
+import { ITEMS, ITEM_IDS, UPGRADES, TYPES, DRINKS, WEATHER } from './config.js?v=28.11';
+import { rnd, clamp } from './util.js?v=28.11';
+import { Plan, toast } from './ui.js?v=28.11';
+import { netDirty } from './net.js?v=28.11';
+import { spawnCustomer } from './sim.js?v=28.11';
+import { ICON_URL } from './icons.js?v=28.11';
 
 /* --- Productos nuevos --- */
 ITEMS.agua={name:'Agua fría',cost:0.3,ref:1.5,prep:0.2,spoil:0,spoilF:0,unlock:'refrescos'};
