@@ -1,1 +1,75 @@
-/* placeholder - will fix */
+/* =========================================================
+   Chiringuito de Lali y Oli · Design Tokens v28.15
+   Identidad «cartel de chiringuito canario»
+   Una sola fuente de verdad: paleta, tipografía, espaciado,
+   radios y sombras. Se importa antes que cualquier otra hoja.
+   ========================================================= */
+
+:root {
+  /* ── Paleta principal ── */
+  --teal:    #0f8b8d;
+  --teal-d:  #0b5f63;
+  --teal-dd: #083f43;
+  --coral:   #e8603c;
+  --coral-d: #c84a29;
+  --gold:    #f5b82e;
+
+  /* ── Fondos y papel ── */
+  --sand:   #fbf3e2;
+  --sand-2: #f6e8cf;
+  --paper:  #fffdf8;
+  --line:   #eadfc9;
+  --line-2: #d8cbb2;
+
+  /* ── Tinta ── */
+  --ink:   #2a2118;
+  --ink-2: #6b5c48;
+
+  /* ── Semáforo ── */
+  --good: #3f8a3a;
+  --bad:  #c73e2a;
+  --warn: #d98a12;
+
+  /* ── Sombras ── */
+  --sh-1: 0 1px 2px rgba(42,33,24,.10), 0 2px 8px rgba(42,33,24,.08);
+  --sh-2: 0 10px 30px rgba(8,63,67,.28), 0 2px 6px rgba(8,63,67,.18);
+
+  /* ── Tipografía ── */
+  --font:   'Satoshi', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-d: 'Chillax', 'Satoshi', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* ── Espaciado base ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  /* ── Radios ── */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+  --r-2xl: 24px;
+  --r-pill: 9999px;
+
+  /* ── Zonas de juego (layout.js las actualiza dinámicamente) ── */
+  --game-width:      100vw;
+  --game-height:     100vh;
+  --game-left:       0px;
+  --game-top:        0px;
+  --game-safe-left:  env(safe-area-inset-left,  0px);
+  --game-safe-right: env(safe-area-inset-right, 0px);
+
+  /* ── Safe areas iPhone ── */
+  --sl: env(safe-area-inset-left,   0px);
+  --sr: env(safe-area-inset-right,  0px);
+  --st: env(safe-area-inset-top,    0px);
+  --sb: env(safe-area-inset-bottom, 0px);
+
+  /* ── Escena del juego (v9/layout.js las actualiza) ── */
+  --scene-top:    0px;
+  --scene-bottom: 0px;
+  --scene-w:      100vw;
+}
