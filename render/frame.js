@@ -45,11 +45,11 @@ export function render(){
   c.fillStyle=g; c.fillRect(0,0,canvas.width,view.oy+332*view.s);
   // banda de mar a todo el ancho con el mismo gradiente que drawSea
   let gs=c.createLinearGradient(0,view.oy+330*view.s,0,view.oy+425*view.s);
-  gs.addColorStop(0,mixColor('#1f8fb0','#2b2f5a',nt)); gs.addColorStop(1,mixColor('#2ec2c4','#2b4a6a',nt));
+  gs.addColorStop(0,mixColor('#0f8b8d','#2b2f5a',nt)); gs.addColorStop(1,mixColor('#15a8aa','#2b4a6a',nt));
   c.fillStyle=gs; c.fillRect(0,view.oy+330*view.s,canvas.width,(425-330)*view.s);
   // arena a todo el ancho con el mismo gradiente que la arena del mundo
   let ga=c.createLinearGradient(0,view.oy+420*view.s,0,view.oy+H*view.s);
-  ga.addColorStop(0,mixColor('#5a4e48','#2a2430',nt)); ga.addColorStop(1,mixColor('#2e2826','#1a1618',nt));
+  ga.addColorStop(0,mixColor('#625548','#2a2430',nt)); ga.addColorStop(1,mixColor('#322922','#1a1618',nt));
   c.fillStyle=ga; c.fillRect(0,view.oy+420*view.s,canvas.width,Math.max(0,canvas.height-(view.oy+420*view.s)));
   c.setTransform(view.s,0,0,view.s,view.ox,view.oy);
   const T=Game.t;
@@ -72,7 +72,7 @@ export function render(){
   // mar
   drawSea(c,T,h,nt,wind,sunX);
   // arena
-  g=c.createLinearGradient(0,420,0,H); g.addColorStop(0,mixColor('#5a4e48','#2a2430',nt)); g.addColorStop(1,mixColor('#2e2826','#1a1618',nt));
+  g=c.createLinearGradient(0,420,0,H); g.addColorStop(0,mixColor('#625548','#2a2430',nt)); g.addColorStop(1,mixColor('#322922','#1a1618',nt));
   c.fillStyle=g; c.fillRect(-400,420,W+800,H-420+300);
   c.fillStyle='rgba(255,255,255,.06)'; for(let i=0;i<120;i++){ const x=(i*97.3)%W, y=430+((i*53.7)%290); c.fillRect(x,y,2,1); }
   // espuma de orilla

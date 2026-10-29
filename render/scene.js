@@ -66,7 +66,7 @@ export function drawClouds(c,T,weather,nt,wind){
 
 export function drawSea(c,T,h,nt,wind,sunX){
   const g=c.createLinearGradient(0,330,0,425);
-  g.addColorStop(0,mixColor('#1f8fb0','#2b2f5a',nt)); g.addColorStop(1,mixColor('#2ec2c4','#2b4a6a',nt));
+  g.addColorStop(0,mixColor('#0f8b8d','#2b2f5a',nt)); g.addColorStop(1,mixColor('#15a8aa','#2b4a6a',nt));
   c.fillStyle=g; c.fillRect(-400,330,W+800,95);
   c.strokeStyle='rgba(255,255,255,.35)'; c.lineWidth=2;
   for(let r=0;r<5;r++){ const y=345+r*17; c.beginPath(); for(let x=-400;x<=W+400;x+=16){ const yy=y+Math.sin(x*0.03+T*(1+r*0.2)*wind+r)*2*(1+r*0.3)*wind; x===-400?c.moveTo(x,yy):c.lineTo(x,yy);} c.stroke(); }
@@ -111,7 +111,7 @@ export function drawHut(c,T,h,nt,wind){
   for(let i=0;i<34;i++){ const x=24+i*14.5; c.beginPath(); c.moveTo(x,248); c.lineTo(x+sway+(i%2?4:-2),268+(i%3)*4); c.stroke(); }
   c.fillStyle=mixColor('#b2864a','#4b3a2e',nt*0.7); for(let i=0;i<34;i++){ const x=22+i*14.5; c.beginPath(); c.moveTo(x,246); c.lineTo(x+7+sway,266+(i%3)*5); c.lineTo(x+14,246); c.fill(); }
   // cartel: la fuente se ajusta al ancho del tablero con margen interior
-  c.fillStyle=woodD; rr(c,150,186,240,48,8); c.fill(); c.fillStyle=mixColor('#f1d9a8','#806a56',nt*0.5); rr(c,156,192,228,36,6); c.fill();
+  c.fillStyle=woodD; rr(c,150,186,240,48,8); c.fill(); c.fillStyle=mixColor('#fbf3e2','#806a56',nt*0.5); rr(c,156,192,228,36,6); c.fill();
   c.fillStyle='#2a211c'; c.textAlign='center';
   { const txt='EL CHARCO AZUL', maxW=196; // 228 - 2·16 de margen interior
     let fs=26; c.font='700 '+fs+'px Chillax, sans-serif';

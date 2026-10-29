@@ -418,6 +418,134 @@
 .eyebrow{font-size:var(--type-eyebrow)}
 .lead{font-size:var(--type-body)}
 
+/* ---------- Pantalla final · cartel de temporada ---------- */
+#final .screen{
+  background:
+    radial-gradient(ellipse 85% 65% at 50% -10%,rgba(245,184,46,.32),transparent 52%),
+    radial-gradient(ellipse 55% 45% at 95% 15%,rgba(232,96,60,.2),transparent 48%),
+    radial-gradient(ellipse 70% 50% at 5% 88%,rgba(15,139,141,.32),transparent 55%),
+    linear-gradient(168deg,#0a5c62 0%,#064248 45%,var(--surface-deep) 100%);
+}
+#final .screen.center{position:relative}
+#final .final-card{
+  position:relative;z-index:1;
+  width:min(580px,100%);
+  padding:clamp(26px,5vw,38px) clamp(22px,4vw,34px);
+  text-align:center;
+  border-radius:var(--radius-sheet);
+  background:linear-gradient(180deg,var(--surface-paper) 0%,var(--surface-sand) 100%);
+  border:1px solid var(--line-2);
+  box-shadow:var(--sh-sheet);
+  overflow:hidden;
+  animation:sheet-rise var(--motion-ui) ease both;
+}
+#final .final-card::before{
+  content:"";
+  position:absolute;left:0;right:0;top:0;height:5px;
+  background:linear-gradient(90deg,var(--accent-coral),var(--accent-sun) 42%,var(--accent-sea));
+}
+#final .final-card .eyebrow{
+  color:var(--accent-sea);
+  letter-spacing:.16em;
+  margin:0 0 6px;
+}
+#final .final-card h1{
+  font-size:var(--type-display);
+  line-height:1.05;
+  letter-spacing:-.025em;
+  color:var(--accent-sea-deep);
+  margin:0 0 12px;
+}
+#final .final-card .lead{
+  max-width:44ch;margin:0 auto 20px;
+  color:var(--ink-2);
+  line-height:1.55;
+}
+#final .final-stats{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+  margin:0 0 26px;text-align:left;
+}
+#final .final-stats>div{
+  padding:14px 16px 14px 18px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:var(--surface-paper);
+  box-shadow:0 2px 10px rgba(8,63,67,.06);
+  border-left:4px solid var(--accent-sea);
+}
+#final .final-stats>div:nth-child(2){border-left-color:var(--accent-coral)}
+#final .final-stats>div:nth-child(3){border-left-color:var(--accent-sun)}
+#final .final-stats>div:nth-child(4){border-left-color:var(--good)}
+#final .final-stats .k{
+  font-size:var(--type-eyebrow);font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);
+}
+#final .final-stats .v{
+  font:600 var(--type-kpi)/1.2 var(--font-d);
+  font-variant-numeric:tabular-nums;color:var(--ink);
+  margin-top:4px;
+}
+#final .final-card .btn.primary.big{
+  min-width:min(100%,280px);
+  box-shadow:var(--sh-glow-coral);
+}
+#final .final-card .save-sheet,
+#final .final-card .row{text-align:left}
+
+/* ---------- Chiringo · hoja dentro del plan ---------- */
+#plan .tab-body .rd{
+  margin:-4px -6px 0;
+  padding:0 2px 8px;
+}
+#plan .tab-body .cs-cover{border-radius:18px 18px 0 0;margin-bottom:0}
+
+/* ---------- Personal · Progreso · Show (pestañas plan) ---------- */
+#plan .tab-body .workforce .wf-summary,
+#plan .tab-body .workforce .wf-card{
+  border-radius:18px;
+  box-shadow:0 2px 12px rgba(8,63,67,.06);
+}
+#plan .tab-body .workforce .wf-summary{
+  background:linear-gradient(135deg,var(--surface-sand),var(--surface-paper));
+  border-left:4px solid var(--accent-sea);
+}
+#plan .tab-body .workforce .wf-card{
+  border-left:4px solid rgba(15,139,141,.35);
+  transition:border-color var(--motion-ui),box-shadow var(--motion-ui);
+}
+#plan .tab-body .workforce .wf-card:hover{
+  border-left-color:var(--accent-sea);
+  box-shadow:var(--sh-sheet);
+}
+#plan .tab-body .workforce .wf-role{color:var(--accent-sea-deep)}
+#plan .tab-body .pg .pg-card{
+  border-radius:18px;
+  box-shadow:0 2px 12px rgba(8,63,67,.06);
+  background:linear-gradient(180deg,var(--surface-paper),var(--surface-sand));
+  border-left:4px solid var(--accent-sea);
+}
+#plan .tab-body .pg .pg-card.pg-grade{border-left-color:var(--accent-sun)}
+#plan .tab-body .pg .pg-card.pg-league-table{border-left-color:var(--accent-coral)}
+#plan .tab-body .pg .pg-chip{
+  border-radius:14px;
+  box-shadow:0 1px 0 rgba(255,253,248,.85) inset;
+}
+#plan .tab-body .pg .pg-controls-bar{
+  background:var(--surface-paper);
+  border-color:var(--line);
+}
+#plan .tab-body .show-sheet{padding-bottom:6px}
+#plan .tab-body .show-intro{margin:0 0 14px;line-height:1.5;color:var(--ink-2)}
+#plan .tab-body .show-row{
+  grid-template-columns:1fr auto;
+  padding:14px 16px;margin:0 0 10px;
+  border-radius:18px;border:1px solid var(--line);
+  background:linear-gradient(135deg,var(--surface-paper),var(--surface-sand));
+  box-shadow:0 2px 10px rgba(8,63,67,.05);
+  border-left:4px solid var(--accent-coral);
+}
+#plan .tab-body .show-row .ctrl{align-self:center}
+
 @media (min-width:900px){
   #plan .tab-body{padding:18px 28px 10px}
   #report .kpis{grid-template-columns:repeat(4,1fr)}
@@ -426,5 +554,5 @@
 
 @media (prefers-reduced-motion:reduce){
   .brand-mark{animation:none!important}
-  .overlay.show .panel.sheet,.overlay.show .panel.lobby-card,#delivery-panel{animation:none!important}
+  .overlay.show .panel.sheet,.overlay.show .panel.lobby-card,#delivery-panel,#final .final-card{animation:none!important}
 }
