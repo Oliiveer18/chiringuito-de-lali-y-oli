@@ -1,21 +1,66 @@
-/* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { ITEMS } from "../config.js?v=28.12.1";
-import { ITEM_IDS } from "../config.js?v=28.12.1";
-import { REGULARS } from "../config.js?v=28.12.1";
-import { SEASON_DAYS } from "../config.js?v=28.12.1";
-import { SPECIAL_DAYS } from "../config.js?v=28.12.1";
-import { START_MONEY } from "../config.js?v=28.12.1";
-import { clamp } from "../util.js?v=28.12.1";
-import { pickW } from "../util.js?v=28.12.1";
-import { rnd } from "../util.js?v=28.12.1";
-import { Audio } from "../audio.js?v=28.12.1";
-import { Game } from "../state.js?v=28.12.1";
-import { closeHour } from "../state.js?v=28.12.1";
-import { setTimeoutGame } from "../state.js?v=28.12.1";
-import { buildTables } from "../world.js?v=28.12.1";
-import { toast } from "../ui.js?v=28.12.1";
-import { updateStockbar } from "../ui.js?v=28.12.1";
-import { spawnCustomer } from "./customers.js?v=28.12.1";
+/* Mechanical extraction from sim.js; declaration bodies are unchanged.
+   Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
+import { ITEMS } from "../config.js?v=28.13";
+import { ITEM_IDS } from "../config.js?v=28.13";
+import { REGULARS } from "../config.js?v=28.13";
+import { SEASON_DAYS } from "../config.js?v=28.13";
+import { SPECIAL_DAYS } from "../config.js?v=28.13";
+import { START_MONEY } from "../config.js?v=28.13";
+import { clamp } from "../util.js?v=28.13";
+import { pickW } from "../util.js?v=28.13";
+import { rnd } from "../util.js?v=28.13";
+import { Audio } from "../audio.js?v=28.13";
+import { Game, simProgressDay } from "../state.js?v=28.13";
+import { closeHour } from "../state.js?v=28.13";
+import { setTimeoutGame } from "../state.js?v=28.13";
+import { buildTables } from "../world.js?v=28.13";
+import { toast } from "../ui.js?v=28.13";
+import { updateStockbar } from "../ui.js?v=28.13";
+import { spawnCustomer } from "./customers.js?v=28.13";
+
+const ARRIVALS_CAP = 1.72;
+const PEAK_CAP = 0.30;
+
+function progressDay(day) {
+  return Math.max(1, Number(day ?? simProgressDay()) || 1);
+}
+
+/** Arrivals multiplier for macro curve (before weather/rep); extends past day 30 with a soft cap. */
+function curveArrivals(d) {
+  const ref = SEASON_DAYS;
+  const t = clamp((d - 1) / (ref - 1), 0, 1);
+  const smooth = t * t * (3 - 2 * t);
+  let arrivals;
+  if (d <= 2) arrivals = 0.55 + 0.06 * (d - 1);
+  else if (d <= 7) {
+    const u = (d - 3) / 4;
+    const ramp = u * u * (3 - 2 * u);
+    arrivals = 0.50 + ramp * (0.72 - 0.50);
+  } else {
+    const endArrivals = 0.85 + 0.65 * smooth;
+    const u = clamp((d - 7) / (ref - 7), 0, 1);
+    const blend = u * u * (3 - 2 * u);
+    arrivals = 0.72 + blend * (endArrivals - 0.72);
+  }
+  if (d > ref) {
+    const extra = d - ref;
+    arrivals += (ARRIVALS_CAP - arrivals) * (1 - Math.exp(-extra / 75));
+  }
+  return arrivals;
+}
+
+function curvePeak(d) {
+  const ref = SEASON_DAYS;
+  let peak = d <= 2 ? 0 : 0.22 * clamp((d - 4) / (ref - 4), 0, 1);
+  if (d > ref) peak += (PEAK_CAP - peak) * (1 - Math.exp(-(d - ref) / 60));
+  return peak;
+}
+
+function curveSmooth(d) {
+  const ref = SEASON_DAYS;
+  const t = clamp((d - 1) / (ref - 1), 0, 1);
+  return t * t * (3 - 2 * t);
+}
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -32,9 +77,9 @@ export function newSeason(){
   buildTables();
 }
 
-/** Reputation influence on spawn mult; soft opening days 1–2, ramp days 3–4. */
-export function repArrivalMult(day=Game.day, rep=Game.rep){
-  const d=clamp(Number(day)||1,1,SEASON_DAYS);
+/** Reputation influence on spawn mult; soft opening career days 1–2, ramp days 3–4. */
+export function repArrivalMult(day, rep=Game.rep){
+  const d=progressDay(day);
   if(d<=2) return 0.50+0.05*(d-1);
   const full=0.35+rep/5*0.95;
   if(d<=4){
@@ -45,31 +90,23 @@ export function repArrivalMult(day=Game.day, rep=Game.rep){
   return full;
 }
 
-export function difficultyProfile(day=Game.day){
-  const d=clamp(Number(day)||1,1,SEASON_DAYS);
-  const t=(d-1)/(SEASON_DAYS-1);
-  const smooth=t*t*(3-2*t);
+export function difficultyProfile(day){
+  const d=progressDay(day);
+  const smooth=curveSmooth(d);
   const late=clamp((d-8)/(SEASON_DAYS-8),0,1);
-  let arrivals;
-  if(d<=2) arrivals=0.55+0.06*(d-1);
-  else if(d<=7){
-    const u=(d-3)/4;
-    const ramp=u*u*(3-2*u);
-    arrivals=0.50+ramp*(0.72-0.50);
-  } else {
-    const endArrivals=0.85+0.65*smooth;
-    const u=clamp((d-7)/(SEASON_DAYS-7),0,1);
-    const blend=u*u*(3-2*u);
-    arrivals=0.72+blend*(endArrivals-0.72);
-  }
-  const peak=d<=2?0:0.22*clamp((d-4)/(SEASON_DAYS-4),0,1);
+  const arrivals=curveArrivals(d);
+  const peak=curvePeak(d);
+  let patience=1.15-0.27*smooth;
+  if(d>SEASON_DAYS) patience-=0.06*(1-Math.exp(-(d-SEASON_DAYS)/100));
+  patience=clamp(patience,0.80,1.15);
+  const lateExt=d>SEASON_DAYS?Math.min(1,late+0.15*(1-Math.exp(-(d-SEASON_DAYS)/90))):late;
   return {
     label:d<=2?'Apertura suave':d<=3?'Aprendizaje':d<=9?'Rodaje':d<=17?'Exigente':d<=24?'Hora de demostrar':'Recta final',
     arrivals,
-    patience:1.15-0.27*smooth,
+    patience,
     doubleBonus:-0.12+0.27*smooth,
     mixedChance:0.30+0.35*smooth,
-    tripleChance:0.18*late*late,
+    tripleChance:0.18*lateExt*lateExt,
     peak
   };
 }

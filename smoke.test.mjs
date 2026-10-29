@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.12.1');
-await import('./coopbridge.js?v=28.12.1');
-const ui = await import('./ui.js?v=28.12.1'), net = await import('./net.js?v=28.12.1'), sim = await import('./sim.js?v=28.12.1');
-await import('./features.js?v=28.12.1'); await import('./v12.js?v=28.12.1'); await import('./v14.js?v=28.12.1');
-const cfg = await import('./config.js?v=28.12.1');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.13');
+await import('./coopbridge.js?v=28.13');
+const ui = await import('./ui.js?v=28.13'), net = await import('./net.js?v=28.13'), sim = await import('./sim.js?v=28.13');
+await import('./features.js?v=28.13'); await import('./v12.js?v=28.13'); await import('./v14.js?v=28.13');
+const cfg = await import('./config.js?v=28.13');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -58,23 +58,32 @@ let ok = 0, ko = 0;
 const check = (name, cond, extra) => { if (cond) { ok++; console.log('  ok  ' + name); } else { ko++; console.log('  FALLO  ' + name + (extra !== undefined ? ' → ' + JSON.stringify(extra) : '')); } };
 
 function mirrorDifficultyArrivals(day, seasonDays = cfg.SEASON_DAYS) {
-  const d = Math.max(1, Math.min(Number(day) || 1, seasonDays));
-  const t = (d - 1) / (seasonDays - 1);
+  const d = Math.max(1, Number(day) || 1);
+  const t = Math.max(0, Math.min(1, (d - 1) / (seasonDays - 1)));
   const smooth = t * t * (3 - 2 * t);
-  if (d <= 2) return 0.55 + 0.06 * (d - 1);
-  if (d <= 7) {
+  let arrivals;
+  if (d <= 2) arrivals = 0.55 + 0.06 * (d - 1);
+  else if (d <= 7) {
     const u = (d - 3) / 4;
     const ramp = u * u * (3 - 2 * u);
-    return 0.50 + ramp * (0.72 - 0.50);
+    arrivals = 0.50 + ramp * (0.72 - 0.50);
+  } else {
+    const endArrivals = 0.85 + 0.65 * smooth;
+    const u = Math.max(0, Math.min(1, (d - 7) / (seasonDays - 7)));
+    const blend = u * u * (3 - 2 * u);
+    arrivals = 0.72 + blend * (endArrivals - 0.72);
   }
-  const endArrivals = 0.85 + 0.65 * smooth;
-  const u = Math.max(0, Math.min(1, (d - 7) / (seasonDays - 7)));
-  const blend = u * u * (3 - 2 * u);
-  return 0.72 + blend * (endArrivals - 0.72);
+  if (d > seasonDays) {
+    const cap = 1.72;
+    arrivals += (cap - arrivals) * (1 - Math.exp(-(d - seasonDays) / 75));
+  }
+  return arrivals;
 }
 function mirrorDifficultyPeak(day, seasonDays = cfg.SEASON_DAYS) {
-  const d = Math.max(1, Math.min(Number(day) || 1, seasonDays));
-  return d <= 2 ? 0 : 0.22 * Math.max(0, Math.min(1, (d - 4) / (seasonDays - 4)));
+  const d = Math.max(1, Number(day) || 1);
+  let peak = d <= 2 ? 0 : 0.22 * Math.max(0, Math.min(1, (d - 4) / (seasonDays - 4)));
+  if (d > seasonDays) peak += (0.30 - peak) * (1 - Math.exp(-(d - seasonDays) / 60));
+  return peak;
 }
 
 // ---------- estado inicial ----------
@@ -92,6 +101,28 @@ check('preferencias de clientes finitas', Object.values(cfg.TYPES).every(t => Ob
 check('terraza suma mesas con tope de 10', tableCount() === 5 && (Game.upgrades.mesas = 3, tableCount() === 10) && (Game.upgrades.mesas = 0, true));
 check('curva afluencia día1 < día10', mirrorDifficultyArrivals(1) < mirrorDifficultyArrivals(10), [mirrorDifficultyArrivals(1), mirrorDifficultyArrivals(10)]);
 check('días 1–2 sin pico mediodía', mirrorDifficultyPeak(1) === 0 && mirrorDifficultyPeak(2) === 0);
+
+console.log('Curva carrera continua (v28.13)');
+const { simProgressDay } = await import('./state.js?v=28.13');
+function mirrorRepMult(d, rep = 3.6) {
+  const day = Math.max(1, Number(d) || 1);
+  if (day <= 2) return 0.50 + 0.05 * (day - 1);
+  const full = 0.35 + rep / 5 * 0.95;
+  if (day <= 4) {
+    const t = (day - 3) / (4 - 3);
+    return 0.40 + t * (full - 0.40);
+  }
+  return full;
+}
+Game.upgrades = { career: { season: 2 } };
+Game.day = 1;
+Game.rep = 3.6;
+check('simProgressDay S2 D1 = 31', simProgressDay() === 31);
+check('temporada 2 día 1 no reinicia rep mult', mirrorRepMult(simProgressDay()) > mirrorRepMult(1));
+check('día 31 más afluencia que día 1', mirrorDifficultyArrivals(31) > mirrorDifficultyArrivals(1));
+check('día 60 ≥ día 31 en afluencia', mirrorDifficultyArrivals(60) >= mirrorDifficultyArrivals(31));
+Game.upgrades = {};
+Game.day = 1;
 
 console.log('Simulación de 15 días');
 for (let d = 1; d <= 15; d++) {

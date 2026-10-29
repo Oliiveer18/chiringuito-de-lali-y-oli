@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=28.12.1';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.12.1';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.12.1';
-import { ICON_URL } from './icons.js?v=28.12.1';
-import { Audio } from './audio.js?v=28.12.1';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, wages, weatherToday } from './state.js?v=28.12.1';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.12.1';
-import { advanceFromReport } from './report.js?v=28.12.1';
-import { netAct, netDirty } from './net.js?v=28.12.1';
-import { drawPerson } from './render.js?v=28.12.1';
-import { iconFor } from './ui-polish.js?v=28.12.1';
-import { renderTab } from './ui.js?v=28.12.1';
+import { trackCost } from './bookkeeping.js?v=28.13';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.13';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.13';
+import { ICON_URL } from './icons.js?v=28.13';
+import { Audio } from './audio.js?v=28.13';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=28.13';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.13';
+import { advanceFromReport } from './report.js?v=28.13';
+import { netAct, netDirty } from './net.js?v=28.13';
+import { drawPerson } from './render.js?v=28.13';
+import { iconFor } from './ui-polish.js?v=28.13';
+import { renderTab } from './ui.js?v=28.13';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
@@ -23,19 +23,20 @@ export function showPlanUI(){
   $('#plan').classList.add('show');
   $('#plan-eyebrow').textContent = `Día ${Game.day} de ${SEASON_DAYS} · ${dayName(Game.day)} · 8:30`;
   const greet = ['Buenos días','Arriba, que hay playa','A por otro día','Huele a salitre','Otra mañana en la costa'];
-  $('#plan-title').textContent = Game.day===1 ? 'Tu primer día' : greet[Game.day%greet.length];
+  $('#plan-title').textContent = simProgressDay()===1 ? 'Tu primer día' : greet[Game.day%greet.length]; // title: only true career day 1; eyebrow stays season-local
   renderForecast(); renderTab(); refreshPlanMoney(); updateReadyUI();
 }
 export function renderForecast(){
   const w=weatherToday(), tw=Game.forecast[Game.day];
   const ev=SPECIAL_DAYS[Game.day];
-  let html = `<div class="fc today"><div class="k">Hoy</div><div class="v">${iconFor(w)}<span>${WEATHER[w].label}</span></div><div class="d">${WEATHER[w].desc}${isWeekend(Game.day)?' Fin de semana: más gente del pueblo.':''}</div></div>`;
+  let html = `<div class="fc today"><div class="k">Hoy</div><div class="v">${iconFor(w)}<span>${WEATHER[w].label}</span></div><div class="d">${WEATHER[w].desc}${isWeekend(simProgressDay())?' Fin de semana: más gente del pueblo.':''}</div></div>`;
   if(ev) html += `<div class="fc event"><div class="k">Evento</div><div class="v">${ev.title}</div><div class="d">${ev.desc}</div></div>`;
   if(Game.day<SEASON_DAYS) html += `<div class="fc"><div class="k">Mañana</div><div class="v">${WEATHER[tw].label}</div><div class="d">${SPECIAL_DAYS[Game.day+1]?SPECIAL_DAYS[Game.day+1].title:dayName(Game.day+1)}</div></div>`;
   html += `<div class="fc"><div class="k">Objetivo</div><div class="v">${eur(GOAL)}</div><div class="d">Quedan ${SEASON_DAYS-Game.day+1} días · valoración ${Game.rep.toFixed(1)}/5</div></div>`;
   const difficulty=difficultyProfile();
-  const softOpen=Game.day<=2?' Días 1–2: apertura suave (~55–60% de afluencia, sin picos de mediodía ni eventos sorpresa).':'';
-  html += `<div class="fc"><div class="k">Dificultad progresiva</div><div class="v">${difficulty.label}</div><div class="d">Afluencia ${Math.round(difficulty.arrivals*100)}% · paciencia ${Math.round(difficulty.patience*100)}%. ${difficulty.peak>0?'Pico gradual de 12:00 a 15:00'+(closeHour()>20?' y de 19:30 a 21:30':'')+'.':'Inicio suave para organizaros.'}${softOpen}${Game.day>=9?' Pueden llegar pedidos de tres productos.':''}</div></div>`;
+  const prog=simProgressDay();
+  const softOpen=prog<=2?' Días 1–2 de carrera: apertura suave (~55–60% de afluencia, sin picos de mediodía ni eventos sorpresa).':'';
+  html += `<div class="fc"><div class="k">Dificultad progresiva</div><div class="v">${difficulty.label}</div><div class="d">Afluencia ${Math.round(difficulty.arrivals*100)}% · paciencia ${Math.round(difficulty.patience*100)}%. ${difficulty.peak>0?'Pico gradual de 12:00 a 15:00'+(closeHour()>20?' y de 19:30 a 21:30':'')+'.':'Inicio suave para organizaros.'}${softOpen}${prog>=9?' Pueden llegar pedidos de tres productos.':''}</div></div>`;
   if(Game.buzz>0.03) html += `<div class="fc"><div class="k">Boca a boca</div><div class="v">+${Math.round(Game.buzz*12)}%</div><div class="d">Recomendaciones de habituales contentos: más afluencia hoy.</div></div>`;
   $('#forecast').innerHTML=html;
 }

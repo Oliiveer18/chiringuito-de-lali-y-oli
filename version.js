@@ -1,5 +1,5 @@
-export const VERSION='v28.12.1';
-export const LABEL='v28.12.1 · pies en suelo del quiosco (HUT_BAR_FLOOR_Y=450)';
+export const VERSION='v28.13';
+export const LABEL='v28.13 · curva de dificultad continua en carrera (sin reset por temporada)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

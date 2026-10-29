@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, STAFF, START_MONEY } from './config.js?v=28.12.1';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY } from './config.js?v=28.13';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -40,6 +40,13 @@ export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Ga
 export function weatherToday(){ return Game.forecast[Game.day-1]; }
 export function dayName(d){ return DAY_NAMES[(d-1)%7]; }
 export function isWeekend(d){ return (d-1)%7>=5; }
+
+/** Absolute timeline for spawn/difficulty only. UI calendar stays on Game.day 1..SEASON_DAYS per season. */
+export function simProgressDay(){
+  const c=Game.upgrades?.career;
+  if(c) return ((c.season||1)-1)*SEASON_DAYS+Game.day;
+  return Game.day;
+}
 
 export const gameTimers=[];
 export function setTimeoutGame(fn,sec){ gameTimers.push({fn,t:sec}); }

@@ -2,9 +2,9 @@
 globalThis.window = globalThis;
 const store = {};
 globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
-const { Game } = await import('./state.js?v=28.12.1');
-const cfg = await import('./config.js?v=28.12.1');
-const C = await import('./career.js?v=28.12.1');
+const { Game } = await import('./state.js?v=28.13');
+const cfg = await import('./config.js?v=28.13');
+const C = await import('./career.js?v=28.13');
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => { if (cond) { ok++; console.log('  ok  ' + name); } else { ko++; console.log('  FALLO  ' + name + (extra !== undefined ? ' → ' + JSON.stringify(extra) : '')); } };
@@ -50,6 +50,9 @@ check('la nueva temporada conserva la caja y reinicia el día', Game.money === m
 check('la nueva temporada trae pronóstico completo', Game.forecast.length === cfg.SEASON_DAYS + 1 && Game.forecast[0] === 'sol');
 check('los habituales no se quedan fuera de la temporada', Game.regulars.a.next <= 4, Game.regulars.a.next);
 check('el nuevo objetivo es el de la temporada 2', c1.obj.type === 'reputacion' && c1.closed === null);
+const { simProgressDay } = await import('./state.js?v=28.13');
+check('S2 D1 progreso día 31', simProgressDay() === 31);
+check('S2 D1 no reinicia rep mult suave (d>4)', (0.35 + Game.rep / 5 * 0.95) > (0.50 + 0.05 * (1 - 1)));
 
 console.log('Temporada fallida, rescate y quiebra');
 Game.day = 30; Game.money = 100; Game.rep = 3; Game.season = { revenue: 1000, served: 100, lost: 5, bestDay: 100, bestDayN: 1 };
