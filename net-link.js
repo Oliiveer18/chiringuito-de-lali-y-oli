@@ -1,31 +1,56 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.1';
-import { Audio } from './audio.js?v=28.14.1';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.1';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.1';
-import { showReportUI } from './report.js?v=28.14.1';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.1';
-import { onNet } from './net-sync.js?v=28.14.1';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.1';
+import { $ } from './util.js?v=28.14.2';
+import { Audio } from './audio.js?v=28.14.2';
+import { Game, NET_SIM, Net } from './state.js?v=28.14.2';
+import { pendingIdx, slotOf } from './sim.js?v=28.14.2';
+import { showReportUI } from './report.js?v=28.14.2';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.2';
+import { onNet } from './net-sync.js?v=28.14.2';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.2';
 // ---------- Red: PeerJS (WebRTC) ----------
 let peer=null, conn=null;
 const PREFIX='chiringuito-lali-oli-';
 const LETTERS='ABCDEFGHJKLMNPQRSTUVWXYZ';
 function newCode(){ let c=''; for(let i=0;i<4;i++) c+=LETTERS[Math.floor(Math.random()*LETTERS.length)]; return c; }
-// STUN + TURN público (Open Relay de Metered). Si falla o se agota, se puede
-// sustituir por credenciales propias definiendo window.TURN_CONFIG antes de cargar net.js.
+// STUN + TURN (Open Relay / Metered). Redes distintas suelen necesitar relay >10 s.
+// Credenciales propias: window.TURN_CONFIG = { urls, username, credential } antes de net.js.
+const OPEN_RELAY = { username: 'openrelayproject', credential: 'openrelayproject' };
 const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:global.stun.twilio.com:3478' },
-  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] },
+  {
+    urls: [
+      'turn:openrelay.metered.ca:80',
+      'turn:openrelay.metered.ca:443',
+      'turn:openrelay.metered.ca:443?transport=tcp',
+      'turns:openrelay.metered.ca:443',
+      'turns:openrelay.metered.ca:443?transport=tcp',
+      'turn:global.relay.metered.ca:80',
+      'turn:global.relay.metered.ca:443',
+      'turn:global.relay.metered.ca:443?transport=tcp',
+      'turns:global.relay.metered.ca:443',
+      'turns:global.relay.metered.ca:443?transport=tcp'
+    ],
+    ...OPEN_RELAY
+  }
 ];
-function peerOptions(){
-  const ice = ICE_SERVERS.slice();
+export function peerRtcConfig(){
+  const ice = ICE_SERVERS.map(s => ({ ...s, urls: Array.isArray(s.urls) ? s.urls.slice() : s.urls }));
   const t = window.TURN_CONFIG;
   if (t && t.urls) ice.push({ urls: t.urls, username: t.username, credential: t.credential });
-  return { config: { iceServers: ice, iceCandidatePoolSize: 10 } };
+  return { iceServers: ice, iceCandidatePoolSize: 10, bundlePolicy: 'max-bundle' };
+}
+function peerOptions(){
+  const opts = {
+    debug: 0,
+    host: '0.peerjs.com',
+    port: 443,
+    path: '/',
+    secure: true,
+    config: peerRtcConfig()
+  };
+  const custom = window.PEERJS_CONFIG;
+  if (custom && typeof custom === 'object') Object.assign(opts, custom);
+  return opts;
 }
 export function netOpen(onOpen){
   if(peer && !peer.destroyed){ onOpen(); return; }
@@ -55,7 +80,8 @@ function guestJoin(code){
   if(peer) peer.destroy();
   peer=new Peer(peerOptions());
   peer.on('open',()=>{
-    conn=peer.connect(PREFIX+code);
+    lobbyStatus('Uniendo a la partida… (puede tardar un poco entre redes distintas)');
+    conn=peer.connect(PREFIX+code, { reliable: true });
     conn.on('open',()=>{ Net.peer=true; renderLobby(); lobbyStatus(''); netSend({t:'hello', name:Net.names.p2}); onNet({t:'peer',on:true}); });
     conn.on('data',d=>{ try{ onNet(typeof d==='string'?JSON.parse(d):d); }catch(e){} });
     conn.on('close',()=>{ conn=null; Net.peer=false; onNet({t:'peer',on:false}); });
