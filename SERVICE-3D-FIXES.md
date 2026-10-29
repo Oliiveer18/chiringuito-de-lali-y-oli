@@ -37,6 +37,7 @@ Rama `fix/3d-service-integrity`, basada en `experiment/vfx-clientes-3d` en
   La secuencia se recupera del snapshot para evitar bloqueos al reconectar.
 - **Sala accesible:** el código visible se registra como identificador real de
   PeerJS, pasándolo como primer argumento y no como una opción ignorada.
+  El reintento por error de socket conserva el código y avanza al servidor alternativo.
 - **Movimiento online:** personajes locales distintos, posición y orientación
   compartidas e interpolación remota. El anfitrión valida secuencias, velocidad,
   límites, colisiones y proximidad a estaciones o clientes.
@@ -87,6 +88,18 @@ Las pruebas automáticas usan conexión WebRTC real entre perfiles aislados, per
 no certifican todas las combinaciones de redes domésticas, datos móviles, VPN
 o cortafuegos. Señalización, STUN y TURN dependen de los servicios externos ya
 configurados; no se ha contratado un relay dedicado ni medido FPS en móvil físico.
+
+La copia alojada pasó los nueve recorridos online entre perfiles del mismo
+entorno de pruebas. Una prueba adicional entre el anfitrión del sandbox y un
+navegador cloud separado no logró abrir el canal. Una prueba forzando relay no
+obtuvo candidatos TURN y registró errores de resolución, conexión y asignación.
+Esto no demuestra un fallo en todas las redes domésticas, pero impide presentar
+el online entre redes distintas como validado. Hace falta configurar un TURN
+operativo y repetir esa prueba.
+
+La [documentación de Open Relay](https://www.metered.ca/tools/openrelay/) solicita
+una cuenta y credenciales propias. Las credenciales de ejemplo heredadas de este
+proyecto no se han validado como un servicio operativo.
 
 ## Cómo probar el cooperativo
 

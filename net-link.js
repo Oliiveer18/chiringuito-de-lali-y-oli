@@ -202,7 +202,7 @@ function guestJoin(code, cloudTry = 0){
         cloudIdx++;
         saveCloudIdx();
         lobbyStatus('Reintentando servidor…');
-        guestJoin(code, cloudTry);
+        guestJoin(code, cloudIdx);
         return;
       }
       clearGuestSearch();

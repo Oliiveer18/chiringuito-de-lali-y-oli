@@ -43,4 +43,10 @@ Original prompt: Sí, empieza las correcciones en una rama nueva de mi copia 3D.
 - Pause on disconnect, keep one handler binding per recovery Link and restore outgoing connection on reopen.
 - Added seven pure movement tests; all 26 service/movement cases pass through npm test.
 - Added an internet-dependent two-profile online browser suite with real channel interruption.
-- First full local online pass: all nine flows green with no page errors. Final hosted validation pending.
+- Source main-flow browser suite: all ten checks green, no page errors.
+- Local and hosted online suites: all nine flows green, no page errors, including post-recovery guest commands.
+- Hosted check also confirms the guest's day/money HUD is populated.
+- Additional sandbox-host to independent cloud-browser guest test could not establish the channel.
+- Relay-only diagnostic produced no relay candidates; TURN lookup/connect/allocation errors observed.
+- Do not mark cross-network online as complete: configure a working TURN relay and repeat that test.
+- Corrected the socket-error fallback which previously retried the same cloud index.
