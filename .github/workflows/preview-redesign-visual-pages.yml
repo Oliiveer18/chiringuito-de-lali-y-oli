@@ -50,9 +50,12 @@ jobs:
           echo "${{ steps.rev.outputs.sha }}" > .github/preview-redesign-revision
           test -f index.html
           test -f preview/index.html
-          grep -q 'style.css?v=28.' index.html
-          grep -q 'style.css?v=29.3' preview/index.html
-          ! cmp -s index.html preview/index.html
+          grep -q 'style.css?v=28.' index.html || { echo 'Root index must stay on v28.x'; exit 1; }
+          grep -qE 'style.css\?v=29\.' preview/index.html || { echo 'Preview index must reference v29.x stylesheet'; exit 1; }
+          if cmp -s index.html preview/index.html; then
+            echo 'Root index.html must not match preview/index.html'
+            exit 1
+          fi
 
       - name: Commit and push to main
         run: |
