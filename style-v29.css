@@ -546,6 +546,224 @@
 }
 #plan .tab-body .show-row .ctrl{align-self:center}
 
+/* =========================================================
+   v29.2 · Sistema global, overlays, responsive, motion
+   ========================================================= */
+
+:root{
+  --toast-good:#3f8a3a;
+  --toast-bad:#c73e2a;
+  --toast-warn:#d98a12;
+}
+
+.ver-line,.fine.ver-line{
+  font-size:11px;letter-spacing:.04em;color:rgba(255,255,255,.72);
+  margin-top:10px;
+}
+#plan .ver-line,#report .ver-line,#lobby .ver-line{
+  color:var(--ink-2);font-size:10.5px;margin:12px 0 0;text-align:center;
+}
+
+#plan .tabs,#report .tabs{
+  overflow-x:auto;overflow-y:hidden;
+  touch-action:pan-x;overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity;
+  mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);
+}
+#plan .tabs .tab{scroll-snap-align:start;flex-shrink:0}
+
+#plan .screen,#report .screen{
+  display:flex;flex-direction:column;
+  padding:calc(10px + var(--st)) calc(10px + var(--sr)) calc(10px + var(--sb)) calc(10px + var(--sl));
+  overflow:hidden;
+}
+#plan .sheet,#report .sheet{
+  display:flex;flex-direction:column;
+  max-height:100%;min-height:0;width:min(920px,100%);margin:auto;
+}
+#plan .tab-body,#report .rep-body{
+  flex:1 1 auto;min-height:0;
+  overflow-y:auto;overflow-x:clip;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Lobby · ticket y señalización */
+#lobby .screen{
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%,rgba(159,230,228,.22),transparent 55%),
+    linear-gradient(168deg,#0c6a70 0%,#084548 50%,var(--surface-deep) 100%);
+}
+#lobby .lobby-card .eyebrow{color:var(--accent-sea-deep)}
+#lobby .code-box{
+  border:2px dashed var(--accent-sea);
+  letter-spacing:.28em;
+  font-size:clamp(1.75rem,8vw,2.25rem);
+  color:var(--accent-sea-deep);
+  background:linear-gradient(180deg,var(--surface-paper),var(--surface-sand));
+}
+#lobby .join-row{
+  padding:10px;border-radius:16px;
+  background:rgba(255,253,248,.55);border:1px solid var(--line);
+}
+#lobby .guest-info{
+  padding:14px 16px;border-radius:16px;
+  background:var(--surface-sand);border:1px solid var(--line);
+  font-size:14px;line-height:1.45;
+}
+#lobby .lobby-status{
+  margin-top:8px;padding:10px 12px;border-radius:12px;
+  background:rgba(15,139,141,.08);border:1px solid rgba(15,139,141,.2);
+  font-size:13px;
+}
+#lobby .or span{background:var(--surface-paper)}
+
+/* Plan · filas compras / mejoras */
+#plan .tab-body > .row:not(.show-row){
+  margin:0 0 10px;padding:12px 14px;
+  border-radius:18px;border:1px solid var(--line);
+  background:linear-gradient(135deg,var(--surface-paper),var(--surface-sand));
+  box-shadow:0 2px 10px rgba(8,63,67,.05);
+  border-left:4px solid var(--accent-sea);
+}
+#plan .tab-body > .row.locked{border-left-color:var(--ink-2);opacity:.58}
+#plan .plan-panel{margin-bottom:12px;border-radius:20px;overflow:hidden}
+
+/* Urgente · hoja proveedor */
+#urgent .screen{
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%,rgba(217,138,18,.25),transparent 55%),
+    linear-gradient(180deg,rgba(5,36,40,.88),rgba(4,28,32,.92));
+  backdrop-filter:blur(8px);
+}
+#urgent .urgent-card{
+  position:relative;width:min(580px,100%);
+  display:flex;flex-direction:column;max-height:min(92dvh,720px);
+  overflow:hidden;padding:0;
+  border-radius:var(--radius-sheet);
+  background:linear-gradient(180deg,var(--surface-paper),var(--surface-sand));
+  box-shadow:var(--sh-sheet);
+}
+#urgent .urgent-card::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:5px;z-index:1;
+  background:linear-gradient(90deg,var(--warn),var(--accent-sun),var(--accent-coral));
+}
+#urgent .urgent-card .sheet-head{
+  padding:20px 22px 14px;background:linear-gradient(180deg,var(--surface-paper),var(--surface-sand));
+}
+#urgent .urgent-card > .muted{
+  padding:0 22px;margin:0;font-size:13px;line-height:1.45;color:var(--ink-2);
+}
+#urgent #urg-body{padding:8px 22px 12px}
+#urgent #urg-body .row{
+  border-radius:16px;margin-bottom:8px;padding:12px 14px;
+  background:var(--surface-paper);border:1px solid var(--line);
+  border-left:4px solid var(--warn);
+}
+#urgent .sheet-foot{padding:14px 22px calc(14px + var(--sb))}
+#urgent #btn-urg-close{border-color:var(--line-2)}
+
+/* Red / conexión */
+.netmsg-card{
+  position:relative;padding:28px 24px 18px;text-align:center;
+  background:linear-gradient(180deg,var(--surface-paper),var(--surface-sand));
+  border:1px solid var(--line-2);
+}
+.netmsg-card h3{
+  font:600 1.25rem var(--font-d);color:var(--accent-sea-deep);margin:0 0 8px;
+}
+.net-ico{
+  width:58px;height:58px;margin:0 auto 12px;
+  border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(180deg,#fde8e2,#fbdcd5);
+  border:2px solid rgba(232,96,60,.25);
+  box-shadow:0 4px 16px rgba(232,96,60,.15);
+}
+.net-ico svg{width:30px;height:30px;stroke:var(--bad)}
+
+/* Informe · equipo y reseñas */
+#report .team{
+  margin:0 22px 16px;border-radius:18px;
+  background:linear-gradient(135deg,var(--surface-sand),var(--surface-paper));
+  border-left:4px solid var(--accent-sea);
+  box-shadow:0 2px 10px rgba(8,63,67,.06);
+}
+#report .reviews{
+  margin:0 22px 12px;padding:14px 16px;border-radius:18px;
+  border:1px solid var(--line);background:var(--surface-paper);
+}
+#report .rep-status{
+  color:var(--ink-2);font-weight:600;padding-left:4px;
+}
+#report .stats{
+  margin-left:22px;margin-right:22px;
+  background:var(--surface-paper);
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+
+/* Toasts · feedback costero */
+.toasts{
+  pointer-events:none;
+  display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+}
+.toast{
+  pointer-events:auto;max-width:min(360px,calc(100vw - 24px));
+  padding:12px 14px 12px 16px;
+  background:linear-gradient(180deg,var(--surface-paper),var(--surface-sand));
+  animation:toast-rise var(--motion-ui) ease both;
+}
+.toast.good{border-left-color:var(--toast-good)}
+.toast.bad{border-left-color:var(--toast-bad)}
+.toast.warn,.toast{border-left-color:var(--accent-sea)}
+.toast.bad{border-left-color:var(--toast-bad)}
+@keyframes toast-rise{
+  from{opacity:0;transform:translateY(8px) scale(.98)}
+  to{opacity:1;transform:none}
+}
+
+/* HUD · acciones y urgencia */
+.hud-btn{
+  border-radius:12px;
+  transition:transform var(--motion-fast),background var(--motion-ui),box-shadow var(--motion-ui);
+}
+.hud-btn:active{transform:translateY(1px) scale(.98)}
+.hud-btn.warn{
+  background:linear-gradient(165deg,#f5c04a,var(--warn));
+  box-shadow:0 0 0 1px rgba(184,114,8,.35),0 4px 14px rgba(217,138,18,.35);
+}
+#stockbar .stock{
+  border-radius:999px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+}
+#stockbar .stock.out{
+  background:rgba(199,62,42,.22);
+  animation:none;
+}
+
+/* Carrera / final · ofertas legado */
+#final .cr-offers{
+  display:grid;gap:10px;margin:16px 0 20px;text-align:left;
+}
+#final .cr-offer{
+  display:flex;flex-direction:column;gap:4px;padding:14px 16px;
+  border-radius:16px;border:1px solid var(--line);
+  background:var(--surface-paper);
+  box-shadow:0 2px 10px rgba(8,63,67,.06);
+  cursor:pointer;text-align:left;
+  transition:border-color var(--motion-ui),box-shadow var(--motion-ui);
+}
+#final .cr-offer b{font:600 15px var(--font-d);color:var(--accent-sea-deep)}
+#final .cr-offer span{font-size:13px;color:var(--ink-2);line-height:1.4}
+#final .cr-offer.on{border-color:var(--accent-coral);box-shadow:0 0 0 3px rgba(232,96,60,.15)}
+#final .cr-offer:disabled{opacity:.55;cursor:not-allowed}
+
+/* Chiringo · scroll en pestaña */
+#plan .tab-body .rd{
+  margin:0;padding:0 0 8px;
+  max-width:none;
+}
+
 @media (min-width:900px){
   #plan .tab-body{padding:18px 28px 10px}
   #report .kpis{grid-template-columns:repeat(4,1fr)}

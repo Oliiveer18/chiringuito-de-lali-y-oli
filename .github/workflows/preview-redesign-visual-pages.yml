@@ -51,7 +51,7 @@ jobs:
           test -f index.html
           test -f preview/index.html
           grep -q 'style.css?v=28.' index.html
-          grep -q 'style.css?v=29.1' preview/index.html
+          grep -q 'style.css?v=29.2' preview/index.html
           ! cmp -s index.html preview/index.html
 
       - name: Commit and push to main

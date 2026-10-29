@@ -19,9 +19,9 @@ import { drawStationProps } from "./items.js?v=28.6";
 import { drawStationWork } from "./items.js?v=28.6";
 
 export const SKY_KEYS=[
-  {h:9, top:'#7cc7ea',bot:'#d9f1fb'},
-  {h:15,top:'#4fb3e3',bot:'#c9ecfa'},
-  {h:18,top:'#6aa6d6',bot:'#ffe2a8'},
+  {h:9, top:'#6ecfe8',bot:'#d4f5f2'},
+  {h:15,top:'#4ab8d4',bot:'#b8ecf0'},
+  {h:18,top:'#5a9fc8',bot:'#ffe2a8'},
   {h:19.6,top:'#e28a6c',bot:'#ffc684'},
   {h:20.6,top:'#5a4f86',bot:'#f19a6e'},
   {h:22.2,top:'#1c2148',bot:'#5a3e63'},

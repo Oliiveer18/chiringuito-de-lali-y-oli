@@ -1,5 +1,5 @@
 import './tabguard.js?v=28.6';
-import { LABEL } from './version.js?v=29.1';
+import { LABEL } from './version.js?v=29.2';
 import { EXTRA } from './icons.js?v=28.6';
 import './main.js?v=28.6';
 import './saves.js?v=28.6';

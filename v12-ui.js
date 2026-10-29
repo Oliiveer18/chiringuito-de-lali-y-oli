@@ -3,7 +3,7 @@ import { Game, Net, hostLive } from './state.js?v=28.6';
 import { ITEMS } from './config.js?v=28.6';
 import { Plan } from './ui.js?v=28.6';
 import { guestSend } from './coopbridge.js?v=28.6';
-import { openDelivery } from './delivery-panel.js?v=29.1';
+import { openDelivery } from './delivery-panel.js?v=29.2';
 import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=28.6';
 import { publish, hireInflu, respond, repairBatidora, quitBatidos, orderDelivery } from './v12-actions.js?v=28.6';
 /* UI */
