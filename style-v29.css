@@ -588,6 +588,20 @@
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
 }
+#plan .sheet > .sheet-head,
+#plan .sheet > #forecast,
+#plan .sheet > .tabs,
+#plan .sheet > .sheet-foot,
+#report .sheet > .sheet-head,
+#report .sheet > .sheet-foot{
+  flex:0 0 auto;
+}
+#plan .tabs{
+  min-height:48px;
+  flex-shrink:0;
+  -webkit-mask-image:none;
+  mask-image:none;
+}
 
 /* Lobby · ticket y señalización */
 #lobby .screen{

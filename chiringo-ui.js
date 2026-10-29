@@ -145,7 +145,7 @@ setInterval(() => { if (Net.role !== 'guest') hito(); }, 1000);
 const rdSheet = document.createElement('link');
 rdSheet.id = 'rd-style';
 rdSheet.rel = 'stylesheet';
-rdSheet.href = 'chiringo-ui-css.css?v=29.2';
+rdSheet.href = 'chiringo-ui-css.css?v=29.3';
 document.head.append(rdSheet);
 
 function captureArchive() {
@@ -169,5 +169,5 @@ setInterval(captureArchive, 500);
 
 const csSheet = document.createElement('link');
 csSheet.rel = 'stylesheet';
-csSheet.href = 'chiringo-ui-archive.css?v=29.2';
+csSheet.href = 'chiringo-ui-archive.css?v=29.3';
 document.head.append(csSheet);
