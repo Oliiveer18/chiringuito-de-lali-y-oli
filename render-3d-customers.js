@@ -137,6 +137,38 @@ const ATREZO_GEOS = {
   hatRibbon: new THREE.CylinderGeometry(0.305, 0.305, 0.05, 14)
 };
 
+// Anclas de entrada alineadas con playa / paseo marítimo (llegada lógica 2D → 3D)
+const CUST_ENTRY_ANCHORS = {
+  beachEast: { x: 9.4, z: 6.55 },
+  beachWest: { x: -9.4, z: 6.55 },
+  boardwalkRight: { x: 8.0, z: 5.35 },
+  boardwalkLeft: { x: -8.0, z: 5.35 }
+};
+const TERRACE_CORRIDOR = { x: 0.4, z: 5.25 };
+const KIOSK_QUEUE_FACE = 0;
+
+function customerEntryAnchor(c) {
+  const fromEast = c.fromRight === true || (c.fromRight !== false && c.x > 620);
+  if (c.type === 'surfista') {
+    return fromEast ? CUST_ENTRY_ANCHORS.boardwalkRight : CUST_ENTRY_ANCHORS.boardwalkLeft;
+  }
+  return fromEast ? CUST_ENTRY_ANCHORS.beachEast : CUST_ENTRY_ANCHORS.beachWest;
+}
+
+function customerMoveTarget(mesh, finalX, finalZ, needsCorridor) {
+  if (!needsCorridor) return { x: finalX, z: finalZ };
+  const cx = TERRACE_CORRIDOR.x;
+  const cz = TERRACE_CORRIDOR.z;
+  const toFinal = Math.hypot(finalX - mesh.position.x, finalZ - mesh.position.z);
+  const toCorridor = Math.hypot(cx - mesh.position.x, cz - mesh.position.z);
+  if (toFinal > 1.2 && toCorridor > 0.55 && mesh.position.z > cz - 0.15) {
+    return { x: cx, z: cz };
+  }
+  return { x: finalX, z: finalZ };
+}
+
+const CUST_SHOE_MAT = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: 0.4, metalness: 0.04 });
+
 // Mapa de clientes activos: custId -> THREE.Group
 const activeCustomerMeshes = new Map();
 
@@ -165,10 +197,15 @@ export function createCustomer3D(customer) {
   shadow.position.y = 0.02;
   char.add(shadow);
 
-  // Cuerpo raíz para animación
+  // Caderas + torso (piernas visibles desde la cadera)
+  const hips = new THREE.Group();
+  hips.position.y = 0.56;
+  char.add(hips);
+
+  const BODY_BASE_Y = 0.10;
   const bodyRoot = new THREE.Group();
-  bodyRoot.position.y = 0.62;
-  char.add(bodyRoot);
+  bodyRoot.position.y = BODY_BASE_Y;
+  hips.add(bodyRoot);
 
   // Torso
   const torsoGeo = new THREE.CylinderGeometry(0.22, 0.25, 0.50, 10);
@@ -292,21 +329,26 @@ export function createCustomer3D(customer) {
 
   // Piernas
   const leftLeg = new THREE.Group();
-  leftLeg.position.set(-0.13, 0.02, 0);
-  char.add(leftLeg);
+  leftLeg.position.set(-0.14, 0, 0);
+  hips.add(leftLeg);
 
   const rightLeg = new THREE.Group();
-  rightLeg.position.set(0.13, 0.02, 0);
-  char.add(rightLeg);
+  rightLeg.position.set(0.14, 0, 0);
+  hips.add(rightLeg);
 
   [leftLeg, rightLeg].forEach(pivot => {
-    const shorts = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.24, 8), shortsMat);
-    shorts.position.y = -0.12;
+    const shorts = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.22, 8), shortsMat);
+    shorts.position.y = -0.11;
     pivot.add(shorts);
 
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.34, 8), skinMat);
-    leg.position.y = -0.32;
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.30, 8), skinMat);
+    leg.position.y = -0.28;
     pivot.add(leg);
+
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.10, 0.24), CUST_SHOE_MAT);
+    shoe.position.set(0, -0.46, 0.04);
+    shoe.castShadow = true;
+    pivot.add(shoe);
   });
 
   // ── ATREZO Y COMPLEMENTOS SEGÚN ARQUETIPO ──
@@ -486,6 +528,8 @@ export function createCustomer3D(customer) {
   char.userData = {
     customer,
     bodyRoot,
+    bodyBaseY: BODY_BASE_Y,
+    hips,
     headGroup,
     leftArm,
     rightArm,
@@ -521,11 +565,17 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
     let charMesh = activeCustomerMeshes.get(c.id);
     if (!charMesh) {
       charMesh = createCustomer3D(c);
+      const entry = customerEntryAnchor(c);
+      charMesh.position.set(entry.x, 0, entry.z);
+      charMesh.userData.entrySide = c.fromRight !== false && c.x > 620 ? 'east' : 'west';
+      charMesh.userData.spawnedAtEntry = true;
       scene.add(charMesh);
       activeCustomerMeshes.set(c.id, charMesh);
     }
 
     const ud = charMesh.userData;
+    const bodyY = ud.bodyBaseY ?? 0.10;
+    const walkScale = c.look?.walk?.bob ?? 1;
 
     // Calcular posición objetivo en el mundo 3D
     let targetX = 0, targetZ = 0;
@@ -534,9 +584,8 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       // Sentado en silla de la terraza (alineado con la silla sin solapar la mesa)
       if (c.table) {
         const tp = tablePosTo3D(c.table);
-        // Ángulo de silla 0 (cos(0.35)*1.24, sin(0.35)*1.24)
-        targetX = tp.x + 1.16;
-        targetZ = tp.z + 0.42;
+        targetX = tp.x + 1.29;
+        targetZ = tp.z + 0.47;
         ud.isSitting = (c.state === 'eat');
       } else {
         targetX = ((c.x - 600) / 600) * 8.5;
@@ -556,9 +605,12 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       ud.isSitting = false;
     }
 
-    // Suavizado de movimiento
-    const dx = targetX - charMesh.position.x;
-    const dz = targetZ - charMesh.position.z;
+    const needsCorridor = c.state === 'queue' || c.state === 'toTable' || c.state === 'arrive';
+    const moveGoal = customerMoveTarget(charMesh, targetX, targetZ, needsCorridor);
+
+    // Suavizado de movimiento hacia waypoint o destino
+    const dx = moveGoal.x - charMesh.position.x;
+    const dz = moveGoal.z - charMesh.position.z;
     const dist = Math.hypot(dx, dz);
 
     if (dist > 0.05) {
@@ -571,7 +623,7 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       ud.speed = 0;
       // Orientación según estado
       if (c.state === 'queue') {
-        ud.targetAngle = 0; // Mirando hacia la barra / Lali (rumbo norte)
+        ud.targetAngle = KIOSK_QUEUE_FACE;
       } else if (c.state === 'eat' && c.table) {
         const tp = tablePosTo3D(c.table);
         ud.targetAngle = Math.atan2(tp.x - charMesh.position.x, tp.z - charMesh.position.z); // Mirando al centro del tablero
@@ -603,26 +655,27 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       // Salto de satisfacción y alegría al recibir comanda
       const jumpProgress = (0.45 - ud.jumpT) / 0.45;
       const jumpY = Math.sin(jumpProgress * Math.PI) * 0.28;
-      ud.bodyRoot.position.y = 0.62 + jumpY;
+      ud.bodyRoot.position.y = 0.42 + jumpY;
       ud.jumpT -= dt;
     } else if (ud.isSitting) {
       // POSTURA SENTADO EN SILLA 3D
-      ud.bodyRoot.position.y = 0.48;
+      ud.bodyRoot.position.y = 0.38;
       ud.leftLeg.rotation.x = -Math.PI / 2.2;
       ud.rightLeg.rotation.x = -Math.PI / 2.2;
       ud.leftArm.rotation.x = -0.4;
       ud.rightArm.rotation.x = -0.4;
     } else if (ud.speed > 0.1) {
       // CAMINANDO POR LA ARENA
-      ud.walkPhase += dt * 8.0;
-      const bob = Math.abs(Math.sin(ud.walkPhase)) * 0.08;
-      ud.bodyRoot.position.y = 0.62 + bob;
+      ud.walkPhase += dt * 5.5;
+      const sinBob = Math.sin(ud.walkPhase);
+      const bob = sinBob * sinBob * 0.035 * walkScale;
+      ud.bodyRoot.position.y = bodyY + bob;
 
-      const legSwing = Math.sin(ud.walkPhase) * 0.55;
+      const legSwing = Math.sin(ud.walkPhase) * 0.42;
       ud.leftLeg.rotation.x = -legSwing;
       ud.rightLeg.rotation.x = legSwing;
 
-      const armSwing = Math.sin(ud.walkPhase) * 0.45;
+      const armSwing = Math.sin(ud.walkPhase) * 0.32;
       ud.leftArm.rotation.x = armSwing;
       ud.rightArm.rotation.x = -armSwing;
 
@@ -637,7 +690,7 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
     } else {
       // REPOSO (Esperando en cola)
       const t = performance.now() * 0.002;
-      ud.bodyRoot.position.y = 0.62 + Math.sin(t * 2.0) * 0.015;
+      ud.bodyRoot.position.y = bodyY + Math.sin(t * 2.0) * 0.012;
       ud.leftLeg.rotation.x = 0;
       ud.rightLeg.rotation.x = 0;
       ud.leftArm.rotation.x = ud.surfboard ? -0.12 : 0.05;

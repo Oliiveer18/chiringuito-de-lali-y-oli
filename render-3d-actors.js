@@ -45,10 +45,15 @@ export function createCharacter3D(type = 'lali') {
   shadowMesh.position.y = 0.02;
   char.add(shadowMesh);
 
-  // Contenedor del cuerpo que realiza el "bobbing" (rebote vertical)
+  // Caderas: pivote común de torso y piernas (pies anclados en y=0 del personaje)
+  const hips = new THREE.Group();
+  hips.position.y = 0.56;
+  char.add(hips);
+
+  const BODY_BASE_Y = 0.10;
   const bodyRoot = new THREE.Group();
-  bodyRoot.position.y = 0.65;
-  char.add(bodyRoot);
+  bodyRoot.position.y = BODY_BASE_Y;
+  hips.add(bodyRoot);
 
   // 2. Torso (Cuerpo y delantal)
   const torsoGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.55, 12);
@@ -59,10 +64,10 @@ export function createCharacter3D(type = 'lali') {
   bodyRoot.add(torso);
 
   // Delantal sobre el torso
-  const apronGeo = new THREE.CylinderGeometry(0.25, 0.29, 0.45, 12, 1, false, 0, Math.PI * 1.5);
+  const apronGeo = new THREE.CylinderGeometry(0.22, 0.25, 0.30, 12, 1, false, 0, Math.PI * 1.15);
   apronGeo.rotateY(Math.PI * 0.75);
   const apron = new THREE.Mesh(apronGeo, apronMat);
-  apron.position.y = 0.24;
+  apron.position.y = 0.20;
   apron.castShadow = true;
   bodyRoot.add(apron);
 
@@ -204,12 +209,12 @@ export function createCharacter3D(type = 'lali') {
 
   // 5. Piernas Articuladas (Pivote en la cadera)
   const leftLegPivot = new THREE.Group();
-  leftLegPivot.position.set(-0.14, 0.02, 0);
-  char.add(leftLegPivot);
+  leftLegPivot.position.set(-0.14, 0, 0);
+  hips.add(leftLegPivot);
 
   const rightLegPivot = new THREE.Group();
-  rightLegPivot.position.set(0.14, 0.02, 0);
-  char.add(rightLegPivot);
+  rightLegPivot.position.set(0.14, 0, 0);
+  hips.add(rightLegPivot);
 
   [leftLegPivot, rightLegPivot].forEach(pivot => {
     // Pantalón / Pantalón corto
@@ -235,6 +240,7 @@ export function createCharacter3D(type = 'lali') {
     const soleGeo = new THREE.BoxGeometry(0.19, 0.03, 0.29);
     const sole = new THREE.Mesh(soleGeo, ACTOR_MAT.shoeSole);
     sole.position.set(0, -0.51, 0.05);
+    sole.castShadow = true;
     pivot.add(sole);
   });
 
@@ -242,6 +248,8 @@ export function createCharacter3D(type = 'lali') {
   char.userData = {
     type,
     baseY: 0,
+    bodyBaseY: BODY_BASE_Y,
+    hips,
     walkPhase: 0,
     speed: 0,
     targetAngle: 0,
@@ -280,17 +288,18 @@ export function animateCharacter(char, vx, vz, dt = 0.016) {
 
   const time = performance.now() * 0.001;
 
+  const bodyY = ud.bodyBaseY ?? 0.10;
+
   if (ud.speed > 0.1) {
-    // MODO CAMINAR / CORRER: Squash & Stretch y rebote alegre
-    ud.walkPhase += dt * ud.speed * 8.5;
+    // MODO CAMINAR: rebote suave (sin²) y zancada moderada
+    ud.walkPhase += dt * ud.speed * 5.5;
 
-    // A) Bobbing vertical (rebote al dar pasos)
-    const bob = Math.abs(Math.sin(ud.walkPhase)) * 0.12;
-    ud.bodyRoot.position.y = 0.65 + bob;
+    const sinBob = Math.sin(ud.walkPhase);
+    const bob = sinBob * sinBob * 0.045;
+    ud.bodyRoot.position.y = bodyY + bob;
 
-    // B) Inclinación del torso hacia delante según velocidad
-    ud.bodyRoot.rotation.x = 0.12;
-    ud.bodyRoot.rotation.z = Math.sin(ud.walkPhase) * 0.04;
+    ud.bodyRoot.rotation.x = 0.06;
+    ud.bodyRoot.rotation.z = Math.sin(ud.walkPhase) * 0.025;
 
     // C) Oscilación de brazos (o sostener bandeja si lleva pedidos)
     const hasTray = ud.trayGroup && ud.trayGroup.visible && ud.trayGroup.userData.items && ud.trayGroup.userData.items.length > 0;
@@ -301,10 +310,10 @@ export function animateCharacter(char, vx, vz, dt = 0.016) {
       ud.rightArm.rotation.x = -0.72 - Math.sin(ud.walkPhase) * 0.04;
       ud.rightArm.rotation.y = -0.22;
       ud.rightArm.rotation.z = 0.10;
-      ud.trayGroup.rotation.z = -Math.sin(ud.walkPhase) * 0.03;
-      ud.trayGroup.position.y = 0.28 + bob * 0.4;
+      ud.trayGroup.rotation.z = -Math.sin(ud.walkPhase) * 0.018;
+      ud.trayGroup.position.y = 0.28 + bob * 0.25;
     } else {
-      const armSwing = Math.sin(ud.walkPhase) * 0.55;
+      const armSwing = Math.sin(ud.walkPhase) * 0.42;
       ud.leftArm.rotation.x = armSwing;
       ud.leftArm.rotation.y = 0;
       ud.leftArm.rotation.z = 0;
@@ -314,7 +323,7 @@ export function animateCharacter(char, vx, vz, dt = 0.016) {
     }
 
     // D) Zancada de piernas alternada
-    const legSwing = Math.sin(ud.walkPhase) * 0.62;
+    const legSwing = Math.sin(ud.walkPhase) * 0.44;
     ud.leftLeg.rotation.x = -legSwing;
     ud.rightLeg.rotation.x = legSwing;
 
@@ -327,7 +336,7 @@ export function animateCharacter(char, vx, vz, dt = 0.016) {
   } else {
     // MODO IDLE: Respiración rítmica y postura relajada
     const breath = Math.sin(time * 2.8) * 0.02;
-    ud.bodyRoot.position.y = 0.65 + breath;
+    ud.bodyRoot.position.y = bodyY + breath;
     ud.bodyRoot.rotation.x = 0;
     ud.bodyRoot.rotation.z = 0;
 

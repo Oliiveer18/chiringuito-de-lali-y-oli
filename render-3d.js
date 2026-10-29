@@ -488,12 +488,43 @@ function buildKiosk(scene) {
 let terraceGroup = null;
 const table3DMeshes = new Map(); // table index -> Group
 
+function setTableUmbrella3D(tGroup, tableIndex, showUmbrella) {
+  if (!tGroup) return;
+  let umbGroup = tGroup.userData.umbrellaGroup;
+  if (showUmbrella) {
+    if (!umbGroup) {
+      umbGroup = new THREE.Group();
+      umbGroup.name = 'umbrellaSet';
+      const poleGeo = new THREE.CylinderGeometry(0.045, 0.045, 2.7, 8);
+      const pole = new THREE.Mesh(poleGeo, MAT.woodLight);
+      pole.position.y = 1.35;
+      umbGroup.add(pole);
+
+      const umbrellaGeo = new THREE.ConeGeometry(1.85, 0.8, 14);
+      const umbMat = [MAT.coral, MAT.teal, MAT.gold, MAT.leafDark][tableIndex % 4];
+      const umbrella = new THREE.Mesh(umbrellaGeo, umbMat);
+      umbrella.position.y = 2.65;
+      umbrella.castShadow = true;
+      umbGroup.add(umbrella);
+
+      tGroup.add(umbGroup);
+      tGroup.userData.umbrellaGroup = umbGroup;
+    }
+    umbGroup.visible = true;
+  } else if (umbGroup) {
+    tGroup.remove(umbGroup);
+    tGroup.userData.umbrellaGroup = null;
+  }
+}
+
 function syncTerraceTables3D(sceneRef) {
   if (!sceneRef || !Game || !Game.tables) return;
   if (!terraceGroup) {
     terraceGroup = new THREE.Group();
     sceneRef.add(terraceGroup);
   }
+
+  const showUmbrellas = lvl('terraza') > 0;
 
   // Sincronizar cada mesa dinámica de la partida
   Game.tables.forEach((t, i) => {
@@ -524,24 +555,12 @@ function syncTerraceTables3D(sceneRef) {
       base.position.y = 0.05;
       tGroup.add(base);
 
-      // Sombrilla a rayas canarias (coral, teal, oro, verde hoja)
-      const poleGeo = new THREE.CylinderGeometry(0.045, 0.045, 2.7, 8);
-      const pole = new THREE.Mesh(poleGeo, MAT.woodLight);
-      pole.position.y = 1.35;
-      tGroup.add(pole);
-
-      const umbrellaGeo = new THREE.ConeGeometry(1.85, 0.8, 14);
-      const umbMat = [MAT.coral, MAT.teal, MAT.gold, MAT.leafDark][i % 4];
-      const umbrella = new THREE.Mesh(umbrellaGeo, umbMat);
-      umbrella.position.y = 2.65;
-      umbrella.castShadow = true;
-      tGroup.add(umbrella);
-
-      // Sillas de terraza (separación ergonómica sin intersección con el tablero)
+      // Sillas de terraza (radio ampliado para no amontonar)
       for (let s = 0; s < 2; s++) {
         const chairSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 12), MAT.woodTeak);
         const angle = s * Math.PI + 0.35;
-        chairSeat.position.set(Math.cos(angle) * 1.24, 0.65, Math.sin(angle) * 1.24);
+        const chairR = 1.38;
+        chairSeat.position.set(Math.cos(angle) * chairR, 0.65, Math.sin(angle) * chairR);
         chairSeat.castShadow = true;
         tGroup.add(chairSeat);
 
@@ -557,10 +576,14 @@ function syncTerraceTables3D(sceneRef) {
       dirtyStack.name = 'dirtyStack';
       tGroup.add(dirtyStack);
 
-      tGroup.userData = { dirtyStack, tableRef: t };
+      tGroup.userData = { dirtyStack, tableRef: t, umbrellaGroup: null };
       terraceGroup.add(tGroup);
       table3DMeshes.set(i, tGroup);
+    } else {
+      tGroup.position.set(pos.x, 0, pos.z);
     }
+
+    setTableUmbrella3D(tGroup, i, showUmbrellas);
 
     // Actualizar estado de platos sucios en la mesa
     if (tGroup.userData && tGroup.userData.dirtyStack) {
@@ -1288,13 +1311,13 @@ export function init3D() {
 
   // 5. Personajes 3D Estilizados AAA (Lali y Oli) con Bandeja 3D (Fase 3)
   playerMesh = createCharacter3D('lali');
-  playerMesh.position.set(-1.8, 0.35, 1.8);
+  playerMesh.position.set(-1.8, 0, 1.8);
   attachTrayToCharacter(playerMesh, 'p1');
   scene.add(playerMesh);
 
   partnerMesh = createCharacter3D('oli');
   // Ubicado dentro de la zona de preparación sin colisionar con la barra lateral
-  partnerMesh.position.set(0.5, 0.35, 1.8);
+  partnerMesh.position.set(0.5, 0, 1.8);
   attachTrayToCharacter(partnerMesh, 'p2');
   scene.add(partnerMesh);
 

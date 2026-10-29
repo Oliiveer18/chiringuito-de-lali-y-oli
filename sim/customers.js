@@ -45,7 +45,7 @@ export function spawnCustomer(forceType, opts){
   const regular = opts && opts.regular ? opts.regular : null;
   const personality = regular ? regular.personality : PKEYS[Math.floor(rnd()*PKEYS.length)];
   const look = regular ? regular.look : genLook(type);
-  const c = {id:++custSeq.id, type, x: fromRight? W+40 : -40, y: rand(684,702), state:'arrive', speed:rand(95,125),
+  const c = {id:++custSeq.id, type, x: fromRight? W+40 : -40, y: rand(684,702), state:'arrive', speed:rand(95,125), fromRight,
     shirt:look.shirt, skin:look.skin, look, personality, regular,
     order:[], patience:0, maxPatience:0, spot:-1, bob:rnd()*6, mood:null, moodT:0, moodTxt:null, tx:0, ty:0, table:null, eatT:0, waited:0, tag:null,
     act:'walk', actT:0, anger:0, angerT:0, graceT:null, subs:{}, walkPhase:0, stridePh:0,

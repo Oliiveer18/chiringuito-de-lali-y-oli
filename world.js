@@ -9,7 +9,7 @@ import { navRebuild } from './nav.js?v=28.16.0-vfx3d';
 
 // ---------- Geometría de la escena ----------
 export const TABLE_POS = [];
-for(let r=0;r<2;r++) for(let c=0;c<5;c++) TABLE_POS.push({x:600+c*148+(r?40:0), y:528+r*112});
+for(let r=0;r<2;r++) for(let c=0;c<5;c++) TABLE_POS.push({x:600+c*162+(r?48:0), y:528+r*126});
 export const HAMACA_POS = []; for(let i=0;i<8;i++) HAMACA_POS.push({x:560+i*88, y:452});
 export const QUEUE_POS = []; for(let i=0;i<QUEUE_SPOTS;i++) QUEUE_POS.push({x:434-i*80, y:600}); // margen para que el último no se corte con sombreros/mochilas
 export const COUNTER = {x:50,y:440,w:440,h:70};
@@ -26,8 +26,8 @@ export function buildTables(){
 /** Convierte coordenadas de mesa 2D a coordenadas mundiales 3D en la terraza */
 export function tablePosTo3D(table) {
   if (!table) return { x: 5.2, z: -0.6 };
-  const tx = 5.2 + ((table.x - 600) / 600) * 6.2;
-  const tz = -0.6 + ((table.y - 528) / 112) * 2.8;
+  const tx = 5.2 + ((table.x - 600) / 650) * 6.8;
+  const tz = -0.6 + ((table.y - 528) / 126) * 3.0;
   return { x: tx, z: tz };
 }
 
