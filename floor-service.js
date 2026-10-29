@@ -1,14 +1,9 @@
-import {Game,Net,isCoop} from './state.js?v=28.12';
-<<<<<<< HEAD
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.12';
-import {HUT_BAR_FLOOR_Y} from './world.js?v=28.12';
-=======
-import {HUT_BAR_FLOOR_Y} from './world.js?v=28.12';
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.12';
->>>>>>> 2488cad (v28.12: player feet on hut deck (HUT_BAR_FLOOR_Y=450))
-import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=28.12';
-import {factor} from './professional-model.mjs?v=28.12';
-import * as M from './service-tasks.mjs?v=28.12';
+import {Game,Net,isCoop} from './state.js?v=28.12.1';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.12.1';
+import {HUT_BAR_FLOOR_Y} from './world.js?v=28.12.1';
+import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=28.12.1';
+import {factor} from './professional-model.mjs?v=28.12.1';
+import * as M from './service-tasks.mjs?v=28.12.1';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
 const endpoint=t=>({x:t.x+(t.x>1150?-46:46),y:t.y+34});

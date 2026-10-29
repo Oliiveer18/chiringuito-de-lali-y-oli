@@ -2,10 +2,10 @@
    world.js
    Geometría de la escena (mesas, hamacas, cola, mostrador) y aspecto de los clientes.
    ========================================================= */
-import { QUEUE_SPOTS } from './config.js?v=28.12';
-import { rand, rnd } from './util.js?v=28.12';
-import { Game, tableCount } from './state.js?v=28.12';
-import { navRebuild } from './nav.js?v=28.12';
+import { QUEUE_SPOTS } from './config.js?v=28.12.1';
+import { rand, rnd } from './util.js?v=28.12.1';
+import { Game, tableCount } from './state.js?v=28.12.1';
+import { navRebuild } from './nav.js?v=28.12.1';
 
 // ---------- Geometría de la escena ----------
 export const TABLE_POS = [];
@@ -13,11 +13,7 @@ for(let r=0;r<2;r++) for(let c=0;c<5;c++) TABLE_POS.push({x:600+c*148+(r?40:0), 
 export const HAMACA_POS = []; for(let i=0;i<8;i++) HAMACA_POS.push({x:560+i*88, y:452});
 export const QUEUE_POS = []; for(let i=0;i<QUEUE_SPOTS;i++) QUEUE_POS.push({x:434-i*80, y:600}); // margen para que el último no se corte con sombreros/mochilas
 export const COUNTER = {x:50,y:440,w:440,h:70};
-<<<<<<< HEAD
 /** Suelo interior del quiosco: fillRect(60,250,420,200) → borde inferior y=450. drawPerson ancla los pies en y. */
-=======
-/** Interior hut deck (`fillRect(60,250,420,200)`); `drawPerson` anchors feet at y. */
->>>>>>> 2488cad (v28.12: player feet on hut deck (HUT_BAR_FLOOR_Y=450))
 export const HUT_BAR_FLOOR_Y = 450;
 
 export function buildTables(){
