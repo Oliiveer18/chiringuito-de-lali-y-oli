@@ -1,5 +1,5 @@
-export const VERSION='v29.2';
-export const LABEL='v29.2 · pasada integral Charco Azul';
+export const VERSION='v29.3';
+export const LABEL='v29.3 · verificación visual Charco Azul';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
