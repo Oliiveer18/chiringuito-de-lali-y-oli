@@ -8,6 +8,16 @@ El juego está publicado en GitHub Pages: https://oliiveer18.github.io/chiringui
 
 El cooperativo usa PeerJS (WebRTC), así que no necesita servidor propio. Hace falta conexión a internet para cargar PeerJS y las fuentes.
 
+## Líneas de producto: oficial, preview y camera-beta
+
+| Línea | Ubicación | Uso |
+|--------|-----------|-----|
+| **Oficial** | Raíz del repo, rama `main`, `version.js` (v28+) | Juego activo: https://oliiveer18.github.io/chiringuito-de-lali-y-oli/ |
+| **Preview v29** | `preview/` | Rediseño visual **congelado**; solo vitrina: https://oliiveer18.github.io/chiringuito-de-lali-y-oli/preview/index.html |
+| **camera-beta** | `camera-beta/` | Experimento de cámara; no es main: https://oliiveer18.github.io/chiringuito-de-lali-y-oli/camera-beta/index.html |
+
+El preview no recibe mantenimiento rutinario; ver `preview/README.md`. Para cache bust en la build oficial, usar `?v=` alineado con `VERSION` en `version.js`.
+
 ## Desarrollo local
 
 Requiere Node.js 18.19 o superior.

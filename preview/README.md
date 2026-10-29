@@ -1,42 +1,30 @@
-# Chiringuito de Lali y Oli
+# Preview · rediseño visual v29 (congelado)
 
-Juego de gestión de un chiringuito en Tenerife, con modo individual y cooperativo online para dos móviles.
+Esta carpeta **no** es la línea de producto activa del Chiringuito de Lali y Oli.
 
-## Jugar
+## Qué es
 
-El juego está publicado en GitHub Pages: https://oliiveer18.github.io/chiringuito-de-lali-y-oli/
+- **Instantánea congelada** del rediseño visual **v29** (p. ej. `style.css?v=29.3`, `version.js` → `v29.3`).
+- Sirve como **referencia y vitrina** en GitHub Pages; **no** recibe mejoras de jugabilidad ni correcciones salvo que se reabra expresamente el rediseño.
 
-El cooperativo usa PeerJS (WebRTC), así que no necesita servidor propio. Hace falta conexión a internet para cargar PeerJS y las fuentes.
+## Juego oficial
+
+- **Código y versión activos:** raíz del repositorio, rama **`main`**, versión en `version.js` (v28+).
+- **Jugar:** https://oliiveer18.github.io/chiringuito-de-lali-y-oli/  
+  (cache bust con `?v=` según `VERSION` en la raíz).
+- **Solo preview (showcase):** https://oliiveer18.github.io/chiringuito-de-lali-y-oli/preview/index.html
+
+## Mantenimiento
+
+No corregir bugs ni evolucionar mecánicas aquí mientras el rediseño esté en pausa. Preferencia del Project **Kiosco Lali y Oli:** seguir en **`main` v28+**; preview v29 congelado hasta nueva orden.
 
 ## Desarrollo local
 
-Requiere Node.js 18.19 o superior.
+Desde la raíz del repo:
 
 ```bash
-npm start        # Servidor estático local en http://localhost:8000
-npm test         # Ejecuta las pruebas automatizadas
-npm run check    # Alias de npm test
+npm start
+# Abrir http://localhost:8000/preview/index.html
 ```
 
-## Estructura
-
-- Núcleo: `state.js`, `config.js`, `sim.js`, `ui.js`, `render.js`, `report.js`, `net.js`, `world.js`.
-- Guardado y fiabilidad: `saves.js`, `reliability.js`, `layout.js`.
-- Ampliaciones: `features.js`, `v12.js` y `v14.js`.
-- Herramientas: `serve.js` y las pruebas `*.test.mjs`.
-- `legacy/`: código heredado que ya no forma parte del juego activo.
-- `tools/migrations/`: scripts de mantenimiento y migración.
-
-## Cooperativo
-
-El anfitrión simula la partida y la invitada recibe el estado. Ambas pueden comprar, mejorar, contratar personal y shows, reparar máquinas, publicar en Chiringo, contratar influencers, responder reseñas y pedir reparto.
-
-## Pruebas
-
-Las pruebas cargan los módulos reales de las ampliaciones y del canal cooperativo, simulan 15 días y comprueban reglas de tendencias, comentarios, influencers, shows, reparto, misiones y acciones de la invitada.
-
-No cubren el dibujo en pantalla ni la conexión PeerJS real.
-
-## Archivos heredados
-
-`server.js` y `coop-latency.test.js` pertenecen a una versión anterior del cooperativo basada en WebSocket. El juego actual usa PeerJS, por lo que están archivados en `legacy/`.
+Las pruebas automatizadas (`npm test`) ejecutan contra el juego en la **raíz**, no contra esta copia.
