@@ -6,8 +6,8 @@ import * as THREE from './lib/three.module.js';
 import { Game, weatherToday, lvl } from './state.js?v=28.16.0-vfx3d';
 import { createCharacter3D, animateCharacter } from './render-3d-actors.js?v=28.16.0-vfx3d';
 import { CONTROLS3D, initControls3D, updateContextualProximity, syncControls3DForGameMode } from './controls-3d.js?v=28.16.0-vfx3d';
-import { syncCustomers3D, clearAllCustomers3D } from './render-3d-customers.js?v=28.16.0-vfx3d';
-import { tablePosTo3D } from './world.js?v=28.16.0-vfx3d';
+import { syncCustomers3D, clearAllCustomers3D } from './render-3d-customers.js?v=28.16.2-vfx3d';
+import { tablePosTo3D } from './world.js?v=28.16.2-vfx3d';
 import { initUpgrades3D, syncUpgrades3D } from './upgrades-3d.js?v=28.16.0-vfx3d';
 import { initStaff3D, syncStaff3D } from './staff-3d.js?v=28.16.0-vfx3d';
 import { initVFX3D, updateVFX3D, spawnCleanSparkles3D, triggerBeerPourVFX } from './vfx-3d.js?v=28.16.0-vfx3d';
@@ -25,8 +25,9 @@ import {
 import {
   buildCoastMeshes,
   getCoastGeometryProfile,
-  updateCoastMaterials
-} from './coast-materials.js?v=28.16.1-vfx3d';
+  updateCoastMaterials,
+  sampleCharacterFootY
+} from './coast-materials.js?v=28.16.2-vfx3d';
 
 const getPlayer = () => (typeof window !== 'undefined' ? window.PLAYER : null);
 
@@ -514,7 +515,7 @@ function syncTerraceTables3D(sceneRef) {
       for (let s = 0; s < 2; s++) {
         const chairSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 12), MAT.woodTeak);
         const angle = s * Math.PI + 0.35;
-        const chairR = 1.38;
+        const chairR = 1.44;
         chairSeat.position.set(Math.cos(angle) * chairR, 0.65, Math.sin(angle) * chairR);
         chairSeat.castShadow = true;
         tGroup.add(chairSeat);
@@ -1441,6 +1442,8 @@ export function render3D(dt = 0.016) {
       playerMesh.position.z = nextZ;
     }
 
+    playerMesh.position.y = sampleCharacterFootY(playerMesh.position.x, playerMesh.position.z);
+
     // Animación procedural de paso (Squash & Stretch)
     animateCharacter(playerMesh, vx, vz, dt);
 
@@ -1448,6 +1451,7 @@ export function render3D(dt = 0.016) {
     updateContextualProximity(playerMesh.position);
   } else if (playerMesh) {
     animateCharacter(playerMesh, 0, 0, dt);
+    playerMesh.position.y = sampleCharacterFootY(playerMesh.position.x, playerMesh.position.z);
   }
 
   if (playerMesh && serviceControls && typeof window !== 'undefined' && window.PLAYER) {
@@ -1460,6 +1464,7 @@ export function render3D(dt = 0.016) {
   // Oli (Compañero) animado en cocina con postura viva
   if (partnerMesh) {
     animateCharacter(partnerMesh, 0, 0, dt);
+    partnerMesh.position.y = sampleCharacterFootY(partnerMesh.position.x, partnerMesh.position.z);
   }
 
   // 3.5 Estaciones Interactivas y Bandeja 3D (Fase 3)

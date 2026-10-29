@@ -1,6 +1,6 @@
 /* coast-materials.js · Agua y arena estilizadas (GPU) · KLO-49 */
 import * as THREE from './lib/three.module.js';
-import { SHORE_WORLD_Z, coastPalette } from './coast-palette.js?v=28.16.1-vfx3d';
+import { SHORE_WORLD_Z, coastPalette } from './coast-palette.js?v=28.16.2-vfx3d';
 
 export { SHORE_WORLD_Z };
 
@@ -188,6 +188,36 @@ diffuseColor.rgb = mix(dryCol, wetCol, wet);`
   return mat;
 }
 
+/** Misma fórmula que buildCoastMeshes (coords locales del plano de arena, mesh en y=-0.2). */
+export const SAND_MESH_WORLD_Y = -0.2;
+export const CHARACTER_FOOT_OFFSET = 0.035;
+const KIOSK_ORIGIN = { x: -2, z: 1.5 };
+const KIOSK_DECK_HALF = { x: 7.35, z: 5.05 };
+const KIOSK_DECK_FOOT_Y = 0.35;
+
+export function sampleSandDisplacement(localX, localZ) {
+  let y = (localZ + 10) * 0.045;
+  y += Math.sin(localX * 0.12) * Math.cos(localZ * 0.1) * 0.35;
+  return y;
+}
+
+export function sampleSandHeight(worldX, worldZ) {
+  return SAND_MESH_WORLD_Y + sampleSandDisplacement(worldX, worldZ);
+}
+
+/** Altura de pies: dunas en playa o tarima del quiosco (la que sea mayor en el deck). */
+export function sampleCharacterFootY(worldX, worldZ, footOffset = CHARACTER_FOOT_OFFSET) {
+  const lx = worldX - KIOSK_ORIGIN.x;
+  const lz = worldZ - KIOSK_ORIGIN.z;
+  const onDeck =
+    Math.abs(lx) <= KIOSK_DECK_HALF.x &&
+    Math.abs(lz) <= KIOSK_DECK_HALF.z &&
+    lz > -2.85;
+  const sandY = sampleSandHeight(worldX, worldZ);
+  const base = onDeck ? Math.max(sandY, KIOSK_DECK_FOOT_Y) : sandY;
+  return base + footOffset;
+}
+
 /** Escribe atributo shoreDist (worldZ - SHORE_WORLD_Z) tras displazar arena */
 export function applySandShoreAttribute(sandGeo, meshWorldZ = 0) {
   const pos = sandGeo.attributes.position;
@@ -209,9 +239,7 @@ export function buildCoastMeshes(scene, profile = getCoastGeometryProfile()) {
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
-    let y = (z + 10) * 0.045;
-    y += Math.sin(x * 0.12) * Math.cos(z * 0.1) * 0.35;
-    pos.setY(i, y);
+    pos.setY(i, sampleSandDisplacement(x, z));
   }
   sandGeo.computeVertexNormals();
   applySandShoreAttribute(sandGeo, 0);

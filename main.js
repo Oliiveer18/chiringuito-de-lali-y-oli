@@ -11,7 +11,7 @@ import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=28.16.0-vfx3d
 import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=28.16.0-vfx3d';
 import { render } from './render.js?v=28.16.0-vfx3d';
 import { ctx } from './canvas.js?v=28.16.0-vfx3d';
-import { init3D, is3DReady, render3D } from './render-3d.js?v=28.16.1-vfx3d';
+import { init3D, is3DReady, render3D } from './render-3d.js?v=28.16.2-vfx3d';
 import './variety.js?v=28.16.0-vfx3d';
 
 // ---------- Bucle ----------

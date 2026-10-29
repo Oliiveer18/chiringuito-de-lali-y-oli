@@ -6,7 +6,8 @@
    ========================================================= */
 import * as THREE from './lib/three.module.js';
 import { Game } from './state.js?v=28.16.0-vfx3d';
-import { tablePosTo3D } from './world.js?v=28.16.0-vfx3d';
+import { tablePosTo3D } from './world.js?v=28.16.2-vfx3d';
+import { sampleCharacterFootY } from './coast-materials.js?v=28.16.2-vfx3d';
 
 // Cache de materiales PBR para bañistas y clientes
 const CUST_MATS = {
@@ -146,6 +147,22 @@ const CUST_ENTRY_ANCHORS = {
 };
 const TERRACE_CORRIDOR = { x: 0.4, z: 5.25 };
 const KIOSK_QUEUE_FACE = 0;
+const TERRACE_CHAIR_R = 1.44;
+const TERRACE_CHAIR_ANGLE = 0.35;
+const SIM_TO_3D_X = 8.5 / 600;
+const SIM_TO_3D_Z = 0.8 / 40;
+
+function mapCustomerSimXZ(c) {
+  return {
+    x: ((c.x - 600) / 600) * 8.5,
+    z: 5.8 + ((c.y - 684) / 40) * 0.8
+  };
+}
+
+function simSpeedTo3D(movingSpd) {
+  const s = movingSpd || 0;
+  return Math.hypot(s * SIM_TO_3D_X, s * SIM_TO_3D_Z);
+}
 
 function customerEntryAnchor(c) {
   const fromEast = c.fromRight === true || (c.fromRight !== false && c.x > 620);
@@ -161,8 +178,12 @@ function customerMoveTarget(mesh, finalX, finalZ, needsCorridor) {
   const cz = TERRACE_CORRIDOR.z;
   const toFinal = Math.hypot(finalX - mesh.position.x, finalZ - mesh.position.z);
   const toCorridor = Math.hypot(cx - mesh.position.x, cz - mesh.position.z);
-  if (toFinal > 1.2 && toCorridor > 0.55 && mesh.position.z > cz - 0.15) {
-    return { x: cx, z: cz };
+  if (toFinal > 1.35 && toCorridor > 0.35 && mesh.position.z > cz - 0.2) {
+    const corridorWeight = THREE.MathUtils.clamp((toCorridor - 0.3) / 1.25, 0.32, 0.92);
+    return {
+      x: THREE.MathUtils.lerp(finalX, cx, corridorWeight),
+      z: THREE.MathUtils.lerp(finalZ, cz, corridorWeight)
+    };
   }
   return { x: finalX, z: finalZ };
 }
@@ -545,7 +566,9 @@ export function createCustomer3D(customer) {
     currentAngle: 0,
     targetAngle: 0,
     isSitting: false,
-    speed: 0
+    speed: 0,
+    prevX: 0,
+    prevZ: 0
   };
 
   return char;
@@ -584,8 +607,8 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       // Sentado en silla de la terraza (alineado con la silla sin solapar la mesa)
       if (c.table) {
         const tp = tablePosTo3D(c.table);
-        targetX = tp.x + 1.29;
-        targetZ = tp.z + 0.47;
+        targetX = tp.x + Math.cos(TERRACE_CHAIR_ANGLE) * TERRACE_CHAIR_R;
+        targetZ = tp.z + Math.sin(TERRACE_CHAIR_ANGLE) * TERRACE_CHAIR_R;
         ud.isSitting = (c.state === 'eat');
       } else {
         targetX = ((c.x - 600) / 600) * 8.5;
@@ -599,42 +622,65 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       targetZ = 4.85;
       ud.isSitting = false;
     } else {
-      // Caminando por la playa o marchándose
-      targetX = ((c.x - 600) / 600) * 8.5;
-      targetZ = 5.8 + ((c.y - 684) / 40) * 0.8;
+      const simPos = mapCustomerSimXZ(c);
+      targetX = simPos.x;
+      targetZ = simPos.z;
       ud.isSitting = false;
     }
 
     const needsCorridor = c.state === 'queue' || c.state === 'toTable' || c.state === 'arrive';
     const moveGoal = customerMoveTarget(charMesh, targetX, targetZ, needsCorridor);
 
-    // Suavizado de movimiento hacia waypoint o destino
-    const dx = moveGoal.x - charMesh.position.x;
-    const dz = moveGoal.z - charMesh.position.z;
+    const followSim =
+      !ud.isSitting &&
+      (c.state === 'arrive' || c.state === 'leave' || c.state === 'walkby' ||
+        (c.movingSpd > 2 && c.state !== 'queue'));
+    const goalX = followSim ? mapCustomerSimXZ(c).x : moveGoal.x;
+    const goalZ = followSim ? mapCustomerSimXZ(c).z : moveGoal.z;
+
+    const dx = goalX - charMesh.position.x;
+    const dz = goalZ - charMesh.position.z;
     const dist = Math.hypot(dx, dz);
 
-    if (dist > 0.05) {
-      const step = Math.min(dist, 5.0 * dt);
+    const simCap = simSpeedTo3D(c.movingSpd) * dt * 1.12;
+    const cruiseCap = Math.max(simCap, ud.speed * dt * 0.85, 0.35 * dt);
+    const moveCap = Math.min(dist, cruiseCap + 0.018);
+
+    if (dist > 0.03 && !ud.isSitting) {
+      const step = moveCap;
       charMesh.position.x += (dx / dist) * step;
       charMesh.position.z += (dz / dist) * step;
-      ud.speed = 4.0;
-      ud.targetAngle = Math.atan2(dx, dz);
-    } else {
-      ud.speed = 0;
-      // Orientación según estado
+      const distMoved = step;
+      const strideMul = c.look?.walk?.stride ?? 1;
+      ud.walkPhase += distMoved * (5.1 * strideMul);
+      const instSpeed = distMoved / Math.max(dt, 0.0001);
+      ud.speed = THREE.MathUtils.lerp(ud.speed, instSpeed, 0.28);
+      if (distMoved > 0.002) ud.targetAngle = Math.atan2(dx, dz);
+    } else if (!ud.isSitting) {
+      ud.speed = THREE.MathUtils.lerp(ud.speed, simSpeedTo3D(c.movingSpd), 0.15);
+      if (ud.speed < 0.06) ud.speed = 0;
       if (c.state === 'queue') {
         ud.targetAngle = KIOSK_QUEUE_FACE;
       } else if (c.state === 'eat' && c.table) {
         const tp = tablePosTo3D(c.table);
-        ud.targetAngle = Math.atan2(tp.x - charMesh.position.x, tp.z - charMesh.position.z); // Mirando al centro del tablero
+        ud.targetAngle = Math.atan2(tp.x - charMesh.position.x, tp.z - charMesh.position.z);
+      }
+    } else {
+      ud.speed = 0;
+      if (c.state === 'eat' && c.table) {
+        const tp = tablePosTo3D(c.table);
+        ud.targetAngle = Math.atan2(tp.x - charMesh.position.x, tp.z - charMesh.position.z);
       }
     }
+
+    charMesh.position.y = sampleCharacterFootY(charMesh.position.x, charMesh.position.z);
 
     // Rotación suave
     let diff = ud.targetAngle - ud.currentAngle;
     while (diff < -Math.PI) diff += Math.PI * 2;
     while (diff > Math.PI) diff -= Math.PI * 2;
-    ud.currentAngle += diff * 0.18;
+    const turnRate = ud.speed > 0.5 ? 0.14 : 0.1;
+    ud.currentAngle += diff * turnRate;
     charMesh.rotation.y = ud.currentAngle;
 
     // Control de visibilidad de atrezo (evitar solapamiento con mesas/sillas al comer)
@@ -664,7 +710,7 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
       ud.rightLeg.rotation.x = -Math.PI / 2.2;
       ud.leftArm.rotation.x = -0.4;
       ud.rightArm.rotation.x = -0.4;
-    } else if (ud.speed > 0.1) {
+    } else if (ud.speed > 0.08) {
       // CAMINANDO POR LA ARENA
       ud.walkPhase += dt * 5.5;
       const sinBob = Math.sin(ud.walkPhase);
