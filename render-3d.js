@@ -22,6 +22,11 @@ import {
   createItem3D,
   STATIONS_LOGIC
 } from './stations-3d.js?v=28.16.0-vfx3d';
+import {
+  buildCoastMeshes,
+  getCoastGeometryProfile,
+  updateCoastMaterials
+} from './coast-materials.js?v=28.16.1-vfx3d';
 
 const getPlayer = () => (typeof window !== 'undefined' ? window.PLAYER : null);
 
@@ -45,10 +50,8 @@ let stringLights = [];
 
 // Mallas dinámicas
 let waterMesh = null;
-let waterGeo = null;
-let waterPosAttr = null;
-let waterBaseY = [];
-let foamMesh = null;
+let waterMat = null;
+let sandMat = null;
 let palmLeaves = [];
 
 // Estado de la Cámara Móvil Cinemática
@@ -126,20 +129,6 @@ const MAT = {
     roughness: 0.12,
     metalness: 0.95
   }),
-  water: new THREE.MeshStandardMaterial({
-    color: 0x0fa3b1,
-    roughness: 0.15,
-    metalness: 0.1,
-    transparent: true,
-    opacity: 0.88,
-    flatShading: true
-  }),
-  foam: new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.2,
-    transparent: true,
-    opacity: 0.75
-  }),
   palmLeaf: new THREE.MeshStandardMaterial({
     color: 0x2d6a4f,
     roughness: 0.6,
@@ -162,46 +151,12 @@ const MAT = {
 
 // ---------- Construcción del Diorama Canario ----------
 function buildBeach(scene) {
-  // 1. Suelo de arena con ligera caída hacia el mar
-  const sandGeo = new THREE.PlaneGeometry(80, 50, 48, 32);
-  sandGeo.rotateX(-Math.PI / 2);
-  const pos = sandGeo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const z = pos.getZ(i);
-    // Pendiente suave hacia el mar (z negativo = mar)
-    let y = (z + 10) * 0.045;
-    // Dunas suaves en los laterales
-    y += Math.sin(x * 0.12) * Math.cos(z * 0.1) * 0.35;
-    pos.setY(i, y);
-  }
-  sandGeo.computeVertexNormals();
-  const sandMesh = new THREE.Mesh(sandGeo, MAT.sand);
-  sandMesh.receiveShadow = true;
-  sandMesh.position.set(0, -0.2, 0);
-  scene.add(sandMesh);
+  const coast = buildCoastMeshes(scene, getCoastGeometryProfile());
+  waterMesh = coast.waterMesh;
+  waterMat = coast.waterMat;
+  sandMat = coast.sandMat;
 
-  // 2. Océano Atlántico animado
-  waterGeo = new THREE.PlaneGeometry(80, 36, 52, 26);
-  waterGeo.rotateX(-Math.PI / 2);
-  waterPosAttr = waterGeo.attributes.position;
-  waterBaseY = new Float32Array(waterPosAttr.count);
-  for (let i = 0; i < waterPosAttr.count; i++) {
-    waterBaseY[i] = waterPosAttr.getY(i);
-  }
-  waterMesh = new THREE.Mesh(waterGeo, MAT.water);
-  waterMesh.position.set(0, -0.05, -16);
-  waterMesh.receiveShadow = true;
-  scene.add(waterMesh);
-
-  // 3. Franja de espuma en la rompiente
-  const foamGeo = new THREE.PlaneGeometry(76, 1.6, 32, 2);
-  foamGeo.rotateX(-Math.PI / 2);
-  foamMesh = new THREE.Mesh(foamGeo, MAT.foam);
-  foamMesh.position.set(0, 0.02, -3.2);
-  scene.add(foamMesh);
-
-  // 4. Silueta del Teide en el horizonte (fondo)
+  // Silueta del Teide en el horizonte (fondo)
   const teideGeo = new THREE.ConeGeometry(16, 9, 7);
   const teideMat = new THREE.MeshBasicMaterial({ color: 0x6e88a0 });
   const teideMesh = new THREE.Mesh(teideGeo, teideMat);
@@ -1277,7 +1232,8 @@ export function init3D() {
     return false;
   }
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const coastProfile = getCoastGeometryProfile();
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coastProfile.pixelRatioCap));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1453,27 +1409,7 @@ export function render3D(dt = 0.016) {
   const now = performance.now();
   const time = now * 0.001;
 
-  // 1. Animación suave de las Olas del Mar
-  if (waterPosAttr && waterMesh) {
-    const wind = (weatherToday && weatherToday() === 'viento') ? 2.2 : 1.0;
-    for (let i = 0; i < waterPosAttr.count; i++) {
-      const x = waterPosAttr.getX(i);
-      const z = waterPosAttr.getZ(i);
-      const wave = Math.sin(x * 0.35 + time * 1.8 * wind) * 0.16 +
-                   Math.cos(z * 0.28 + time * 1.4) * 0.11;
-      waterPosAttr.setY(i, waterBaseY[i] + wave);
-    }
-    waterPosAttr.needsUpdate = true;
-    waterGeo.computeVertexNormals();
-
-    // Pulso de espuma en la orilla
-    if (foamMesh) {
-      foamMesh.position.z = -3.2 + Math.sin(time * 1.8 * wind) * 0.45;
-      foamMesh.scale.x = 1.0 + Math.cos(time * 1.4) * 0.05;
-    }
-  }
-
-  // 2. Brisa marina en las palmeras según el viento canario
+  // Brisa marina en las palmeras según el viento canario
   const windFactor = (weatherToday && weatherToday() === 'viento') ? 2.4 : 1.0;
   palmLeaves.forEach((crown, i) => {
     crown.rotation.z = Math.sin(time * 1.5 * windFactor + i * 1.2) * (0.045 * windFactor);
@@ -1584,6 +1520,13 @@ export function render3D(dt = 0.016) {
   syncUpgrades3D();
   syncStaff3D(dt, time);
   updateVFX3D(dt, time);
+
+  updateCoastMaterials(waterMat, sandMat, {
+    time,
+    h,
+    windFactor,
+    sunLight
+  });
 
   // Renderizar la escena
   renderer.render(scene, camera);

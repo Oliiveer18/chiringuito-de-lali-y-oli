@@ -33,7 +33,7 @@ import { drawTable } from "./tables.js?v=28.16.0-vfx3d";
 import { drawTeide } from "./scene.js?v=28.16.0-vfx3d";
 import { nightness } from "./scene.js?v=28.16.0-vfx3d";
 import { skyAt } from "./scene.js?v=28.16.0-vfx3d";
-import { is3DReady } from "../render-3d.js?v=28.16.0-vfx3d";
+import { is3DReady } from "../render-3d.js?v=28.16.1-vfx3d";
 
 export function render(){
   const c=ctx; const h = Game.mode==='service'? Game.hour : (Game.mode==='report'? closeHour() : 11);
