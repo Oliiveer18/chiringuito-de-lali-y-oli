@@ -1,1 +1,49 @@
-FULL_CONTENT_FROM_FILE
+@import url("style-tokens.css?v=28.15.5");
+
+/* =========================================================
+   Chiringuito de Lali y Oli · style-main.css v28.15
+   Fusión unificada de: style-base · style-base-report ·
+   style-mobile · style-v9 · style-v10 · style-v28 ·
+   chiringo-ui-css + estilos extraídos de los 5 JS
+   ========================================================= */
+
+/* ── Extraído de style-base.css ── */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#073c40;color:var(--ink);font:500 15px/1.45 var(--font);
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none}
+input{-webkit-user-select:text;user-select:text}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid rgba(245,184,46,.9);outline-offset:2px}
+#game{position:fixed;left:var(--game-left);top:var(--game-top);width:var(--game-width);height:var(--game-height);display:block;touch-action:none;background:#0a4a50}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line-2);
+  background:var(--paper);font-weight:700;font-size:14px;box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 2px rgba(42,33,24,.12);transition:transform .08s,box-shadow .15s,background .15s,opacity .15s}
+.btn:hover{background:#fff;box-shadow:0 1px 0 #fff inset,0 3px 8px rgba(42,33,24,.14)}
+.btn:active{transform:translateY(1px) scale(.985);box-shadow:none}
+.btn.sm{min-height:34px;padding:0 12px;font-size:12.5px;border-radius:10px}
+.btn.big{min-height:52px;padding:0 26px;font-size:16px;border-radius:14px}
+.btn.block{width:100%}
+.btn.primary{background:linear-gradient(180deg,#ee6d49,var(--coral));border-color:var(--coral-d);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 4px 12px rgba(232,96,60,.38)}
+.btn.primary:hover{background:linear-gradient(180deg,#f2785a,#ec6743)}
+.btn.teal{background:var(--teal);border-color:var(--teal-d);color:#fff}
+.btn.teal:hover{background:var(--teal-d);border-color:var(--teal-dd);color:#fff}
+.btn.gold{background:var(--gold);border-color:#c89a1a;color:#2b1a00;box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 3px 10px rgba(245,184,46,.3)}
+.btn.gold:hover{background:#f7c540;filter:brightness(1.04)}
+.btn.ghost{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.55);color:#fff;box-shadow:none;backdrop-filter:blur(4px)}
+.btn.ghost:hover{background:rgba(255,255,255,.24)}
+.btn.text{background:none;border-color:transparent;box-shadow:none;color:var(--ink-2);min-height:40px}
+.btn.text:hover{background:rgba(42,33,24,.06)}
+.btn.waiting{background:var(--sand-2);border-color:var(--line-2);color:var(--ink-2);box-shadow:none;animation:pulse 1.6s ease-in-out infinite}
+.btn:disabled,.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;animation:none}
+.ico{width:20px;height:20px;fill:currentColor;flex:none}
+@keyframes pulse{50%{opacity:.65}}
+
+#hud{position:fixed;z-index:20;left:var(--game-left);top:var(--game-top);width:var(--game-width);display:flex;align-items:center;gap:10px;
+  padding:calc(8px + var(--st)) calc(12px + var(--sr)) 8px calc(12px + var(--sl));background:linear-gradient(180deg,rgba(6,52,56,.96),rgba(8,63,67,.90));
+  color:#fff;border-bottom:1px solid rgba(255,255,255,.12);box-shadow:0 4px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);font-weight:700}
+.hud-group{display:flex;align-items:center;gap:10px;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,.08);white-space:nowrap}
+.hud-day{font-size:12px;opacity:.85;text-transform:uppercase;letter-spacing:.06em}
+.hud-clock{font:600 20px/1 var(--font-d);font-variant-numeric:tabular-nums;min-width:50px;text-align:center}
+.hud-weather{font-size:12px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.14);background:rgba(255,255,2
