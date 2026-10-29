@@ -1319,6 +1319,9 @@ export function init3D() {
   resize3D();
   window.addEventListener('resize', resize3D);
   isInitialized = true;
+  import('./tripo-scene-bridge.js?v=28.16.0-vfx3d')
+    .then(m => m.restorePlacedTripoAssets?.())
+    .catch(() => {});
   return true;
 }
 
@@ -1579,21 +1582,47 @@ export function getPartnerMesh() {
 }
 
 const tripoPlaced = [];
+const tripoByAssetId = new Map();
+
+function applyTripoTransform(object3D, options = {}) {
+  const scale = options.scale ?? 1;
+  object3D.scale.setScalar(scale);
+  if (options.rotationY != null) object3D.rotation.y = options.rotationY;
+  const x = options.x ?? options.position?.x ?? 4.5;
+  const y = options.y ?? options.position?.y ?? 0;
+  const z = options.z ?? options.position?.z ?? -2;
+  object3D.position.set(x, y, z);
+}
 
 /** Añade un Object3D generado por Tripo a la escena diorama (acción explícita del jugador). */
 export function addTripoModelToScene(object3D, options = {}) {
   if (!isInitialized || !scene || !object3D) return null;
-  const scale = options.scale ?? 1;
-  object3D.scale.setScalar(scale);
-  const x = options.x ?? 4.5;
-  const y = options.y ?? 0;
-  const z = options.z ?? -2;
-  object3D.position.set(x, y, z);
+  applyTripoTransform(object3D, options);
   object3D.name = options.name || `tripo_${Date.now()}`;
   object3D.userData.tripo = true;
+  object3D.userData.tripoAssetId = options.assetId || null;
+  object3D.userData.tripoInstanceId = options.sceneInstanceId || null;
   scene.add(object3D);
   tripoPlaced.push(object3D);
+  if (options.assetId) tripoByAssetId.set(options.assetId, object3D);
   return object3D;
+}
+
+export function removeTripoModelByAssetId(assetId, { markRetired = true } = {}) {
+  const obj = tripoByAssetId.get(assetId);
+  if (!obj || !scene) return false;
+  scene.remove(obj);
+  const i = tripoPlaced.indexOf(obj);
+  if (i >= 0) tripoPlaced.splice(i, 1);
+  tripoByAssetId.delete(assetId);
+  return true;
+}
+
+export function bindTripoModelToSlot(assetId, slotKey) {
+  const obj = tripoByAssetId.get(assetId);
+  if (!obj) return false;
+  obj.userData.tripoEntitySlot = slotKey;
+  return true;
 }
 
 export function getScene3D() {
@@ -1602,6 +1631,10 @@ export function getScene3D() {
 
 export function listTripoModelsInScene() {
   return tripoPlaced.slice();
+}
+
+export function hasTripoAssetInScene(assetId) {
+  return tripoByAssetId.has(assetId);
 }
 
 if (typeof window !== 'undefined') {
@@ -1619,5 +1652,6 @@ if (typeof window !== 'undefined') {
   window.spawnCleanSparkles3D = spawnCleanSparkles3D;
   window.triggerBeerPourVFX = triggerBeerPourVFX;
   window.addTripoModelToScene = addTripoModelToScene;
+  window.removeTripoModelByAssetId = removeTripoModelByAssetId;
   window.getScene3D = getScene3D;
 }

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-29T22:00:30.863Z",
+  "assets": [
+    {
+      "id": "tripo_mock-task-00000000-0000-4000-8000-000000000001",
+      "taskId": "mock-task-00000000-0000-4000-8000-000000000001",
+      "displayName": "Mock · objeto",
+      "category": "objeto",
+      "state": "validado",
+      "glbPath": "/generated/tripo/mock-task-00000000-0000-4000-8000-000000000001.glb",
+      "glbVersion": 1,
+      "bytes": 16,
+      "style": "juego",
+      "description": "test",
+      "transform": {
+        "scale": 1,
+        "rotationY": 0,
+        "position": {
+          "x": 4.5,
+          "y": 0,
+          "z": -2
+        }
+      },
+      "entitySlot": null,
+      "sceneInstanceId": null,
+      "createdAt": "2026-10-29T22:00:30.858Z",
+      "updatedAt": "2026-10-29T22:00:30.863Z"
+    }
+  ]
+}

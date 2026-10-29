@@ -98,8 +98,21 @@ try {
   check('download GLB mock', dl.status === 200 && dl.body.slice(0, 4).equals(mockGlbBuffer().slice(0, 4)));
   check(
     'GLB guardado en generated/tripo',
-    fs.existsSync(path.join(__dirname, 'generated', 'tripo', `${MOCK_TASK_ID}.glb`))
+    fs.existsSync(path.join(__dirname, 'generated', 'tripo', `mock-task-00000000-0000-4000-8000-000000000001.glb`))
   );
+
+  const manifest = await get(port, '/api/tripo/manifest');
+  const manJ = JSON.parse(manifest.body.toString());
+  check('manifest mock incluye activo', manJ.assets?.some(a => a.taskId === MOCK_TASK_ID));
+
+  const reg = await post(port, '/api/tripo/assets/register', {
+    taskId: MOCK_TASK_ID,
+    displayName: 'Mock · objeto',
+    category: 'objeto',
+    description: 'test',
+    style: 'juego',
+  });
+  check('register mock', reg.status === 200);
 
   const noKey = await get(port, '/api/tripo/balance');
   check('mock balance sin TRIPO_API_KEY', noKey.status === 200);

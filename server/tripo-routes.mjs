@@ -9,10 +9,17 @@ import {
   tripoDownloadUrl,
 } from './tripo-client.mjs';
 import { handleMockRoute, mockGlbBuffer } from './tripo-mock.mjs';
+import { GENERATED_DIR, ROOT } from './tripo-paths.mjs';
+import {
+  readManifest,
+  upsertAsset,
+  validateAssetFile,
+  registerDownloadedAsset,
+  safeGlbFilename,
+  assetIdFromTask,
+} from './tripo-assets.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
-export const GENERATED_DIR = path.join(ROOT, 'generated', 'tripo');
+export { GENERATED_DIR } from './tripo-paths.mjs';
 
 const CATEGORY_PROMPT = {
   personaje: 'personaje de juego estilizado, ',
@@ -94,12 +101,20 @@ export async function handleTripoApi(req, res, pathname) {
       if (mocked.binary) {
         await ensureGeneratedDir();
         const id = pathname.split('/').pop();
-        const filePath = path.join(GENERATED_DIR, `${id}.glb`);
+        const filePath = path.join(GENERATED_DIR, safeGlbFilename(id));
         await fsp.writeFile(filePath, mocked.binary);
+        await registerDownloadedAsset({
+          taskId: id,
+          displayName: id,
+          category: 'objeto',
+          description: '',
+          style: 'juego',
+        });
         res.writeHead(200, {
           'Content-Type': 'model/gltf-binary',
-          'Content-Disposition': `attachment; filename="${mocked.filename}"`,
-          'X-Local-Path': `/generated/tripo/${id}.glb`,
+          'Content-Disposition': `attachment; filename="${safeGlbFilename(id)}"`,
+          'X-Local-Path': `/generated/tripo/${safeGlbFilename(id)}`,
+          'X-Asset-Id': assetIdFromTask(id),
         });
         res.end(mocked.binary);
         return true;
@@ -111,6 +126,40 @@ export async function handleTripoApi(req, res, pathname) {
 
   if (req.method === 'GET' && pathname === '/api/tripo/config') {
     json(res, 200, tripoConfigPayload());
+    return true;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/tripo/manifest') {
+    const manifest = await readManifest();
+    json(res, 200, manifest);
+    return true;
+  }
+
+  if (req.method === 'PATCH' && pathname.startsWith('/api/tripo/assets/') && !pathname.endsWith('/validate')) {
+    const id = decodeURIComponent(pathname.slice('/api/tripo/assets/'.length));
+    const body = await readBody(req);
+    const asset = await upsertAsset({ ...body, id });
+    json(res, 200, { asset });
+    return true;
+  }
+
+  const validateMatch = pathname.match(/^\/api\/tripo\/assets\/([^/]+)\/validate$/);
+  if (req.method === 'POST' && validateMatch) {
+    const asset = await readManifest().then(m => m.assets.find(a => a.id === validateMatch[1]));
+    const taskId = asset?.taskId || validateMatch[1].replace(/^tripo_/, '');
+    const result = await validateAssetFile(taskId);
+    json(res, result.ok ? 200 : 400, result);
+    return true;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/tripo/assets/register') {
+    const body = await readBody(req);
+    if (!body.taskId) {
+      json(res, 400, { error: 'Falta taskId' });
+      return true;
+    }
+    const result = await registerDownloadedAsset(body);
+    json(res, result.ok ? 200 : 400, result);
     return true;
   }
 
@@ -164,27 +213,21 @@ export async function handleTripoApi(req, res, pathname) {
       await ensureGeneratedDir();
       const buf =
         modelUrl === 'mock://glb' ? mockGlbBuffer() : await tripoDownloadUrl(modelUrl);
-      const filePath = path.join(GENERATED_DIR, `${taskId}.glb`);
+      const filePath = path.join(GENERATED_DIR, safeGlbFilename(taskId));
       await fsp.writeFile(filePath, buf);
-      const manifestPath = path.join(GENERATED_DIR, 'manifest.json');
-      let manifest = [];
-      try {
-        manifest = JSON.parse(await fsp.readFile(manifestPath, 'utf8'));
-      } catch {
-        manifest = [];
-      }
-      if (!manifest.find(e => e.taskId === taskId)) {
-        manifest.push({
-          taskId,
-          path: `/generated/tripo/${taskId}.glb`,
-          savedAt: new Date().toISOString(),
-        });
-        await fsp.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
-      }
+      await registerDownloadedAsset({
+        taskId,
+        displayName: task?.data?.prompt || taskId,
+        category: 'objeto',
+        state: 'generado',
+        style: null,
+        description: '',
+      });
       res.writeHead(200, {
         'Content-Type': 'model/gltf-binary',
-        'Content-Disposition': `attachment; filename="${taskId}.glb"`,
-        'X-Local-Path': `/generated/tripo/${taskId}.glb`,
+        'Content-Disposition': `attachment; filename="${safeGlbFilename(taskId)}"`,
+        'X-Local-Path': `/generated/tripo/${safeGlbFilename(taskId)}`,
+        'X-Asset-Id': assetIdFromTask(taskId),
       });
       res.end(buf);
       return true;

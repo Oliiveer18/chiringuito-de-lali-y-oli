@@ -8,98 +8,120 @@ Integración de generación 3D vía [Tripo API](https://developers.tripo3d.ai/en
 - Rama `feature/tripo-integration` (basada en `experiment/vfx-clientes-3d`, escena Three.js)
 - Cuenta Tripo y API key desde la [consola de claves](https://developers.tripo3d.ai/en/keys)
 
-## Configurar la clave
-
-1. Copia el ejemplo:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Edita `.env` y asigna tu clave (sin comillas extra):
-
-   ```bash
-   TRIPO_API_KEY=sk-...
-   ```
-
-3. `.env` está en `.gitignore` — no lo subas a GitHub.
-
-## Arrancar en local
-
-El juego en GitHub Pages **no** puede llamar a Tripo directamente (la clave debe quedarse en el servidor). En local usa el servidor de desarrollo con proxy:
+## Mac · puesta en marcha rápida
 
 ```bash
+git clone https://github.com/Oliiveer18/chiringuito-de-lali-y-oli.git
+cd chiringuito-de-lali-y-oli
+git checkout feature/tripo-integration
+cp .env.example .env
+# Edita .env y añade TRIPO_API_KEY (solo en local)
 npm run dev
 ```
 
-Abre **http://localhost:8000** (o el puerto de `PORT`).
+Abre **http://localhost:8000**, entra al **servicio** (escena 3D) y pulsa **Tripo 3D** en el HUD.
 
-- `npm start` sigue sirviendo solo estáticos (sin proxy Tripo).
-- Sin `TRIPO_API_KEY`, el juego arranca igual; el panel Tripo muestra un aviso amable.
-
-## Comprobar saldo (manual, con clave real)
-
-Con `npm run dev` y `TRIPO_API_KEY` definida:
-
-1. Entra al juego y pulsa **Tripo 3D** en el HUD (durante el servicio).
-2. Pulsa **Actualizar** junto al saldo.
-
-También puedes usar curl contra tu servidor local (no pegues la clave en el historial del shell compartido):
-
-```bash
-curl -s http://localhost:8000/api/tripo/balance
-```
-
-La ruta real de Tripo es `GET https://openapi.tripo3d.ai/v3/account/balance` con `Authorization: Bearer …` (el proxy lo hace por ti).
-
-## Primera generación
-
-1. `npm run dev` con clave configurada.
-2. Juega hasta la escena 3D (servicio).
-3. **Tripo 3D** → describe el modelo, elige categoría y estilo.
-4. **Generar modelo 3D** (una petición por clic; hay protección anti-doble clic).
-5. Cuando el estado sea **Completada**, revisa la vista previa.
-6. **Añadir a escena** solo si quieres colocarlo en el diorama (acción explícita).
-7. **Descargar GLB** guarda una copia; el servidor también guarda en `generated/tripo/{taskId}.glb`.
-
-Los modelos usan `POST /v3/generation/text-to-model` con `model` según estilo (p. ej. `P2-20260801` para juego, `v3.1-20260211` para alta calidad). Consulta [modelos y versiones](https://developers.tripo3d.ai/en/docs/models-and-versions).
-
-## GitHub Pages + backend externo
-
-La publicación estática en Pages **no** incluye `dev-server.mjs`. Opciones:
-
-- Jugar en Pages sin generación 3D (panel informativo).
-- Desplegar `dev-server.mjs` (o un proxy equivalente) en Render, Fly.io, Railway, etc., y servir el juego desde el mismo origen o configurar CORS en el proxy.
-
-## Tests sin créditos
-
-```bash
-TRIPO_MOCK=1 node tripo-api.test.mjs
-```
-
-Incluido en `npm test`. No llama a la API real ni requiere clave.
-
-## Modo simulación
-
-Para desarrollo sin consumir créditos:
+Simulación sin créditos:
 
 ```bash
 TRIPO_MOCK=1 npm run dev
 ```
 
-El panel indicará «Modo simulación».
+## Configurar la clave
+
+1. `cp .env.example .env`
+2. `TRIPO_API_KEY=…` en `.env` (sin comillas extra)
+3. `.env` está en `.gitignore` — no lo subas a GitHub
+
+## Arrancar en local
+
+| Comando | Qué hace |
+|---------|----------|
+| `npm run dev` | Juego + proxy Tripo (`dev-server.mjs`) |
+| `npm start` | Solo estáticos (sin Tripo) |
+
+Sin `TRIPO_API_KEY`, el juego arranca igual; el panel Tripo muestra un aviso.
+
+## GitHub Pages / githack vs `npm run dev`
+
+- **Preview estático** (p. ej. [raw.githack.com](https://raw.githack.com/) sobre `index.html` de la rama): sirve HTML/JS/CSS del juego; **no** hay `/api/tripo/*`, así que generación, saldo y manifest de servidor **no funcionan** (panel informativo).
+- **`npm run dev`**: imprescindible para proxy Tripo, descarga GLB al disco y `generated/tripo/manifest.json`.
+
+## Comprobar saldo (manual, con clave real)
+
+1. `npm run dev` con `TRIPO_API_KEY`
+2. HUD → **Tripo 3D** → **Actualizar saldo**
+
+```bash
+curl -s http://localhost:8000/api/tripo/balance
+```
+
+Upstream: `GET https://openapi.tripo3d.ai/v3/account/balance` con `Authorization: Bearer …`.
+
+## Pipeline de activos (flujo en el panel)
+
+Pasos en español (barra superior del panel):
+
+1. **Generar** — una petición por clic (anti-doble clic ~800 ms); estado `pendiente` → `generado`
+2. **Previsualizar** — vista Three.js en el panel
+3. **Guardar** — valida cabecera GLB + registra en `generated/tripo/manifest.json` y `localStorage` (`chiringuito.tripo.assets`); estado `validado`
+4. **Incorporar escena** — acción explícita; estado `integrado` (nunca automático al cargar tests)
+5. **Asociar entidad** — ranura opcional (decoración / exposición; **no** sustituye a Lali/Oli jugables)
+6. **Retirar** — quita de la escena; estado `retirado`
+
+Ajustes antes de incorporar: **Escala** y **Rotación °** en el panel.
+
+Persistencia tras recargar:
+
+- Servidor: `generated/tripo/*.glb` + `manifest.json` (GLB en `.gitignore`)
+- Cliente: `localStorage` activos + `chiringuito.tripo.placed` para modelos **integrados**
+
+## Ranuras de entidad compatibles
+
+| Clave | Uso |
+|-------|-----|
+| `prop_generico` | Posición manual (sin anclaje fijo) |
+| `decor_terrace_a` | Decoración terraza |
+| `decor_bar` | Decoración barra |
+| `decor_beach` | Decoración playa |
+| `exhibicion_personaje` | Figura decorativa (no reemplaza personajes jugables) |
+
+## Primera generación real
+
+1. `npm run dev` + `TRIPO_API_KEY`
+2. Servicio 3D → **Tripo 3D**
+3. Descripción + categoría + estilo → **Generar**
+4. **Guardar** → **Incorporar escena** si procede
+
+Modelos: `POST /v3/generation/text-to-model` con `model` según estilo ([modelos y versiones](https://developers.tripo3d.ai/en/docs/models-and-versions)).
+
+## Tests sin créditos
+
+```bash
+npm test
+# o solo Tripo:
+node tripo-assets.test.mjs && TRIPO_MOCK=1 node tripo-api.test.mjs
+```
+
+No ejecutan generación real ni requieren clave.
 
 ## Rutas del proxy
 
-| Ruta local | Tripo upstream |
-|------------|----------------|
-| `GET /api/tripo/config` | Estado (sin upstream) |
-| `GET /api/tripo/balance` | `GET /v3/account/balance` |
-| `GET /api/tripo/usage` | `GET /v3/account/usage` |
-| `POST /api/tripo/generate` | `POST /v3/generation/text-to-model` |
-| `GET /api/tripo/tasks/:id` | `GET /v3/tasks/{task_id}` |
-| `GET /api/tripo/download/:id` | Descarga `output.model_url` y guarda GLB local |
+| Ruta local | Tripo upstream / función |
+|------------|---------------------------|
+| `GET /api/tripo/config` | Estado local |
+| `GET /api/tripo/manifest` | Manifest de activos |
+| `POST /api/tripo/assets/register` | Validar + registrar GLB |
+| `POST /api/tripo/assets/:id/validate` | Revalidar GLB |
+| `PATCH /api/tripo/assets/:id` | Metadatos / estado |
+| `GET /api/tripo/balance` | `/v3/account/balance` |
+| `GET /api/tripo/usage` | `/v3/account/usage` |
+| `POST /api/tripo/generate` | `/v3/generation/text-to-model` |
+| `GET /api/tripo/tasks/:id` | `/v3/tasks/{task_id}` |
+| `GET /api/tripo/download/:id` | Descarga y guarda GLB local |
 
-## Registro local
+## Estados de activo
 
-Metadatos de modelos generados: `localStorage` (`chiringuito.tripo.models`) y `generated/tripo/manifest.json` en el servidor tras cada descarga.
+`pendiente` · `generado` · `validado` · `integrado` · `sustituido` · `retirado`
+
+`integrado` solo tras **Incorporar escena** explícito.

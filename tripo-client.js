@@ -51,8 +51,46 @@ export async function downloadTripoGlb(taskId) {
     throw new Error(msg);
   }
   const localPath = res.headers.get('X-Local-Path') || `/generated/tripo/${taskId}.glb`;
+  const assetId = res.headers.get('X-Asset-Id');
   const blob = await res.blob();
-  return { blob, localPath };
+  return { blob, localPath, assetId };
+}
+
+export async function fetchTripoManifest() {
+  const res = await fetch('/api/tripo/manifest', { cache: 'no-store' });
+  if (!res.ok) throw new Error('No se pudo leer el manifest de activos.');
+  return res.json();
+}
+
+export async function registerTripoAsset(meta) {
+  const res = await fetch('/api/tripo/assets/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(meta),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.reason || data.error || 'No se pudo registrar el activo.');
+  return data;
+}
+
+export async function validateTripoAsset(assetId) {
+  const res = await fetch(`/api/tripo/assets/${encodeURIComponent(assetId)}/validate`, {
+    method: 'POST',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.reason || data.message || 'Validación fallida.');
+  return data;
+}
+
+export async function patchTripoAsset(id, body) {
+  const res = await fetch(`/api/tripo/assets/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.error || 'No se pudo actualizar el activo.');
+  return data.asset;
 }
 
 /** Espera entre intentos con backoff (mín. 2 s, recomendado por Tripo). */

@@ -97,7 +97,42 @@
   gap: 8px;
   margin-top: 12px;
 }
+#tripo-steps.tripo-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+}
+#tripo-steps li {
+  font: 600 11px/1 system-ui;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #eef2f0;
+  color: #315e5d;
+}
+#tripo-steps li.on {
+  background: #0b676c;
+  color: #fff;
+}
+#tripo-steps li.done {
+  background: #dff3f4;
+  color: #12484c;
+}
+.tripo-state-k {
+  margin-left: 8px;
+  color: #315e5d;
+  font-weight: 500;
+}
+.tripo-transform-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
 #tripo-panel .tripo-actions .btn {
   flex: 1 1 auto;
-  min-width: 140px;
+  min-width: 120px;
 }
