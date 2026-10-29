@@ -3,23 +3,24 @@
    Joystick virtual flotante (pulgar izquierdo) + Botón contextual gigante (pulgar derecho)
    con respuesta háptica y detección inteligente de proximidad.
    ========================================================= */
-import { Game } from './state.js?v=28.16.0-vfx3d';
+import { Game, Net } from './state.js?v=28.16.0-vfx3d';
 import { cleanTable, servable, tryServe } from './sim.js?v=28.16.0-vfx3d';
 import { Audio } from './audio.js?v=28.16.0-vfx3d';
 import { tablePosTo3D } from './world.js?v=28.16.0-vfx3d';
 import {
   startBeerPour,
-  updateBeerPour,
   releaseBeerPour,
-  startGrillCook,
+  cancelBeerPour,
   collectGrillDish,
   deliverTrayItemToCustomer,
-  trayAddItem,
-  trayClear,
+  stationCommand,
   trayGetItems,
   initStationUI,
   STATIONS_LOGIC
 } from './stations-3d.js?v=28.16.0-vfx3d';
+import { preparedMatch } from './service-3d-model.mjs';
+import { customerInteractionPosition } from './render-3d-customers.js?v=28.16.2-vfx3d';
+import { guestClean, guestServe } from './net-guest.js?v=28.16.0-vfx3d';
 
 export const CONTROLS3D = {
   // Estado del joystick virtual
@@ -36,6 +37,7 @@ export const CONTROLS3D = {
   // Estado de la acción contextual
   currentAction: null,
   isHoldingAction: false,
+  heldAction: null,
   // Callbacks
   onActionTrigger: null
 };
@@ -57,10 +59,14 @@ let actLblEl = null;
 const JOY_MAX_DIST = 44; // Radio máximo en px
 
 function controls3DEnabled() {
-  return Game && Game.mode === 'service';
+  return Game && Game.mode === 'service' && Game.speed > 0;
 }
 
 export function resetControls3DInput() {
+  if(CONTROLS3D.heldAction?.type==='beer') cancelBeerPour(Net.me);
+  CONTROLS3D.isHoldingAction=false;
+  CONTROLS3D.heldAction=null;
+  actBtnEl?.classList.remove('act-press');
   CONTROLS3D.joyActive = false;
   CONTROLS3D.joyTouchId = null;
   CONTROLS3D.inputX = 0;
@@ -171,16 +177,19 @@ export function initControls3D(playerMesh) {
   // ---------- TECLADO EN ESCRITORIO (WASD / Flechas) ----------
   window.addEventListener('keydown', e => {
     if (!controls3DEnabled()) return;
+    if(e.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
     if (e.key in CONTROLS3D.keys) {
+      e.preventDefault();
       CONTROLS3D.keys[e.key] = true;
       updateKeyboardInput();
     }
     // Barra espaciadora o Enter ejecuta la acción contextual
-    if (e.code === 'Space' && !e.target.matches('input, textarea') && !CONTROLS3D.isHoldingAction) {
+    if (e.code === 'Space' && !e.repeat && !CONTROLS3D.isHoldingAction) {
       e.preventDefault();
       CONTROLS3D.isHoldingAction = true;
-      if (CONTROLS3D.currentAction && CONTROLS3D.currentAction.type === 'beer') {
-        startBeerPour('p1');
+      CONTROLS3D.heldAction=CONTROLS3D.currentAction;
+      if (CONTROLS3D.heldAction?.type === 'beer') {
+        startBeerPour(Net.me);
       } else {
         triggerCurrentAction();
       }
@@ -193,47 +202,51 @@ export function initControls3D(playerMesh) {
       updateKeyboardInput();
     }
     if (e.code === 'Space') {
-      CONTROLS3D.isHoldingAction = false;
-      if (CONTROLS3D.currentAction && CONTROLS3D.currentAction.type === 'beer') {
-        releaseBeerPour('p1');
-      }
+      endActionHold();
     }
   });
 
   // ---------- BOTÓN CONTEXTUAL GIGANTE (Pulgar Derecho) ----------
   if (actBtnEl) {
     actBtnEl.addEventListener('pointerdown', e => {
-      if (!controls3DEnabled()) return;
+      if (!controls3DEnabled() || CONTROLS3D.isHoldingAction) return;
       e.preventDefault();
+      actBtnEl.setPointerCapture(e.pointerId);
       CONTROLS3D.isHoldingAction = true;
+      CONTROLS3D.heldAction=CONTROLS3D.currentAction;
       // Respuesta háptica suave
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(14);
       }
       actBtnEl.classList.add('act-press');
-      if (CONTROLS3D.currentAction && CONTROLS3D.currentAction.type === 'beer') {
-        startBeerPour('p1');
+      if (CONTROLS3D.heldAction?.type === 'beer') {
+        startBeerPour(Net.me);
       } else {
         triggerCurrentAction();
       }
     });
 
-    const endActionHold = () => {
-      actBtnEl.classList.remove('act-press');
-      if (CONTROLS3D.isHoldingAction) {
-        CONTROLS3D.isHoldingAction = false;
-        if (CONTROLS3D.currentAction && CONTROLS3D.currentAction.type === 'beer') {
-          releaseBeerPour('p1');
-        }
-      }
-    };
-
-    actBtnEl.addEventListener('pointerup', endActionHold);
-    actBtnEl.addEventListener('pointercancel', endActionHold);
+    actBtnEl.addEventListener('pointerup', () => endActionHold());
+    actBtnEl.addEventListener('pointercancel', () => endActionHold(true));
+    actBtnEl.addEventListener('lostpointercapture', () => endActionHold(true));
   }
+  window.addEventListener('blur', resetControls3DInput);
+  document.addEventListener('visibilitychange', () => { if(document.hidden) resetControls3DInput(); });
 
   hideActionButton();
   syncControls3DForGameMode();
+}
+
+function endActionHold(cancel=false){
+  if(!CONTROLS3D.isHoldingAction) return;
+  const held=CONTROLS3D.heldAction;
+  CONTROLS3D.isHoldingAction=false;
+  CONTROLS3D.heldAction=null;
+  actBtnEl?.classList.remove('act-press');
+  if(held?.type==='beer'){
+    if(cancel||!controls3DEnabled()) cancelBeerPour(Net.me);
+    else releaseBeerPour(Net.me);
+  }
 }
 
 function updateKeyboardInput() {
@@ -265,7 +278,7 @@ export function updateContextualProximity(playerPos) {
 
   let best = null;
   let minDist = 1e9;
-  const trayItems = trayGetItems('p1');
+  const trayItems = trayGetItems(Net.me);
   const hasDirtyDishes = trayItems.includes('dirty');
 
   // 1. Si lleva platos sucios en la bandeja y está cerca del fregadero
@@ -298,16 +311,16 @@ export function updateContextualProximity(playerPos) {
   if (!best && Game && Game.customers) {
     for (const c of Game.customers) {
       if (!servable(c)) continue;
-      const cp = c.table ? tablePosTo3D(c.table) : { x: ((c.x - 600) / 600) * 8.5, z: ((c.y - 500) / 220) * 3.5 };
-      const cx = c.table ? cp.x + 0.55 : cp.x;
+      const cp = customerInteractionPosition(c);
+      const cx = cp.x;
       const cz = cp.z;
       const d = Math.hypot(playerPos.x - cx, playerPos.z - cz);
       if (d < 3.2 && d < minDist) {
         minDist = d;
         // ¿Llevamos en la bandeja algún producto que pide este cliente?
-        const match = trayItems.find(it => c.order && c.order.includes(it));
+        const match = preparedMatch(Game,c,Net.me);
         if (match) {
-          best = { type: 'deliver', customer: c, item: match, name: 'ENTREGAR', ico: '🍽️', class: 'act-green' };
+          best = { type: 'deliver', customer: c, item: match.unit.id, name: 'ENTREGAR', ico: '🍽️', class: 'act-green' };
         } else {
           best = { type: 'serve', customer: c, name: 'ATENDER', ico: '🛎️', class: 'act-green' };
         }
@@ -322,7 +335,10 @@ export function updateContextualProximity(playerPos) {
       if (d < s.r && d < minDist) {
         minDist = d;
         if (s.id === 'grill' && STATIONS_LOGIC.grill.state !== 'idle') {
-          best = { type: 'grill', name: 'RECOGER PLANCHA', ico: '🍳', class: 'act-fire' };
+          const g=STATIONS_LOGIC.grill;
+          best = { type: 'grill', name: g.state==='cooking'?'COCINANDO…':g.state==='burnt'?'RECOGER QUEMADO':'RECOGER PLANCHA', ico: '🍳', class: 'act-fire' };
+        } else if(s.id==='coffee' && STATIONS_LOGIC.coffee.state!=='idle'){
+          best = { type:'coffee',name:'PREPARANDO CAFÉ…',ico:s.ico,class:s.class };
         } else {
           best = { type: s.id, name: s.name, ico: s.ico, class: s.class };
         }
@@ -336,8 +352,13 @@ export function updateContextualProximity(playerPos) {
   }
 
   // Actualizar UI del botón
-  if (!CONTROLS3D.currentAction || CONTROLS3D.currentAction.type !== best.type || CONTROLS3D.currentAction.name !== best.name) {
-    CONTROLS3D.currentAction = best;
+  const previous=CONTROLS3D.currentAction;
+  CONTROLS3D.currentAction = best;
+  if(CONTROLS3D.heldAction?.type==='beer'){
+    const beer=STATIONS_3D.find(s=>s.id==='beer');
+    if(Math.hypot(playerPos.x-beer.x,playerPos.z-beer.z)>=beer.r) endActionHold(true);
+  }
+  if (!previous || previous.type !== best.type || previous.name !== best.name) {
     if (actIcoEl) actIcoEl.textContent = best.ico;
     if (actLblEl) actLblEl.textContent = best.name;
 
@@ -354,45 +375,32 @@ function triggerCurrentAction() {
   if (!act) return;
 
   if (act.type === 'clean' && act.table) {
-    cleanTable(act.table, false, 'p1');
-    trayAddItem('p1', 'dirty');
-    const tp = tablePosTo3D(act.table);
-    if (typeof window !== 'undefined' && window.spawnCleanSparkles3D) {
-      window.spawnCleanSparkles3D(tp.x, 0.15, tp.z);
-    }
+    if(Net.role==='guest') guestClean(act.tableIdx);
+    else cleanTable(act.table, false, Net.me);
   } else if (act.type === 'sink') {
-    trayClear('p1');
-    if (typeof Audio !== 'undefined' && Audio._raw && Audio._raw.clean) {
+    const washed=stationCommand({type:'wash'},Net.me);
+    if (washed && typeof Audio !== 'undefined' && Audio._raw && Audio._raw.clean) {
       Audio._raw.clean();
     }
-    if (Game && Game.floaters) {
+    if (washed && Net.role!=='guest' && Game && Game.floaters) {
       Game.floaters.push({ x: 420, y: 460, text: '✨ ¡Vajilla limpia!', t: 0, color: '#e0f7fa' });
     }
   } else if (act.type === 'deliver' && act.customer) {
-    deliverTrayItemToCustomer(act.customer, 'p1');
+    deliverTrayItemToCustomer(act.customer, Net.me);
   } else if (act.type === 'serve' && act.customer) {
-    tryServe(act.customer, 'p1');
-  } else if (act.type === 'beer') {
-    // Si se invoca con un solo click sin mantener, dar un pulso corto
-    startBeerPour('p1');
-    setTimeout(() => releaseBeerPour('p1'), 950);
+    if(Net.role==='guest') guestServe(act.customer);
+    else tryServe(act.customer, Net.me);
   } else if (act.type === 'grill') {
-    collectGrillDish('p1');
+    collectGrillDish(Net.me);
   } else if (act.type === 'coffee') {
-    trayAddItem('p1', 'barraquito');
-    if (typeof Audio !== 'undefined' && Audio._raw && Audio._raw.start) {
+    const started=stationCommand({type:'coffee'},Net.me);
+    if (started && typeof Audio !== 'undefined' && Audio._raw && Audio._raw.start) {
       Audio._raw.start();
     }
-    if (Game && Game.floaters) {
-      Game.floaters.push({ x: 260, y: 480, text: '☕ Barraquito recién hecho', t: 0, color: '#ffd36b' });
-    }
   } else if (act.type === 'cooler') {
-    trayAddItem('p1', 'refresco');
-    if (typeof Audio !== 'undefined' && Audio._raw && Audio._raw.pop) {
+    const started=stationCommand({type:'cooler'},Net.me);
+    if (started && typeof Audio !== 'undefined' && Audio._raw && Audio._raw.pop) {
       Audio._raw.pop();
-    }
-    if (Game && Game.floaters) {
-      Game.floaters.push({ x: 260, y: 480, text: '🥤 Refresco frío', t: 0, color: '#80deea' });
     }
   }
 

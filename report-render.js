@@ -9,8 +9,11 @@ import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './st
 import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.16.0-vfx3d';
 import { netAct, netDirty } from './net.js?v=28.16.0-vfx3d';
 import { dayStarsSummary, buildRevModel, opinionLine, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.16.0-vfx3d';
+import { discardService3D } from './service-3d-model.mjs';
 
 export function endDay(){
+  if(Game.mode!=='service') return;
+  discardService3D(Game);
   Game.mode='report';
   const s=Game.dayStats;
   const wage=wages(), rent=RENT;
@@ -53,6 +56,8 @@ export function endDay(){
 }
 export function reportStatsHtml(s, m){
   const acc=m.acc;
+  const qualityTips=s.tipsQuality||0, syncTips=Math.max(0,(s.tips||0)-qualityTips);
+  const preparedWaste=Object.entries(s.preparedWaste||{}).map(([id,n])=>`${n} ${ITEMS[id]?.name||id}`).join(', ');
   const repDelta=Game.rep-acc.repStart;
   const net=operatingResult(s,acc);
   const recordBanner = s._isNewRecord ? `
@@ -73,7 +78,8 @@ export function reportStatsHtml(s, m){
     <p class="muted" style="margin:0 24px 12px">${opinionLine(s)} Alquileres de hamacas: ${s.beachRentals||0}.</p>
     <div class="stats">
       <span>Ventas en barra</span><span class="pos">+${eur(s.revenue-s.tips-(s.tipsP||0))}</span>
-      ${s.tips>0.5?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(s.tips)}</span>`:''}
+      ${syncTips>0.001?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(syncTips)}</span>`:''}
+      ${qualityTips>0.001?`<span>Propinas por preparación</span><span class="pos">+${eur(qualityTips)}</span>`:''}
       ${s.tipsP>0.05?`<span>Propinas de agradecimiento</span><span class="pos">+${eur(s.tipsP)}</span>`:''}
       ${s.hamacas>0.5?`<span>Alquiler de hamacas</span><span class="pos">+${eur(s.hamacas)}</span>`:''}
       <span>Compras de género (mañana)</span><span class="neg">−${eur(s.purchases)}</span>
@@ -87,6 +93,7 @@ export function reportStatsHtml(s, m){
     </div>
     <div style="padding:0 24px 12px;display:flex;flex-wrap:wrap;gap:6px">${acc.soldStr||'<span class="muted" style="margin:0">Hoy no se vendió nada.</span>'}</div>
     ${acc.spoilLines.length?`<p class="muted" style="margin:0 24px 12px">Se ha estropeado: ${acc.spoilLines.join(', ')} (${eur(acc.spoilVal)}).</p>`:''}
+    ${preparedWaste?`<p class="muted" style="margin:0 24px 12px">Preparados descartados al cerrar: ${preparedWaste}. El género ya se descontó al preparar.</p>`:''}
     ${s.lost?`<p class="muted" style="margin:0 24px 12px">Clientes perdidos: ${[s.lostPrice?s.lostPrice+' por precios altos':'',s.lostQueue?s.lostQueue+' por cola llena':'',s.lostPatience?s.lostPatience+' por esperar demasiado':'',s.lostStock?s.lostStock+' porque no quedaba género':''].filter(Boolean).join(', ')}.</p>`:''}
     ${s.regVisits?`<p class="muted" style="margin:0 24px 12px">Habituales hoy: ${s.regVisits} visita${s.regVisits>1?'s':''}. Atendedlos bien y volverán más fieles.</p>`:''}
     ${Game.buzz>0.03?`<p class="muted" style="margin:0 24px 12px">Boca a boca: los habituales contentos traen amigos (+${Math.round(Game.buzz*12)}% de afluencia mañana).</p>`:''}

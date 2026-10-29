@@ -11,7 +11,7 @@ import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=28.16.0-vfx3d
 import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=28.16.0-vfx3d';
 import { render } from './render.js?v=28.16.0-vfx3d';
 import { ctx } from './canvas.js?v=28.16.0-vfx3d';
-import { init3D, is3DReady, render3D } from './render-3d.js?v=28.16.2-vfx3d';
+import { init3D, is3DReady, render3D, getPlayerMesh } from './render-3d.js?v=28.16.2-vfx3d';
 import './variety.js?v=28.16.0-vfx3d';
 
 // ---------- Bucle ----------
@@ -21,16 +21,33 @@ function frame(now){
   if(isGuest()) guestTick(dt);
   else if(!manualTime){ acc+=dt*(Game.mode==='service'?Game.speed:1); while(acc>=STEP){ update(STEP); acc-=STEP; } }
   netTick(dt);
-  if(is3DReady()){ render3D(dt); }
+  if(is3DReady()){ render3D(manualTime?0:dt); }
   render();
   if(window.__betaDraw){ try{ window.__betaDraw(ctx); }catch(e){ console.error('betaDraw', e); } }
   requestAnimationFrame(frame);
 }
 let manualTime=false;
-window.advanceTime = ms => { manualTime=true; const n=Math.round(ms/1000/STEP); for(let i=0;i<n;i++) update(STEP*(Game.mode==='service'?Math.max(1,Game.speed):1)); render(); manualTime=false; };
+window.advanceTime = ms => {
+  const previousManualTime=manualTime;
+  manualTime=true;
+  try{
+    const requested=Number(ms);
+    let remaining=Number.isFinite(requested)?Math.max(0,requested)/1000:0;
+    while(remaining>1e-9){
+      const dt=Math.min(STEP,remaining), speed=Game.mode==='service'?Game.speed:1;
+      if(!isGuest()&&speed>0) update(dt*speed);
+      if(is3DReady()) render3D(dt,false);
+      remaining-=dt;
+    }
+    if(is3DReady()) render3D(0);
+    render();
+  }finally{manualTime=previousManualTime;}
+};
 window.render_game_to_text = ()=> JSON.stringify({
   mode:Game.mode, day:Game.day, hour:+Game.hour.toFixed(2), money:Math.round(Game.money), rep:+Game.rep.toFixed(2), weather:Game.forecast.length?weatherToday():null,
-  stock:Game.stock, queue:Game.customers.filter(c=>c.state==='queue').map(c=>({spot:c.spot,type:c.type,order:c.order,patience:+c.patience.toFixed(1)})),
+  stock:Game.stock, service3D:Game.service3D,
+  player3D:is3DReady()?{x:getPlayerMesh().position.x,z:getPlayerMesh().position.z}:null,
+  queue:Game.customers.filter(c=>c.state==='queue').map(c=>({spot:c.spot,type:c.type,order:c.order,patience:+c.patience.toFixed(1)})),
   tables:Game.tables.map(t=>t.state), slots:Game.slots.map(s=>!!s.cust), stats:Game.dayStats && {served:Game.dayStats.served,lost:Game.dayStats.lost,revenue:Math.round(Game.dayStats.revenue)}
 });
 window.__api = {serve:(c)=>tryServe(c), clean:t=>cleanTable(t,false), startDay, endDay, showPlan, newSeason, buyStock, ITEMS, UPGRADES,
@@ -48,5 +65,6 @@ if (typeof window !== 'undefined') { init3D(); }
 requestAnimationFrame(frame);
 
 window.__test = { netOpen, netSend, newSeason, showPlan, toggleReady, pressReady,
+  setManualTime:value=>{ manualTime=!!value; },
   guestServe, guestClean, tryServe, spawnCustomer, applyState,
   setPlanTab: v => Plan.tab = v };

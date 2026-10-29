@@ -10,6 +10,8 @@ import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, r
 import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.16.0-vfx3d';
 import { netDirty, netSend } from './net-link.js?v=28.16.0-vfx3d';
 import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.16.0-vfx3d';
+import { applyService3DCommand } from './service-3d.js';
+import { service3D, createService3D } from './service-3d-model.mjs';
 export function onNet(m){
   switch(m.t){
     case 'created': Net.role='host'; Net.me='p1'; Net.code=m.code; renderLobby(); break;
@@ -29,6 +31,19 @@ export function onNet(m){
 export function applyAct(m){
   const who='p2';
   switch(m.a){case 'floor':floorCommand(m.command,who);break;
+    case 'service3d': {
+      if(Game.mode!=='service'||m.serviceId!==Game.floor?.id||!Number.isSafeInteger(m.q)||m.q<1){
+        pushAck(m.q,false,'service3d'); break;
+      }
+      const commands=service3D(Game).commands, previous=commands[who];
+      if(previous && m.q<=previous.q){
+        pushAck(m.q,m.q===previous.q&&previous.ok,'service3d'); break;
+      }
+      const ok=applyService3DCommand(m.command,who);
+      commands[who]={q:m.q,ok};
+      pushAck(m.q,ok,'service3d');
+      break;
+    }
     case 'serve': {
       const c=Game.customers.find(o=>o.id===m.id);
       const slot=slotOf(who);
@@ -69,6 +84,7 @@ export function snapshot(){
     stock:Game.stock, prices:Game.prices, enabled:Game.enabled, upgrades:Game.upgrades, staff:Game.staff, forecast:Game.forecast, season:Game.season, buzz:Game.buzz,
     names:Net.names, roles:Net.roles, ready:Net.ready, ev:Net.events.splice(0), acks:Net.acks.splice(0) };
   if(Game.mode==='service'){
+    o.service3D=service3D(Game); o.time=Game.t;
     o.floor=Game.floor?{...Game.floor,events:[],tasks:Game.floor.tasks.map(t=>({...t,path:[]})),actors:Game.floor.actors.map(a=>({...a,returnPath:[]}))}:null;
     o.cu = Game.customers.map(c=>({i:c.id,x:Math.round(c.x),y:Math.round(c.y),s:c.state,o:c.order,st:c.itemSt,p:+(c.patience/(c.maxPatience||1)).toFixed(3),sp:c.spot,
       m:c.mood,mt:+(c.moodT||0).toFixed(2),mx:c.moodTxt,sh:c.shirt,sk:c.skin,h:c.hat,ty:c.type,d:c.dir||1,sv:c.served,ip:c.inPrep,
@@ -111,6 +127,10 @@ export function applyState(m){
   if(m.ready && m.ready[Net.me]) Net.readySent=false;
   Game.mode = m.mode;
   if(m.mode==='service'){Game.floor=m.floor||null;
+    Game.service3D=m.service3D||createService3D();
+    const lastServiceSequence=Game.service3D.commands?.[Net.me]?.q;
+    if(Number.isSafeInteger(lastServiceSequence)) Net.seq=Math.max(Net.seq,lastServiceSequence);
+    if(Number.isFinite(m.time)) Game.t=m.time;
     const seen=new Set();
     for(const sc of m.cu){ seen.add(sc.i); let c=guestCust.get(sc.i);
       if(!c){ c={id:sc.i,x:sc.x,y:sc.y,bob:Math.random()*6}; guestCust.set(sc.i,c); }

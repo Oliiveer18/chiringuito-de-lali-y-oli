@@ -3,9 +3,9 @@
    Fase 1: Escena 3D de alta gama, iluminación de estudio y cámara móvil cinemática.
    ========================================================= */
 import * as THREE from './lib/three.module.js';
-import { Game, weatherToday, lvl } from './state.js?v=28.16.0-vfx3d';
+import { Game, Net, weatherToday, lvl } from './state.js?v=28.16.0-vfx3d';
 import { createCharacter3D, animateCharacter } from './render-3d-actors.js?v=28.16.0-vfx3d';
-import { CONTROLS3D, initControls3D, updateContextualProximity, syncControls3DForGameMode } from './controls-3d.js?v=28.16.0-vfx3d';
+import { CONTROLS3D, initControls3D, updateContextualProximity, syncControls3DForGameMode, resetControls3DInput } from './controls-3d.js?v=28.16.0-vfx3d';
 import { syncCustomers3D, clearAllCustomers3D } from './render-3d-customers.js?v=28.16.2-vfx3d';
 import { tablePosTo3D } from './world.js?v=28.16.2-vfx3d';
 import { initUpgrades3D, syncUpgrades3D } from './upgrades-3d.js?v=28.16.0-vfx3d';
@@ -14,8 +14,7 @@ import { initVFX3D, updateVFX3D, spawnCleanSparkles3D, triggerBeerPourVFX } from
 import {
   attachTrayToCharacter,
   updateTrayAnimation,
-  updateBeerPour,
-  updateGrillCook,
+  syncStationUI,
   trayAddItem,
   trayClear,
   trayGetItems,
@@ -37,6 +36,7 @@ let scene = null;
 let camera = null;
 let canvas3d = null;
 let isInitialized = false;
+let renderedServiceId = null;
 
 // Personajes 3D
 let playerMesh = null;
@@ -1404,8 +1404,15 @@ export function check3DCollision(px, pz, radius = 0.32) {
 }
 
 // ---------- Render Loop 3D ----------
-export function render3D(dt = 0.016) {
+export function render3D(dt = 0.016, draw = true) {
   if (!isInitialized || !renderer || !scene || !camera) return;
+  const serviceDt=Game.mode==='service'&&Number.isFinite(Game.speed)?dt*Math.max(0,Game.speed):0;
+  if(Game.mode==='service' && renderedServiceId!==Game.floor?.id){
+    renderedServiceId=Game.floor?.id;
+    resetControls3DInput();
+    playerMesh?.position.set(-1.8,0,1.8);
+    partnerMesh?.position.set(.5,0,1.8);
+  }
 
   const now = performance.now();
   const time = now * 0.001;
@@ -1430,22 +1437,19 @@ export function render3D(dt = 0.016) {
     const curZ = playerMesh.position.z;
 
     // Movimiento con resolución independiente en ejes X y Z para permitir deslizamiento suave en paredes
-    let nextX = curX + vx * dt;
-    nextX = Math.max(-9.2, Math.min(14.5, nextX));
-    if (!check3DCollision(nextX, curZ, r)) {
-      playerMesh.position.x = nextX;
-    }
-
-    let nextZ = curZ + vz * dt;
-    nextZ = Math.max(-4.8, Math.min(5.8, nextZ));
-    if (!check3DCollision(playerMesh.position.x, nextZ, r)) {
-      playerMesh.position.z = nextZ;
+    for(let remaining=serviceDt;remaining>1e-9;){
+      const step=Math.min(1/60,remaining);
+      const nextX=Math.max(-9.2,Math.min(14.5,playerMesh.position.x+vx*step));
+      if(!check3DCollision(nextX,playerMesh.position.z,r)) playerMesh.position.x=nextX;
+      const nextZ=Math.max(-4.8,Math.min(5.8,playerMesh.position.z+vz*step));
+      if(!check3DCollision(playerMesh.position.x,nextZ,r)) playerMesh.position.z=nextZ;
+      remaining-=step;
     }
 
     playerMesh.position.y = sampleCharacterFootY(playerMesh.position.x, playerMesh.position.z);
 
     // Animación procedural de paso (Squash & Stretch)
-    animateCharacter(playerMesh, vx, vz, dt);
+    animateCharacter(playerMesh, vx, vz, serviceDt);
 
     // Detección inteligente de proximidad para el botón contextual
     updateContextualProximity(playerMesh.position);
@@ -1468,14 +1472,19 @@ export function render3D(dt = 0.016) {
   }
 
   // 3.5 Estaciones Interactivas y Bandeja 3D (Fase 3)
-  updateBeerPour(dt);
-  updateGrillCook(dt);
+  // Rebind local/remote trays when joining as p2 after the title screen.
+  if(playerMesh.userData.trayOwner!==Net.me){
+    attachTrayToCharacter(playerMesh,Net.me);
+    attachTrayToCharacter(partnerMesh,Net.me==='p1'?'p2':'p1');
+    playerMesh.userData.trayOwner=Net.me;
+  }
+  syncStationUI();
   updateTrayAnimation('p1', dt);
   updateTrayAnimation('p2', dt);
 
   // 3.8 Clientes 3D en la Arena y Terraza + Mesas Dinámicas + Monedas Físicas + Radar (Fase AAA)
   syncTerraceTables3D(scene);
-  syncCustomers3D(scene, camera, dt);
+  syncCustomers3D(scene, camera, Game.mode==='service'?serviceDt:dt);
   updateCoins3D(dt);
   updateOffscreenRadar();
 
@@ -1523,7 +1532,7 @@ export function render3D(dt = 0.016) {
   updateWeather3D(dt, time, h);
   updateStageAndShow3D(dt, time);
   syncUpgrades3D();
-  syncStaff3D(dt, time);
+  syncStaff3D(serviceDt, Game.t);
   updateVFX3D(dt, time);
 
   updateCoastMaterials(waterMat, sandMat, {
@@ -1534,7 +1543,7 @@ export function render3D(dt = 0.016) {
   });
 
   // Renderizar la escena
-  renderer.render(scene, camera);
+  if(draw) renderer.render(scene, camera);
 }
 
 export function is3DReady() {

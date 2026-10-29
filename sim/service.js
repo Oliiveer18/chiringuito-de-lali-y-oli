@@ -30,6 +30,14 @@ import { leaveQueue } from "./customers.js?v=28.16.0-vfx3d";
 import { pendingIdx } from "./orders.js?v=28.16.0-vfx3d";
 import { regularOutcome } from "./customers.js?v=28.16.0-vfx3d";
 import { servable } from "./day.js?v=28.16.0-vfx3d";
+import { commitPreparedDelivery, addDirtyUnit } from "../service-3d-model.mjs";
+
+export function deliverPreparedItem(c, who='p1'){
+  if(Net.role==='guest' || !commitPreparedDelivery(Game,c,who)) return false;
+  checkComplete(c);
+  if(c.state==='floorReady') completeFloorOrder(c);
+  return true;
+}
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
@@ -125,7 +133,12 @@ export function payAndGo(c, total, s, upset){
 }
 
 export function completeOrder(c){
+  if(c.orderCompleted) return;
+  c.orderCompleted=true;
   let total=0; for(const id of c.served){ total+=(c.floorPrices?.[id]??Game.prices[id]); Game.dayStats.sold[id]=(Game.dayStats.sold[id]||0)+1; }
+  const qualityTip=Math.max(0,c.preparedBonus||0);
+  total+=qualityTip;
+  c.qualityTip=qualityTip;
   c.tDone=Game.t;
   let sync=false, syncTip=0;
   if(isCoop() && c.partT.p1!=null && c.partT.p2!=null && Math.abs(c.partT.p1-c.partT.p2)<=2.5){
@@ -144,7 +157,7 @@ export function completeOrder(c){
   if(c.personality==='generoso') pTip=total*P.tipP;
   if(c.personality==='exigente' && s>0.85) pTip=total*P.tipP;
   if(pTip>0.01){ total+=pTip; Game.dayStats.tipsP=(Game.dayStats.tipsP||0)+pTip; Game.floaters.push({x:c.x,y:c.y-190,text:'Propina +'+eur2(pTip),t:0,color:'#ffd36b'}); }
-  c.syncTip=sync; c.tipped = sync || pTip>0.01; c.tipAmt = syncTip + Math.max(0,pTip);
+  c.syncTip=sync; c.tipped = sync || pTip>0.01 || qualityTip>0; c.tipAmt = syncTip + Math.max(0,pTip) + qualityTip;
   const freeTables = Game.tables.filter(t=>t.state==='free');
   const free = c.floorTableId!=null?Game.tables[c.floorTableId]:(freeTables.length ? freeTables[Math.floor(rnd()*freeTables.length)] : null);
   if(free){payAndSeat(c,total,s,free);if(c.floorTableId!=null){c.state='eat';c.path=null;c.x=free.x+(free.x>1150?-38:38);c.y=free.y+8;c.tx=c.x;c.ty=c.y;}return;}
@@ -166,6 +179,7 @@ export function commitClean(t,auto,who){
   if(!t || t.state!=='dirty') return;
   t.state='free'; t.dirtyT=0; Game.dayStats.cleaned++;
   const key=who||'p1';const b=Game.dayStats.by[key]||(Game.dayStats.by[key]={items:0,rev:0,clean:0});b.clean++;
+  if(Game.service3D && !auto) addDirtyUnit(Game,key);
   cleanFx(t);
   if(hostLive()) Net.events.push({e:'clean',i:Game.tables.indexOf(t),snd:!auto});
   if(!auto) Audio._raw.clean();

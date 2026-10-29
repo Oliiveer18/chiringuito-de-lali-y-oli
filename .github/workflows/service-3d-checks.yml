@@ -1,0 +1,24 @@
+name: Service 3D integrity
+on:
+  push:
+    branches: [fix/3d-service-integrity, experiment/vfx-clientes-3d]
+  pull_request:
+    paths:
+      - 'service-3d*'
+      - 'stations-3d.js'
+      - 'controls-3d.js'
+      - 'sim/**'
+      - 'net-sync.js'
+      - '.github/workflows/service-3d-checks.yml'
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Simulation and active-service regressions
+        run: npm test

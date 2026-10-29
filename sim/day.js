@@ -56,10 +56,12 @@ import { regularOutcome } from "./customers.js?v=28.16.0-vfx3d";
 import { scheduleRegulars } from "./customers.js?v=28.16.0-vfx3d";
 import { spawnCustomer } from "./customers.js?v=28.16.0-vfx3d";
 import { startPart } from "./service.js?v=28.16.0-vfx3d";
+import { createService3D, updateService3D } from "../service-3d-model.mjs";
 
 export function servable(c){return c&&(['floorWaitEscort','floorMenu','floorReady'].includes(c.state)||(['queue','prep','floorWaitingPrep'].includes(c.state)&&pendingIdx(c).length>0));}
 
 export function startDay(){
+  Game.service3D=createService3D();
   Game.mode='service'; Game.hour=10; Game.closing=false; Game.closeT=0; Game.spawnAcc=0; Game.spawnThrottleUntil=0;
   Game.customers=[]; Game.floaters=[]; Game.mods={arr:1};
   Game.dayEvent = SPECIAL_DAYS[Game.day]||null;
@@ -85,8 +87,10 @@ export function startDay(){
 }
 
 export function update(dt){
+  if(!Number.isFinite(dt)||dt<=0||(Game.mode==='service'&&Game.speed===0)) return;
   Game.t += dt;
   if(Game.mode!=='service') { updateAmbient(dt); return; }
+  updateService3D(Game,dt);
   for(let i=gameTimers.length-1;i>=0;i--){ gameTimers[i].t-=dt; if(gameTimers[i].t<=0){ const f=gameTimers[i].fn; gameTimers.splice(i,1); f(); } }
   updateFloor(dt);
   updateBeach();

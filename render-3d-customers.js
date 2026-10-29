@@ -575,6 +575,14 @@ export function createCustomer3D(customer) {
 }
 
 // Sincronizar clientes 2D con la escena 3D y proyectar coordenadas a pantalla
+export function customerInteractionPosition(customer){
+  const mesh=activeCustomerMeshes.get(customer.id);
+  if(mesh) return {x:mesh.position.x,z:mesh.position.z};
+  if(customer.table) return tablePosTo3D(customer.table);
+  if(customer.state==='queue') return {x:-2.2-(customer.spot||0)*1.1,z:4.85};
+  return mapCustomerSimXZ(customer);
+}
+
 export function syncCustomers3D(scene, camera, dt = 0.016) {
   if (!Game || !Game.customers || !scene || !camera) return;
 
@@ -644,7 +652,7 @@ export function syncCustomers3D(scene, camera, dt = 0.016) {
 
     const simCap = simSpeedTo3D(c.movingSpd) * dt * 1.12;
     const cruiseCap = Math.max(simCap, ud.speed * dt * 0.85, 0.35 * dt);
-    const moveCap = Math.min(dist, cruiseCap + 0.018);
+    const moveCap = dt>0?Math.min(dist, cruiseCap + 0.018):0;
 
     if (dist > 0.03 && !ud.isSitting) {
       const step = moveCap;

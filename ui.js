@@ -149,6 +149,7 @@ sndBtn.addEventListener('click',()=>{ Audio.init(); setSoundLabel(Audio.toggle()
 
 canvas.addEventListener('pointerdown',e=>{
   if(Game.mode!=='service' || Game.speed===0) return;
+  if(window.is3DReady?.()) return; // 2D hit testing is not valid through a perspective camera.
   const p=toWorld(e.clientX,e.clientY);
   // clientes en cola
   let best=null, bd=1e9;
@@ -160,6 +161,7 @@ addEventListener('keydown',e=>{
   if(Game.mode!=='service') return;
   if(e.code==='KeyP'){ const v=Game.speed?0:1; if(isGuest()) netAct({a:'speed',v}); else { setSpeed(v); netDirty(); } return; }
   if(Game.speed===0) return;
+  if(window.is3DReady?.()) return; // The 3D contextual controller owns service shortcuts.
   const act=c=>{ if(!c) return; if(isGuest()) guestServe(c); else tryServe(c,'p1'); };
   if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); const q=Game.customers.filter(servable).sort((a,b)=>a.spot-b.spot); act(q[0]); }
   const n=parseInt(e.key); if(n>=1&&n<=6){ act(Game.customers.find(c=>servable(c)&&c.spot===n-1)); }

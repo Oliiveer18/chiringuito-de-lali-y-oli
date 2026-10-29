@@ -2,6 +2,7 @@
 import { Game, Net } from './state.js?v=28.16.0-vfx3d';
 import { netAct } from './net-link.js?v=28.16.0-vfx3d';
 export const REJECT_MSG = {
+  service3d:'No se pudo completar: revisa stock, bandeja, preparación y cliente.',
   busy:'Tu puesto ya estaba ocupado con otro pedido.',
   gone:'Ese cliente ya no esperaba el pedido.',
   clean:'Esa mesa ya estaba limpia.',

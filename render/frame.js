@@ -48,9 +48,11 @@ export function render(){
 
     // 1. Burbujas de pedidos y estados ancladas a las cabezas de los clientes 3D
     if (Game.mode === 'service') {
+      const rect=canvas.getBoundingClientRect();
       for (const cu of Game.customers) {
         if (cu._screenPos && cu._screenPos.visible) {
           c.save();
+          c.setTransform(canvas.width/Math.max(1,rect.width),0,0,canvas.height/Math.max(1,rect.height),0,0);
           c.translate(cu._screenPos.x, cu._screenPos.y);
           const sc = cu._screenPos.scale || 1.0;
           c.scale(sc, sc);

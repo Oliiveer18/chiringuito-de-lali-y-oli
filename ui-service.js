@@ -13,6 +13,7 @@ export function showServiceUI(){
   if(isCoop()){ const st=Net.roles[Net.me]; const el=$('#hud-role'); el.textContent='Tú: '+STATION_LABEL[st]; el.style.background=STATION_COLOR[st]; }
   const hint=$('#hint');
   hint.textContent = isCoop() ? `Tú preparas ${Net.roles[Net.me]==='barra'?'las bebidas':'los platos'} · Entregad a la vez los pedidos mixtos para cobrar propina`
+                              : window.is3DReady?.()?'Muévete con el joystick o WASD · Acércate y usa el botón de acción o Espacio'
                               : 'Toca a los clientes de la cola para servirles · Toca las mesas sucias para limpiarlas';
   if(simProgressDay()<=2){ hint.classList.remove('hidden'); hint.style.opacity=1; setTimeout(()=>hint.style.opacity=0,14000);} else hint.classList.add('hidden');
   updateHud(); updateStockbar();
@@ -77,7 +78,7 @@ export function updateStockbar(){
   list.innerHTML=items.map(id=>{const n=Game.stock[id];return `<div class="stock ${n===0?'out':n<6?'low':''}" title="${ITEMS[id].name}"><img src="${ICON_URL[id]}" alt="${ITEMS[id].name}">${n}</div>`;}).join('');
   applyStockMode();
 }
-export function setSpeed(s){ Game.speed=s; document.querySelectorAll('.speed button').forEach(b=>b.classList.toggle('on', +b.dataset.speed===s)); }
+export function setSpeed(s){ if(![0,1,2,3].includes(s))return false; Game.speed=s; document.querySelectorAll('.speed button').forEach(b=>b.classList.toggle('on', +b.dataset.speed===s)); return true; }
 
 export const toastsEl=$('#toasts');
 export function toast(title,text,kind){ if(hostLive()) Net.events.push({e:'toast',title,text,kind}); toastLocal(title,text,kind); }

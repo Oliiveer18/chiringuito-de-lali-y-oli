@@ -281,13 +281,8 @@ export function syncStaff3D(dt = 0.016, time = 0) {
           const tp = tablePosTo3D(dirtyTable);
           mAcaymo.rotation.y = Math.atan2(tp.x - mAcaymo.position.x, tp.z - mAcaymo.position.z);
           ud.cleanTimer = (ud.cleanTimer || 0) + dt;
-          if (ud.cleanTimer >= 1.5) {
-            ud.cleanTimer = 0;
-            dirtyTable.state = 'free';
-            if (typeof window !== 'undefined' && window.spawnCleanSparkles3D) {
-              window.spawnCleanSparkles3D(tp.x, 0.15, tp.z);
-            }
-          }
+          // Presentation only: floor-service commits table state and statistics.
+          if (ud.cleanTimer >= 1.5) ud.cleanTimer = 0;
         }
         ud.bodyRoot.position.y = 0.62;
         ud.legL.rotation.x = 0;

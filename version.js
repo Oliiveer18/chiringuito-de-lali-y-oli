@@ -1,5 +1,5 @@
-export const VERSION='v28.16.0-vfx3d';
-export const LABEL='EXPERIMENTAL · v28.16.0-vfx3d (VFX clientes 3D)';
+export const VERSION='v28.16.3-service-fix';
+export const LABEL='EXPERIMENTAL · v28.16.3-service-fix (integridad del servicio 3D)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
