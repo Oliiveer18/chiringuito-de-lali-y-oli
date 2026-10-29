@@ -1,0 +1,11 @@
+/* camera-beta v5: estilos de la barra de cámara, mando y chip */
+#cam-bar{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:6px;background:rgba(20,30,32,.82);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px;backdrop-filter:blur(6px)}
+#cam-bar button{appearance:none;border:0;background:transparent;color:#e9f4f4;font:700 12px Satoshi,sans-serif;padding:8px 12px;border-radius:999px}
+#cam-bar button.on{background:#0f8b8d;color:#fff}
+#beta-pad{position:fixed;z-index:61;right:calc(12px + env(safe-area-inset-right));bottom:calc(64px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
+#beta-pad button{appearance:none;border:1px solid rgba(255,255,255,.2);background:rgba(20,30,32,.8);color:#e9f4f4;font:700 18px Satoshi,sans-serif;border-radius:12px}
+#beta-pad button:nth-child(1){grid-column:2}
+#beta-pad button:nth-child(2){grid-column:1;grid-row:2}
+#beta-pad button:nth-child(3){grid-column:3;grid-row:2}
+#beta-pad button:nth-child(4){grid-column:2;grid-row:2}
+#beta-chip{position:fixed;z-index:62;left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));background:rgba(15,139,141,.9);color:#fff;font:700 11px Satoshi,sans-serif;padding:6px 10px;border-radius:999px}

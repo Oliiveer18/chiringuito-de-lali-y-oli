@@ -1,0 +1,109 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "engine": "chromium",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "coop": false,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "88e4ce3c6c54bc544d6e6365148c3489745b2d9099c709118ec7124afadc1dd2"
+    },
+    {
+      "engine": "chromium",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "coop": true,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "be35e45c6ef9f14f0400c467e52633b78495a7ef588d59d4ccd6668d1563e5db"
+    },
+    {
+      "engine": "chromium",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "coop": false,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "555c1743114c3693582b8ee2e413354c26b9a2060832fe5c59160b9d5752358f"
+    },
+    {
+      "engine": "chromium",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "coop": true,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "94752be1c294650cf39f505352d34e18012ba68c847ad29dadf3bf6444a30bb4"
+    },
+    {
+      "engine": "webkit",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "coop": false,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "96a1460dfc9df94b963c35f1b909a13927b8576b450b2e77a8385aba0b0694f3"
+    },
+    {
+      "engine": "webkit",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "coop": true,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "35929fe74797ef34f3fa85eda3f4a71d235f33936ef921c557dbf27314bf9901"
+    },
+    {
+      "engine": "webkit",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "coop": false,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "1f1bc4c0a0ac9a463f0bac346c3a9d7959a7fc6037798b0abdd7f2f5ac774c43"
+    },
+    {
+      "engine": "webkit",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "coop": true,
+      "ok": true,
+      "saveRoundTrip": true,
+      "publicSignaturesEqual": true,
+      "snapshots": 19,
+      "sha256": "efeb6679fe673f6dd6d6dfa624a90073abc05c8087345ce79a883ee4c941351e"
+    }
+  ]
+}

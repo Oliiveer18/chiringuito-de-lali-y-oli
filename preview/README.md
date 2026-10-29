@@ -1,0 +1,42 @@
+# Chiringuito de Lali y Oli
+
+Juego de gestión de un chiringuito en Tenerife, con modo individual y cooperativo online para dos móviles.
+
+## Jugar
+
+El juego está publicado en GitHub Pages: https://oliiveer18.github.io/chiringuito-de-lali-y-oli/
+
+El cooperativo usa PeerJS (WebRTC), así que no necesita servidor propio. Hace falta conexión a internet para cargar PeerJS y las fuentes.
+
+## Desarrollo local
+
+Requiere Node.js 18.19 o superior.
+
+```bash
+npm start        # Servidor estático local en http://localhost:8000
+npm test         # Ejecuta las pruebas automatizadas
+npm run check    # Alias de npm test
+```
+
+## Estructura
+
+- Núcleo: `state.js`, `config.js`, `sim.js`, `ui.js`, `render.js`, `report.js`, `net.js`, `world.js`.
+- Guardado y fiabilidad: `saves.js`, `reliability.js`, `layout.js`.
+- Ampliaciones: `features.js`, `v12.js` y `v14.js`.
+- Herramientas: `serve.js` y las pruebas `*.test.mjs`.
+- `legacy/`: código heredado que ya no forma parte del juego activo.
+- `tools/migrations/`: scripts de mantenimiento y migración.
+
+## Cooperativo
+
+El anfitrión simula la partida y la invitada recibe el estado. Ambas pueden comprar, mejorar, contratar personal y shows, reparar máquinas, publicar en Chiringo, contratar influencers, responder reseñas y pedir reparto.
+
+## Pruebas
+
+Las pruebas cargan los módulos reales de las ampliaciones y del canal cooperativo, simulan 15 días y comprueban reglas de tendencias, comentarios, influencers, shows, reparto, misiones y acciones de la invitada.
+
+No cubren el dibujo en pantalla ni la conexión PeerJS real.
+
+## Archivos heredados
+
+`server.js` y `coop-latency.test.js` pertenecen a una versión anterior del cooperativo basada en WebSocket. El juego actual usa PeerJS, por lo que están archivados en `legacy/`.

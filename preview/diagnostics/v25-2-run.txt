@@ -1,0 +1,113 @@
+v25.2 aplicada: chiringo-ui.js, cierre-ui.js, config.js, game.js, index.html, ratings-model.mjs, smoke.test.mjs, v12.js, v25.test.mjs
+== v25
+OK v25: opiniones deterministas, valoracion publica, reputacion gradual, historial corregible sin duplicar y metricas sociales.
+== tab-persist
+tab-persist OK
+== smoke
+Carga y datos
+  ok  productos nuevos registrados
+  ok  bebidas nuevas cuentan como barra
+  ok  preferencias de clientes finitas
+  ok  terraza suma mesas con tope de 10
+Simulación de 15 días
+  ok  15 días sin excepciones
+  ok  sin NaN en caja, valoración ni mejoras
+  ok  hubo clientes extra de shows, reservas y grupos
+  ok  la invitada envió acciones por el canal
+Reglas de Chiringo (v13)
+  ok  la tendencia de ayer da seguidores y comentario
+  ok  el cierre deja un balance de seguidores con ganados y perdidos
+  ok  promocionar algodón sin stock genera queja y se puede responder
+  ok  responder cuenta una sola vez al día
+  ok  anunciar un show que no se contrató da queja
+  ok  influencer contratado sube la afluencia aunque no haya publicación
+  ok  al día siguiente se puede volver a contratar influencer
+  ok  la encuesta tiene resultado (papas o pescado)
+Cooperativo (la invitada actúa como el anfitrión)
+  ok  la invitada contrata un show y se cobra
+  ok  no se puede contratar un segundo show el mismo día
+  ok  la invitada repara la algodonera
+  ok  la invitada repara la batidora
+  ok  el reparto se rechaza durante la preparación sin cobrar
+  ok  el reparto de la invitada se limita a 20 unidades
+  ok  no se puede pedir reparto de un producto bloqueado
+  ok  el clic de la invitada se envía al anfitrión en vez de ejecutarse
+Clima y misiones (v14)
+  ok  las bebidas nuevas piden más con calima que con panza de burro
+  ok  las bebidas nuevas ya no se ven afectadas en comida
+  ok  la misión se anuncia al empezar el día
+  ok  cumplir la misión da la recompensa una vez
+  ok  el informe del día queda guardado
+
+TODOS LOS TESTS OK · superados: 29
+== social-model
+Alcance e interacción
+  ok  con 50 seguidores el alcance es neutro
+  ok  el alcance está acotado entre 0,7 y 1,8
+  ok  más seguidores nunca reducen el alcance
+  ok  valoración 3 es neutra y 5 mejora
+  ok  la tendencia suma interacción
+  ok  repetir la publicación de ayer reduce el efecto
+  ok  encajar con la tendencia aumenta el efecto
+  ok  una publicación siempre da al menos 1 seguidor
+Abandono
+  ok  1 estrella pierde 4 % y 5 estrellas 0,5 %
+  ok  sin publicar y con reputación media se pierden seguidores
+  ok  una buena publicación con 5 estrellas crece
+Promesas y quejas
+  ok  promesa incumplida: no se cobra y se pierde
+  ok  queja sin responder resta seguidores
+  ok  los seguidores prestados se van más rápido
+Robustez
+  ok  nunca baja de cero
+  ok  entradas raras no producen NaN
+  ok  60 días sin publicar no dejan la cuenta en negativo y la reducen
+  ok  60 días publicando con buena nota crecen y siguen acotados
+
+TODOS LOS TESTS OK · superados: 18
+== career
+Objetivos
+  ok  temporada 1: la concesión (GOAL)
+  ok  los tipos rotan
+  ok  el capital objetivo crece con la temporada
+  ok  la reputación objetivo está acotada
+  ok  el progreso va de 0 a 100
+Efectos
+  ok  aplicar efectos dos veces no acumula
+  ok  el género sube con las temporadas
+  ok  la ventaja de proveedor abarata y se puede quitar
+  ok  volver a la temporada 1 restaura los valores base
+Cierre de temporada
+  ok  con el objetivo cumplido se ofrecen 3 ventajas distintas
+  ok  se ganan puntos de Legado
+  ok  cerrar dos veces no duplica el Legado
+  ok  recargar y volver a cerrar el mismo día no repite el Legado
+  ok  no se puede continuar sin elegir ventaja
+  ok  no se puede elegir una ventaja que no se ofrece
+  ok  elegir ventaja la guarda una sola vez
+  ok  ya se puede continuar
+  ok  la nueva temporada conserva la caja y reinicia el día
+  ok  la nueva temporada trae pronóstico completo
+  ok  los habituales no se quedan fuera de la temporada
+  ok  el nuevo objetivo es el de la temporada 2
+Temporada fallida, rescate y quiebra
+  ok  sin objetivo no hay ventajas y se puede continuar
+  ok  fallar el objetivo da una pequeña subvención
+  ok  el colchón evita la quiebra a mitad de temporada
+  ok  sin rescates la quiebra cierra la carrera con Legado
+Tienda de Legado
+  ok  no se compra sin puntos suficientes
+  ok  se compra una mejora y se descuentan los puntos
+  ok  no se compra dos veces
+  ok  la nueva carrera aplica la dote y conserva la mejora
+Robustez
+  ok  sin NaN en 40 temporadas simuladas
+
+TODOS LOS TESTS OK · superados: 30
+== progression
+OK: 500 jornadas, 87 NPC, tres tablas de diez por ámbito, revisión semanal, cierres idempotentes y persistencia JSON.
+== market
+OK: 500 jornadas, 87 economías, ligas simultáneas de 10, persistencia, determinismo, inversiones condicionadas a caja, nombres Unicode.
+== service-v24
+OK: equilibrio de estrellas, reputación con memoria, pérdidas y precios diferenciados; 12 jornadas de hamacas con cobros por sesión y límites de ingresos.
+RESULT ok=true

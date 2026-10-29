@@ -1,0 +1,11 @@
+{
+  "name": "Chiringuito de Lali y Oli",
+  "short_name": "Chiringuito",
+  "description": "Gestiona el chiringuito Charco Azul, solo o en cooperativo online.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#073c40",
+  "theme_color": "#0b4f54",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
