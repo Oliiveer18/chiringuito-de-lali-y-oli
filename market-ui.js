@@ -1,13 +1,13 @@
-import {leaguePanel} from './management-ui.js?v=28.13';
+import {leaguePanel} from './management-ui.js?v=28.14';
 // v23: nombre por carrera y panel de las tres ligas simultáneas.
-import {Game,Net} from './state.js?v=28.13';
-import {Plan} from './ui.js?v=28.13';
-import {netDirty} from './net.js?v=28.13';
-import {escapeHtml as E,eur} from './util.js?v=28.13';
-import {ctx,view} from './canvas.js?v=28.13';
-import * as R from './market-model.mjs?v=28.13';
+import {Game,Net,simProgressDay} from './state.js?v=28.14';
+import {Plan} from './ui.js?v=28.14';
+import {netDirty} from './net.js?v=28.14';
+import {escapeHtml as E,eur} from './util.js?v=28.14';
+import {ctx,view} from './canvas.js?v=28.14';
+import * as R from './market-model.mjs?v=28.14';
 let draft=null,area=0,tier=0,detail=null;
-const day=()=>((Game.upgrades.career?.season||1)-1)*30+Game.day;
+const day=()=>simProgressDay();
 const name=()=>R.nameValue(Game.upgrades.kioskName);
 function setName(){if(Net.role==='guest'||!['plan','report'].includes(Game.mode))return;if(!Game.upgrades.kioskName){Game.upgrades.kioskName=R.nameValue(draft);draft=null;netDirty();}}
 function form(parent){if(!parent||parent.querySelector('[data-kiosk-name]'))return;const label=document.createElement('label');label.textContent='Nombre para la nueva carrera';const input=document.createElement('input');input.type='text';input.dataset.kioskName='1';input.placeholder='El Charco Azul';input.value=name();input.setAttribute('aria-label','Nombre del kiosco para la nueva carrera');label.append(input);parent.prepend(label);}

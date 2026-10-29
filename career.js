@@ -1,9 +1,10 @@
 /* Carrera infinita del chiringuito: temporadas encadenadas con objetivo, ventajas, Legado y traspaso.
    Lógica sin DOM: Game.day sigue siendo el día DE LA TEMPORADA (1..SEASON_DAYS), así que el resto del juego no cambia.
    Los datos de la carrera viven en Game.upgrades.career (se guardan y se sincronizan en cooperativo). */
-import { Game } from './state.js?v=28.13';
-import { GOAL, ITEMS, SEASON_DAYS, SPECIAL_DAYS, TYPES } from './config.js?v=28.13';
-import { clamp, pickW, rnd } from './util.js?v=28.13';
+import { Game, simProgressDay } from './state.js?v=28.14';
+import { GOAL, ITEMS, SEASON_DAYS, TYPES } from './config.js?v=28.14';
+import { clamp, rnd } from './util.js?v=28.14';
+import { buildSeasonForecast } from './sim/forecast.js?v=28.14';
 
 export const OBJ_TYPES = ['capital', 'reputacion', 'seguidores', 'servicio'];
 export const PERKS = {
@@ -129,7 +130,7 @@ export function initCareer() {
   applyEffects(c);
   return c;
 }
-export const careerDay = c => ((c ? c.season : 1) - 1) * SEASON_DAYS + Game.day;
+export const careerDay = () => simProgressDay();
 export function rescuesLeft(c) { return (c.perks.includes('colchon') ? 1 : 0) + (c.legacyOwned.includes('colchon_legado') ? 1 : 0) - (c.rescuesUsed || 0); }
 
 export function closeSeason() {
@@ -174,16 +175,6 @@ export function buyLegacy(id) {
   c.leg = { points: L.points, owned: [...L.owned] };
   return true;
 }
-export function buildForecast() {
-  const f = [];
-  for (let d = 1; d <= SEASON_DAYS + 1; d++) {
-    let w = pickW({ sol: 52, panza: 20, calima: 13, viento: 15 });
-    if (SPECIAL_DAYS[d] && SPECIAL_DAYS[d].forceWeather) w = SPECIAL_DAYS[d].forceWeather;
-    if (d === 1) w = 'sol';
-    f.push(w);
-  }
-  return f;
-}
 // pasa a la siguiente temporada conservando caja, mejoras, personal, valoración, seguidores y habituales
 export function nextSeason() {
   const U = Game.upgrades, c = U.career; if (!c) return false;
@@ -197,7 +188,7 @@ export function nextSeason() {
   for (const k of DAY_FLAGS) delete U[k];if(U.socialCalendar)U.socialIdle=Math.max(0,Number(U.socialCalendar.idle)||0);
   Game.day = 1; Game.hour = 10;
   Game.season = { revenue: 0, served: 0, lost: 0, bestDay: 0, bestDayN: 1 };
-  Game.forecast = buildForecast();
+  Game.forecast = buildSeasonForecast();
   Game.dayStats = null; Game.customers = []; Game.floaters = []; Game.particles = [];
   if (Game.regulars) for (const r of Object.values(Game.regulars)) r.next = Math.min(num(r.next) || 2, 2 + Math.floor(rnd() * 3));
   c.startMoney = Game.money;

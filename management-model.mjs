@@ -1,6 +1,7 @@
 // Modelo de gestión: puntuaciones, actividad, comentarios y contratación.
 const finite=x=>Number.isFinite(x)?x:0;
 const cap=(x,a,b)=>Math.max(a,Math.min(b,x));
+// Same calendar math as simProgressDay() in state.js when season=career.season and day=Game.day (30-day seasons).
 export function absoluteDay(season,day){
  if(!Number.isInteger(season)||season<1||!Number.isInteger(day)||day<1||day>30)throw new Error('Invalid season/day');
  return (season-1)*30+day;

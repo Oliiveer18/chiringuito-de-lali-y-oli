@@ -1,6 +1,6 @@
-import { scheduleViewportResize, view } from './canvas.js?v=28.13';
-import { W, H } from './config.js?v=28.13';
-import { Game } from './state.js?v=28.13';
+import { scheduleViewportResize, view } from './canvas.js?v=28.14';
+import { W, H } from './config.js?v=28.14';
+import { Game } from './state.js?v=28.14';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 const CAM_SPAN=700,CAM_CX={barra:290,mesas:930};

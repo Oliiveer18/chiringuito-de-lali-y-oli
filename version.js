@@ -1,5 +1,5 @@
-export const VERSION='v28.13';
-export const LABEL='v28.13 · curva de dificultad continua en carrera (sin reset por temporada)';
+export const VERSION='v28.14';
+export const LABEL='v28.14 · día de carrera y pronóstico unificados (simProgressDay, buildSeasonForecast)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

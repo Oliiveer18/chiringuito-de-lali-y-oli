@@ -1,15 +1,15 @@
-import {trackCost} from './bookkeeping.js?v=28.13';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.13';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.13';
-import * as Rankings from './market-model.mjs?v=28.13';
-import {Game,Net} from './state.js?v=28.13';
-import {STAFF,RENT} from './config.js?v=28.13';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.13';
-import {netDirty} from './net.js?v=28.13';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.13';
-import {escapeHtml as E,eur} from './util.js?v=28.13';
-import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.13';
-const day=()=>absoluteDay(Number(Game.upgrades.career?.season)||1,Game.day);
+import {trackCost} from './bookkeeping.js?v=28.14';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.14';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.14';
+import * as Rankings from './market-model.mjs?v=28.14';
+import {Game,Net,simProgressDay} from './state.js?v=28.14';
+import {STAFF,RENT} from './config.js?v=28.14';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.14';
+import {netDirty} from './net.js?v=28.14';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.14';
+import {escapeHtml as E,eur} from './util.js?v=28.14';
+import {candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.14';
+const day=()=>simProgressDay();
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}
 export function capturePhoto(post,cost,arr){const u=Game.upgrades,id=(u.career?.season||1)+':'+Game.day;const a=Array.isArray(u.chiringoArchive)?u.chiringoArchive:[];if(!a.some(r=>r.id===id))u.chiringoArchive=[...a,{id,season:u.career?.season||1,day:Game.day,post,cost,arr,metrics:null,comments:[],threadClosed:false}].slice(-60);}

@@ -2,10 +2,10 @@
    world.js
    Geometría de la escena (mesas, hamacas, cola, mostrador) y aspecto de los clientes.
    ========================================================= */
-import { QUEUE_SPOTS } from './config.js?v=28.13';
-import { rand, rnd } from './util.js?v=28.13';
-import { Game, tableCount } from './state.js?v=28.13';
-import { navRebuild } from './nav.js?v=28.13';
+import { QUEUE_SPOTS } from './config.js?v=28.14';
+import { rand, rnd } from './util.js?v=28.14';
+import { Game, tableCount } from './state.js?v=28.14';
+import { navRebuild } from './nav.js?v=28.14';
 
 // ---------- Geometría de la escena ----------
 export const TABLE_POS = [];

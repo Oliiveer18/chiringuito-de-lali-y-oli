@@ -1,22 +1,22 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged.
    Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
-import { ITEMS } from "../config.js?v=28.13";
-import { ITEM_IDS } from "../config.js?v=28.13";
-import { REGULARS } from "../config.js?v=28.13";
-import { SEASON_DAYS } from "../config.js?v=28.13";
-import { SPECIAL_DAYS } from "../config.js?v=28.13";
-import { START_MONEY } from "../config.js?v=28.13";
-import { clamp } from "../util.js?v=28.13";
-import { pickW } from "../util.js?v=28.13";
-import { rnd } from "../util.js?v=28.13";
-import { Audio } from "../audio.js?v=28.13";
-import { Game, simProgressDay } from "../state.js?v=28.13";
-import { closeHour } from "../state.js?v=28.13";
-import { setTimeoutGame } from "../state.js?v=28.13";
-import { buildTables } from "../world.js?v=28.13";
-import { toast } from "../ui.js?v=28.13";
-import { updateStockbar } from "../ui.js?v=28.13";
-import { spawnCustomer } from "./customers.js?v=28.13";
+import { ITEMS } from "../config.js?v=28.14";
+import { ITEM_IDS } from "../config.js?v=28.14";
+import { REGULARS } from "../config.js?v=28.14";
+import { SEASON_DAYS } from "../config.js?v=28.14";
+import { START_MONEY } from "../config.js?v=28.14";
+import { clamp } from "../util.js?v=28.14";
+import { rnd } from "../util.js?v=28.14";
+import { Audio } from "../audio.js?v=28.14";
+import { Game, simProgressDay } from "../state.js?v=28.14";
+import { closeHour } from "../state.js?v=28.14";
+import { setTimeoutGame } from "../state.js?v=28.14";
+import { buildTables } from "../world.js?v=28.14";
+import { toast } from "../ui.js?v=28.14";
+import { updateStockbar } from "../ui.js?v=28.14";
+import { spawnCustomer } from "./customers.js?v=28.14";
+export { buildSeasonForecast } from "./forecast.js?v=28.14";
+import { buildSeasonForecast } from "./forecast.js?v=28.14";
 
 const ARRIVALS_CAP = 1.72;
 const PEAK_CAP = 0.30;
@@ -62,18 +62,13 @@ function curveSmooth(d) {
   return t * t * (3 - 2 * t);
 }
 
+/** Season weather table (days 1..SEASON_DAYS plus closing day); shared by classic new game and career nextSeason. */
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
   for(const id of ITEM_IDS){ Game.stock[id]= ITEMS[id].unlock?0:15; Game.prices[id]=ITEMS[id].ref; Game.enabled[id]=true; }
-  Game.forecast=[];
   Game.regulars={}; Game.regVisited={}; Game.buzz=0;
   for(const r of REGULARS) Game.regulars[r.id]={loyalty:1,visits:0,next:2+Math.floor(rnd()*3)};
-  for(let d=1; d<=SEASON_DAYS+1; d++){
-    let w = pickW({sol:52,panza:20,calima:13,viento:15});
-    if(SPECIAL_DAYS[d] && SPECIAL_DAYS[d].forceWeather) w = SPECIAL_DAYS[d].forceWeather;
-    if(d===1) w='sol';
-    Game.forecast.push(w);
-  }
+  Game.forecast=buildSeasonForecast();
   buildTables();
 }
 
