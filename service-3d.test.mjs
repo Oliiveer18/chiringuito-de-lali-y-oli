@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as M from './service-3d-model.mjs';
+import { acceptGuestMovement3D, playerPoses3D } from './movement-3d-model.mjs';
 
 function game() {
   return {
@@ -214,4 +215,51 @@ test('non-finite and negative deltas cannot corrupt a station',()=>{
   M.beginPreparation(g,'grill');
   for(const dt of [NaN,Infinity,-1,0]) M.updateService3D(g,dt);
   assert.equal(M.service3D(g).stations.grill.progress,0);
+});
+
+function move(g,seq,x,z=1.8,extra={}){
+  return {serviceId:g.floor.id,seq,pose:{x,z,heading:0},...extra};
+}
+test('host accepts bounded guest movement and preserves separate player identities',()=>{
+  const g=game();g.floor={id:'day-1'};
+  assert.equal(acceptGuestMovement3D(g,move(g,1,1),{},1000),true);
+  assert.equal(playerPoses3D(g).p2.x,1);
+  assert.equal(playerPoses3D(g).p1.x,-1.8);
+});
+test('movement sequence rejects replay, stale service and non-finite coordinates',()=>{
+  const g=game(),budget={};g.floor={id:'day-1'};
+  acceptGuestMovement3D(g,move(g,2,1),budget,1000);
+  assert.equal(acceptGuestMovement3D(g,move(g,2,1.1),budget,1200),false);
+  assert.equal(acceptGuestMovement3D(g,move(g,3,1.1,1.8,{serviceId:'yesterday'}),budget,1200),false);
+  assert.equal(acceptGuestMovement3D(g,move(g,3,NaN),budget,1200),false);
+  assert.equal(playerPoses3D(g).p2.x,1);
+});
+test('teleports are rejected with a correction but no authoritative position change',()=>{
+  const g=game();g.floor={id:'day-1'};
+  assert.equal(acceptGuestMovement3D(g,move(g,1,14),{},1000),false);
+  assert.equal(playerPoses3D(g).p2.x,.5);
+  assert.equal(playerPoses3D(g).p2.correctionSeq,1);
+});
+test('movement flood cannot repeatedly spend the same time budget',()=>{
+  const g=game(),budget={};g.floor={id:'day-1'};
+  assert.equal(acceptGuestMovement3D(g,move(g,1,1.1),budget,1000),true);
+  assert.equal(acceptGuestMovement3D(g,move(g,2,1.7),budget,1000),false);
+  assert.equal(acceptGuestMovement3D(g,move(g,3,1.7),budget,1200),true);
+});
+test('host checks the entire movement segment, not only the endpoint',()=>{
+  const g=game();g.floor={id:'day-1'};
+  assert.equal(acceptGuestMovement3D(g,move(g,1,1.3),{},1000,x=>x>.8&&x<1),false);
+  assert.equal(playerPoses3D(g).p2.x,.5);
+});
+test('pause rejects guest movement and sends a correction',()=>{
+  const g=game();g.floor={id:'day-1'};g.speed=0;
+  assert.equal(acceptGuestMovement3D(g,move(g,1,.8),{},1000),false);
+  assert.equal(playerPoses3D(g).p2.x,.5);
+});
+test('player poses survive snapshots and reset for a new service',()=>{
+  const g=game();g.floor={id:'day-1'};
+  acceptGuestMovement3D(g,move(g,1,1),{},1000);
+  assert.equal(playerPoses3D(JSON.parse(JSON.stringify(g))).p2.x,1);
+  M.discardService3D(g);
+  assert.equal(playerPoses3D(g).p2.x,.5);
 });

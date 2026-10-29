@@ -55,7 +55,6 @@ export function renderUrgent(){
 export function applyUrgent(id){ if(Game.mode!=='service') return; const c=buyStock(id,10,2); if(c!==false){ Game.dayStats.urgent+=c; if(isCoop()) toast('Pedido urgente', `${Net.names[arguments[1]||'p1']} ha pedido 10 × ${ITEMS[id].name.toLowerCase()}.`, ''); } renderUrgent(); updateStockbar(); updateHud(); }
 
 export function updateHud(){
-  if(!Game.dayStats) return;
   if($('#hud-day')) $('#hud-day').textContent=`Día ${Game.day} · ${dayName(Game.day)}`;
   if($('#hud-clock')) $('#hud-clock').textContent=hhmm(Game.hour);
   const w = WEATHER[weatherToday()];

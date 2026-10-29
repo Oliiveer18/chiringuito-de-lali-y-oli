@@ -43,7 +43,7 @@ export const CONTROLS3D = {
 };
 
 // Coordenadas 3D exactas en el espacio mundial de las estaciones de trabajo
-const STATIONS_3D = [
+export const STATIONS_3D = [
   { id: 'beer',   name: 'TIRAR CAÑA',     ico: '🍺', class: 'act-gold',  x: -3.8, z: 2.8, r: 2.2 },
   { id: 'coffee', name: 'HACER CAFÉ',     ico: '☕', class: 'act-coral', x: -1.4, z: 2.8, r: 2.2 },
   { id: 'grill',  name: 'PLANCHA',        ico: '🍳', class: 'act-fire',  x: -0.1, z: 2.8, r: 2.2 },

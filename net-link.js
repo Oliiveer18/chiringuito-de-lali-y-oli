@@ -14,6 +14,7 @@ export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
 let peer = null, conn = null, joinGen = 0, searchTimer = null;
+const boundConnections = new WeakSet();
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 function newCode(){ let c = ''; for (let i = 0; i < 4; i++) c += LETTERS[Math.floor(Math.random() * LETTERS.length)]; return c; }
 
@@ -32,14 +33,13 @@ function saveCloudIdx(){
   try { sessionStorage.setItem(CLOUD_KEY, String(cloudIdx)); } catch (e) {}
 }
 
-function peerOptions(id){
+function peerOptions(){
   const cloud = PEERJS_CLOUDS[cloudIdx] || PEERJS_CLOUDS[0];
   const opts = {
     debug: 0,
     ...cloud,
     config: peerRtcConfig()
   };
-  if (id != null) opts.id = id;
   const custom = window.PEERJS_CONFIG;
   if (custom && typeof custom === 'object') Object.assign(opts, custom);
   return opts;
@@ -69,14 +69,20 @@ function startGuestSearch(cloudTry){
 }
 
 function attachConn(c, { onOpen, onFail }){
+  // The recovery wrapper reuses its Link when the underlying channel reconnects.
+  // Reattaching would process every message twice after each recovery.
+  if(boundConnections.has(c))return;
+  boundConnections.add(c);
   let opened = false;
   c.on('open', () => {
+    conn = c;
     opened = true;
     clearGuestSearch();
     onOpen && onOpen();
   });
   c.on('data', d => { try { onNet(typeof d === 'string' ? JSON.parse(d) : d); } catch (e) {} });
   c.on('close', () => {
+    if(conn!==c)return;
     conn = null;
     Net.peer = false;
     onNet({ t: 'peer', on: false });
@@ -88,7 +94,8 @@ function attachConn(c, { onOpen, onFail }){
 
 function makePeer(id, handlers){
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
-  peer = new Peer(peerOptions(id));
+  // PeerJS takes the public id as its first argument, not options.id.
+  peer = id ? new Peer(id, peerOptions()) : new Peer(peerOptions());
   if (handlers.open) peer.on('open', handlers.open);
   if (handlers.connection) peer.on('connection', handlers.connection);
   peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });

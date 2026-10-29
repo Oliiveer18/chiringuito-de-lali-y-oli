@@ -9,6 +9,12 @@ on:
       - 'controls-3d.js'
       - 'sim/**'
       - 'net-sync.js'
+      - 'net-link.js'
+      - 'net-movement-3d.js'
+      - 'movement-3d-model.mjs'
+      - 'render-3d.js'
+      - 'ui-service.js'
+      - 'online-3d.browser.test.mjs'
       - '.github/workflows/service-3d-checks.yml'
 permissions:
   contents: read

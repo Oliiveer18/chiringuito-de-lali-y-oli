@@ -69,7 +69,7 @@ try{
   await page.goto(url+'/?debug=1');
   await page.waitForFunction(()=>window.__api&&window.is3DReady?.());
   await page.evaluate(async()=>{window.render3D=(await import('./render-3d.js?v=28.16.2-vfx3d')).render3D;});
-  assert.equal(await page.getAttribute('html','data-version'),'v28.16.3-service-fix');
+  assert.equal(await page.getAttribute('html','data-version'),'v28.16.4-online-fix');
   await check('title, new game and planning tabs',async()=>{
     await page.locator('#btn-start').click();
     await page.getByRole('button',{name:'Nueva partida',exact:true}).click();

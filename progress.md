@@ -33,3 +33,14 @@ Original prompt: Sí, empieza las correcciones en una rama nueva de mi copia 3D.
 - DPR 2 overlay diagnostic observed a 2× transform for a CSS-coordinate fixture on a 780px canvas
   displayed at 390px, matching the required scaling.
 - Existing camera-beta.test.mjs failure belongs to the baseline and remains documented.
+
+## Cooperative 3D extension, v28.16.4
+
+- Reproduced the public room-code mismatch: PeerJS received its id as an ignored option.
+- Corrected the constructor and joined an actual WebRTC channel from an isolated guest profile.
+- Added shared player identities, authoritative movement validation, interpolation and proximity checks.
+- Transmit customer arrival direction and flush guest movement before station/delivery actions.
+- Pause on disconnect, keep one handler binding per recovery Link and restore outgoing connection on reopen.
+- Added seven pure movement tests; all 26 service/movement cases pass through npm test.
+- Added an internet-dependent two-profile online browser suite with real channel interruption.
+- First full local online pass: all nine flows green with no page errors. Final hosted validation pending.

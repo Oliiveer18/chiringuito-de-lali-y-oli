@@ -5,8 +5,11 @@
 import * as THREE from './lib/three.module.js';
 import { Game, Net, weatherToday, lvl } from './state.js?v=28.16.0-vfx3d';
 import { createCharacter3D, animateCharacter } from './render-3d-actors.js?v=28.16.0-vfx3d';
-import { CONTROLS3D, initControls3D, updateContextualProximity, syncControls3DForGameMode, resetControls3DInput } from './controls-3d.js?v=28.16.0-vfx3d';
-import { syncCustomers3D, clearAllCustomers3D } from './render-3d-customers.js?v=28.16.2-vfx3d';
+import { CONTROLS3D, STATIONS_3D, initControls3D, updateContextualProximity, syncControls3DForGameMode, resetControls3DInput } from './controls-3d.js?v=28.16.0-vfx3d';
+import { syncCustomers3D, clearAllCustomers3D, customerInteractionPosition } from './render-3d-customers.js?v=28.16.2-vfx3d';
+import { playerPoses3D } from './movement-3d-model.mjs';
+import { setMovementCollision3D, publishLocalPose3D, consumeLocalCorrection3D } from './net-movement-3d.js';
+import { setService3DProximityCheck } from './service-3d.js';
 import { tablePosTo3D } from './world.js?v=28.16.2-vfx3d';
 import { initUpgrades3D, syncUpgrades3D } from './upgrades-3d.js?v=28.16.0-vfx3d';
 import { initStaff3D, syncStaff3D } from './staff-3d.js?v=28.16.0-vfx3d';
@@ -37,6 +40,7 @@ let camera = null;
 let canvas3d = null;
 let isInitialized = false;
 let renderedServiceId = null;
+let localMeshOwner = 'p1';
 
 // Personajes 3D
 let playerMesh = null;
@@ -1281,6 +1285,19 @@ export function init3D() {
   // 6. Controles Ergonómicos de Pulgares Móviles (Joystick y Botón Contextual)
   initControls3D(playerMesh);
   initOffscreenRadar();
+  setMovementCollision3D(check3DCollision);
+  setService3DProximityCheck((command,who)=>{
+    const pose=playerPoses3D(Game)[who];
+    if(command.type==='deliver'){
+      const c=Game.customers.find(c=>c.id===command.customer);
+      if(!c)return false;
+      const target=customerInteractionPosition(c);
+      return Math.hypot(pose.x-target.x,pose.z-target.z)<=3.95;
+    }
+    const id=command.type==='releaseBeer'?'beer':command.type==='wash'?'sink':command.type;
+    const station=STATIONS_3D.find(s=>s.id===id);
+    return !station||Math.hypot(pose.x-station.x,pose.z-station.z)<=station.r+.75;
+  });
 
   // Controles de Cámara Táctil (2 dedos)
   const inputTarget = document.getElementById('game') || canvas3d;
@@ -1407,12 +1424,20 @@ export function check3DCollision(px, pz, radius = 0.32) {
 export function render3D(dt = 0.016, draw = true) {
   if (!isInitialized || !renderer || !scene || !camera) return;
   const serviceDt=Game.mode==='service'&&Number.isFinite(Game.speed)?dt*Math.max(0,Game.speed):0;
+  if(localMeshOwner!==Net.me){
+    [playerMesh,partnerMesh]=[partnerMesh,playerMesh];
+    localMeshOwner=Net.me;
+    resetControls3DInput();
+  }
   if(Game.mode==='service' && renderedServiceId!==Game.floor?.id){
     renderedServiceId=Game.floor?.id;
     resetControls3DInput();
-    playerMesh?.position.set(-1.8,0,1.8);
-    partnerMesh?.position.set(.5,0,1.8);
+    const poses=playerPoses3D(Game),other=Net.me==='p2'?'p1':'p2';
+    playerMesh?.position.set(poses[Net.me].x,0,poses[Net.me].z);
+    partnerMesh?.position.set(poses[other].x,0,poses[other].z);
   }
+  const correction=consumeLocalCorrection3D();
+  if(correction){playerMesh.position.x=correction.x;playerMesh.position.z=correction.z;}
 
   const now = performance.now();
   const time = now * 0.001;
@@ -1467,9 +1492,21 @@ export function render3D(dt = 0.016, draw = true) {
 
   // Oli (Compañero) animado en cocina con postura viva
   if (partnerMesh) {
-    animateCharacter(partnerMesh, 0, 0, dt);
+    const pose=Game.mode==='service'&&Net.peer?playerPoses3D(Game)[Net.me==='p2'?'p1':'p2']:null;
+    const oldX=partnerMesh.position.x,oldZ=partnerMesh.position.z;
+    const k=Game.speed>0?Math.min(1,dt*14):0;
+    if(pose){
+      partnerMesh.position.x+=(pose.x-partnerMesh.position.x)*k;
+      partnerMesh.position.z+=(pose.z-partnerMesh.position.z)*k;
+    }
+    animateCharacter(partnerMesh,dt>0?(partnerMesh.position.x-oldX)/dt:0,dt>0?(partnerMesh.position.z-oldZ)/dt:0,serviceDt);
+    if(pose){
+      const delta=Math.atan2(Math.sin(pose.heading-partnerMesh.rotation.y),Math.cos(pose.heading-partnerMesh.rotation.y));
+      partnerMesh.rotation.y+=delta*k;
+    }
     partnerMesh.position.y = sampleCharacterFootY(partnerMesh.position.x, partnerMesh.position.z);
   }
+  if(playerMesh)publishLocalPose3D(playerMesh.position,playerMesh.rotation.y);
 
   // 3.5 Estaciones Interactivas y Bandeja 3D (Fase 3)
   // Rebind local/remote trays when joining as p2 after the title screen.
@@ -1553,7 +1590,6 @@ export function is3DReady() {
 export function getPlayerMesh() {
   return playerMesh;
 }
-
 export function getPartnerMesh() {
   return partnerMesh;
 }

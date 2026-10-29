@@ -8,9 +8,16 @@ const products = {
   cooler: ['agua', 'refresco', 'batido', 'helado']
 };
 
+export function createPlayers3D(){
+  return {
+    p1:{x:-1.8,z:1.8,heading:0,seq:0,correctionSeq:0},
+    p2:{x:.5,z:1.8,heading:0,seq:0,correctionSeq:0}
+  };
+}
+
 export function createService3D() {
   return {
-    nextUnit: 0, trays: { p1: [], p2: [] }, commands: {},
+    nextUnit: 0, trays: { p1: [], p2: [] }, commands: {}, players:createPlayers3D(),
     stations: {
       beer: { state: 'idle', owner: null, progress: 0, sweetSpotMin: .72, sweetSpotMax: .92, pourTime: 1.35 },
       grill: { state: 'idle', owner: null, progress: 0, itemCooking: null, cookTime: 2.1, greenMin: .65, greenMax: .90 },

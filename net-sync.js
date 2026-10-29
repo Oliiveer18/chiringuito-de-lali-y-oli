@@ -12,6 +12,7 @@ import { netDirty, netSend } from './net-link.js?v=28.16.0-vfx3d';
 import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.16.0-vfx3d';
 import { applyService3DCommand } from './service-3d.js';
 import { service3D, createService3D } from './service-3d-model.mjs';
+import { acceptGuestPose3D } from './net-movement-3d.js';
 export function onNet(m){
   switch(m.t){
     case 'created': Net.role='host'; Net.me='p1'; Net.code=m.code; renderLobby(); break;
@@ -20,7 +21,7 @@ export function onNet(m){
     case 'peer':
       Net.peer=m.on;
       if(m.on){ toastLocal('Conectado', 'Tu pareja ya está en la partida.', 'good'); hideNetMsg(); if(Game.mode==='service' && Net.pausedByDrop){ Net.pausedByDrop=false; setSpeed(1); } }
-      else { if(Game.mode==='service' && Game.speed&&m.serviceId===Game.floor?.id){ setSpeed(0); Net.pausedByDrop=true; } netLost(`${escapeHtml(Net.names.p2)} se ha desconectado. Puede volver a entrar con el código <b>${Net.code}</b>.`, true); }
+      else { if(Game.mode==='service' && Game.speed){ setSpeed(0); Net.pausedByDrop=true; } netLost(`${escapeHtml(Net.names[Net.me==='p2'?'p1':'p2'])} se ha desconectado. Puede volver a entrar con el código <b>${Net.code}</b>.`, true); }
       renderLobby(); netDirty(); break;
     case 'closed': netLost('Tu pareja ha cerrado la partida.'); break;
     case 'hello': if(Net.role==='host'){ Net.names.p2 = String(m.name||'Jugador 2').slice(0,14); renderLobby(); netDirty(); } break;
@@ -31,6 +32,7 @@ export function onNet(m){
 export function applyAct(m){
   const who='p2';
   switch(m.a){case 'floor':floorCommand(m.command,who);break;
+    case 'move3d': acceptGuestPose3D(m); break;
     case 'service3d': {
       if(Game.mode!=='service'||m.serviceId!==Game.floor?.id||!Number.isSafeInteger(m.q)||m.q<1){
         pushAck(m.q,false,'service3d'); break;
@@ -89,7 +91,7 @@ export function snapshot(){
     o.cu = Game.customers.map(c=>({i:c.id,x:Math.round(c.x),y:Math.round(c.y),s:c.state,o:c.order,st:c.itemSt,p:+(c.patience/(c.maxPatience||1)).toFixed(3),sp:c.spot,
       m:c.mood,mt:+(c.moodT||0).toFixed(2),mx:c.moodTxt,sh:c.shirt,sk:c.skin,h:c.hat,ty:c.type,d:c.dir||1,sv:c.served,ip:c.inPrep,
       pn:c.personality,lk:c.look,rg:c.regular?c.regular.id:null,nm:c.regular?c.regular.name:null,ly:c.regLoyalty,
-      an:c.act,at:+(c.actT||0).toFixed(2),ag:c.anger,sb:Object.keys(c.subs||{}).length?c.subs:null,wt:c.waitT,sat:c.sat,ft:c.floorTableId,fp:c.floorPaid}));
+      an:c.act,at:+(c.actT||0).toFixed(2),ag:c.anger,sb:Object.keys(c.subs||{}).length?c.subs:null,wt:c.waitT,sat:c.sat,ft:c.floorTableId,fp:c.floorPaid,fr:c.fromRight}));
     o.tb = Game.tables.map(t=>({s:t.state, e: t.cust && t.cust.state==='eat' ? t.cust.served : null}));
     o.sl = Game.slots.map(s=>({w:s.who, c:s.cust?s.cust.id:null, p:s.cust? +(s.t/s.total).toFixed(3):0, cv:!!s.cover, it:s.items||[]}));
     o.fl = Game.floaters.map(f=>({x:Math.round(f.x),y:Math.round(f.y),text:f.text,t:+f.t.toFixed(2),color:f.color}));
@@ -135,7 +137,7 @@ export function applyState(m){
     for(const sc of m.cu){ seen.add(sc.i); let c=guestCust.get(sc.i);
       if(!c){ c={id:sc.i,x:sc.x,y:sc.y,bob:Math.random()*6}; guestCust.set(sc.i,c); }
       Object.assign(c,{gx:sc.x,gy:sc.y,state:sc.s,order:sc.o,itemSt:sc.st,patience:sc.p,maxPatience:1,spot:sc.sp,mood:sc.m,moodT:sc.mt,moodTxt:sc.mx,shirt:sc.sh,skin:sc.sk,hat:sc.h,type:sc.ty,dir:sc.d,served:sc.sv,inPrep:sc.ip,
-        personality:sc.pn,look:sc.lk,regular:sc.rg?{id:sc.rg,name:sc.nm}:null,regLoyalty:sc.ly,act:sc.an,actT:sc.at,anger:sc.ag,subs:sc.sb||{},waitT:sc.wt,sat:sc.sat,floorTableId:sc.ft,floorPaid:sc.fp});
+        personality:sc.pn,look:sc.lk,regular:sc.rg?{id:sc.rg,name:sc.nm}:null,regLoyalty:sc.ly,act:sc.an,actT:sc.at,anger:sc.ag,subs:sc.sb||{},waitT:sc.wt,sat:sc.sat,floorTableId:sc.ft,floorPaid:sc.fp,fromRight:sc.fr});
     }
     for(const k of [...guestCust.keys()]) if(!seen.has(k)) guestCust.delete(k);
     Game.customers=[...guestCust.values()];
