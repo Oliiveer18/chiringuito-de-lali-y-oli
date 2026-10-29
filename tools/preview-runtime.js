@@ -14,5 +14,7 @@
   window.previewStorage=memoryStore();
   window.previewSessionStorage=memoryStore();
   document.querySelector('.title-card')?.insertAdjacentHTML('beforeend',
-    '<p class="muted" style="font-size:12px;margin-top:14px">Vista de pruebas: las partidas de esta vista se pierden al recargar. La versión de GitHub conserva su guardado normal.</p>');
+    '<p style="font-size:12px;line-height:1.45;margin:10px auto 0;max-width:480px;padding:10px 12px;border:1px solid #83bdbc;border-radius:8px;background:#06464b;color:#f5faf9">Vista de pruebas: el guardado de esta vista se pierde al recargar. Tu juego de GitHub conserva su guardado normal.</p>');
+  const version=document.querySelector('#ver-title');
+  if(version)version.style.color='#d6e8e7';
 })();
