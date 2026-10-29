@@ -1,10 +1,10 @@
 /* Carrera infinita del chiringuito: temporadas encadenadas con objetivo, ventajas, Legado y traspaso.
    Lógica sin DOM: Game.day sigue siendo el día DE LA TEMPORADA (1..SEASON_DAYS), así que el resto del juego no cambia.
    Los datos de la carrera viven en Game.upgrades.career (se guardan y se sincronizan en cooperativo). */
-import { Game, simProgressDay } from './state.js?v=28.14.2';
-import { GOAL, ITEMS, SEASON_DAYS, TYPES } from './config.js?v=28.14.2';
-import { clamp, rnd } from './util.js?v=28.14.2';
-import { buildSeasonForecast } from './sim/forecast.js?v=28.14.2';
+import { Game, simProgressDay } from './state.js?v=28.14.3';
+import { GOAL, ITEMS, SEASON_DAYS, TYPES } from './config.js?v=28.14.3';
+import { clamp, rnd } from './util.js?v=28.14.3';
+import { buildSeasonForecast } from './sim/forecast.js?v=28.14.3';
 
 export const OBJ_TYPES = ['capital', 'reputacion', 'seguidores', 'servicio'];
 export const PERKS = {

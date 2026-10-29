@@ -1,5 +1,5 @@
-export const VERSION='v28.14.2';
-export const LABEL='v28.14.2 · cooperativo online: TURN TLS y más tiempo ICE entre redes';
+export const VERSION='v28.14.3';
+export const LABEL='v28.14.3 · cooperativo: señalización alternativa, errores claros y TURN';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

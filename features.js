@@ -1,12 +1,12 @@
-import {trackCost,trackRefund} from './bookkeeping.js?v=28.14.2';
+import {trackCost,trackRefund} from './bookkeeping.js?v=28.14.3';
 /* v11: algodonera automática, shows y gestión realista. Módulo aditivo. */
-import { Game, Net, hostLive, lvl } from './state.js?v=28.14.2';
-import { ITEMS, ITEM_IDS, UPGRADES, TYPES } from './config.js?v=28.14.2';
-import { rnd, clamp } from './util.js?v=28.14.2';
-import { Plan, toast, updateStockbar } from './ui.js?v=28.14.2';
-import { netDirty } from './net.js?v=28.14.2';
-import { ICON_URL } from './icons.js?v=28.14.2';
-import { guestSend, onGuestAction } from './coopbridge.js?v=28.14.2';
+import { Game, Net, hostLive, lvl } from './state.js?v=28.14.3';
+import { ITEMS, ITEM_IDS, UPGRADES, TYPES } from './config.js?v=28.14.3';
+import { rnd, clamp } from './util.js?v=28.14.3';
+import { Plan, toast, updateStockbar } from './ui.js?v=28.14.3';
+import { netDirty } from './net.js?v=28.14.3';
+import { ICON_URL } from './icons.js?v=28.14.3';
+import { guestSend, onGuestAction } from './coopbridge.js?v=28.14.3';
 
 ITEMS.algodon={name:'Algodón de azúcar',cost:0.4,ref:3.5,prep:0,spoil:0.2,spoilF:0.05,unlock:'algodonera'};
 ITEM_IDS.push('algodon');

@@ -2,8 +2,8 @@
    canvas.js
    Canvas principal: viewport, redimensionado y conversión de coordenadas.
    ========================================================= */
-import { H, W } from './config.js?v=28.14.2';
-import { $ } from './util.js?v=28.14.2';
+import { H, W } from './config.js?v=28.14.3';
+import { $ } from './util.js?v=28.14.3';
 
 // ---------- Entrada ----------
 export const canvas=$('#game'), ctx=canvas.getContext('2d');

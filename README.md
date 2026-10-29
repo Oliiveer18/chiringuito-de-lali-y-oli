@@ -41,6 +41,8 @@ npm run check    # Alias de npm test
 
 El anfitrión simula la partida y la invitada recibe el estado. Ambas pueden comprar, mejorar, contratar personal y shows, reparar máquinas, publicar en Chiringo, contratar influencers, responder reseñas y pedir reparto.
 
+Entre redes distintas (cada jugador en su Wi‑Fi o datos) hace falta TURN además de STUN; el juego incluye relays públicos de Open Relay. Si sigue fallando en redes muy restrictivas, el anfitrión puede definir credenciales propias antes de cargar el juego: `window.TURN_CONFIG = { urls: 'turn:…', username: '…', credential: '…' }` (por ejemplo cuenta gratuita en metered.ca).
+
 ## Pruebas
 
 Las pruebas cargan los módulos reales de las ampliaciones y del canal cooperativo, simulan 15 días y comprueban reglas de tendencias, comentarios, influencers, shows, reparto, misiones y acciones de la invitada.
