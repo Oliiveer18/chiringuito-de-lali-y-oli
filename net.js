@@ -1,30 +1,30 @@
-import {floorCommand} from './floor-service.js?v=28.5';
+import {floorCommand} from './floor-service.js?v=28.6';
 /* =========================================================
    net.js
    Red: WebRTC con PeerJS (sin servidor propio), sala compartida,
    sincronización anfitrión→invitado y acciones pendientes del invitado.
    ========================================================= */
-import { STATION_LABEL, who } from './config.js?v=28.5';
-import { $, clamp, escapeHtml } from './util.js?v=28.5';
-import { Audio } from './audio.js?v=28.5';
-import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=28.5';
-import { TABLE_POS } from './world.js?v=28.5';
-import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=28.5';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.5';
-import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.5';
+import { STATION_LABEL, who } from './config.js?v=28.6';
+import { $, clamp, escapeHtml } from './util.js?v=28.6';
+import { Audio } from './audio.js?v=28.6';
+import { Game, NET_SIM, Net, guestCust, hostLive, isGuest } from './state.js?v=28.6';
+import { TABLE_POS } from './world.js?v=28.6';
+import { cleanFx, cleanTable, hud, newSeason, pendingIdx, servable, slotOf, tryServe } from './sim.js?v=28.6';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.6';
+import { Plan, applyPlanAction, applyUrgent, hideAll, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.6';
 
 import {
   REJECT_MSG, pendHas, guestServe, guestClean, guestPendTick,
-} from './net-guest.js?v=28.5';
+} from './net-guest.js?v=28.6';
 import {
   netOpen, netSimDelay, netSend, netAct, netDirty, leaveCoop, goSolo,
-} from './net-link.js?v=28.5';
+} from './net-link.js?v=28.6';
 import {
   onNet, applyAct, pushAck, snapshot, netTick, applyState, guestTick,
-} from './net-sync.js?v=28.5';
+} from './net-sync.js?v=28.6';
 import {
   PINGS, sendPing, showPing, showLobby, lobbyStatus, lobbyError, myName, renderLobby, netLost, hideNetMsg,
-} from './net-lobby.js?v=28.5';
+} from './net-lobby.js?v=28.6';
 export {
   REJECT_MSG, pendHas, guestServe, guestClean, guestPendTick,
   netOpen, netSimDelay, netSend, netAct, netDirty, leaveCoop, goSolo,

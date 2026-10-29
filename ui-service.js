@@ -1,12 +1,12 @@
 /* Servicio, cierre, urgente y avisos. Lo importa ui.js. */
-import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=28.5';
-import { $, eur, hhmm, stars } from './util.js?v=28.5';
-import { ICON_URL } from './icons.js?v=28.5';
-import { Audio } from './audio.js?v=28.5';
-import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, weatherToday } from './state.js?v=28.5';
-import { buyStock, newSeason } from './sim.js?v=28.5';
-import { hideAll, Plan, showPlan } from './ui-plan.js?v=28.5';
-import { netAct, netDirty } from './net.js?v=28.5';
+import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=28.6';
+import { $, eur, hhmm, stars } from './util.js?v=28.6';
+import { ICON_URL } from './icons.js?v=28.6';
+import { Audio } from './audio.js?v=28.6';
+import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, weatherToday } from './state.js?v=28.6';
+import { buyStock, newSeason } from './sim.js?v=28.6';
+import { hideAll, Plan, showPlan } from './ui-plan.js?v=28.6';
+import { netAct, netDirty } from './net.js?v=28.6';
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
   $('#hud-role').classList.toggle('hidden', !isCoop()); $('#btn-ping').classList.toggle('hidden', !isCoop());
@@ -46,8 +46,10 @@ export function showFinalUI(){
 
 export function renderUrgent(){
   $('#urg-money').textContent=eur(Game.money);
-  $('#urg-body').innerHTML = activeItems().map(id=>`<div class="row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${ITEMS[id].name}</div><div class="sub">Quedan <b>${Game.stock[id]}</b></div></div>
-   <div class="ctrl"><button class="btn sm" data-ub="${id}" ${Game.money<ITEMS[id].cost*20?'disabled':''}>+10 · ${eur(ITEMS[id].cost*20)}</button></div></div>`).join('');
+  const note=$('#urg-note');
+  if(note) note.textContent=(isCoop()?'A mitad de jornada todo cuesta el doble. Ojo: el servicio sigue mientras pides.':'A mitad de jornada todo cuesta el doble. Llega al momento.')+' · Almacén ×2 en jornada.';
+  $('#urg-body').innerHTML = activeItems().map(id=>{const base=ITEMS[id].cost*10, bill=base*2;return `<div class="row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${ITEMS[id].name}</div><div class="sub">Quedan <b>${Game.stock[id]}</b> · almacén ${eur(ITEMS[id].cost)} ×2</div></div>
+   <div class="ctrl"><button class="btn sm" data-ub="${id}" ${Game.money<bill?'disabled':''}>+10 · <s>${eur(base)}</s> <b>${eur(bill)}</b></button></div></div>`;}).join('');
 }
 export function applyUrgent(id){ if(Game.mode!=='service') return; const c=buyStock(id,10,2); if(c!==false){ Game.dayStats.urgent+=c; if(isCoop()) toast('Pedido urgente', `${Net.names[arguments[1]||'p1']} ha pedido 10 × ${ITEMS[id].name.toLowerCase()}.`, ''); } renderUrgent(); updateStockbar(); updateHud(); }
 

@@ -1,5 +1,5 @@
-export const VERSION='v28.5';
-export const LABEL='v28.5 · pestañas del plan, clima y personal pulidos';
+export const VERSION='v28.6';
+export const LABEL='v28.6 · reparto 2×, icono moto, HUD sonido y cola';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

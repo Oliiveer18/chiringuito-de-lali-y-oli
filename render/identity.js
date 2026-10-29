@@ -1,15 +1,15 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { STATION_LABEL } from "../config.js?v=28.5";
-import { W } from "../config.js?v=28.5";
-import { WHO_COLOR } from "../config.js?v=28.5";
-import { clamp } from "../util.js?v=28.5";
-import { rr } from "../icons.js?v=28.5";
-import { Net } from "../state.js?v=28.5";
-import { isCoop } from "../state.js?v=28.5";
-import { drawAngerCue } from "./scene.js?v=28.5";
-import { drawNameplate } from "./scene.js?v=28.5";
-import { drawOrderIcons } from "./scene.js?v=28.5";
-import { drawPersonalityBadge } from "./characters.js?v=28.5";
+import { STATION_LABEL } from "../config.js?v=28.6";
+import { W } from "../config.js?v=28.6";
+import { WHO_COLOR } from "../config.js?v=28.6";
+import { clamp } from "../util.js?v=28.6";
+import { rr } from "../icons.js?v=28.6";
+import { Net } from "../state.js?v=28.6";
+import { isCoop } from "../state.js?v=28.6";
+import { drawAngerCue } from "./scene.js?v=28.6";
+import { drawNameplate } from "./scene.js?v=28.6";
+import { drawOrderIcons } from "./scene.js?v=28.6";
+import { drawPersonalityBadge } from "./characters.js?v=28.6";
 
 export const STATION_ZONE = { cocina:248, barra:410 };
 
@@ -35,8 +35,9 @@ export function drawBubble(c,cu,T){
       c.fillStyle = p>0.5?'#5cc35a': p>0.25?'#f5b82e':'#e8473c'; rr(c,bx-sw/2,by+33,Math.max(2,sw*p),7,3.5); c.fill();
       if(cu.anger>0) drawAngerCue(c, bx-sw/2+7, by+36.5, cu.anger, T);
     }
-    // número de puesto
-    if(cu.spot>=0){ c.fillStyle='rgba(42,33,28,.85)'; c.beginPath(); c.arc(cu.x,cu.y+20,11,0,7); c.fill(); c.fillStyle='#fff6e6'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(String(cu.spot+1),cu.x,cu.y+25); }
+    // número de puesto (cola o esperando en mostrador, no al llegar)
+    const atCounter = cu.state==='queue' || (cu.state==='prep' && cu.inPrep===0);
+    if(cu.spot>=0 && atCounter){ c.fillStyle='rgba(42,33,28,.85)'; c.beginPath(); c.arc(cu.x,cu.y+20,11,0,7); c.fill(); c.fillStyle='#fff6e6'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(String(cu.spot+1),cu.x,cu.y+25); }
     drawPersonalityBadge(c,cu,bx,by,bw);
     if(cu.regular) drawNameplate(c,cu,bx,by-26);
   } else if(cu.mood && cu.moodT>0){

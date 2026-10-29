@@ -3,9 +3,9 @@
    Paleta: arena, azul Charco y coral. Pensada para móvil en horizontal.
    Orden: 1) base  2) capa de interfaz móvil (antes en layout.js)  3) v9  4) v10
    ========================================================= */
-@import url("style-base.css?v=28.5");
-@import url("style-base-report.css?v=28.5");
-@import url("style-mobile.css?v=28.5");
-@import url("style-v9.css?v=28.5");
-@import url("style-v10.css?v=28.5");
-@import url("style-v28.css?v=28.5");
+@import url("style-base.css?v=28.6");
+@import url("style-base-report.css?v=28.6");
+@import url("style-mobile.css?v=28.6");
+@import url("style-v9.css?v=28.6");
+@import url("style-v10.css?v=28.6");
+@import url("style-v28.css?v=28.6");

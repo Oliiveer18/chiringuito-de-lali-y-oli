@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.5');
-await import('./coopbridge.js?v=28.5');
-const ui = await import('./ui.js?v=28.5'), net = await import('./net.js?v=28.5'), sim = await import('./sim.js?v=28.5');
-await import('./features.js?v=28.5'); await import('./v12.js?v=28.5'); await import('./v14.js?v=28.5');
-const cfg = await import('./config.js?v=28.5');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.6');
+await import('./coopbridge.js?v=28.6');
+const ui = await import('./ui.js?v=28.6'), net = await import('./net.js?v=28.6'), sim = await import('./sim.js?v=28.6');
+await import('./features.js?v=28.6'); await import('./v12.js?v=28.6'); await import('./v14.js?v=28.6');
+const cfg = await import('./config.js?v=28.6');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -130,7 +130,7 @@ check('la invitada repara la batidora', !Game.upgrades.batidoraRota && Game.mone
 delete Game.upgrades.deliveryItem; const planMoney = Game.money; guest('delivery', { id: 'cerveza', qty: 5 });
 check('el reparto se rechaza durante la preparación sin cobrar', !Game.upgrades.deliveryItem && Game.money === planMoney);
 Game.mode = 'service'; const m5 = Game.money; guest('delivery', { id: 'cerveza', qty: 9999 });
-check('el reparto de la invitada se limita a 20 unidades', Game.upgrades.deliveryQty === 20 && Math.abs(Game.money - (m5 - 0.7 * 20)) < 1e-6, Game.upgrades.deliveryQty);
+check('el reparto de la invitada se limita a 20 unidades', Game.upgrades.deliveryQty === 20 && Math.abs(Game.money - (m5 - 0.7 * 20 * 2)) < 1e-6, Game.upgrades.deliveryQty);
 delete Game.upgrades.deliveryItem; const m6 = Game.money; guest('delivery', { id: 'pescado', qty: 5 });
 check('no se puede pedir reparto de un producto bloqueado', !Game.upgrades.deliveryItem && Game.money === m6);
 Net.role = 'guest'; const sent0 = net.sent.length; click('guest', { btn: { show: 'mago' } });

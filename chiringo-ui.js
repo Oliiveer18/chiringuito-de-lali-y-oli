@@ -1,19 +1,19 @@
-import {photoThread} from './management-ui.js?v=28.5';
+import {photoThread} from './management-ui.js?v=28.6';
 /* v19: Chiringo (cabecera, tarjeta «Hoy», publicaciones en tarjetas, balance de seguidores, feed de reseñas y respuesta inmediata).
    Sustituye la pestaña «Red» de v12.js por «Chiringo». Reutiliza las acciones de v12 (data-post, data-influ, data-resp).
    Los efectos mostrados salen de social-model.js, el mismo cálculo que aplica v12.js. */
-import { Game, Net } from './state.js?v=28.5';
-import { ITEMS } from './config.js?v=28.5';
-import { Plan, toast, estimateCustomers } from './ui.js?v=28.5';
-import { Audio } from './audio.js?v=28.5';
-import { ICON_URL } from './icons.js?v=28.5';
-import { drawPerson } from './render.js?v=28.5';
-import { netDirty } from './net.js?v=28.5';
-import { escapeHtml, eur, stars } from './util.js?v=28.5';
-import { postEffect, influEffect, postMetrics } from './social-model.js?v=28.5';
+import { Game, Net } from './state.js?v=28.6';
+import { ITEMS } from './config.js?v=28.6';
+import { Plan, toast, estimateCustomers } from './ui.js?v=28.6';
+import { Audio } from './audio.js?v=28.6';
+import { ICON_URL } from './icons.js?v=28.6';
+import { drawPerson } from './render.js?v=28.6';
+import { netDirty } from './net.js?v=28.6';
+import { escapeHtml, eur, stars } from './util.js?v=28.6';
+import { postEffect, influEffect, postMetrics } from './social-model.js?v=28.6';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=28.5';
-import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=28.5';
+import { POSTS, INFLU } from './v12.js?v=28.6';
+import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=28.6';
 
 let sel = null, status = null, flashId = null, flashT = 0, prev = { init: false }, prevDay = null;
 
@@ -145,7 +145,7 @@ setInterval(() => { if (Net.role !== 'guest') hito(); }, 1000);
 const rdSheet = document.createElement('link');
 rdSheet.id = 'rd-style';
 rdSheet.rel = 'stylesheet';
-rdSheet.href = 'chiringo-ui-css.css?v=28.5';
+rdSheet.href = 'chiringo-ui-css.css?v=28.6';
 document.head.append(rdSheet);
 
 function captureArchive() {
@@ -169,5 +169,5 @@ setInterval(captureArchive, 500);
 
 const csSheet = document.createElement('link');
 csSheet.rel = 'stylesheet';
-csSheet.href = 'chiringo-ui-archive.css?v=28.5';
+csSheet.href = 'chiringo-ui-archive.css?v=28.6';
 document.head.append(csSheet);
