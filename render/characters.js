@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=28.11";
-import { clamp } from "../util.js?v=28.11";
+import { Net } from "../state.js?v=28.12";
+import { clamp } from "../util.js?v=28.12";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28.11";
-import { W } from "../config.js?v=28.11";
-import { rr } from "../icons.js?v=28.11";
-import { Game } from "../state.js?v=28.11";
-import { PCOLORS } from "./scene.js?v=28.11";
-import { drawPictogram } from "./scene.js?v=28.11";
-import { drawHeldItem } from "./items.js?v=28.11";
+import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28.12";
+import { W } from "../config.js?v=28.12";
+import { rr } from "../icons.js?v=28.12";
+import { Game } from "../state.js?v=28.12";
+import { PCOLORS } from "./scene.js?v=28.12";
+import { drawPictogram } from "./scene.js?v=28.12";
+import { drawHeldItem } from "./items.js?v=28.12";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -199,7 +199,7 @@ export function drawFloorWorker(c,a,T){
   if(a.player){
     const col=WHO_COLOR[a.id]||'#ffd36b';
     c.strokeStyle=col; c.lineWidth=2.5;
-    c.beginPath(); c.ellipse(a.x,a.y-2,14,5,0,0,7); c.stroke();
+    c.beginPath(); c.ellipse(a.x,a.y,14,5,0,0,7); c.stroke();
   }
   // Bandeja con productos reales al llevar un pedido
   if(a.carry){

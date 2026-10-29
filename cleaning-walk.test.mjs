@@ -81,7 +81,7 @@ test('limpieza encadenada del usuario ejecutada de principio a fin',()=>{
   assert.equal(s.tables[0].state,'free');
   // 2) terminada la primera, el usuario pide la segunda y empieza a volver
   const id2=requestTask(s,{kind:'clean',target:'table1',requestedBy:'p1',legs:[{x:600,y:500,duration:1.8}]});
-  p1.returning=true;p1.home={x:265,y:470};p1.returnPath=plan(p1,p1.home);
+  p1.returning=true;p1.home={x:265,y:450};p1.returnPath=plan(p1,p1.home);
   stepHome(p1,0.5,plan); // camina hacia casa un tramo
   assert.ok(p1.returning,'estaba volviendo a casa');
   // 3) updateFloor interrumpe el retorno porque hay tarea en cola pedida por p1

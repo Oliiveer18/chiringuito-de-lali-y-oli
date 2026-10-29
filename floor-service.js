@@ -1,15 +1,16 @@
-import {Game,Net,isCoop} from './state.js?v=28.11';
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.11';
-import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=28.11';
-import {factor} from './professional-model.mjs?v=28.11';
-import * as M from './service-tasks.mjs?v=28.11';
+import {Game,Net,isCoop} from './state.js?v=28.12';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=28.12';
+import {HUT_BAR_FLOOR_Y} from './world.js?v=28.12';
+import {navFind,navLineFree,navSetTarget,navStep} from './nav.js?v=28.12';
+import {factor} from './professional-model.mjs?v=28.12';
+import * as M from './service-tasks.mjs?v=28.12';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
 const endpoint=t=>({x:t.x+(t.x>1150?-46:46),y:t.y+34});
 function route(a,p){
   const inside=q=>q.x>=20&&q.x<=540&&q.y>=150&&q.y<540;
   if(a.player&&(inside(a)||inside(p))){
-    const exit={x:550,y:560}, door={x:550,y:470};
+    const exit={x:550,y:560}, door={x:550,y:HUT_BAR_FLOOR_Y};
     let prefix=[], suffix=[], start={x:a.x,y:a.y}, end={x:p.x,y:p.y};
     if(inside(a)){prefix=[{x:550,y:a.y},door,exit];start=exit;}
     if(inside(p)){suffix=[door,{x:550,y:p.y},{x:p.x,y:p.y}];end=exit;}
@@ -22,7 +23,7 @@ const path=navFind(a.x,a.y,p.x,p.y);let x=a.x,y=a.y;for(const q of path){if(!nav
 function syncTables(){const s=Game.floor;if(!s)return;for(let i=0;i<Game.tables.length;i++){const a=s.tables[i],b=Game.tables[i];if(a)a.state=b.state;}}
 export function floorActive(id){return Game.mode==='service'&&!!actor(id);}
 export function floorAway(id){const a=actor(id);return !!a&&(!!a.task||!!a.returning||Math.hypot(a.x-a.home.x,a.y-a.home.y)>5);}
-export function initFloor(api){hooks=api;const list=[];const add=(id,role,x,player=false)=>{const e=Game.upgrades.workforce?.team?.[role];const homeY=player?420:560;list.push({id,role,player,name:player?(isCoop()?Net.names[id]:'Tu personaje'):(e?.name||STAFF.find(s=>s.id===role)?.name||role),x,y:homeY,home:{x,y:homeY},speed:110/Math.max(.7,e?.workMultiplier||1),can:role==='cocinero'?['clean']:player?['clean','takeOrder','deliver']:['clean','escort','takeOrder','deliver'],auto:player?[]:role==='limpiador'?['clean']:role==='terraza'||role==='camarero'&&e?.specialty==='polivalente'?['escort','takeOrder','deliver']:[],returning:false,phase:0,dir:1});};add('p1','player',isCoop()&&Net.roles.p1==='barra'?435:265,true);if(isCoop())add('p2','player',Net.roles.p2==='barra'?435:265,true);for(const [role,id,x] of [['camarero','yeray',380],['cocinero','carmela',95],['limpiador','acaymo',520],['terraza','terraza',550]])if(Game.staff[role])add(id,role,x);Game.floor=M.createService('floor:'+crypto.randomUUID(),list,Game.tables.map((t,i)=>({id:'table'+i,state:t.state})));dirty();}
+export function initFloor(api){hooks=api;const list=[];const add=(id,role,x,player=false)=>{const e=Game.upgrades.workforce?.team?.[role];const homeY=player?HUT_BAR_FLOOR_Y:560;list.push({id,role,player,name:player?(isCoop()?Net.names[id]:'Tu personaje'):(e?.name||STAFF.find(s=>s.id===role)?.name||role),x,y:homeY,home:{x,y:homeY},speed:110/Math.max(.7,e?.workMultiplier||1),can:role==='cocinero'?['clean']:player?['clean','takeOrder','deliver']:['clean','escort','takeOrder','deliver'],auto:player?[]:role==='limpiador'?['clean']:role==='terraza'||role==='camarero'&&e?.specialty==='polivalente'?['escort','takeOrder','deliver']:[],returning:false,phase:0,dir:1});};add('p1','player',isCoop()&&Net.roles.p1==='barra'?435:265,true);if(isCoop())add('p2','player',Net.roles.p2==='barra'?435:265,true);for(const [role,id,x] of [['camarero','yeray',380],['cocinero','carmela',95],['limpiador','acaymo',520],['terraza','terraza',550]])if(Game.staff[role])add(id,role,x);Game.floor=M.createService('floor:'+crypto.randomUUID(),list,Game.tables.map((t,i)=>({id:'table'+i,state:t.state})));dirty();}
 function task(kind,target,legs,who=null,customer=null,priority=0){syncTables();const id=M.requestTask(Game.floor,{kind,target,legs,requestedBy:who,priority});if(id&&customer)job(id).customer=customer.id;dirty();return !!id;}
 export function requestFloorClean(t,who='p1',automatic=false){if(Game.mode!=='service'||!Game.floor||!t||t.state!=='dirty')return false;const e=Game.upgrades.workforce?.team?.limpiador;return task('clean','table'+Game.tables.indexOf(t),[{...endpoint(t),duration:1.8*factor(e,[{complex:Game.tables.filter(t=>t.state==='dirty').length>2}])}],automatic?null:who,null,30);}
 export function requestFloorCustomer(c,who=null){if(!c||!Game.floor)return false;const t=Game.tables[c.floorTableId];if(!t)return false;const p=endpoint(t);if(c.state==='floorWaitEscort')return task('escort','table'+c.floorTableId,[{x:c.x,y:c.y+12,duration:.2},{...p,duration:.3}],who,c,10);if(c.state==='floorMenu')return task('takeOrder',String(c.id),[{...p,duration:.8},{x:520,y:560,duration:.2}],who,c,50);if(c.state==='floorReady')return task('deliver',String(c.id),[{x:520,y:560,duration:.5},{...p,duration:.6}],who,c,80);if(c.state==='floorWaitingPrep')return !!hooks.prepare(c,Game.slots.find(s=>s.who===who));return false;}
