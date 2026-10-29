@@ -1,5 +1,5 @@
-export const VERSION='v28.9';
-export const LABEL='v28.9 · apertura suave, curva de afluencia realista';
+export const VERSION='v28.10';
+export const LABEL='v28.10 · pies en suelo del quiosco, afluencia día 1 más viva';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

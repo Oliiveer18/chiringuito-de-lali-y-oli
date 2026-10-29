@@ -1,21 +1,21 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { ITEMS } from "../config.js?v=28.9";
-import { ITEM_IDS } from "../config.js?v=28.9";
-import { REGULARS } from "../config.js?v=28.9";
-import { SEASON_DAYS } from "../config.js?v=28.9";
-import { SPECIAL_DAYS } from "../config.js?v=28.9";
-import { START_MONEY } from "../config.js?v=28.9";
-import { clamp } from "../util.js?v=28.9";
-import { pickW } from "../util.js?v=28.9";
-import { rnd } from "../util.js?v=28.9";
-import { Audio } from "../audio.js?v=28.9";
-import { Game } from "../state.js?v=28.9";
-import { closeHour } from "../state.js?v=28.9";
-import { setTimeoutGame } from "../state.js?v=28.9";
-import { buildTables } from "../world.js?v=28.9";
-import { toast } from "../ui.js?v=28.9";
-import { updateStockbar } from "../ui.js?v=28.9";
-import { spawnCustomer } from "./customers.js?v=28.9";
+import { ITEMS } from "../config.js?v=28.10";
+import { ITEM_IDS } from "../config.js?v=28.10";
+import { REGULARS } from "../config.js?v=28.10";
+import { SEASON_DAYS } from "../config.js?v=28.10";
+import { SPECIAL_DAYS } from "../config.js?v=28.10";
+import { START_MONEY } from "../config.js?v=28.10";
+import { clamp } from "../util.js?v=28.10";
+import { pickW } from "../util.js?v=28.10";
+import { rnd } from "../util.js?v=28.10";
+import { Audio } from "../audio.js?v=28.10";
+import { Game } from "../state.js?v=28.10";
+import { closeHour } from "../state.js?v=28.10";
+import { setTimeoutGame } from "../state.js?v=28.10";
+import { buildTables } from "../world.js?v=28.10";
+import { toast } from "../ui.js?v=28.10";
+import { updateStockbar } from "../ui.js?v=28.10";
+import { spawnCustomer } from "./customers.js?v=28.10";
 
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
@@ -35,7 +35,7 @@ export function newSeason(){
 /** Reputation influence on spawn mult; soft opening days 1–2, ramp days 3–4. */
 export function repArrivalMult(day=Game.day, rep=Game.rep){
   const d=clamp(Number(day)||1,1,SEASON_DAYS);
-  if(d<=2) return 0.25+0.15*(d-1);
+  if(d<=2) return 0.50+0.05*(d-1);
   const full=0.35+rep/5*0.95;
   if(d<=4){
     const t=(d-3)/(4-3);
@@ -51,7 +51,7 @@ export function difficultyProfile(day=Game.day){
   const smooth=t*t*(3-2*t);
   const late=clamp((d-8)/(SEASON_DAYS-8),0,1);
   let arrivals;
-  if(d<=2) arrivals=0.38+0.07*(d-1);
+  if(d<=2) arrivals=0.55+0.06*(d-1);
   else if(d<=7){
     const u=(d-3)/4;
     const ramp=u*u*(3-2*u);

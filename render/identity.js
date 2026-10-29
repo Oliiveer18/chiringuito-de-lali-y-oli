@@ -1,15 +1,15 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { STATION_LABEL } from "../config.js?v=28.9";
-import { W } from "../config.js?v=28.9";
-import { WHO_COLOR } from "../config.js?v=28.9";
-import { clamp } from "../util.js?v=28.9";
-import { rr } from "../icons.js?v=28.9";
-import { Game } from "../state.js?v=28.9";
-import { Net } from "../state.js?v=28.9";
-import { isCoop } from "../state.js?v=28.9";
-import { drawAngerCue } from "./scene.js?v=28.9";
-import { drawOrderIcons } from "./scene.js?v=28.9";
-import { drawPersonalityBadge } from "./characters.js?v=28.9";
+import { STATION_LABEL } from "../config.js?v=28.10";
+import { W } from "../config.js?v=28.10";
+import { WHO_COLOR } from "../config.js?v=28.10";
+import { clamp } from "../util.js?v=28.10";
+import { rr } from "../icons.js?v=28.10";
+import { Game } from "../state.js?v=28.10";
+import { Net } from "../state.js?v=28.10";
+import { isCoop } from "../state.js?v=28.10";
+import { drawAngerCue } from "./scene.js?v=28.10";
+import { drawOrderIcons } from "./scene.js?v=28.10";
+import { drawPersonalityBadge } from "./characters.js?v=28.10";
 
 export const STATION_ZONE = { cocina:248, barra:410 };
 

@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.9');
-await import('./coopbridge.js?v=28.9');
-const ui = await import('./ui.js?v=28.9'), net = await import('./net.js?v=28.9'), sim = await import('./sim.js?v=28.9');
-await import('./features.js?v=28.9'); await import('./v12.js?v=28.9'); await import('./v14.js?v=28.9');
-const cfg = await import('./config.js?v=28.9');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.10');
+await import('./coopbridge.js?v=28.10');
+const ui = await import('./ui.js?v=28.10'), net = await import('./net.js?v=28.10'), sim = await import('./sim.js?v=28.10');
+await import('./features.js?v=28.10'); await import('./v12.js?v=28.10'); await import('./v14.js?v=28.10');
+const cfg = await import('./config.js?v=28.10');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -61,7 +61,7 @@ function mirrorDifficultyArrivals(day, seasonDays = cfg.SEASON_DAYS) {
   const d = Math.max(1, Math.min(Number(day) || 1, seasonDays));
   const t = (d - 1) / (seasonDays - 1);
   const smooth = t * t * (3 - 2 * t);
-  if (d <= 2) return 0.38 + 0.07 * (d - 1);
+  if (d <= 2) return 0.55 + 0.06 * (d - 1);
   if (d <= 7) {
     const u = (d - 3) / 4;
     const ramp = u * u * (3 - 2 * u);
