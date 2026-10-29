@@ -1,12 +1,12 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { W } from "../config.js?v=28.7";
-import { rr } from "../icons.js?v=28.7";
-import { Game } from "../state.js?v=28.7";
-import { Net } from "../state.js?v=28.7";
-import { guestCust } from "../state.js?v=28.7";
-import { isGuest } from "../state.js?v=28.7";
-import { canvas } from "../canvas.js?v=28.7";
-import { view } from "../canvas.js?v=28.7";
+import { W } from "../config.js?v=28.8";
+import { rr } from "../icons.js?v=28.8";
+import { Game } from "../state.js?v=28.8";
+import { Net } from "../state.js?v=28.8";
+import { guestCust } from "../state.js?v=28.8";
+import { isGuest } from "../state.js?v=28.8";
+import { canvas } from "../canvas.js?v=28.8";
+import { view } from "../canvas.js?v=28.8";
 
 export function drawPendingBadges(c,T){
   if(!isGuest() || !Net.pend.size) return;
@@ -15,6 +15,7 @@ export function drawPendingBadges(c,T){
     if(p.kind==='serve'){
       const cu=guestCust.get(p.key); if(!cu) continue;
       x=cu.x; y=cu.y-8; r=30;
+      if(['queue','prep','arrive'].includes(cu.state)) y=cu.y-22;
     } else {
       const t=Game.tables[p.key]; if(!t) continue;
       // r=42 centrado en (t.x, t.y-4): el aro queda por debajo del rótulo «Limpiar» (t.y-76…t.y-50)
@@ -37,6 +38,10 @@ export function drawPendingBadges(c,T){
     const tw=c.measureText(label).width+18*dpr;
     let bx=sx+sr+10*dpr; if(bx+tw>canvas.width-8*dpr) bx=sx-sr-10*dpr-tw; // no cabe: a la izquierda
     let by=sy-9*dpr;
+    if(p.kind==='serve'){
+      const cu=guestCust.get(p.key);
+      if(cu && ['queue','prep','arrive'].includes(cu.state)) by=sy-72*view.s;
+    }
     by=Math.max(8*dpr, Math.min(by, canvas.height-8*dpr-19*dpr));      // dentro del lienzo
     c.fillStyle='rgba(42,33,28,.88)'; rr(c,bx,by,tw,19*dpr,9*dpr); c.fill();
     c.strokeStyle=p.expired?'#e8a33d':'#9ff0d0'; c.lineWidth=1.2*dpr; rr(c,bx,by,tw,19*dpr,9*dpr); c.stroke();

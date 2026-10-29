@@ -1,19 +1,19 @@
-import {photoThread} from './management-ui.js?v=28.7';
+import {photoThread} from './management-ui.js?v=28.8';
 /* v19: Chiringo (cabecera, tarjeta «Hoy», publicaciones en tarjetas, balance de seguidores, feed de reseñas y respuesta inmediata).
    Sustituye la pestaña «Red» de v12.js por «Chiringo». Reutiliza las acciones de v12 (data-post, data-influ, data-resp).
    Los efectos mostrados salen de social-model.js, el mismo cálculo que aplica v12.js. */
-import { Game, Net } from './state.js?v=28.7';
-import { ITEMS } from './config.js?v=28.7';
-import { Plan, toast, estimateCustomers } from './ui.js?v=28.7';
-import { Audio } from './audio.js?v=28.7';
-import { ICON_URL } from './icons.js?v=28.7';
-import { drawPerson } from './render.js?v=28.7';
-import { netDirty } from './net.js?v=28.7';
-import { escapeHtml, eur, stars } from './util.js?v=28.7';
-import { postEffect, influEffect, postMetrics } from './social-model.js?v=28.7';
+import { Game, Net } from './state.js?v=28.8';
+import { ITEMS } from './config.js?v=28.8';
+import { Plan, toast, estimateCustomers } from './ui.js?v=28.8';
+import { Audio } from './audio.js?v=28.8';
+import { ICON_URL } from './icons.js?v=28.8';
+import { drawPerson } from './render.js?v=28.8';
+import { netDirty } from './net.js?v=28.8';
+import { escapeHtml, eur, stars } from './util.js?v=28.8';
+import { postEffect, influEffect, postMetrics } from './social-model.js?v=28.8';
 // Misma URL que usa game.js: así se comparte la instancia de v12 y no se duplican sus temporizadores.
-import { POSTS, INFLU } from './v12.js?v=28.7';
-import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=28.7';
+import { POSTS, INFLU } from './v12.js?v=28.8';
+import { FOL, RAT, TAB, MIL, MIL_PRIZE, milestone, ctxOf, header, todayCard, ledger, postIcon, feed, archiveHtml } from './chiringo-ui-render.js?v=28.8';
 
 let sel = null, status = null, flashId = null, flashT = 0, prev = { init: false }, prevDay = null;
 
@@ -78,23 +78,19 @@ function render(force) {
 function buzz() { try { navigator.vibrate && navigator.vibrate(25); } catch (e) { } }
 
 function afterAction(t) {
-  const k = t.dataset.post ? 'post' : t.dataset.influ ? 'influ' : 'resp';
+  const k = t.dataset.post ? 'post' : 'influ';
   if (Net.role === 'guest') { Audio.click(); setStatus('📨 Enviado al anfitrión…', ''); render(true); return; }
   const u = Game.upgrades;
-  const ok = k === 'post' ? u.socialPostDia === Game.day : k === 'influ' ? !!u.socialInfluContratado : !!u.socialRespondido;
+  const ok = k === 'post' ? u.socialPostDia === Game.day : !!u.socialInfluContratado;
   if (!ok) { Audio.bad(); buzz(); setStatus('⚠️ No se ha podido registrar. Revisa la caja y los requisitos.', 'bad'); render(true); return; }
   const lastPend = (pred) => [...(u.socialPend || [])].reverse().find(pred);
   if (k === 'post') {
     const P = POSTS[t.dataset.post], e = lastPend(x => x.post); flash(t.dataset.post); sel = null;
     setStatus('✅ Publicado: ' + P.name + ' · +' + (e ? e.n : P.followers) + ' seguidores esperados · +' + Math.round((u.socialArr != null ? u.socialArr : P.arr) * 100) + '% afluencia hoy', 'good');
     if (P.cost) Audio.coin();
-  } else if (k === 'influ') {
+  } else {
     const I = INFLU[u.socialInflu], e = lastPend(x => x.prest);
     setStatus('✅ Colaboración cerrada con ' + I.name + ' · +' + (e ? e.n : I.followers) + ' seguidores al cierre (prestados)', 'good'); Audio.coin();
-  } else {
-    const last = (u.socialComments || [])[0];
-    if (last) u.socialReply = { text: last, kind: t.dataset.resp };
-    setStatus('✅ Respuesta publicada · evitáis perder seguidores por la queja', 'good'); netDirty();
   }
   setTimeout(() => Audio.good(), 130); buzz(); render(true);
 }
@@ -121,7 +117,7 @@ document.addEventListener('click', e => {
     else { Audio.click(); sel = sel === id ? null : id; }
     render(true); return;
   }
-  const t = el.closest('[data-post],[data-influ],[data-resp]');
+  const t = el.closest('[data-post],[data-influ]');
   if (t && !t.disabled && t.closest('.rd')) afterAction(t);
 }, true);
 document.addEventListener('keydown', e => {
@@ -145,7 +141,7 @@ setInterval(() => { if (Net.role !== 'guest') hito(); }, 1000);
 const rdSheet = document.createElement('link');
 rdSheet.id = 'rd-style';
 rdSheet.rel = 'stylesheet';
-rdSheet.href = 'chiringo-ui-css.css?v=28.7';
+rdSheet.href = 'chiringo-ui-css.css?v=28.8';
 document.head.append(rdSheet);
 
 function captureArchive() {
@@ -171,5 +167,5 @@ setInterval(captureArchive, 500);
 
 const csSheet = document.createElement('link');
 csSheet.rel = 'stylesheet';
-csSheet.href = 'chiringo-ui-archive.css?v=28.7';
+csSheet.href = 'chiringo-ui-archive.css?v=28.8';
 document.head.append(csSheet);

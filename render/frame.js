@@ -1,38 +1,38 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { H } from "../config.js?v=28.7";
-import { W } from "../config.js?v=28.7";
-import { WHO_COLOR } from "../config.js?v=28.7";
-import { clamp } from "../util.js?v=28.7";
-import { lerp } from "../util.js?v=28.7";
-import { mixColor } from "../util.js?v=28.7";
-import { rr } from "../icons.js?v=28.7";
-import { Game } from "../state.js?v=28.7";
-import { closeHour } from "../state.js?v=28.7";
-import { hamacaCount } from "../state.js?v=28.7";
-import { lvl } from "../state.js?v=28.7";
-import { weatherToday } from "../state.js?v=28.7";
-import { whoName } from "../state.js?v=28.7";
-import { HAMACA_POS } from "../world.js?v=28.7";
-import { canvas } from "../canvas.js?v=28.7";
-import { ctx } from "../canvas.js?v=28.7";
-import { view } from "../canvas.js?v=28.7";
-import { drawPurchasedProps } from "../scene-extras.js?v=28.7";
-import { drawBubble } from "./identity.js?v=28.7";
-import { drawClouds } from "./scene.js?v=28.7";
-import { drawCustomer } from "./characters.js?v=28.7";
-import { drawFloorWorker } from "./characters.js?v=28.7";
-import { drawHamaca } from "./tables.js?v=28.7";
-import { drawHut } from "./scene.js?v=28.7";
-import { drawLights } from "./effects.js?v=28.7";
-import { drawNetStatus } from "./hud.js?v=28.7";
-import { drawPalm } from "./scene.js?v=28.7";
-import { drawPendingBadges } from "./hud.js?v=28.7";
-import { drawSea } from "./scene.js?v=28.7";
-import { drawStationLabels } from "./identity.js?v=28.7";
-import { drawTable } from "./tables.js?v=28.7";
-import { drawTeide } from "./scene.js?v=28.7";
-import { nightness } from "./scene.js?v=28.7";
-import { skyAt } from "./scene.js?v=28.7";
+import { H } from "../config.js?v=28.8";
+import { W } from "../config.js?v=28.8";
+import { WHO_COLOR } from "../config.js?v=28.8";
+import { clamp } from "../util.js?v=28.8";
+import { lerp } from "../util.js?v=28.8";
+import { mixColor } from "../util.js?v=28.8";
+import { rr } from "../icons.js?v=28.8";
+import { Game } from "../state.js?v=28.8";
+import { closeHour } from "../state.js?v=28.8";
+import { hamacaCount } from "../state.js?v=28.8";
+import { lvl } from "../state.js?v=28.8";
+import { weatherToday } from "../state.js?v=28.8";
+import { whoName } from "../state.js?v=28.8";
+import { HAMACA_POS } from "../world.js?v=28.8";
+import { canvas } from "../canvas.js?v=28.8";
+import { ctx } from "../canvas.js?v=28.8";
+import { view } from "../canvas.js?v=28.8";
+import { drawPurchasedProps } from "../scene-extras.js?v=28.8";
+import { drawBubble } from "./identity.js?v=28.8";
+import { drawClouds } from "./scene.js?v=28.8";
+import { drawCustomer } from "./characters.js?v=28.8";
+import { drawFloorWorker } from "./characters.js?v=28.8";
+import { drawHamaca } from "./tables.js?v=28.8";
+import { drawHut } from "./scene.js?v=28.8";
+import { drawLights } from "./effects.js?v=28.8";
+import { drawNetStatus } from "./hud.js?v=28.8";
+import { drawPalm } from "./scene.js?v=28.8";
+import { drawPendingBadges } from "./hud.js?v=28.8";
+import { drawSea } from "./scene.js?v=28.8";
+import { drawStationLabels } from "./identity.js?v=28.8";
+import { drawTable } from "./tables.js?v=28.8";
+import { drawTeide } from "./scene.js?v=28.8";
+import { nightness } from "./scene.js?v=28.8";
+import { skyAt } from "./scene.js?v=28.8";
 
 export function render(){
   const c=ctx; const h = Game.mode==='service'? Game.hour : (Game.mode==='report'? closeHour() : 11);
@@ -99,12 +99,14 @@ export function render(){
     const task=Game.floor?.tasks.find(t=>t.kind==='escort'&&t.customer===cu.id&&['queued','blocked'].includes(t.state));
     if(!task)continue;
     c.save();c.font='700 12px system-ui';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#083f43';c.fillStyle='#fffdf8';
-    c.strokeText('Esperando camarero',cu.x,cu.y-145);c.fillText('Esperando camarero',cu.x,cu.y-145);c.restore();
+    const escortY=cu.y-((cu.mood&&cu.moodT>0)?168:152);
+    c.strokeText('Esperando camarero',cu.x,escortY);c.fillText('Esperando camarero',cu.x,escortY);c.restore();
   }
   // etiquetas de puesto por encima de clientes y burbujas: siempre legibles
   drawStationLabels(c);
   // barras de preparación: fila fija sobre la zona de burbujas (una por slot; dos slots pueden repartirse un pedido mixto)
   if(Game.mode==='service'){
+    const prepBaseY=Game.slots.some(s=>s.cust)?302:314;
     // 1) medir la etiqueta completa a 10px y dimensionar la píldora con su ancho real + padding
     const items=[];
     for(const s of Game.slots){
@@ -126,7 +128,7 @@ export function render(){
     }
     // 3) dibujar: texto centrado en el rectángulo real (x-4+pw/2)
     for(const it of items){
-      const x=it.cu.x+10, y=314-it.row*24;
+      const x=it.cu.x+10, y=prepBaseY-it.row*24;
       c.fillStyle='rgba(42,33,28,.85)'; rr(c,x-4,y-4,it.pw,18,9); c.fill();
       c.fillStyle=WHO_COLOR[it.s.who]||'#ffd36b'; rr(c,x,y,(it.pw-8)*it.p,10,5); c.fill();
       c.font='700 10px Satoshi, sans-serif'; c.textAlign='center'; c.lineWidth=2.5;

@@ -2,8 +2,8 @@
    canvas.js
    Canvas principal: viewport, redimensionado y conversión de coordenadas.
    ========================================================= */
-import { H, W } from './config.js?v=28.7';
-import { $ } from './util.js?v=28.7';
+import { H, W } from './config.js?v=28.8';
+import { $ } from './util.js?v=28.8';
 
 // ---------- Entrada ----------
 export const canvas=$('#game'), ctx=canvas.getContext('2d');
@@ -44,9 +44,13 @@ export function resize(){
        cielo). Si sobra pantalla: centrado (se extiende cielo y arena). */
     view.oy=worldH>=height?(height-worldH)*dpr:(height-worldH)/2*dpr;
   }else{
-    /* Vertical: encajar por ancho, igual que antes. */
-    view.s=availableW/W*dpr;
-    view.oy=(height-H*(availableW/W))/2*dpr;
+    /* Vertical: encajar por ancho; reservar HUD/stockbar para no tapar el borde jugable. */
+    const insetTop=top+6, insetBottom=bottom+10;
+    const playH=Math.max(1,height-insetTop-insetBottom);
+    const sCss=availableW/W;
+    view.s=sCss*dpr;
+    const worldH=H*sCss;
+    view.oy=(insetTop+Math.max(0,(playH-worldH)/2))*dpr;
   }
   view.ox=(availableW-W*(view.s/dpr))/2*dpr;
   document.body.classList.toggle('portrait',width<height);

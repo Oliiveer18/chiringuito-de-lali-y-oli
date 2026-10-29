@@ -53,6 +53,9 @@ body.playing #stockbar.mini .stock{height:26px!important;font-size:11.5px!import
 .stock-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 body.portrait #stockbar{flex-wrap:wrap;justify-content:center}
 body.portrait #stockbar .stock-list{flex-wrap:wrap;justify-content:center}
+body.portrait.playing #hud{top:calc(8px + var(--st));left:calc(10px + var(--sl));right:calc(10px + var(--sr))}
+body.portrait.playing #stockbar{bottom:calc(12px + var(--sb));max-width:calc(100vw - 20px - var(--sl) - var(--sr));padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+body.portrait.playing #game{touch-action:manipulation}
 
 /* Aviso contextual por encima de la barra plegada. La capa móvil fija top sin media query y se aplica también en escritorio: hay que restablecer top:auto para que el anclaje inferior funcione (con top+bottom a la vez la altura colapsa). */
 @media (hover:hover){

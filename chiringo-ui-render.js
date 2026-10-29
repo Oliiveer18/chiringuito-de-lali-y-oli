@@ -1,11 +1,11 @@
-import {photoThread} from './management-ui.js?v=28.7';
-import { Game } from './state.js?v=28.7';
-import { ITEMS } from './config.js?v=28.7';
-import { ICON_URL } from './icons.js?v=28.7';
-import { drawPerson } from './render.js?v=28.7';
-import { escapeHtml, eur } from './util.js?v=28.7';
-import { influEffect } from './social-model.js?v=28.7';
-import { POSTS, INFLU } from './v12.js?v=28.7';
+import {photoThread} from './management-ui.js?v=28.8';
+import { Game } from './state.js?v=28.8';
+import { ITEMS } from './config.js?v=28.8';
+import { ICON_URL } from './icons.js?v=28.8';
+import { drawPerson } from './render.js?v=28.8';
+import { escapeHtml, eur } from './util.js?v=28.8';
+import { influEffect } from './social-model.js?v=28.8';
+import { POSTS, INFLU } from './v12.js?v=28.8';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';
@@ -181,7 +181,7 @@ function archiveHtml(u) {
     const m = r.metrics;
     h += '<article class="cs-post"><header><div class="cs-avatar">' + brandMark + '</div><div><b>' + business + '</b><small>Temporada ' + r.season + ' · Día ' + r.day + ' · ' + (r.cost ? 'Campaña' : 'Orgánica') + '</small></div></header>';
     h += '<div class="cs-art cs-art-' + r.post + '"><span>' + postIcon(r.post) + '</span><strong>' + label + '</strong><small>Tenerife · Ilustración de la publicación</small></div>';
-    h += '<div class="cs-post-body"><p>' + escapeHtml(P.desc) + '</p><p class="cs-metrics">' + (m ? '♡ ' + m.likes + ' me gusta · ' + m.comments + ' comentarios estimados · Alcance ' + m.reach : 'Resultados pendientes del cierre') + '</p>';
+    h += '<div class="cs-post-body"><p>' + escapeHtml(P.desc) + '</p><p class="cs-metrics">' + (m ? '♡ ' + m.likes + ' me gusta · Alcance ' + m.reach + ' · Interacciones estimadas ' + m.interactions + ' (el hilo de abajo muestra ' + (r.comments || []).length + ' comentario' + ((r.comments || []).length === 1 ? '' : 's') + ' visibles)' : 'Resultados pendientes del cierre') + '</p>';
     h += '<p class="rd-mut">Inversión: ' + eur(r.cost) + (m ? ' · Interacciones: ' + m.interactions : ' · Previsión de afluencia: +' + Math.round(r.arr * 100) + '%') + '</p></div>' + photoThread(r) + '</article>';
   }
   return h + '</section>';

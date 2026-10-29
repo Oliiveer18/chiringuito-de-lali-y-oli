@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=28.7";
-import { clamp } from "../util.js?v=28.7";
+import { Net } from "../state.js?v=28.8";
+import { clamp } from "../util.js?v=28.8";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28.7";
-import { W } from "../config.js?v=28.7";
-import { rr } from "../icons.js?v=28.7";
-import { Game } from "../state.js?v=28.7";
-import { PCOLORS } from "./scene.js?v=28.7";
-import { drawPictogram } from "./scene.js?v=28.7";
-import { drawHeldItem } from "./items.js?v=28.7";
+import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28.8";
+import { W } from "../config.js?v=28.8";
+import { rr } from "../icons.js?v=28.8";
+import { Game } from "../state.js?v=28.8";
+import { PCOLORS } from "./scene.js?v=28.8";
+import { drawPictogram } from "./scene.js?v=28.8";
+import { drawHeldItem } from "./items.js?v=28.8";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -137,7 +137,8 @@ export function drawCustomer(c,cu,T){
     shorts: cu.type==='surfista'?'#e8603c':'#2a3f6b'});
   // Identidad: etiqueta breve y estable para cada cliente (oculta en mostrador con burbuja de pedido)
   const counterOrder = cu.state==='queue' || cu.state==='arrive' || cu.state==='prep';
-  if(!sit && !counterOrder){
+  const moodBubble = (cu.mood && cu.moodT>0) || cu.state==='waitTable';
+  if(!sit && !counterOrder && !moodBubble){
     const label = cu.revName || (cu.regular && cu.regular.name) || '';
     if(label){
       c.font='600 10px Satoshi, sans-serif';
@@ -158,7 +159,17 @@ export function drawPersonalityBadge(c,cu,bx,by,bw){
   const w=tw+26;
   // junto a la burbuja, anclado al borde derecho (espacio libre hacia las mesas); a la izquierda si no cabe
   let x=bx+bw/2+6; if(x+w>W-4) x=bx-bw/2+2-w;
-  const y=by-30;
+  let y=by-30;
+  if(Game.mode==='service' && cu.spot>=0){
+    for(const o of Game.customers){
+      if(o.id===cu.id || !['queue','prep','arrive'].includes(o.state)) continue;
+      if(Math.abs(o.x-cu.x)<78 && Math.abs(o.y-cu.y)<24){
+        y=by-40;
+        if(x+w>W-4) y=by-52;
+        break;
+      }
+    }
+  }
   c.fillStyle=PCOLORS[cu.personality]||'#555'; rr(c,x,y,w,28,9); c.fill();
   c.strokeStyle='rgba(42,33,28,.7)'; c.lineWidth=1.2; c.stroke();
   drawPictogram(c,cu.personality,x+11,y+14);

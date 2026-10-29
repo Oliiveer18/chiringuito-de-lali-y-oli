@@ -1,8 +1,8 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { clamp } from "../util.js?v=28.7";
-import { mixColor } from "../util.js?v=28.7";
-import { rr } from "../icons.js?v=28.7";
-import { COUNTER } from "../world.js?v=28.7";
+import { clamp } from "../util.js?v=28.8";
+import { mixColor } from "../util.js?v=28.8";
+import { rr } from "../icons.js?v=28.8";
+import { COUNTER } from "../world.js?v=28.8";
 
 export function drawStationProps(c, station, zx){
   if(station==='cocina'){ // plancha sobre la madera de la barra

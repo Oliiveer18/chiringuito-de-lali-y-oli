@@ -1,14 +1,15 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { STATION_LABEL } from "../config.js?v=28.7";
-import { W } from "../config.js?v=28.7";
-import { WHO_COLOR } from "../config.js?v=28.7";
-import { clamp } from "../util.js?v=28.7";
-import { rr } from "../icons.js?v=28.7";
-import { Net } from "../state.js?v=28.7";
-import { isCoop } from "../state.js?v=28.7";
-import { drawAngerCue } from "./scene.js?v=28.7";
-import { drawOrderIcons } from "./scene.js?v=28.7";
-import { drawPersonalityBadge } from "./characters.js?v=28.7";
+import { STATION_LABEL } from "../config.js?v=28.8";
+import { W } from "../config.js?v=28.8";
+import { WHO_COLOR } from "../config.js?v=28.8";
+import { clamp } from "../util.js?v=28.8";
+import { rr } from "../icons.js?v=28.8";
+import { Game } from "../state.js?v=28.8";
+import { Net } from "../state.js?v=28.8";
+import { isCoop } from "../state.js?v=28.8";
+import { drawAngerCue } from "./scene.js?v=28.8";
+import { drawOrderIcons } from "./scene.js?v=28.8";
+import { drawPersonalityBadge } from "./characters.js?v=28.8";
 
 export const STATION_ZONE = { cocina:248, barra:410 };
 
@@ -18,7 +19,8 @@ export function drawBubble(c,cu,T){
   if(cu.state==='queue' || cu.state==='arrive' || cu.state==='prep'){
     const n=cu.order.length, bw=14+n*34;
     const stag = cu.spot>=0 ? cu.spot%2===1 : cu.id%2===0;
-    const by = cu.y - (stag?214:142);
+    const prepActive = Game.slots.some(s=>s.cust);
+    const by = cu.y - (stag?(prepActive?224:214):142);
     const bx = clamp(cu.x, bw/2+6, W-bw/2-6);
     const grace = cu.patience<=0 && cu.maxPatience>0;
     c.fillStyle='#fff6e6'; rr(c,bx-bw/2,by,bw,40,12); c.fill();
@@ -64,6 +66,8 @@ export function drawStationLabels(c){
   // nombres largos: resolver solape horizontal de izquierda a derecha (hueco de 8px, sin salir del lienzo)
   const sorted=nps.slice().sort((a,b)=>a.x-b.x);
   for(let i=1;i<sorted.length;i++){ const p=sorted[i-1], q=sorted[i]; const minX=p.x+p.tw/2+8+q.tw/2; if(q.x<minX) q.x=minX; }
-  for(const n of nps){ if(n.x+n.tw/2>W-6) n.x=W-6-n.tw/2; c.fillStyle='rgba(42,33,28,.8)'; rr(c,n.x-n.tw/2,332,n.tw,20,10); c.fill(); c.fillStyle=WHO_COLOR[n.w]; c.fillText(n.lab,n.x,346); }
+  const prepActive = Game.mode==='service' && Game.slots.some(s=>s.cust);
+  const labelY = prepActive ? 318 : 332;
+  for(const n of nps){ if(n.x+n.tw/2>W-6) n.x=W-6-n.tw/2; c.fillStyle='rgba(42,33,28,.8)'; rr(c,n.x-n.tw/2,labelY,n.tw,20,10); c.fill(); c.fillStyle=WHO_COLOR[n.w]; c.fillText(n.lab,n.x,labelY+14); }
   c.textAlign='center';
 }
