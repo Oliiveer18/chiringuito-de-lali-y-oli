@@ -1,15 +1,15 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.7';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.7';
-import { showReportUI } from './report.js?v=28.14.7';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.7';
-import { onNet } from './net-sync.js?v=28.14.7';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.7';
+import { $ } from './util.js?v=28.15.5';
+import { Audio } from './audio.js?v=28.15.5';
+import { Game, NET_SIM, Net } from './state.js?v=28.15.5';
+import { pendingIdx, slotOf } from './sim.js?v=28.15.5';
+import { showReportUI } from './report.js?v=28.15.5';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.15.5';
+import { onNet } from './net-sync.js?v=28.15.5';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.15.5';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus
-} from './net-rtc.js?v=28.14.7';
+} from './net-rtc.js?v=28.15.5';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------

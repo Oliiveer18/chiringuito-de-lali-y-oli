@@ -1,5 +1,5 @@
 export const VERSION='v28.15.5';
-export const LABEL=VERSION;
+export const LABEL='v28.15.5-f7 · experimento F7';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

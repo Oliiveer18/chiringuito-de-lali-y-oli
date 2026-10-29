@@ -1,10 +1,10 @@
 /* Sala, avisos y mensajes de desconexión. Lo importa net.js. */
-import { STATION_LABEL } from './config.js?v=28.14.7';
-import { $, escapeHtml } from './util.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, Net, hostLive, isGuest } from './state.js?v=28.14.7';
-import { hideAll, toastLocal } from './ui.js?v=28.14.7';
-import { netAct, netDirty, netOpen, netSend } from './net-link.js?v=28.14.7';
+import { STATION_LABEL } from './config.js?v=28.15.5';
+import { $, escapeHtml } from './util.js?v=28.15.5';
+import { Audio } from './audio.js?v=28.15.5';
+import { Game, Net, hostLive, isGuest } from './state.js?v=28.15.5';
+import { hideAll, toastLocal } from './ui.js?v=28.15.5';
+import { netAct, netDirty, netOpen, netSend } from './net-link.js?v=28.15.5';
 export const PINGS = { ayuda:'¡Échame una mano!', mesas:'Hay mesas sucias', genero:'Se acaba el género', bien:'¡Buen trabajo!' };
 export function sendPing(k){
   $('#ping-menu').classList.add('hidden');
