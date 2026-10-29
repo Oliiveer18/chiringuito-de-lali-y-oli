@@ -1,25 +1,64 @@
 name: Preview rediseño v29 (Pages)
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - project/redesign-visual
+      - main
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages-preview-redesign
   cancel-in-progress: true
+
 jobs:
   deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.ref == 'refs/heads/project/redesign-visual' ||
+      (github.ref == 'refs/heads/main' && (
+        contains(toJSON(github.event.head_commit.modified), 'preview-redesign-visual-pages.yml') ||
+        contains(toJSON(github.event.head_commit.added), 'preview-redesign-visual-pages.yml')
+      ))
     runs-on: ubuntu-latest
     environment: github-pages
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout main (site root)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: site
+
+      - name: Checkout redesign (preview source)
+        uses: actions/checkout@v4
         with:
           ref: project/redesign-visual
+          path: preview-src
+
+      - name: Compose site with preview subfolder
+        run: |
+          rsync -a --delete --exclude='.git' preview-src/ site/preview/
+          if rg -q 'href="/|src="/|fetch\(\x27/|fetch\("/' site/preview/index.html site/preview/game.js 2>/dev/null; then
+            sed -i 's|<head>|<head>\n<base href="/chiringuito-de-lali-y-oli/preview/">|' site/preview/index.html
+          fi
+          test -f site/index.html
+          test -f site/preview/index.html
+          grep -q 'style.css?v=28.6' site/index.html || grep -q 'style.css?v=28.' site/index.html
+          grep -q 'style.css?v=29.1' site/preview/index.html
+
       - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: site
+
       - uses: actions/deploy-pages@v4
         id: deployment
-      - run: echo "URL=${{ steps.deployment.outputs.page_url }}"
+
+      - run: |
+          echo "page_url=${{ steps.deployment.outputs.page_url }}"
+          echo "preview=${{ steps.deployment.outputs.page_url }}/preview/index.html"
