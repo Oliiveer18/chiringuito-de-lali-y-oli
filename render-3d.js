@@ -5,7 +5,7 @@
 import * as THREE from './lib/three.module.js';
 import { Game, weatherToday, lvl } from './state.js?v=28.16.0-vfx3d';
 import { createCharacter3D, animateCharacter } from './render-3d-actors.js?v=28.16.0-vfx3d';
-import { CONTROLS3D, initControls3D, updateContextualProximity } from './controls-3d.js?v=28.16.0-vfx3d';
+import { CONTROLS3D, initControls3D, updateContextualProximity, syncControls3DForGameMode } from './controls-3d.js?v=28.16.0-vfx3d';
 import { syncCustomers3D, clearAllCustomers3D } from './render-3d-customers.js?v=28.16.0-vfx3d';
 import { tablePosTo3D } from './world.js?v=28.16.0-vfx3d';
 import { initUpgrades3D, syncUpgrades3D } from './upgrades-3d.js?v=28.16.0-vfx3d';
@@ -1459,7 +1459,8 @@ export function render3D(dt = 0.016) {
 
   // 3. Movimiento y Animación de los Personajes 3D con Deslizamiento de Colisión Físico
   let vx = 0, vz = 0;
-  if (playerMesh) {
+  const serviceControls = syncControls3DForGameMode();
+  if (playerMesh && serviceControls) {
     const moveSpeed = 6.4;
     vx = CONTROLS3D.inputX * moveSpeed;
     vz = CONTROLS3D.inputZ * moveSpeed;
@@ -1486,13 +1487,15 @@ export function render3D(dt = 0.016) {
 
     // Detección inteligente de proximidad para el botón contextual
     updateContextualProximity(playerMesh.position);
+  } else if (playerMesh) {
+    animateCharacter(playerMesh, 0, 0, dt);
+  }
 
+  if (playerMesh && serviceControls && typeof window !== 'undefined' && window.PLAYER) {
     // Sincronizar coordenadas con PLAYER del juego (2D/3D híbrido)
-    if (typeof window !== 'undefined' && window.PLAYER) {
-      window.PLAYER.x = (playerMesh.position.x / 8.5) * 600 + 600;
-      window.PLAYER.y = (playerMesh.position.z / 3.5) * 220 + 500;
-      window.PLAYER.movingSpd = Math.hypot(vx, vz);
-    }
+    window.PLAYER.x = (playerMesh.position.x / 8.5) * 600 + 600;
+    window.PLAYER.y = (playerMesh.position.z / 3.5) * 220 + 500;
+    window.PLAYER.movingSpd = Math.hypot(vx, vz);
   }
 
   // Oli (Compañero) animado en cocina con postura viva

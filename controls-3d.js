@@ -56,6 +56,37 @@ let actIcoEl = null;
 let actLblEl = null;
 const JOY_MAX_DIST = 44; // Radio máximo en px
 
+function controls3DEnabled() {
+  return Game && Game.mode === 'service';
+}
+
+export function resetControls3DInput() {
+  CONTROLS3D.joyActive = false;
+  CONTROLS3D.joyTouchId = null;
+  CONTROLS3D.inputX = 0;
+  CONTROLS3D.inputZ = 0;
+  for (const k of Object.keys(CONTROLS3D.keys)) CONTROLS3D.keys[k] = false;
+  if (joyBaseEl) joyBaseEl.classList.add('hidden');
+  if (joyThumbEl) joyThumbEl.style.transform = 'translate(0px, 0px)';
+}
+
+function hideActionButton() {
+  if (actBtnEl) actBtnEl.classList.add('hidden');
+  CONTROLS3D.currentAction = null;
+}
+
+/** Desactiva joystick/botón contextual fuera de la jornada activa. */
+export function syncControls3DForGameMode() {
+  const zone = document.getElementById('joystick-zone');
+  if (zone) zone.style.pointerEvents = controls3DEnabled() ? 'auto' : 'none';
+  if (!controls3DEnabled()) {
+    resetControls3DInput();
+    hideActionButton();
+    return false;
+  }
+  return true;
+}
+
 export function initControls3D(playerMesh) {
   if (typeof document === 'undefined') return;
 
@@ -69,6 +100,7 @@ export function initControls3D(playerMesh) {
 
   // ---------- GESTOS TÁCTILES DEL JOYSTICK (Pulgar Izquierdo) ----------
   zone.addEventListener('touchstart', e => {
+    if (!controls3DEnabled()) return;
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
       // Activación en el cuadrante inferior izquierdo
@@ -92,7 +124,7 @@ export function initControls3D(playerMesh) {
   }, { passive: true });
 
   window.addEventListener('touchmove', e => {
-    if (!CONTROLS3D.joyActive) return;
+    if (!CONTROLS3D.joyActive || !controls3DEnabled()) return;
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
       if (t.identifier === CONTROLS3D.joyTouchId) {
@@ -138,6 +170,7 @@ export function initControls3D(playerMesh) {
 
   // ---------- TECLADO EN ESCRITORIO (WASD / Flechas) ----------
   window.addEventListener('keydown', e => {
+    if (!controls3DEnabled()) return;
     if (e.key in CONTROLS3D.keys) {
       CONTROLS3D.keys[e.key] = true;
       updateKeyboardInput();
@@ -170,6 +203,7 @@ export function initControls3D(playerMesh) {
   // ---------- BOTÓN CONTEXTUAL GIGANTE (Pulgar Derecho) ----------
   if (actBtnEl) {
     actBtnEl.addEventListener('pointerdown', e => {
+      if (!controls3DEnabled()) return;
       e.preventDefault();
       CONTROLS3D.isHoldingAction = true;
       // Respuesta háptica suave
@@ -197,9 +231,16 @@ export function initControls3D(playerMesh) {
     actBtnEl.addEventListener('pointerup', endActionHold);
     actBtnEl.addEventListener('pointercancel', endActionHold);
   }
+
+  hideActionButton();
+  syncControls3DForGameMode();
 }
 
 function updateKeyboardInput() {
+  if (!controls3DEnabled()) {
+    resetControls3DInput();
+    return;
+  }
   const k = CONTROLS3D.keys;
   const kx = (k.d || k.ArrowRight ? 1 : 0) - (k.a || k.ArrowLeft ? 1 : 0);
   const kz = (k.s || k.ArrowDown ? 1 : 0) - (k.w || k.ArrowUp ? 1 : 0);
@@ -216,6 +257,10 @@ function updateKeyboardInput() {
 
 // ---------- Detección Inteligente de Proximidad ----------
 export function updateContextualProximity(playerPos) {
+  if (!controls3DEnabled()) {
+    hideActionButton();
+    return;
+  }
   if (!playerPos || !actBtnEl) return;
 
   let best = null;
@@ -304,6 +349,7 @@ export function updateContextualProximity(playerPos) {
 
 // ---------- Ejecutar la Acción Contextual ----------
 function triggerCurrentAction() {
+  if (!controls3DEnabled()) return;
   const act = CONTROLS3D.currentAction;
   if (!act) return;
 
