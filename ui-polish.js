@@ -1,6 +1,6 @@
 /* ui-polish v27.77: clima de hoy, agenda compacta, reseñas y sistema unificado de estrellas. */
-import { Game } from './state.js?v=28.6';
-import { SPECIAL_DAYS, WEATHER } from './config.js?v=28.6';
+import { Game } from './state.js?v=28.7';
+import { SPECIAL_DAYS, WEATHER } from './config.js?v=28.7';
 const svgWrap=inner=>`<svg class="wicon" viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
 const SUN=svgWrap('<circle cx="12" cy="12" r="5" fill="#f5b82e"/><g stroke="#f5b82e" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g>');
 const CLOUD=svgWrap('<circle cx="9" cy="9" r="4" fill="#f5b82e"/><path d="M7 18h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.5 3.5 0 0 0 7 18z" fill="#cfd8dc"/>');
@@ -22,7 +22,7 @@ function agenda(){
 document.addEventListener('plan-tab-repaint',agenda);
 
 function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
-function starCount(card){const el=card.querySelector('.rev-head span');if(!el)return 0;const m=el.textContent.match(/★|☆/g)||[];return m.filter(c=>c==='★').length;}
+function starCount(card){const el=card.querySelector('.rev-stars');if(!el)return 0;const m=el.textContent.match(/★|☆/g)||[];return m.filter(c=>c==='★').length;}
 function polishReviews(){
  const rep=document.getElementById('rep-body');
  if(!rep||Game.mode!=='report')return;
@@ -30,7 +30,7 @@ function polishReviews(){
  const cards=[...rep.querySelectorAll('.review')];
  cards.forEach(card=>{
   const txt=card.querySelector('.rev-text');
-  const starsEl=card.querySelector('.rev-head span');
+  const starsEl=card.querySelector('.rev-stars');
   if(starsEl&&!starsEl.dataset.polished){const filled=starCount(card);starsEl.dataset.polished='1';starsEl.innerHTML=`<span class="stars"><b>${'★'.repeat(filled)}</b><span>${'☆'.repeat(5-filled)}</span></span>`;}
   card.querySelectorAll('.net-actions .btn').forEach(b=>{const t=b.textContent||'';if(t.includes('Disculparte'))b.classList.add('primary');else if(t.includes('Invitar'))b.classList.add('teal');});
   const nameEl=card.querySelector('.rev-head b');

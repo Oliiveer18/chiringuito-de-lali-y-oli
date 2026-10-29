@@ -1,15 +1,14 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { STATION_LABEL } from "../config.js?v=28.6";
-import { W } from "../config.js?v=28.6";
-import { WHO_COLOR } from "../config.js?v=28.6";
-import { clamp } from "../util.js?v=28.6";
-import { rr } from "../icons.js?v=28.6";
-import { Net } from "../state.js?v=28.6";
-import { isCoop } from "../state.js?v=28.6";
-import { drawAngerCue } from "./scene.js?v=28.6";
-import { drawNameplate } from "./scene.js?v=28.6";
-import { drawOrderIcons } from "./scene.js?v=28.6";
-import { drawPersonalityBadge } from "./characters.js?v=28.6";
+import { STATION_LABEL } from "../config.js?v=28.7";
+import { W } from "../config.js?v=28.7";
+import { WHO_COLOR } from "../config.js?v=28.7";
+import { clamp } from "../util.js?v=28.7";
+import { rr } from "../icons.js?v=28.7";
+import { Net } from "../state.js?v=28.7";
+import { isCoop } from "../state.js?v=28.7";
+import { drawAngerCue } from "./scene.js?v=28.7";
+import { drawOrderIcons } from "./scene.js?v=28.7";
+import { drawPersonalityBadge } from "./characters.js?v=28.7";
 
 export const STATION_ZONE = { cocina:248, barra:410 };
 
@@ -39,7 +38,7 @@ export function drawBubble(c,cu,T){
     const atCounter = cu.state==='queue' || (cu.state==='prep' && cu.inPrep===0);
     if(cu.spot>=0 && atCounter){ c.fillStyle='rgba(42,33,28,.85)'; c.beginPath(); c.arc(cu.x,cu.y+20,11,0,7); c.fill(); c.fillStyle='#fff6e6'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(String(cu.spot+1),cu.x,cu.y+25); }
     drawPersonalityBadge(c,cu,bx,by,bw);
-    if(cu.regular) drawNameplate(c,cu,bx,by-26);
+    // nameplate omitido aquí: compite con iconos de pedido (habitual identificado al salir de cola)
   } else if(cu.mood && cu.moodT>0){
     const txt=cu.moodTxt || MOODS[cu.mood]; if(!txt) return;
     c.font='700 13px Satoshi, sans-serif'; const tw=c.measureText(txt).width+18;

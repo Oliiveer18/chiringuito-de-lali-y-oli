@@ -1,5 +1,5 @@
-export const VERSION='v28.6';
-export const LABEL='v28.6 · reparto 2×, icono moto, HUD sonido y cola';
+export const VERSION='v28.7';
+export const LABEL='v28.7 · cola legible, Chiringo en publicaciones, reseñas';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

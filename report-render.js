@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.6';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.6';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.6';
-import { rr } from './icons.js?v=28.6';
-import { Audio } from './audio.js?v=28.6';
-import { reputation } from './ratings-model.mjs?v=28.6';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.6';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.6';
-import { netAct, netDirty } from './net.js?v=28.6';
-import { dayStarsSummary, buildRevModel, opinionLine, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.6';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.7';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.7';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.7';
+import { rr } from './icons.js?v=28.7';
+import { Audio } from './audio.js?v=28.7';
+import { reputation } from './ratings-model.mjs?v=28.7';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.7';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.7';
+import { netAct, netDirty } from './net.js?v=28.7';
+import { dayStarsSummary, buildRevModel, opinionLine, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.7';
 
 export function endDay(){
   Game.mode='report';
@@ -153,7 +153,7 @@ export function teamHtml(s){
 export function reviewsSectionHtml(m){
   const cards=m.cards.map(c=>{
     const loc=c.town?`<span class="rev-loc">${escapeHtml(c.town)}</span>`:'';
-    const head=`<div class="rev-head"><div class="rev-who"><b>${escapeHtml(c.name)}</b>${loc}</div><span>${stars(c.stars)}</span></div>`;
+    const head=`<div class="rev-head"><div class="rev-who"><b>${escapeHtml(c.name)}</b>${loc}</div><span class="rev-stars">${stars(c.stars)}</span></div>`;
     const body=`<p class="rev-text">${c.text}</p>`;
     let foot='';
     if(c.resp){

@@ -1,11 +1,11 @@
-import {photoThread} from './management-ui.js?v=28.6';
-import { Game } from './state.js?v=28.6';
-import { ITEMS } from './config.js?v=28.6';
-import { ICON_URL } from './icons.js?v=28.6';
-import { drawPerson } from './render.js?v=28.6';
-import { escapeHtml, eur } from './util.js?v=28.6';
-import { influEffect } from './social-model.js?v=28.6';
-import { POSTS, INFLU } from './v12.js?v=28.6';
+import {photoThread} from './management-ui.js?v=28.7';
+import { Game } from './state.js?v=28.7';
+import { ITEMS } from './config.js?v=28.7';
+import { ICON_URL } from './icons.js?v=28.7';
+import { drawPerson } from './render.js?v=28.7';
+import { escapeHtml, eur } from './util.js?v=28.7';
+import { influEffect } from './social-model.js?v=28.7';
+import { POSTS, INFLU } from './v12.js?v=28.7';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';
@@ -166,25 +166,9 @@ function postIcon(id) {
   return k && ICON_URL[k] ? '<img src="' + ICON_URL[k] + '" alt="">' : '<span>' + (POST_ICON[id] || '📣') + '</span>';
 }
 
-function feed(u) {
-  const cms = u.socialComments || [];
-  if (!cms.length) return '<div class="rd-h">Comentarios</div><p class="rd-mut">Todavía no hay comentarios. Aparecerán al cerrar el primer día.</p>';
-  const rep = u.socialReply, ayer = (u.socialPostDia === Game.day - 1 && POSTS[u.socialPost]) ? POSTS[u.socialPost].name : null;
-  let h = '<div class="rd-h">Reseñas generales y respuestas</div><div class="rd-feed">';
-  cms.forEach((c, i) => {
-    const r = review(c), av = avatar(c);
-    const about = r.neg ? 'el servicio de ayer' : r.trend ? 'la tendencia de ayer' : ayer ? 'tu publicación «' + ayer + '»' : 'la jornada de ayer';
-    const likes = 1 + hash(c) % Math.max(3, Math.round((u[FOL] || 0) / 15));
-    const replied = rep && rep.text === c && cms.indexOf(c) === i && REPLY[rep.kind];
-    const canReply = i === 0 && r.neg && !u.socialRespondido && !replied;
-    h += '<div class="rd-rev"><div class="rd-rev-top">' + (av ? '<img class="rd-av" src="' + av + '" alt="">' : '<div class="rd-av">' + icon('followers') + '</div>') +
-      '<div class="rd-who"><b>' + r.name + '</b><span class="rd-mut">' + r.city + ' · sobre ' + escapeHtml(about) + '</span></div>' +
-      '<span class="rd-tag ' + r.cls + '">' + r.tag + '</span></div><p class="rd-txt">“' + escapeHtml(c) + '”</p><div class="rd-acts"><button class="rd-like' + (LIKES.has(c) ? ' on' : '') + '" data-like="' + escapeHtml(c) + '" aria-label="Me gusta" aria-pressed="' + (LIKES.has(c) ? 'true' : 'false') + '">' + icon('heart') + '<span>' + (likes + (LIKES.has(c) ? 1 : 0)) + '</span></button><span class="rd-cm">' + icon('chat') + ' ' + (replied ? 1 : 0) + '</span></div>';
-    if (replied) h += '<div class="rd-reply"><b>' + brandMark + ' ' + KIOSCO + '</b><br>' + REPLY[rep.kind] + '</div>';
-    if (canReply) h += '<div class="rd-reply-do"><span class="rd-mut">Responder (si no, perdéis seguidores mañana):</span><button class="btn sm teal" data-resp="disculpa">Disculparos</button><button class="btn sm primary" data-resp="descuento" ' + (Game.money < 50 ? 'disabled' : '') + '>Descuento · 50 €</button></div>';
-    h += '</div>';
-  });
-  return h + '</div>';
+function feed(_u) {
+  // Comentarios interactivos solo en hilos de «Tu perfil · Publicaciones» (photoThread).
+  return '';
 }
 
 function archiveHtml(u) {

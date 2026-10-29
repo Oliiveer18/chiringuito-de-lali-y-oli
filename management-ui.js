@@ -1,18 +1,18 @@
-import {trackCost} from './bookkeeping.js?v=28.6';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.6';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.6';
-import * as Rankings from './market-model.mjs?v=28.6';
-import {Game,Net} from './state.js?v=28.6';
-import {STAFF,RENT} from './config.js?v=28.6';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.6';
-import {netDirty} from './net.js?v=28.6';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.6';
-import {escapeHtml as E,eur} from './util.js?v=28.6';
-import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.6';
+import {trackCost} from './bookkeeping.js?v=28.7';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.7';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.7';
+import * as Rankings from './market-model.mjs?v=28.7';
+import {Game,Net} from './state.js?v=28.7';
+import {STAFF,RENT} from './config.js?v=28.7';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.7';
+import {netDirty} from './net.js?v=28.7';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.7';
+import {escapeHtml as E,eur} from './util.js?v=28.7';
+import {absoluteDay,candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.7';
 const day=()=>absoluteDay(Number(Game.upgrades.career?.season)||1,Game.day);
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}
-export function capturePhoto(post,cost,arr){const u=Game.upgrades,id=(u.career?.season||1)+':'+Game.day;const a=Array.isArray(u.chiringoArchive)?u.chiringoArchive:[];if(!a.some(r=>r.id===id))u.chiringoArchive=[...a,{id,season:u.career?.season||1,day:Game.day,post,cost,arr,metrics:null,comments:[]}].slice(-60);}
+export function capturePhoto(post,cost,arr){const u=Game.upgrades,id=(u.career?.season||1)+':'+Game.day;const a=Array.isArray(u.chiringoArchive)?u.chiringoArchive:[];if(!a.some(r=>r.id===id))u.chiringoArchive=[...a,{id,season:u.career?.season||1,day:Game.day,post,cost,arr,metrics:null,comments:[],threadClosed:false}].slice(-60);}
 export function closePhoto(){const u=Game.upgrades,id=(u.career?.season||1)+':'+Game.day,r=u.chiringoArchive?.find(r=>r.id===id);if(!r||r.threadClosed)return;r.comments=photoComments(r,{stockOuts:Game.dayStats?.stockOuts,showDay:u.showDia,poll:u.socialPoll});r.metrics=u.socialStats?{...u.socialStats}:null;r.threadClosed=true;}
 export function photoThread(r){const comments=r.comments||[];return '<section class="photo-thread"><h4>Comentarios visibles · '+comments.length+'</h4><p class="muted">Las interacciones estimadas de la publicacion se muestran por separado. Compensar una queja cuesta 50 euros y permite una recuperacion por jornada de carrera: un seguidor pendiente al cierre y +0,05 de valoracion publica.</p>'+comments.map(c=>{const author=c.author||{id:'visitor-'+c.authorId,name:AUTHORS[Number(c.authorId)%AUTHORS.length]||'Visitante'};return '<article><img width="36" height="36" src="'+portrait(author)+'" alt=""><b>'+E(author.name)+'</b><p>'+E(c.text)+'</p>'+(c.reply?'<blockquote><b>'+E(Game.upgrades.kioskName||'El Charco Azul')+'</b><p>'+E(c.reply.text)+'</p></blockquote>':replyOptions(c).map(o=>'<button class="btn sm" data-manage="reply" data-id="'+E(r.id)+'" data-comment="'+E(c.id)+'" data-choice="'+o.id+'" '+(o.id==='compensate'&&Game.upgrades.compensationRewardDay===day()?'disabled':'')+'>'+E(o.label)+'</button>').join(''))+'</article>';}).join('')+(comments.length?'':'<p>Los comentarios apareceran al cerrar la jornada.</p>')+'</section>';}
 function workforce(){const u=Game.upgrades,d=day();if(Net.role==='guest')return u.workforce||{team:{},applicants:[],priority:{camarero:'patience',limpiador:'oldest'}};if(!u.workforce){u.workforce={team:{},batch:-1,applicants:[],priority:{camarero:'patience',limpiador:'oldest'}};for(const s of STAFF)if(Game.staff[s.id])u.workforce.team[s.id]={id:'original-'+s.id,name:s.name,role:s.id,wage:s.wage,workMultiplier:1,training:0,hiredDay:d};}const w=u.workforce,b=Math.floor((d-1)/3);if(w.batch!==b){w.batch=b;w.applicants=candidates(u.career?.id||u.progression?.seed||u.kioskName||'charco',d);netDirty();}upgradeWorkforce(w);if(!u.floorRosterMigrated){for(const c of candidates(u.career?.id||u.progression?.seed||u.kioskName||'charco',d))if(c.role==='terraza'&&!w.applicants.some(a=>a.id===c.id))w.applicants.push(c);u.floorRosterMigrated=true;netDirty();}return w;}

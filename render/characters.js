@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=28.6";
-import { clamp } from "../util.js?v=28.6";
+import { Net } from "../state.js?v=28.7";
+import { clamp } from "../util.js?v=28.7";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28.6";
-import { W } from "../config.js?v=28.6";
-import { rr } from "../icons.js?v=28.6";
-import { Game } from "../state.js?v=28.6";
-import { PCOLORS } from "./scene.js?v=28.6";
-import { drawPictogram } from "./scene.js?v=28.6";
-import { drawHeldItem } from "./items.js?v=28.6";
+import { PERSONALITIES, WHO_COLOR } from "../config.js?v=28.7";
+import { W } from "../config.js?v=28.7";
+import { rr } from "../icons.js?v=28.7";
+import { Game } from "../state.js?v=28.7";
+import { PCOLORS } from "./scene.js?v=28.7";
+import { drawPictogram } from "./scene.js?v=28.7";
+import { drawHeldItem } from "./items.js?v=28.7";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -135,8 +135,9 @@ export function drawCustomer(c,cu,T){
     board:cu.type==='surfista'&&!sit, camera:cu.id%2===0,
     pose, t:(cu.actT!=null&&cu.actT<50)?cu.actT:T, ph:cu.stridePh||0, moving, bob:bobAmt, dir:cu.dir||1,
     shorts: cu.type==='surfista'?'#e8603c':'#2a3f6b'});
-  // Identidad: etiqueta breve y estable para cada cliente
-  if(!sit){
+  // Identidad: etiqueta breve y estable para cada cliente (oculta en mostrador con burbuja de pedido)
+  const counterOrder = cu.state==='queue' || cu.state==='arrive' || cu.state==='prep';
+  if(!sit && !counterOrder){
     const label = cu.revName || (cu.regular && cu.regular.name) || '';
     if(label){
       c.font='600 10px Satoshi, sans-serif';

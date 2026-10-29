@@ -1,9 +1,9 @@
-import { Game, Net, gameTimers, guestCust } from './state.js?v=28.6';
-import { newSeason } from './sim.js?v=28.6';
-import { showPlan, Plan } from './ui.js?v=28.6';
-import { buildTables } from './world.js?v=28.6';
-import { netDirty } from './net.js?v=28.6';
-import { showReportUI } from './report.js?v=28.6';
+import { Game, Net, gameTimers, guestCust } from './state.js?v=28.7';
+import { newSeason } from './sim.js?v=28.7';
+import { showPlan, Plan } from './ui.js?v=28.7';
+import { buildTables } from './world.js?v=28.7';
+import { netDirty } from './net.js?v=28.7';
+import { showReportUI } from './report.js?v=28.7';
 const KEY='lali-oli.library.v2', BACK=KEY+'.backup';
 const fields=['day','money','rep','stock','prices','enabled','upgrades','staff','forecast','season','lastDebt','starsLog','revUsed','revPrev','regulars','regVisited','buzz','pendingPurchases'];
 const encode=x=>JSON.stringify(x,(_,v)=>v instanceof Set?{__laliSet:[...v]}:v);
