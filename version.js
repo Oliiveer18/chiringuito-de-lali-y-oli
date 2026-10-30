@@ -1,5 +1,5 @@
-export const VERSION='v28.14.9';
-export const LABEL='v28.14.9 · cooperativo a prueba de desconexiones: reintentos del invitado, sala del anfitrión autorreparable y kiosco centrado en Barra y cola';
+export const VERSION='v28.14.10';
+export const LABEL='v28.14.10 · cooperativo a prueba de desconexiones: la partida se reconecta sola al volver al juego, reintentos del invitado y sala autorreparable';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY, WEATHER } from './config.js?v=28.14.9';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY, WEATHER } from './config.js?v=28.14.10';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -37,7 +37,7 @@ export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('te
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Game.upgrades.workforce?.team?.[st.id]?.wage??st.wage):0), 0); }
 
-/* v28.14.9: el pronóstico puede venir de partidas antiguas o del canal coop con
+/* v28.14.10: el pronóstico puede venir de partidas antiguas o del canal coop con
    huecos o claves retiradas; siempre se resuelve a una clave válida de WEATHER
    (fallback 'sol') antes de leer .label/.desc. Así evitamos el TypeError de ui-plan. */
 export function weatherAt(d){ const w=Game.forecast?.[d-1]; return WEATHER[w]?w:'sol'; }

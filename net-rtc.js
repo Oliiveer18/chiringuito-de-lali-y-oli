@@ -56,6 +56,19 @@ export function guestSearchStatus(cloudTry, cloudsTotal, attemptSec){
     (móvil en segundo plano, reconexión del servidor de señalización), así que
     peer-unavailable nunca es definitivo mientras el jugador siga en la sala. */
 export const GUEST_RETRY = { firstMs: 3000, maxMs: 6000, maxAttempts: 40 };
+
+/** v28.14.10: qué hacer al volver la pestaña a primer plano. El peer de señalización
+    puede quedar vivo-desconectado (basta reconnect) o morir del todo — el servidor
+    suelta el registro de la sala cuando el móvil pasa el juego a segundo plano.
+    En ese caso ni reconnect ni el evento 'close' lo reviven: hay que reconstruir
+    el enlace con el MISMO código (el anfitrión re-registra su sala, el invitado
+    reanuda la búsqueda donde la dejó). */
+export function visibilityRecovery({ peerAlive, peerDisconnected, role, code, hasConn }){
+  if (peerAlive) return peerDisconnected ? 'reconnect' : null;
+  if (role === 'host' && code) return 'host-relisten';
+  if (role === 'guest' && code && !hasConn) return 'guest-rejoin';
+  return null;
+}
 export function nextGuestRetryMs(attempt){
   return Math.min(GUEST_RETRY.firstMs + Math.min(Math.max(attempt, 0), 10) * 300, GUEST_RETRY.maxMs);
 }

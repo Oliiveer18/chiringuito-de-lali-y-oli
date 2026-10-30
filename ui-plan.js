@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=28.14.9';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.14.9';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.14.9';
-import { ICON_URL } from './icons.js?v=28.14.9';
-import { Audio } from './audio.js?v=28.14.9';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=28.14.9';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.14.9';
-import { advanceFromReport } from './report.js?v=28.14.9';
-import { netAct, netDirty } from './net.js?v=28.14.9';
-import { drawPerson } from './render.js?v=28.14.9';
-import { iconFor } from './ui-polish.js?v=28.14.9';
-import { renderTab } from './ui.js?v=28.14.9';
+import { trackCost } from './bookkeeping.js?v=28.14.10';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.14.10';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.14.10';
+import { ICON_URL } from './icons.js?v=28.14.10';
+import { Audio } from './audio.js?v=28.14.10';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=28.14.10';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.14.10';
+import { advanceFromReport } from './report.js?v=28.14.10';
+import { netAct, netDirty } from './net.js?v=28.14.10';
+import { drawPerson } from './render.js?v=28.14.10';
+import { iconFor } from './ui-polish.js?v=28.14.10';
+import { renderTab } from './ui.js?v=28.14.10';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};

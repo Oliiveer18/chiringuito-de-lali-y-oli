@@ -1,16 +1,16 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.9';
-import { Audio } from './audio.js?v=28.14.9';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.9';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.9';
-import { showReportUI } from './report.js?v=28.14.9';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.9';
-import { onNet } from './net-sync.js?v=28.14.9';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.9';
+import { $ } from './util.js?v=28.14.10';
+import { Audio } from './audio.js?v=28.14.10';
+import { Game, NET_SIM, Net } from './state.js?v=28.14.10';
+import { pendingIdx, slotOf } from './sim.js?v=28.14.10';
+import { showReportUI } from './report.js?v=28.14.10';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.10';
+import { onNet } from './net-sync.js?v=28.14.10';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.10';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
-  GUEST_RETRY, nextGuestRetryMs
-} from './net-rtc.js?v=28.14.9';
+  GUEST_RETRY, nextGuestRetryMs, visibilityRecovery
+} from './net-rtc.js?v=28.14.10';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -81,7 +81,7 @@ function attachConn(c, { onOpen, onFail }){
     Net.peer = false;
     onNet({ t: 'peer', on: false });
   });
-  // v28.14.9: PeerJS no emite 'failed' en DataConnection; sin esto el reintento
+  // v28.14.10: PeerJS no emite 'failed' en DataConnection; sin esto el reintento
   // entre servidores y la recuperación del invitado nunca se disparaban.
   c.on('error', () => { if (!opened) onFail && onFail(); });
   c.on('failed', () => {
@@ -130,7 +130,7 @@ function hostStart(attempt = 0){
   hostListen(code);
 }
 
-/** v28.14.9: la sala del anfitrión se reconstruye sola con el MISMO código si el
+/** v28.14.10: la sala del anfitrión se reconstruye sola con el MISMO código si el
     servidor de señalización suelta la conexión (típico al pasar el juego a
     segundo plano en el móvil para mandar el código). Así el invitado no
     necesita que se genere una sala nueva. */
@@ -168,7 +168,7 @@ function hostListen(code, attempt = 0){
   });
 }
 
-/** v28.14.9: el invitado reintenta la conexión mientras espera. Antes, un único
+/** v28.14.10: el invitado reintenta la conexión mientras espera. Antes, un único
     peer.connect fallido (anfitrión aún no registrado, o su sala reactivándose
     tras pasar el juego a segundo plano) dejaba el "Buscando anfitrión…"
     para siempre sin volver a intentarlo. */
@@ -309,9 +309,20 @@ export function goSolo(){
   else if (Game.mode === 'lobby') { hideAll(); Game.mode = 'title'; $('#title').classList.add('show'); }
 }
 
-// v28.14.9: al volver a primer plano (móvil en segundo plano), reanimar el enlace
-// de señalización si el servidor lo soltó mientras la pestaña estaba dormida.
+// v28.14.10: al volver a primer plano (móvil en segundo plano), reanimar el enlace.
+// Caso 1: el peer sigue vivo pero desconectado → reconnect al mismo servidor.
+// Caso 2: el peer MURIÓ del todo (el servidor soltó el registro de la sala mientras
+// la pestaña estaba dormida) → ni reconnect ni el evento 'close' pueden revivirlo.
+// Ahí se reconstruye el enlace completo con el MISMO código: el anfitrión re-registra
+// su sala y el invitado reanuda la búsqueda donde la dejó.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible' || !peer) return;
-  if (peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch (e) {} }
+  if (document.visibilityState !== 'visible') return;
+  const action = visibilityRecovery({
+    peerAlive: !!(peer && !peer.destroyed),
+    peerDisconnected: !!(peer && !peer.destroyed && peer.disconnected),
+    role: Net.role, code: Net.code, hasConn: !!conn
+  });
+  if (action === 'reconnect') { try { peer.reconnect(); } catch (e) {} }
+  else if (action === 'host-relisten') hostListen(Net.code);
+  else if (action === 'guest-rejoin') guestJoin(Net.code);
 });

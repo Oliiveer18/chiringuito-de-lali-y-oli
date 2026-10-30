@@ -1,4 +1,4 @@
-/* Prueba de regresión v28.14.9: consistencia de la versión de módulos.
+/* Prueba de regresión v28.14.10: consistencia de la versión de módulos.
    El release v28.14.7 subió el sufijo de versión solo en los archivos raíz y olvidó
    sim/ y render/, que quedaron en 28.14.6. El navegador cargó DOS copias de
    cada módulo (dos objetos Game) y los flujos que cruzaban ambas copias fallaban:
