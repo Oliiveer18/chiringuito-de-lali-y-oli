@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY, WEATHER } from './config.js?v=28.18.0';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY, WEATHER } from './config.js?v=28.19.0';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -25,6 +25,17 @@ window.Net = Net;
 export const isCoop = ()=> Net.role!=='solo';
 export const isGuest = ()=> Net.role==='guest';
 export const hostLive = ()=> Net.role==='host' && Net.peer;
+/* v28.19: la disponibilidad del currículum es real: media jornada y fines de
+   semana limitan cuándo trabaja cada contratado (y su sueldo ya lo refleja). */
+export function staffOnDuty(role){
+  const e=Game.upgrades.workforce?.team?.[role];
+  if(!e) return true;
+  const a=e.availability;
+  if(a==='Fines de semana') return isWeekend(simProgressDay());
+  if(a==='Mañanas') return Game.hour<15;
+  if(a==='Tardes') return Game.hour>=14;
+  return true;
+}
 export function whoName(w){ return w==='yeray'?(Game.upgrades.workforce?.team?.camarero?.name||'Yeray') : isCoop()? Net.names[w] : 'Preparando'; }
 export function partner(){ return Net.me==='p1'?'p2':'p1'; }
 

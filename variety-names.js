@@ -1,5 +1,5 @@
 /* Nombres de clientes. Lo importa variety.js. */
-import { NAMES } from './config.js?v=28.18.0';
+import { NAMES } from './config.js?v=28.19.0';
 const add = (arr, items) => { for (const it of items) if (!arr.includes(it)) arr.push(it); };
 // ---------- Nombres y pueblos (turistas, locales y surfistas) ----------
 add(NAMES.turista, [
@@ -18,7 +18,7 @@ add(NAMES.local, [
   'Gara, La Laguna','Adán, Santa Cruz','Nira, La Orotava','Ayoze, Los Realejos',
   'Candelaria, Güímar','Zebenzui, Fasnia','Nerea, Arico','Yeray, Granadilla',
   'Garañona, San Miguel','Aday, Arona','Noa, Adeje','Chaxiraxi, Guía de Isora',
-  'Arona, Vilaflor','Iballa, Santiago del Teide','Echedey, Buenavista',
+  'Dácil, Vilaflor','Iballa, Santiago del Teide','Echedey, Buenavista',
   'Aday, Garachico','Nira, Icod de los Vinos','Ayoze, La Guancha',
   'Gara, San Juan de la Rambla','Adán, Los Silos','Nira, El Tanque',
   'Ayoze, Tacoronte','Candelaria, El Sauzal','Zebenzui, La Matanza',
@@ -26,7 +26,7 @@ add(NAMES.local, [
   'Gara, Anaga','Adán, San Andrés','Nira, Taganana','Ayoze, Igueste',
   'Candelaria, La Laguna','Zebenzui, La Cuesta','Nerea, Taco','Yeray, La Salud',
   'Garañona, La Candelaria','Aday, Arafo','Noa, Fasnia','Chaxiraxi, Arico',
-  'Arona, Granadilla','Iballa, San Isidro','Echedey, Los Abrigos','Aday, El Médano',
+  'Beneharo, Granadilla','Iballa, San Isidro','Echedey, Los Abrigos','Aday, El Médano',
   'Nira, La Camella','Ayoze, Costa del Silencio','Gara, Las Chafiras',
   'Adán, Guargacho','Nira, Los Cristianos','Ayoze, Playa de la Arena',
   'Candelaria, Puerto de Santiago','Zebenzui, Tamaimo','Nerea, Santiago del Teide',
@@ -34,13 +34,13 @@ add(NAMES.local, [
 ]);
 add(NAMES.surfista, [
   'Nauzet, El Médano','Iballa, Las Américas','Aday, Costa Adeje','Gara, La Caleta',
-  'Echedey, Puerto de la Cruz','Noa, Alcalá','Arona, Playa Paraíso',
+  'Echedey, Puerto de la Cruz','Noa, Alcalá','Yaiza, Playa Paraíso',
   'Iballa, La Jaquita','Aday, El Poris','Gara, Abades','Echedey, Güímar',
-  'Noa, La Nea','Arona, Radazul','Iballa, Las Galletas','Aday, La Tejita',
-  'Gara, El Cabezo','Echedey, La Jaquita','Noa, La Tejita','Arona, El Médano',
+  'Noa, La Nea','Airam, Radazul','Iballa, Las Galletas','Aday, La Tejita',
+  'Gara, El Cabezo','Echedey, La Jaquita','Noa, La Tejita','Dácil, El Médano',
   'Iballa, Las Américas','Aday, La Caleta','Gara, Alcalá','Echedey, Puerto de la Cruz',
-  'Noa, Playa Paraíso','Arona, La Jaquita','Iballa, El Poris','Aday, Abades',
-  'Gara, Güímar','Echedey, La Nea','Noa, Radazul','Arona, Las Galletas',
+  'Noa, Playa Paraíso','Yaiza, La Jaquita','Iballa, El Poris','Aday, Abades',
+  'Gara, Güímar','Echedey, La Nea','Noa, Radazul','Beneharo, Las Galletas',
   'Iballa, La Tejita','Aday, El Cabezo','Gara, Las Américas','Echedey, La Caleta'
 ]);
 

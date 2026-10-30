@@ -35,10 +35,20 @@ export function recordComment(posts,postId,comment){
 // Conserva las exportaciones auxiliares de la revisión anterior sin duplicar su implementación.
 export {hash32,decide,decideAll,opinionCounts,publicRating} from './opinions-model.mjs';
 function hash(text){let h=2166136261;for(const c of String(text))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
-const NAMES=['Naira','Aday','Dacil','Jonay','Iballa','Nauzet','Nerea','Airam','Yaiza','Beneharo','Celia','Saul'];
+const NAMES=['Naira','Aday','Dácil','Jonay','Iballa','Nauzet','Nerea','Airam','Yaiza','Beneharo','Celia','Saúl'];
 const ORIGINS=['Arona','Adeje','Los Cristianos','El Médano','Granadilla','San Isidro','Guía de Isora','La Laguna'];
 const ROLES=[['camarero',55],['cocinero',65],['limpiador',30],['terraza',60]];
 const AVAILABILITY=['Jornada completa','Fines de semana','Mañanas','Tardes'];
+/* v28.19: sueldos proporcionales a lo que produce cada candidato.
+   Ejes con ventajas Y desventajas reales:
+   - Ritmo (workMultiplier es tiempo por unidad): el novato es un 18% más
+     lento pero cuesta menos; el experto es un 16% más rápido pero cobra más.
+   - Especialidad: mejora su terreno y empeora en el contrario (factor()).
+   - Disponibilidad: ahora es real (staffOnDuty) y descuenta el sueldo en la
+     misma proporción: media jornada cuesta ~62%, solo fines de semana ~50%.
+   El sueldo sale de base x ritmo x presencia (+-5% de regateo), redondeado
+   a 5 €: nunca hay fichas desproporcionadas, solo decisiones. */
+export const PRESENCE_PRICE={'Jornada completa':1,'Fines de semana':0.5,'Mañanas':0.62,'Tardes':0.62};
 export function candidates(seed,day){
  if(!Number.isInteger(day)||day<1)throw new Error('Invalid recruitment day');
  const batch=Math.floor((day-1)/3),h0=hash(seed+':'+batch+':count');
@@ -48,9 +58,16 @@ export function candidates(seed,day){
   const h=hash(seed+':'+batch+':'+i),[role,base]=ROLES[i%ROLES.length];
   const level=h%3,experience=[0,2,5][level];
   const age=Math.max(18+((h>>>3)%23),18+experience),origin=ORIGINS[(h>>>6)%ORIGINS.length];
+  const availability=AVAILABILITY[(h>>>9)%AVAILABILITY.length];
+  const slowness=[1.18,1,0.84][level];
+  const noise=0.95+((h>>>12)%11)/100;
+  const raw=base*(2-slowness)*PRESENCE_PRICE[availability]*noise;
+  const wage=raw>=25?Math.round(raw/5)*5:Math.round(raw);
   const experienceLabel=experience?experience+' años en '+({camarero:'servicio de barra',cocinero:'cocina',limpiador:'limpieza de establecimientos',terraza:'servicio de terraza'}[role]):'Sin experiencia previa';
-  const presentation=experience?'Busco trabajo de temporada en '+({camarero:'barra',cocinero:'cocina',limpiador:'limpieza',terraza:'terraza'}[role])+'. Tengo experiencia en el puesto.':'Busco mi primera oportunidad en este puesto y tengo disposición para aprender.';
-  out.push({id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],age,origin,experience,experienceLabel,availability:AVAILABILITY[(h>>>9)%AVAILABILITY.length],presentation,wage:base+[-10,0,15][level],workMultiplier:[1.15,1,0.85][level],received:batch*3+1,expires:batch*3+3,training:0});
+  const presRole={camarero:'barra',cocinero:'cocina',limpiador:'limpieza',terraza:'terraza'}[role];
+  const presAvail={'Jornada completa':'Puedo hacer jornada completa.','Fines de semana':'Solo puedo trabajar fines de semana: el precio lo refleja.','Mañanas':'Solo doy mañanas (hasta las 15:00): el precio lo refleja.','Tardes':'Solo doy tardes (desde las 14:00): el precio lo refleja.'}[availability];
+  const presentation=(experience?'Busco trabajo de temporada en '+presRole+'. Tengo experiencia en el puesto. ':'Busco mi primera oportunidad en '+presRole+' y tengo disposición para aprender. ')+presAvail;
+  out.push({id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],age,origin,experience,experienceLabel,availability,presentation,wage,workMultiplier:slowness,received:batch*3+1,expires:batch*3+3,training:0});
  }
  return out;
 }

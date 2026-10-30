@@ -1,14 +1,14 @@
-import {trackCost} from './bookkeeping.js?v=28.18.0';
-import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.18.0';
-import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.18.0';
-import * as Rankings from './market-model.mjs?v=28.18.0';
-import {Game,Net,simProgressDay} from './state.js?v=28.18.0';
-import {STAFF,RENT} from './config.js?v=28.18.0';
-import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.18.0';
-import {netDirty} from './net.js?v=28.18.0';
-import {guestSend,onGuestAction} from './coopbridge.js?v=28.18.0';
-import {escapeHtml as E,eur} from './util.js?v=28.18.0';
-import {candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.18.0';
+import {trackCost} from './bookkeeping.js?v=28.19.0';
+import {profile,factor,skillText,portrait,trainChoice,reconcileCalendar,photoComments,replyOptions,AUTHORS} from './professional-model.mjs?v=28.19.0';
+import {weeklyPoints,dailyPoints} from './management-model.mjs?v=28.19.0';
+import * as Rankings from './market-model.mjs?v=28.19.0';
+import { Game, Net, staffOnDuty, simProgressDay } from './state.js?v=28.19.0';
+import {STAFF,RENT} from './config.js?v=28.19.0';
+import {Plan,toast,staffAvatar,refreshPlanMoney} from './ui.js?v=28.19.0';
+import {netDirty} from './net.js?v=28.19.0';
+import {guestSend,onGuestAction} from './coopbridge.js?v=28.19.0';
+import {escapeHtml as E,eur} from './util.js?v=28.19.0';
+import {candidates,hireCandidate,trainEmployee} from './management-model.mjs?v=28.19.0';
 const day=()=>simProgressDay();
 export function socialIdle(target,published){const u=Game.upgrades;if(target<1)return 0;if(!u.socialCalendar)u.socialCalendar={last:target-1,idle:Math.max(0,Math.min(Number(u.socialIdle)||0,target-1))};const c=u.socialCalendar;if(c.last>=target)return c.idle;return published?0:c.idle+1;}
 export function markSocial(target,idle){if(target<1)return;Game.upgrades.socialCalendar={last:target,idle};Game.upgrades.socialIdle=idle;}
@@ -24,7 +24,7 @@ function cvCard(c,current){
  const exp=c.experienceLabel||(c.experience?c.experience+' años de experiencia':'Sin experiencia registrada');
  const avail=c.availability||'Disponibilidad no registrada';
  const pres=c.presentation||'';
- return '<article class="wf-card cv" data-candidate="'+E(c.id)+'"><div class="cv-head"><img class="cv-portrait" src="'+portrait(c)+'" alt="Retrato de '+E(c.name)+'"><div class="cv-head-text"><h4>'+E(c.name)+'</h4><p class="cv-origin">'+E(age)+' · '+E(origin)+'</p></div></div><div class="cv-fields"><div class="cv-section"><span class="k">Puesto</span><b>'+roleName(c.role)+'</b></div><div class="cv-section"><span class="k">Experiencia</span><b>'+E(exp)+'</b></div><div class="cv-section"><span class="k">Disponibilidad</span><b>'+E(avail)+'</b></div><div class="cv-section"><span class="k">Pretensión</span><b>'+eur(c.wage)+'/día</b></div></div>'+(pres?'<p class="cv-text">'+E(pres)+'</p>':'')+'<p class="cv-meta">Vigente hasta la jornada '+c.expires+' de carrera.</p>'+(current?'<p class="cv-meta">Actual: '+E(current.name)+' · '+eur(current.wage)+'/día · ×'+current.workMultiplier.toFixed(2)+'</p>':'<p class="cv-meta">Puesto actualmente vacante.</p>')+'<footer class="cv-footer">'+button('hire',c.id,current?'Sustituir a '+current.name:'Contratar')+button('discard',c.id,'Descartar')+'</footer></article>';
+ return '<article class="wf-card cv" data-candidate="'+E(c.id)+'"><div class="cv-head"><img class="cv-portrait" src="'+portrait(c)+'" alt="Retrato de '+E(c.name)+'"><div class="cv-head-text"><h4>'+E(c.name)+'</h4><p class="cv-origin">'+E(age)+' · '+E(origin)+'</p></div></div><div class="cv-fields"><div class="cv-section"><span class="k">Puesto</span><b>'+roleName(c.role)+'</b></div><div class="cv-section"><span class="k">Experiencia</span><b>'+E(exp)+'</b></div><div class="cv-section"><span class="k">Disponibilidad</span><b>'+E(avail)+'</b></div><div class="cv-section"><span class="k">Pretensión</span><b>'+eur(c.wage)+'/día</b></div></div>'+(pres?'<p class="cv-text">'+E(pres)+'</p>':'')+'<p class="cv-text">'+E(skillText(c))+'</p>'+'<p class="cv-meta">Vigente hasta la jornada '+c.expires+' de carrera.</p>'+(current?'<p class="cv-meta">Actual: '+E(current.name)+' · '+eur(current.wage)+'/día · ×'+current.workMultiplier.toFixed(2)+'</p>':'<p class="cv-meta">Puesto actualmente vacante.</p>')+'<footer class="cv-footer">'+button('hire',c.id,current?'Sustituir a '+current.name:'Contratar')+button('discard',c.id,'Descartar')+'</footer></article>';
 }
 function paint(){
   if(Game.mode!=='plan'||Plan.tab!=='personal')return;
@@ -41,7 +41,7 @@ function paint(){
     h+='<article class="wf-card"><img src="'+(e?portrait(e):staffAvatar(s.id))+'" alt=""><div class="wf-card-body"><h4>'+E(e?.name||'Puesto vacante')+'</h4><p class="wf-role">'+roleName(s.id)+'</p>';
     if(e){
       if(e.dateUnknown)h+='<p>Antiguedad anterior no registrada.</p>';
-      h+='<p>'+eur(e.wage)+'/día · '+(Game.upgrades['ausente_'+s.id]?'Ausente hoy':'Contratado')+'</p><p>Antigüedad desde la contratación registrada: '+Math.max(1,d-e.hiredDay+1)+' jornada(s). Formación '+e.training+'/2.</p><p>'+E(skillText(e))+'</p><p>Jornadas registradas trabajadas: '+(e.worked||0)+' · Ausencias registradas: '+(e.absences||0)+'</p><div class="wf-card-actions">'+button('dismiss',s.id,'Despedir');
+      h+='<p>'+eur(e.wage)+'/día · '+(Game.upgrades['ausente_'+s.id]?'Ausente hoy':staffOnDuty(s.id)?'Contratado':'Fuera de turno ('+(e.availability||'')+')')+'</p><p>Antigüedad desde la contratación registrada: '+Math.max(1,d-e.hiredDay+1)+' jornada(s). Formación '+e.training+'/2.</p><p>'+E(skillText(e))+'</p><p>Jornadas registradas trabajadas: '+(e.worked||0)+' · Ausencias registradas: '+(e.absences||0)+'</p><div class="wf-card-actions">'+button('dismiss',s.id,'Despedir');
       if(e.training<2){
         h+=button('train',s.id,'Rapidez: reduce un 5% el tiempo · '+eur(100*(e.training+1)));
         if(!['general','polivalente'].includes(e.specialty))h+=button('focus',s.id,'Especialidad: mejora su ventaja · '+eur(100*(e.training+1)));

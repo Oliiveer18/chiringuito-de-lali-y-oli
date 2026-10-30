@@ -1,5 +1,5 @@
-export const VERSION='v28.18.0';
-export const LABEL='v28.18.0 · el personal ya trabaja de verdad (cocinera prepara, limpiador vela las mesas), nadie se va sin mesa con mesas libres, el cierre no corta escenas y el "siguiente día" cooperativo es instantáneo';
+export const VERSION='v28.19.0';
+export const LABEL='v28.19.0 · currículums equilibrados: cada candidato tiene ventajas y desventajas reales (ritmo, especialidad y disponibilidad) con sueldo proporcional a lo que produce, y nombres de NPCs corregidos';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
