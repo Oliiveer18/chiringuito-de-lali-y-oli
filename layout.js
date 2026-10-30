@@ -1,6 +1,6 @@
-import { scheduleViewportResize, view } from './canvas.js?v=28.17.0';
-import { W, H } from './config.js?v=28.17.0';
-import { Game } from './state.js?v=28.17.0';
+import { scheduleViewportResize, view } from './canvas.js?v=28.18.0';
+import { W, H } from './config.js?v=28.18.0';
+import { Game } from './state.js?v=28.18.0';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 /* v28.16.0: CAM_CX.barra 290→270 centra el kiosco (su eje visual: pico del tejado y

@@ -1,14 +1,14 @@
 /* Carrera infinita: interfaz. Pestaña «Carrera», pantalla de cierre de temporada / traspaso, ventajas y Legado.
    Funciona en solitario y en cooperativo: el anfitrión decide y la invitada envía sus clics por el canal de acciones. */
-import { Game, Net } from './state.js?v=28.17.0';
-import { SEASON_DAYS } from './config.js?v=28.17.0';
-import { Plan, showPlan, toast } from './ui.js?v=28.17.0';
-import { Audio } from './audio.js?v=28.17.0';
-import { netDirty } from './net.js?v=28.17.0';
-import { newSeason } from './sim.js?v=28.17.0';
-import { guestSend, onGuestAction } from './coopbridge.js?v=28.17.0';
-import { escapeHtml, eur } from './util.js?v=28.17.0';
-import * as C from './career.js?v=28.17.0';
+import { Game, Net } from './state.js?v=28.18.0';
+import { SEASON_DAYS } from './config.js?v=28.18.0';
+import { Plan, showPlan, toast } from './ui.js?v=28.18.0';
+import { Audio } from './audio.js?v=28.18.0';
+import { netDirty } from './net.js?v=28.18.0';
+import { newSeason } from './sim.js?v=28.18.0';
+import { guestSend, onGuestAction } from './coopbridge.js?v=28.18.0';
+import { escapeHtml, eur } from './util.js?v=28.18.0';
+import * as C from './career.js?v=28.18.0';
 
 const TAB = 'carrera';
 const $ = id => document.getElementById(id);

@@ -93,7 +93,7 @@ globalThis.MutationObserver = class { observe() {} };
 globalThis.Peer = class {};
 globalThis.navigator = {};
 
-const V = '28.17.0';
+const V = '28.18.0';
 const { Game, Net } = await import(`./state.js?v=${V}`);
 await import(`./coopbridge.js?v=${V}`);
 const sim = await import(`./sim.js?v=${V}`);

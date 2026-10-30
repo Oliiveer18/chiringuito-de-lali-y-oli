@@ -3,7 +3,7 @@
    Constantes del juego: dimensiones, calendario, economía, productos,
 clientes habituales, clima, mejoras y personal.
    ========================================================= */
-import { rnd } from './util.js?v=28.17.0';
+import { rnd } from './util.js?v=28.18.0';
 
 // ---------- Constantes ----------
 export const W = 1280, H = 720;
@@ -46,7 +46,7 @@ export const PERSONALITIES = {
 };
 export const PKEYS = Object.keys(PERSONALITIES);
 export const ANGER_MIN_STAGE = 1.6;
-export const WAIT_TABLE_MAX = 7;
+export const WAIT_TABLE_MAX = 12; // v28.18: 12 s para que dé tiempo a limpiar/liberar una mesa
 
 // ---------- Clientes habituales ----------
 export const REGULARS = [

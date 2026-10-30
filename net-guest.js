@@ -1,6 +1,6 @@
 /* Acciones pendientes del invitado. Lo importa net.js. */
-import { Game, Net } from './state.js?v=28.17.0';
-import { netAct } from './net-link.js?v=28.17.0';
+import { Game, Net } from './state.js?v=28.18.0';
+import { netAct } from './net-link.js?v=28.18.0';
 export const REJECT_MSG = {
   busy:'Tu puesto ya estaba ocupado con otro pedido.',
   gone:'Ese cliente ya no esperaba el pedido.',
@@ -19,6 +19,15 @@ export function guestClean(i){
   const q=++Net.seq;
   netAct({a:'clean', i, q,serviceId:Game.floor?.id});
   Net.pend.set(q, {kind:'clean', key:i, t0:performance.now(), expired:false});
+}
+let readyRetryT=0;
+/* v28.18: reintenta el aviso de "listo" mientras el anfitrión no avance de
+   pantalla: los mensajes sueltos se pierden y el toggle antiguo se rompía. */
+export function guestReadyTick(dt){
+  if(!Net.readySent) return;
+  if(Game.mode!=='report' && Game.mode!=='plan') return;
+  readyRetryT+=dt;
+  if(readyRetryT>=0.6){ readyRetryT=0; netAct({a:'ready'}); }
 }
 export function guestPendTick(){
   const now=performance.now();

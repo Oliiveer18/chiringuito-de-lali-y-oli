@@ -1,5 +1,5 @@
-export const VERSION='v28.17.0';
-export const LABEL='v28.17.0 · ARREGLADO el bloqueo al limpiar mesas: el jugador ya no se queda clavado entre las mesas y la pareja puede tomar el relevo';
+export const VERSION='v28.18.0';
+export const LABEL='v28.18.0 · el personal ya trabaja de verdad (cocinera prepara, limpiador vela las mesas), nadie se va sin mesa con mesas libres, el cierre no corta escenas y el "siguiente día" cooperativo es instantáneo';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
