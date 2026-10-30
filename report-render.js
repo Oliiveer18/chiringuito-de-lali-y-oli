@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.14.13';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.14.13';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.14.13';
-import { rr } from './icons.js?v=28.14.13';
-import { Audio } from './audio.js?v=28.14.13';
-import { reputation } from './ratings-model.mjs?v=28.14.13';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.14.13';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.14.13';
-import { netAct, netDirty } from './net.js?v=28.14.13';
-import { dayStarsSummary, buildRevModel, opinionLine, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.14.13';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.15.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.15.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.15.0';
+import { rr } from './icons.js?v=28.15.0';
+import { Audio } from './audio.js?v=28.15.0';
+import { reputation } from './ratings-model.mjs?v=28.15.0';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.15.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.15.0';
+import { netAct, netDirty } from './net.js?v=28.15.0';
+import { dayStarsSummary, buildRevModel, opinionLine, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.15.0';
 
 export function endDay(){
   Game.mode='report';

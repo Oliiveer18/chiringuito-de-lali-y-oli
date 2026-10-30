@@ -1,23 +1,19 @@
-import { Game, Net, gameTimers, guestCust, repairForecast } from './state.js?v=28.14.13';
-import { newSeason } from './sim.js?v=28.14.13';
-import { showPlan, Plan } from './ui.js?v=28.14.13';
-import { buildTables } from './world.js?v=28.14.13';
-import { netDirty } from './net.js?v=28.14.13';
-import { showReportUI } from './report.js?v=28.14.13';
+import { Game, Net, gameTimers, guestCust, repairForecast } from './state.js?v=28.15.0';
+import { newSeason } from './sim.js?v=28.15.0';
+import { showPlan, Plan } from './ui.js?v=28.15.0';
+import { buildTables } from './world.js?v=28.15.0';
+import { netDirty } from './net.js?v=28.15.0';
+import { showReportUI } from './report.js?v=28.15.0';
+import { encode, decode, copy, valid, uid, parseLibrary, mergeImported, exportFileName, FIELDS } from './saves-io.mjs?v=28.15.0';
 const KEY='lali-oli.library.v2', BACK=KEY+'.backup';
-const fields=['day','money','rep','stock','prices','enabled','upgrades','staff','forecast','season','lastDebt','starsLog','revUsed','revPrev','regulars','regVisited','buzz','pendingPurchases'];
-const encode=x=>JSON.stringify(x,(_,v)=>v instanceof Set?{__laliSet:[...v]}:v);
-const decode=s=>JSON.parse(s,(_,v)=>v&&Array.isArray(v.__laliSet)?new Set(v.__laliSet):v);
-const copy=x=>decode(encode(x));
-const valid=s=>s&&s.data&&Number.isInteger(s.data.day)&&s.data.day>=1&&s.data.day<=30&&Number.isFinite(s.data.money)&&Number.isFinite(s.data.rep)&&['solo','coop'].includes(s.kind)&&Array.isArray(s.data.forecast)&&['stock','prices','enabled','upgrades','staff','season','regulars'].every(k=>s.data[k]&&typeof s.data[k]==='object')&&(s.phase!=='report'||s.ui&&s.data.dayStats&&s.data.revModel);
+const fields=FIELDS;
 let library=[],active=null,pending=null,bypass=false,last='',locked=false;
 function message(t){
   if(typeof t==='string'&&t.startsWith('✓ Guardado automático'))return;
   if(t)console.warn('[guardado]',t);
 }
-function parse(raw){const a=decode(raw);if(!Array.isArray(a)||!a.every(valid))throw Error('Guardado incompatible');return a;}
+const parse=parseLibrary;
 try{const raw=localStorage.getItem(KEY);if(raw!==null)library=parse(raw);else{for(const kind of ['solo','coop']){const rawOld=localStorage.getItem('lali-oli.save.v1.'+kind);if(rawOld){const s=decode(rawOld);if(valid(s))library.push({...s,id:uid()});}}}}catch(e){try{const raw=localStorage.getItem(BACK);if(!raw)throw e;library=parse(raw);message('Recuperada la copia anterior.');}catch(e){locked=true;message('No se pudieron leer las partidas. No se sobrescribirán los datos.');}}
-function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}
 const settled=()=>{const p=Game.upgrades&&Game.upgrades.progression;if(!p)return true;const d=((Game.upgrades.career&&Game.upgrades.career.season)||1)-1;return p.last>=d*30+Game.day;};
 function save(){if(locked||pending||Net.role==='guest'||!['plan','report'].includes(Game.mode)||Game.mode==='report'&&(!Net.ui||!Game.revModel)||Game.mode==='report'&&!settled())return;
 try{const kind=Net.role==='host'?'coop':'solo',data={};for(const k of fields)if(Game[k]!==undefined)data[k]=copy(Game[k]);if(Game.mode==='report'){data.dayStats=copy(Game.dayStats);data.revModel=copy(Game.revModel);}const s={id:active||uid(),kind,phase:Game.mode,data,names:copy(Net.names),roles:copy(Net.roles),ui:Game.mode==='report'?copy(Net.ui):null,date:new Date().toISOString()};if(!valid(s))throw Error();const sig=encode([s.kind,s.phase,s.data,s.ui,s.names,s.roles]);if(sig===last)return;
@@ -30,9 +26,44 @@ function button(text,fn,cls){const b=document.createElement('button');b.type='bu
 function original(q){bypass=true;try{document.querySelector(q).click();}finally{bypass=false;}}
 function resume(s){modal.hidden=true;if(s.kind==='solo'){Net.role='solo';Net.me='p1';restore(s);}else{pending=copy(s);original('#btn-coop');if(s.names?.p1)document.querySelector('#lobby-name').value=s.names.p1;if(s.roles)Object.assign(Net.roles,s.roles);document.querySelector('#lobby-status').textContent='Continuando día '+s.data.day+'. Crea una sala e invita a '+(s.names?.p2||'tu pareja')+'.';}}
 function removeSave(s){if(!confirm('¿Eliminar esta partida? Esta acción no se puede deshacer.'))return;library=library.filter(x=>x.id!==s.id);localStorage.setItem(KEY,encode(library));if(active===s.id){active=null;last='';}screen(s.kind);}
-function screen(kind){modal.replaceChildren();const box=document.createElement('div');box.className='save-sheet';modal.append(box);const h=document.createElement('h2');h.textContent=kind==='solo'?'Tus partidas en solitario':'Vuestras partidas';box.append(h);const actions=document.createElement('div');actions.className='save-actions';actions.append(button('Nueva partida',()=>{if(locked){alert('Los datos no se pueden leer. Se evita sobrescribirlos.');return;}active=null;pending=null;last='';modal.hidden=true;original(kind==='solo'?'#btn-start':'#btn-coop');}));if(kind==='coop')actions.append(button('Unirme con código',()=>{pending=null;active=null;last='';modal.hidden=true;original('#btn-coop');}));actions.append(button('Volver',()=>modal.hidden=true));box.append(actions);
-for(const s of library.filter(s=>s.kind===kind).sort((a,b)=>String(b.date).localeCompare(String(a.date)))){const row=document.createElement('div');row.className='save-row';const title=document.createElement('strong');title.textContent=kind==='coop'?(s.names?.p1||'Jugador 1')+' y '+(s.names?.p2||'Jugador 2'):'Temporada individual';const p=document.createElement('p');p.textContent='Día '+s.data.day+(s.phase==='report'?' completado':' · preparación')+' · '+Math.round(s.data.money)+' € · '+new Date(s.date).toLocaleString('es-ES');row.append(title,p,button('Continuar',()=>resume(s)),button('Eliminar',()=>removeSave(s),'danger'));box.append(row);}
-const p=document.createElement('p');p.textContent='Guardado local al preparar y al cerrar cada jornada, con respaldo anterior. Durante el servicio se retoma el último punto guardado. En cooperativo guarda el anfitrión.';box.append(p);modal.hidden=false;}
+/** v28.15: exportar una partida como archivo (copia de seguridad o cambio de
+    dispositivo). El archivo usa el mismo formato que la biblioteca local. */
+function exportSave(s){
+  try{
+    const blob=new Blob([encode(s)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=exportFileName(s);
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){message('No se pudo exportar la partida.');}
+}
+/** v28.15: importar una partida exportada (propia o de tu pareja). Valida el
+    archivo antes de tocar la biblioteca y no sobrescribe nada más. */
+const fileInput=document.createElement('input');
+fileInput.type='file'; fileInput.accept='application/json,.json'; fileInput.hidden=true;
+document.body.append(fileInput);
+fileInput.addEventListener('change',()=>{
+  const file=fileInput.files&&fileInput.files[0];
+  fileInput.value='';
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const s=decode(String(r.result));
+      if(!s.id) s.id=uid();
+      library=mergeImported(library,s);
+      localStorage.setItem(KEY,encode(library));
+      message('Partida importada: día '+s.data.day+'.');
+      screen(s.kind);
+    }catch(e){alert('Ese archivo no es una partida del Chiringuito válida.');}
+  };
+  r.readAsText(file);
+});
+function importSave(){ fileInput.click(); }
+function screen(kind){modal.replaceChildren();const box=document.createElement('div');box.className='save-sheet';modal.append(box);const h=document.createElement('h2');h.textContent=kind==='solo'?'Tus partidas en solitario':'Vuestras partidas';box.append(h);const actions=document.createElement('div');actions.className='save-actions';actions.append(button('Nueva partida',()=>{if(locked){alert('Los datos no se pueden leer. Se evita sobrescribirlos.');return;}active=null;pending=null;last='';modal.hidden=true;original(kind==='solo'?'#btn-start':'#btn-coop');}));if(kind==='coop')actions.append(button('Unirme con código',()=>{pending=null;active=null;last='';modal.hidden=true;original('#btn-coop');}));actions.append(button('Importar partida',importSave));actions.append(button('Volver',()=>modal.hidden=true));box.append(actions);
+for(const s of library.filter(s=>s.kind===kind).sort((a,b)=>String(b.date).localeCompare(String(a.date)))){const row=document.createElement('div');row.className='save-row';const title=document.createElement('strong');title.textContent=kind==='coop'?(s.names?.p1||'Jugador 1')+' y '+(s.names?.p2||'Jugador 2'):'Temporada individual';const p=document.createElement('p');p.textContent='Día '+s.data.day+(s.phase==='report'?' completado':' · preparación')+' · '+Math.round(s.data.money)+' € · '+new Date(s.date).toLocaleString('es-ES');row.append(title,p,button('Continuar',()=>resume(s)),button('Exportar',()=>exportSave(s)),button('Eliminar',()=>removeSave(s),'danger'));box.append(row);}
+const p=document.createElement('p');p.textContent='Guardado local al preparar y al cerrar cada jornada, con respaldo anterior. Durante el servicio se retoma el último punto guardado. En cooperativo guarda el anfitrión. Con «Exportar» te llevas la partida como archivo (para el otro móvil o como copia) y con «Importar partida» la recuperas.';box.append(p);modal.hidden=false;}
 for(const [q,k]of [['#btn-start','solo'],['#btn-coop','coop']])document.querySelector(q).addEventListener('click',e=>{if(bypass)return;e.preventDefault();e.stopImmediatePropagation();screen(k);},true);
 document.querySelector('#btn-lobby-go').addEventListener('click',e=>{if(!Net.peer||Net.role!=='host')return;if(pending){e.preventDefault();e.stopImmediatePropagation();restore(pending);}else{active=null;last='';}},true);
 document.querySelector('#btn-lobby-back').addEventListener('click',()=>pending=null,true);

@@ -1,10 +1,20 @@
-import { Game, Net } from './state.js?v=28.14.13';
-import { setSpeed, toastLocal } from './ui.js?v=28.14.13';
+import { Game, Net } from './state.js?v=28.15.0';
+import { setSpeed, toastLocal } from './ui.js?v=28.15.0';
+import { netLostInfo } from './net-lobby.js?v=28.15.0';
 const Base=window.Peer;
 let sessionToken;try{sessionToken=sessionStorage.getItem('lali-oli.peer-token');if(!sessionToken){sessionToken=crypto.randomUUID();sessionStorage.setItem('lali-oli.peer-token',sessionToken);}}catch(e){sessionToken=String(Date.now())+Math.random();}
 function notice(text){const el=document.querySelector('#lobby-status');if(el)el.textContent=text;}
 const LINK_WINDOW_MS=45000;
-function lost(){if(Game.mode==='service'&&Game.speed){Net.pausedByDrop=true;setSpeed(0);}Net.peer=false;notice('Conexión interrumpida. Reconectando durante 45 segundos…');}
+/** v28.15. la capa de reintentos del enlace ya reconecta sola durante 45 s, pero
+    antes el juego solo se pausaba en silencio: el jugador veía la partida congelada
+    sin explicación. Ahora se muestra un aviso visible (se quita solo al reconectar)
+    y se recuerda la velocidad anterior para restaurarla al volver el enlace. */
+function lost(){
+  if(Game.mode==='service'&&Game.speed){Net.speedBeforeDrop=Game.speed;Net.pausedByDrop=true;setSpeed(0);}
+  Net.peer=false;
+  notice('Conexión interrumpida. Reconectando durante 45 segundos…');
+  if(Game.mode==='service') netLostInfo('Conexión interrumpida. Reconectando automáticamente durante 45 s. Si tu pareja tiene el juego en segundo plano, que lo abra un momento.');
+}
 class Link {
  constructor(owner,target,options,inbound=false){this.owner=owner;this.target=target;this.options=options;this.inbound=inbound;this.open=false;this.done=false;this.handlers={};this.start=0;this.last=0;this.generation=0;this.attemptMs=inbound?15000:28000;owner.links.add(this);}
  on(name,fn){(this.handlers[name]??=[]).push(fn);return this;}

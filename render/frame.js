@@ -1,38 +1,82 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { H } from "../config.js?v=28.14.13";
-import { W } from "../config.js?v=28.14.13";
-import { WHO_COLOR } from "../config.js?v=28.14.13";
-import { clamp } from "../util.js?v=28.14.13";
-import { lerp } from "../util.js?v=28.14.13";
-import { mixColor } from "../util.js?v=28.14.13";
-import { rr } from "../icons.js?v=28.14.13";
-import { Game } from "../state.js?v=28.14.13";
-import { closeHour } from "../state.js?v=28.14.13";
-import { hamacaCount } from "../state.js?v=28.14.13";
-import { lvl } from "../state.js?v=28.14.13";
-import { weatherToday } from "../state.js?v=28.14.13";
-import { whoName } from "../state.js?v=28.14.13";
-import { HAMACA_POS } from "../world.js?v=28.14.13";
-import { canvas } from "../canvas.js?v=28.14.13";
-import { ctx } from "../canvas.js?v=28.14.13";
-import { view } from "../canvas.js?v=28.14.13";
-import { drawPurchasedProps } from "../scene-extras.js?v=28.14.13";
-import { drawBubble } from "./identity.js?v=28.14.13";
-import { drawClouds } from "./scene.js?v=28.14.13";
-import { drawCustomer } from "./characters.js?v=28.14.13";
-import { drawFloorWorker } from "./characters.js?v=28.14.13";
-import { drawHamaca } from "./tables.js?v=28.14.13";
-import { drawHut } from "./scene.js?v=28.14.13";
-import { drawLights } from "./effects.js?v=28.14.13";
-import { drawNetStatus } from "./hud.js?v=28.14.13";
-import { drawPalm } from "./scene.js?v=28.14.13";
-import { drawPendingBadges } from "./hud.js?v=28.14.13";
-import { drawSea } from "./scene.js?v=28.14.13";
-import { drawStationLabels } from "./identity.js?v=28.14.13";
-import { drawTable } from "./tables.js?v=28.14.13";
-import { drawTeide } from "./scene.js?v=28.14.13";
-import { nightness } from "./scene.js?v=28.14.13";
-import { skyAt } from "./scene.js?v=28.14.13";
+import { H } from "../config.js?v=28.15.0";
+import { W } from "../config.js?v=28.15.0";
+import { WHO_COLOR } from "../config.js?v=28.15.0";
+import { clamp } from "../util.js?v=28.15.0";
+import { lerp } from "../util.js?v=28.15.0";
+import { mixColor } from "../util.js?v=28.15.0";
+import { rr } from "../icons.js?v=28.15.0";
+import { Game } from "../state.js?v=28.15.0";
+import { closeHour } from "../state.js?v=28.15.0";
+import { hamacaCount } from "../state.js?v=28.15.0";
+import { lvl } from "../state.js?v=28.15.0";
+import { weatherToday } from "../state.js?v=28.15.0";
+import { whoName } from "../state.js?v=28.15.0";
+import { HAMACA_POS } from "../world.js?v=28.15.0";
+import { canvas } from "../canvas.js?v=28.15.0";
+import { ctx } from "../canvas.js?v=28.15.0";
+import { view } from "../canvas.js?v=28.15.0";
+import { drawPurchasedProps } from "../scene-extras.js?v=28.15.0";
+import { drawBubble } from "./identity.js?v=28.15.0";
+import { drawClouds } from "./scene.js?v=28.15.0";
+import { drawCustomer } from "./characters.js?v=28.15.0";
+import { drawFloorWorker } from "./characters.js?v=28.15.0";
+import { drawHamaca } from "./tables.js?v=28.15.0";
+import { drawHut } from "./scene.js?v=28.15.0";
+import { drawLights } from "./effects.js?v=28.15.0";
+import { drawNetStatus } from "./hud.js?v=28.15.0";
+import { drawPalm } from "./scene.js?v=28.15.0";
+import { drawPendingBadges } from "./hud.js?v=28.15.0";
+import { drawSea } from "./scene.js?v=28.15.0";
+import { drawStationLabels } from "./identity.js?v=28.15.0";
+import { drawTable } from "./tables.js?v=28.15.0";
+import { drawTeide } from "./scene.js?v=28.15.0";
+import { nightness } from "./scene.js?v=28.15.0";
+import { skyAt } from "./scene.js?v=28.15.0";
+
+/* v28.15: fondo lejano prerrenderizado. Estrellas, sol, La Gomera y el Teide solo
+   dependen de la hora (y de si hay calima), así que se dibujan en un canvas
+   offscreen cada vez que cambia el tramo de hora (0.1 h) en vez de cada frame:
+   decenas de operaciones de path por frame se convierten en una sola copia.
+   Se renderiza a 2x para que siga nítido con la cámara ampliada. */
+let bgFar=null, bgFarKey='';
+function drawFar(c,h,nt,weather){
+  const key=Math.round(h*10)+'|'+(weather==='panza'?'p':'s');
+  if(bgFarKey!==key){
+    bgFarKey=key;
+    const X=-20, WD=1340, HT=335, SS=2;
+    if(!bgFar) bgFar=document.createElement('canvas');
+    bgFar.width=WD*SS; bgFar.height=HT*SS;
+    const x=bgFar.getContext('2d');
+    x.scale(SS,SS); x.translate(-X,0);
+    const sunP=clamp((h-10)/(20.8-10),0,1.1);
+    const sx=lerp(380,140,sunP), sy=lerp(70,330,Math.pow(sunP,1.6));
+    if(weather!=='panza'){
+      x.fillStyle= h>18.5?'rgba(255,170,90,.35)':'rgba(255,240,180,.35)'; x.beginPath(); x.arc(sx,sy,70,0,7); x.fill();
+      x.fillStyle= h>18.5? '#ffb062':'#fff3c4'; x.beginPath(); x.arc(sx,sy,34,0,7); x.fill();
+    }
+    if(nt>0.2){ x.fillStyle=`rgba(255,255,255,${(nt-0.2)*1.2})`; for(let i=0;i<40;i++){ x.fillRect((i*137)%W,(i*71)%260,2,2);} }
+    x.fillStyle=mixColor('#7fa6bf','#3a3557',nt); x.beginPath(); x.moveTo(-20,332); x.quadraticCurveTo(80,290,180,300); x.quadraticCurveTo(260,286,330,332); x.fill();
+    drawTeide(x,h,nt);
+  }
+  c.drawImage(bgFar,-20,0,1340,335);
+}
+
+/* v28.15: motas de la arena prerrenderizadas: son 120 rects idénticos cada frame
+   y no dependen de nada (color fijo), así que se dibujan una sola vez. */
+let bgSpeckles=null;
+function drawSpeckles(c){
+  if(!bgSpeckles){
+    const SS=2;
+    bgSpeckles=document.createElement('canvas');
+    bgSpeckles.width=W*SS; bgSpeckles.height=290*SS;
+    const x=bgSpeckles.getContext('2d');
+    x.scale(SS,SS);
+    x.fillStyle='rgba(255,255,255,.06)';
+    for(let i=0;i<120;i++){ x.fillRect((i*97.3)%W,((i*53.7)%290),2,1); }
+  }
+  c.drawImage(bgSpeckles,0,430,W,290);
+}
 
 export function render(){
   const c=ctx; const h = Game.mode==='service'? Game.hour : (Game.mode==='report'? closeHour() : 11);
@@ -54,19 +98,11 @@ export function render(){
   c.setTransform(view.s,0,0,view.s,view.ox,view.oy);
   const T=Game.t;
   const wind = weather==='viento'?2.2:1;
-  // sol
+  // sol: posición también la usa el reflejo del mar (drawSea)
   const sunP = clamp((h-10)/(20.8-10),0,1.1);
   const sunX = lerp(380,140,sunP), sunY = lerp(70,330,Math.pow(sunP,1.6));
-  if(weather!=='panza'){
-    c.fillStyle= h>18.5?'rgba(255,170,90,.35)':'rgba(255,240,180,.35)'; c.beginPath(); c.arc(sunX,sunY,70,0,7); c.fill();
-    c.fillStyle= h>18.5? '#ffb062':'#fff3c4'; c.beginPath(); c.arc(sunX,sunY,34,0,7); c.fill();
-  }
-  // estrellas
-  if(nt>0.2){ c.fillStyle=`rgba(255,255,255,${(nt-0.2)*1.2})`; for(let i=0;i<40;i++){ const x=(i*137)%W, y=(i*71)%260; c.fillRect(x,y,2,2);} }
-  // La Gomera al fondo (silueta)
-  c.fillStyle=mixColor('#7fa6bf','#3a3557',nt); c.beginPath(); c.moveTo(-20,332); c.quadraticCurveTo(80,290,180,300); c.quadraticCurveTo(260,286,330,332); c.fill();
-  // Teide
-  drawTeide(c,h,nt);
+  // v28.15: estrellas, sol, La Gomera y Teide prerrenderizados (drawFar)
+  drawFar(c,h,nt,weather);
   // nubes
   drawClouds(c,T,weather,nt,wind);
   // mar
@@ -74,7 +110,8 @@ export function render(){
   // arena
   g=c.createLinearGradient(0,420,0,H); g.addColorStop(0,mixColor('#5a4e48','#2a2430',nt)); g.addColorStop(1,mixColor('#2e2826','#1a1618',nt));
   c.fillStyle=g; c.fillRect(-400,420,W+800,H-420+300);
-  c.fillStyle='rgba(255,255,255,.06)'; for(let i=0;i<120;i++){ const x=(i*97.3)%W, y=430+((i*53.7)%290); c.fillRect(x,y,2,1); }
+  // v28.15: motas prerrenderizadas (drawSpeckles)
+  drawSpeckles(c);
   // espuma de orilla
   c.strokeStyle='rgba(255,255,255,.75)'; c.lineWidth=4; c.beginPath();
   for(let x=-400;x<=W+400;x+=20){ const y=422+Math.sin(x*0.02+T*1.4*wind)*4+Math.sin(T*0.7)*3; x===-400?c.moveTo(x,y):c.lineTo(x,y);} c.stroke();

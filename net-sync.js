@@ -1,15 +1,15 @@
 /* Mensajes, snapshot y estado del invitado. Lo importa net.js. */
-import { floorCommand } from './floor-service.js?v=28.14.13';
-import { $, clamp, escapeHtml } from './util.js?v=28.14.13';
-import { Audio } from './audio.js?v=28.14.13';
-import { Game, Net, guestCust, hostLive, isGuest, repairForecast } from './state.js?v=28.14.13';
-import { TABLE_POS } from './world.js?v=28.14.13';
-import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.14.13';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.13';
-import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.13';
-import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.14.13';
-import { netDirty, netSend } from './net-link.js?v=28.14.13';
-import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.14.13';
+import { floorCommand } from './floor-service.js?v=28.15.0';
+import { $, clamp, escapeHtml } from './util.js?v=28.15.0';
+import { Audio } from './audio.js?v=28.15.0';
+import { Game, Net, guestCust, hostLive, isGuest, repairForecast } from './state.js?v=28.15.0';
+import { TABLE_POS } from './world.js?v=28.15.0';
+import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.15.0';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.15.0';
+import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.15.0';
+import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.15.0';
+import { netDirty, netSend } from './net-link.js?v=28.15.0';
+import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.15.0';
 export function onNet(m){
   switch(m.t){
     case 'created': Net.role='host'; Net.me='p1'; Net.code=m.code; renderLobby(); break;
@@ -17,8 +17,13 @@ export function onNet(m){
     case 'error': lobbyError(m.msg); break;
     case 'peer':
       Net.peer=m.on;
-      if(m.on){ toastLocal('Conectado', 'Tu pareja ya está en la partida.', 'good'); hideNetMsg(); if(Game.mode==='service' && Net.pausedByDrop){ Net.pausedByDrop=false; setSpeed(1); } }
-      else { if(Game.mode==='service' && Game.speed&&m.serviceId===Game.floor?.id){ setSpeed(0); Net.pausedByDrop=true; } netLost(`${escapeHtml(Net.names.p2)} se ha desconectado. Puede volver a entrar con el código <b>${Net.code}</b>.`, true); }
+      if(m.on){ toastLocal('Conectado', 'Tu pareja ya está en la partida.', 'good'); hideNetMsg(); if(Game.mode==='service' && Net.pausedByDrop){ Net.pausedByDrop=false; setSpeed(Net.speedBeforeDrop||1); Net.speedBeforeDrop=null; } }
+      else {
+        // v28.15: pausa justa al perder al invitado en pleno servicio y textos por rol
+        if(Game.mode==='service' && Game.speed){ Net.speedBeforeDrop=Game.speed; setSpeed(0); Net.pausedByDrop=true; }
+        if(Net.role==='guest') netLost(`Se ha perdido la conexión con el anfitrión. Reintentando con el código <b>${Net.code}</b>…`, true);
+        else netLost(`${escapeHtml(Net.names.p2)} se ha desconectado. Puede volver a entrar con el código <b>${Net.code}</b>.`, true);
+      }
       renderLobby(); netDirty(); break;
     case 'closed': netLost('Tu pareja ha cerrado la partida.'); break;
     case 'hello': if(Net.role==='host'){ Net.names.p2 = String(m.name||'Jugador 2').slice(0,14); renderLobby(); netDirty(); } break;

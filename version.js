@@ -1,5 +1,5 @@
-export const VERSION='v28.14.13';
-export const LABEL='v28.14.13 · cooperativo a prueba de desconexiones: la partida se reconecta sola al volver al juego, reintentos del invitado y sala autorreparable';
+export const VERSION='v28.15.0';
+export const LABEL='v28.15.0 · reconexión en mitad de la partida con mensajes claros, fondo prerrenderizado y exportar/importar partidas como archivo';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
