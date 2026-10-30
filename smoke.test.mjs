@@ -17,8 +17,8 @@ register('data:text/javascript,' + encodeURIComponent(hook), import.meta.url);
 const intervals = [], clicks = [], errors = [];
 globalThis.window = globalThis;
 globalThis.setInterval = fn => { intervals.push(fn); return 1; };
-const canvas = () => ({ width: 0, height: 0, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {} } });
-const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }) });
+const canvas = () => ({ width: 0, height: 0, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } } });
+const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }) });
 const byId = {}, tabs = el();
 globalThis.document = {
   querySelector: s => (s === '#plan .tabs' ? tabs : s === '#game' ? canvas() : el()),
@@ -39,11 +39,11 @@ globalThis.prompt = (m, d) => d;
 globalThis.Peer = class { emit() { return true; } };
 
 // ---------- carga de módulos reales ----------
-const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=28.22.0');
-await import('./coopbridge.js?v=28.22.0');
-const ui = await import('./ui.js?v=28.22.0'), net = await import('./net.js?v=28.22.0'), sim = await import('./sim.js?v=28.22.0');
-await import('./features.js?v=28.22.0'); await import('./v12.js?v=28.22.0'); await import('./v14.js?v=28.22.0');
-const cfg = await import('./config.js?v=28.22.0');
+const { Game, Net, gameTimers, tableCount } = await import('./state.js?v=29.0.0');
+await import('./coopbridge.js?v=29.0.0');
+const ui = await import('./ui.js?v=29.0.0'), net = await import('./net.js?v=29.0.0'), sim = await import('./sim.js?v=29.0.0');
+await import('./features.js?v=29.0.0'); await import('./v12.js?v=29.0.0'); await import('./v14.js?v=29.0.0');
+const cfg = await import('./config.js?v=29.0.0');
 
 const peer = new globalThis.Peer();
 peer.slot = { on(n, f) { this.h = f; } };
@@ -103,7 +103,7 @@ check('curva afluencia día1 < día10', mirrorDifficultyArrivals(1) < mirrorDiff
 check('días 1–2 sin pico mediodía', mirrorDifficultyPeak(1) === 0 && mirrorDifficultyPeak(2) === 0);
 
 console.log('Curva carrera continua (v28.13)');
-const { simProgressDay } = await import('./state.js?v=28.22.0');
+const { simProgressDay } = await import('./state.js?v=29.0.0');
 function mirrorRepMult(d, rep = 3.6) {
   const day = Math.max(1, Number(d) || 1);
   if (day <= 2) return 0.50 + 0.05 * (day - 1);

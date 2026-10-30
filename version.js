@@ -1,5 +1,5 @@
-export const VERSION='v28.22.0';
-export const LABEL='v28.22.0 · informe con el personal en solitario: fila del jugador y métricas de cada contratado (preparados, vendidos, mesas, terraza) con resumen de plantilla, y el personal fuera de turno ya no aparece parado en el kiosco';
+export const VERSION='v29.0.0';
+export const LABEL='v29.0.0 · cámara unificada: un solo sistema de encuadre para vertical y horizontal, con zoom de kiosco y mesas también en horizontal y margen de playa a ambos lados para que el chiringuito no quede pegado al borde';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

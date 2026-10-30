@@ -20,8 +20,8 @@ register('data:text/javascript,' + encodeURIComponent(hook), import.meta.url);
 
 // ---------- DOM mínimo (como smoke.test.mjs) ----------
 const elements = {};
-const canvas = () => ({ width: 0, height: 0, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {} } });
-const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, querySelectorAll: () => [], setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }) });
+const canvas = () => ({ width: 0, height: 0, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } } });
+const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, querySelectorAll: () => [], setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }) });
 globalThis.window = globalThis;
 globalThis.document = {
   querySelector: s => (elements[s] || (elements[s] = (s === '#game' ? canvas() : el()))),
@@ -36,9 +36,9 @@ globalThis.addEventListener = globalThis.addEventListener || (() => {});
 globalThis.MutationObserver = class { observe() {} };
 
 // ---------- módulos reales ----------
-const { Game, weatherToday, weatherAt, repairForecast } = await import('./state.js?v=28.22.0');
-const plan = await import('./ui-plan.js?v=28.22.0');
-const cfg = await import('./config.js?v=28.22.0');
+const { Game, weatherToday, weatherAt, repairForecast } = await import('./state.js?v=29.0.0');
+const plan = await import('./ui-plan.js?v=29.0.0');
+const cfg = await import('./config.js?v=29.0.0');
 const forecastEl = () => elements['#forecast'].innerHTML;
 
 let ok = 0, ko = 0;

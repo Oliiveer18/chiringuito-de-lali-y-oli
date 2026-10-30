@@ -2,7 +2,7 @@
    icons.js
    Iconos dibujados por código (canvas → dataURL) para HUD y botones.
    ========================================================= */
-import { ITEM_IDS } from './config.js?v=28.22.0';
+import { ITEM_IDS } from './config.js?v=29.0.0';
 
 // Colores [principal, fondo] de productos añadidos por módulos posteriores (v11, v14)
 export const EXTRA = {};
