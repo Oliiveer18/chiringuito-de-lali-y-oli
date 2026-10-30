@@ -1,5 +1,12 @@
 const TYPES=new Set(['clean','escort','takeOrder','pickup','deliver']);
 const ACTIVE=new Set(['queued','walking','working','blocked']);
+/* v28.17: relevo de tareas de limpieza. Antes una tarea pedida por una jugadora era
+   suya para siempre: si su personaje quedaba atascado (p. ej. sin ruta), la mesa
+   se quedaba sucia eternamente y la pareja no podía limpiarla. Ahora, tras
+   GRAB_DELAY segundos sin asignarse otra jugadora puede tomarla, y tras
+   AUTO_GRAB_DELAY la puede tomar el personal (limpiador). */
+const GRAB_DELAY=5;
+const AUTO_GRAB_DELAY=12;
 const number=(x,name)=>{if(!Number.isFinite(x)||x<0)throw Error('Invalid '+name);return x;};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function createService(id,actors,tables){
@@ -15,7 +22,7 @@ export function requestTask(s,{kind,target,requestedBy=null,legs,priority=0}){
  const table=['clean','escort'].includes(kind)?s.tables.find(t=>t.id===target):null;
  if(kind==='clean'&&(!table||table.state!=='dirty'))return null;
  const old=s.tasks.find(t=>t.kind===kind&&t.target===target&&ACTIVE.has(t.state));
- if(old){if(kind==='clean'){if(old.requestedBy&&requestedBy&&old.requestedBy!==requestedBy)return null;if(old.state!=='queued')return !requestedBy||old.actor===requestedBy?old.id:null;}if(requestedBy){old.requestedBy=requestedBy;old.priority=Math.max(old.priority,100);}return old.id;}
+ if(old){if(kind==='clean'){const grabbable=old.state==='queued'&&s.time-old.created>=GRAB_DELAY;if(old.requestedBy&&requestedBy&&old.requestedBy!==requestedBy&&!grabbable)return null;if(old.state!=='queued')return !requestedBy||old.actor===requestedBy?old.id:null;}if(requestedBy){old.requestedBy=requestedBy;old.priority=Math.max(old.priority,100);}else if(kind==='clean'&&old.state==='queued'&&old.requestedBy&&s.time-old.created>=AUTO_GRAB_DELAY){old.requestedBy=null;}return old.id;}
  if(kind==='escort'&&(!table||table.state!=='free'||table.claim))return null;
  const id=s.id+':task:'+ ++s.sequence;
  if(kind==='escort'){table.state='reserved';table.claim=id;}

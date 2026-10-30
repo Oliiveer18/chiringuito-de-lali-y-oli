@@ -1,10 +1,11 @@
 /* Acciones pendientes del invitado. Lo importa net.js. */
-import { Game, Net } from './state.js?v=28.16.0';
-import { netAct } from './net-link.js?v=28.16.0';
+import { Game, Net } from './state.js?v=28.17.0';
+import { netAct } from './net-link.js?v=28.17.0';
 export const REJECT_MSG = {
   busy:'Tu puesto ya estaba ocupado con otro pedido.',
   gone:'Ese cliente ya no esperaba el pedido.',
   clean:'Esa mesa ya estaba limpia.',
+  taken:'Tu pareja ya había pedido esa mesa. Si no avanza, en unos segundos podrás tomarla tú.',
 };
 export function pendHas(kind,key){ for(const p of Net.pend.values()) if(p.kind===kind && p.key===key) return true; return false; }
 export function guestServe(cu){
