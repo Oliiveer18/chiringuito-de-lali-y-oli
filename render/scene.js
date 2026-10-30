@@ -1,22 +1,22 @@
-import { drawFloorWorker } from "./characters.js?v=28.21.0";
+import { drawFloorWorker } from "./characters.js?v=28.22.0";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { floorActive } from "../floor-service.js?v=28.21.0";
-import { STATION_COLOR } from "../config.js?v=28.21.0";
-import { W } from "../config.js?v=28.21.0";
-import { stationOf } from "../config.js?v=28.21.0";
-import { clamp } from "../util.js?v=28.21.0";
-import { lerp } from "../util.js?v=28.21.0";
-import { mixColor } from "../util.js?v=28.21.0";
-import { drawIcon } from "../icons.js?v=28.21.0";
-import { rr } from "../icons.js?v=28.21.0";
-import { Game } from "../state.js?v=28.21.0";
-import { Net } from "../state.js?v=28.21.0";
-import { isCoop } from "../state.js?v=28.21.0";
-import { COUNTER, HUT_BAR_FLOOR_Y } from "../world.js?v=28.21.0";
-import { STATION_ZONE } from "./identity.js?v=28.21.0";
-import { drawPerson } from "./characters.js?v=28.21.0";
-import { drawStationProps } from "./items.js?v=28.21.0";
-import { drawStationWork } from "./items.js?v=28.21.0";
+import { floorActive } from "../floor-service.js?v=28.22.0";
+import { STATION_COLOR } from "../config.js?v=28.22.0";
+import { W } from "../config.js?v=28.22.0";
+import { stationOf } from "../config.js?v=28.22.0";
+import { clamp } from "../util.js?v=28.22.0";
+import { lerp } from "../util.js?v=28.22.0";
+import { mixColor } from "../util.js?v=28.22.0";
+import { drawIcon } from "../icons.js?v=28.22.0";
+import { rr } from "../icons.js?v=28.22.0";
+import { Game } from "../state.js?v=28.22.0";
+import { Net } from "../state.js?v=28.22.0";
+import { isCoop } from "../state.js?v=28.22.0";
+import { COUNTER, HUT_BAR_FLOOR_Y } from "../world.js?v=28.22.0";
+import { STATION_ZONE } from "./identity.js?v=28.22.0";
+import { drawPerson } from "./characters.js?v=28.22.0";
+import { drawStationProps } from "./items.js?v=28.22.0";
+import { drawStationWork } from "./items.js?v=28.22.0";
 
 export const SKY_KEYS=[
   {h:9, top:'#7cc7ea',bot:'#d9f1fb'},
@@ -142,6 +142,7 @@ export function drawHut(c,T,h,nt,wind){
   if(Game.staff.cocinero&&!floorActive('carmela')){ drawPerson(c,95+Math.sin(T*2)*8,HUT_BAR_FLOOR_Y,{shirt:'#ffffff',skin:'#e0a97e',hat:'chef',type:'staff'}); if(Game.mode==='service'&&Game.slots.some(s=>s.cust)){ c.fillStyle='rgba(255,255,255,.4)'; for(let i=0;i<3;i++){ c.beginPath(); c.arc(130+i*10+Math.sin(T*3+i)*6, 380-((T*30+i*20)%50), 6,0,7); c.fill(); } } }
   // Interior workers are drawn before the counter front.
 if(Game.mode==='service'&&Game.floor) for(const a of Game.floor.actors){
+  if(a.offDuty&&!a.task&&!a.returning) continue;
   if(a.player&&!a.task&&!a.returning&&Math.hypot(a.x-a.home.x,a.y-a.home.y)<5) drawFloorWorker(c,a,T);
 }
   // barra

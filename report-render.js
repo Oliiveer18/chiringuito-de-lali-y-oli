@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.21.0';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.21.0';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.21.0';
-import { rr } from './icons.js?v=28.21.0';
-import { Audio } from './audio.js?v=28.21.0';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=28.21.0';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.21.0';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.21.0';
-import { netAct, netDirty } from './net.js?v=28.21.0';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.21.0';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.22.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.22.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.22.0';
+import { rr } from './icons.js?v=28.22.0';
+import { Audio } from './audio.js?v=28.22.0';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=28.22.0';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, staffOnDuty } from './state.js?v=28.22.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.22.0';
+import { netAct, netDirty } from './net.js?v=28.22.0';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.22.0';
 
 export function endDay(){
   Game.mode='report';
@@ -115,7 +115,7 @@ export function reportStatsHtml(s, m){
       ${acc.spoilLines.length?`<p>Se ha estropeado: <b>${acc.spoilLines.join(', ')}</b> (${eur(acc.spoilVal)}).</p>`:''}
       ${notes.map(n=>n).join('')}
     </div>
-    ${capitalNote(s)}${isCoop()?teamHtml(s):''}`;
+    ${capitalNote(s)}${teamPanelHtml(s,m)}`;
 }
 export function reviewsWrapHtml(m){ return `<div class="reviews">${reviewsSectionHtml(m)}</div>`; }
 export function revSigOf(m){ return m ? m.day+'#'+m.respCount+'#'+m.cards.map(c=>c.vid+':'+(c.resp||0)).join(',') : ''; }
@@ -177,6 +177,49 @@ export function showReportUI(){
   if(m && m.day===Game.day) Net.lastRevSig=revSigOf(m);
   hideAll(); $('#hud').classList.add('hidden'); $('#stockbar').classList.add('hidden'); $('#report').classList.add('show');
   updateReadyUI();
+}
+/* v28.22: el informe de fin de jornada también muestra al personal en solitario:
+   cada contratado con sus números (preparados, vendidos, mesas, terraza) y un
+   resumen general de plantilla. En cooperativo se añade bajo el equipo. */
+const STAFF_WHO={camarero:'yeray',cocinero:'carmela',limpiador:'acaymo',terraza:'terraza'};
+const STAFF_LABEL={camarero:'Atención de cola',cocinero:'Preparación',limpiador:'Limpieza',terraza:'Servicio de terraza'};
+const STAFF_COLOR={camarero:'#0f8b8d',cocinero:'#e8603c',limpiador:'#6b7f8e',terraza:'#b07a1e'};
+export function staffRowsHtml(s){
+  const team=(Game.upgrades.workforce&&Game.upgrades.workforce.team)||{};
+  let h='';
+  for(const [role,e] of Object.entries(team)){
+    if(!Game.staff[role])continue;
+    const b=(s.by&&s.by[STAFF_WHO[role]])||{};
+    const name=(e&&e.name)||STAFF_WHO[role];
+    let stats;
+    if(role==='terraza') stats=`<span><b>${b.escort||0}</b> acompañados</span><span><b>${b.orders||0}</b> comandas</span><span><b>${b.delivered||0}</b> servidos</span>`;
+    else if(role==='limpiador') stats=`<span><b>${b.clean||0}</b> mesas limpiadas</span>`;
+    else stats=`<span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span>${role==='camarero'?`<span><b>${s.staffClients||0}</b> clientes</span>`:''}`;
+    h+=`<div class="mate"><div class="mate-h"><span class="dot" style="background:${STAFF_COLOR[role]}"></span><b>${escapeHtml(name)}</b><span class="tag">${STAFF_LABEL[role]}</span></div><div class="mate-s">${stats}</div></div>`;
+  }
+  return h;
+}
+export function teamPanelHtml(s,m){
+  const rows=staffRowsHtml(s);
+  const team=(Game.upgrades.workforce&&Game.upgrades.workforce.team)||{};
+  if(!rows){
+    if(isCoop()) return teamHtml(s);
+    const b=(s.by&&s.by.p1)||{};
+    return `<div class="team"><p class="eyebrow">El equipo</p><div class="mate"><div class="mate-h"><span class="dot" style="background:#0f8b8d"></span><b>Tú</b><span class="tag">Barra y sala</span></div><div class="mate-s"><span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span><span><b>${b.clean||0}</b> mesas</span></div></div><p class="team-note">Sin personal contratado. Con el equipo del plan puedes contratar a camareros, cocineros, limpiadores y personal de terraza.</p></div>`;
+  }
+  const acc=(m&&m.acc)||{};
+  let hired=0,onDuty=0,items=0,clean=0,ter=0;
+  for(const [role] of Object.entries(team)){
+    if(!Game.staff[role])continue;
+    hired++; if(staffOnDuty(role))onDuty++;
+    const b=(s.by&&s.by[STAFF_WHO[role]])||{};
+    items+=b.items||0; clean+=b.clean||0; ter+=(b.escort||0)+(b.orders||0)+(b.delivered||0);
+  }
+  const sum=`<p class="team-note">Resumen del personal: <b>${hired}</b> contratado${hired>1?'s':''} · <b>${onDuty}</b> de turno hoy · sueldos <b>${eur(acc.wage||0)}</b>. Han preparado <b>${items}</b> producto${items!==1?'s':''}, limpiado <b>${clean}</b> mesa${clean!==1?'s':''} y atendido la terraza en <b>${ter}</b> momento${ter!==1?'s':''}.</p>`;
+  if(isCoop()) return teamHtml(s)+`<div class="team"><p class="eyebrow">El personal</p>${rows}${sum}</div>`;
+  const b=(s.by&&s.by.p1)||{};
+  const you=`<div class="mate"><div class="mate-h"><span class="dot" style="background:#0f8b8d"></span><b>Tú</b><span class="tag">Barra y sala</span></div><div class="mate-s"><span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span><span><b>${b.clean||0}</b> mesas</span></div></div>`;
+  return `<div class="team"><p class="eyebrow">El equipo</p>${you}${rows}${sum}</div>`;
 }
 export function teamHtml(s){
   const row=(w)=>{ const b=s.by[w]||{items:0,rev:0,clean:0}; const st=Net.roles[w];

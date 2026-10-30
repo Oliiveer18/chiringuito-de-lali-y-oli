@@ -1,5 +1,5 @@
-export const VERSION='v28.21.0';
-export const LABEL='v28.21.0 · ligas más claras con barras de puntos por jornada, sin sustituciones de género: si no queda lo que pide el cliente se marcha, clientes perdidos al cierre bien contados y género estropeado reflejado en la caja del día';
+export const VERSION='v28.22.0';
+export const LABEL='v28.22.0 · informe con el personal en solitario: fila del jugador y métricas de cada contratado (preparados, vendidos, mesas, terraza) con resumen de plantilla, y el personal fuera de turno ya no aparece parado en el kiosco';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

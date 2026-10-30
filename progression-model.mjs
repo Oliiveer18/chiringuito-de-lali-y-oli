@@ -1,5 +1,5 @@
 // Progreso diario v23. Las tres ligas económicas se calculan en market-model.
-import * as R from './market-model.mjs?v=28.21.0';
+import * as R from './market-model.mjs?v=28.22.0';
 export const areas=R.AREAS,tiers=R.TIERS;
 export const num=x=>Number.isFinite(x)?x:0;
 const cap=(x,a,b)=>Math.max(a,Math.min(b,x));
