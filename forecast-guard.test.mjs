@@ -1,4 +1,4 @@
-/* Prueba de regresión v28.14.8: el plan de apertura no puede romperse aunque el
+/* Prueba de regresión v28.14.9: el plan de apertura no puede romperse aunque el
    pronóstico llegue vacío, corto o con claves retiradas (partida antigua o coop).
    Reproduce el TypeError "Cannot read properties of undefined (reading 'label')"
    de ui-plan.js:32 y verifica las defensas de state.js. Uso: node forecast-guard.test.mjs */
@@ -36,9 +36,9 @@ globalThis.addEventListener = globalThis.addEventListener || (() => {});
 globalThis.MutationObserver = class { observe() {} };
 
 // ---------- módulos reales ----------
-const { Game, weatherToday, weatherAt, repairForecast } = await import('./state.js?v=28.14.8');
-const plan = await import('./ui-plan.js?v=28.14.8');
-const cfg = await import('./config.js?v=28.14.8');
+const { Game, weatherToday, weatherAt, repairForecast } = await import('./state.js?v=28.14.9');
+const plan = await import('./ui-plan.js?v=28.14.9');
+const cfg = await import('./config.js?v=28.14.9');
 const forecastEl = () => elements['#forecast'].innerHTML;
 
 let ok = 0, ko = 0;

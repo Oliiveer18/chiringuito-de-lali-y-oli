@@ -1,9 +1,12 @@
-import { scheduleViewportResize, view } from './canvas.js?v=28.14.8';
-import { W, H } from './config.js?v=28.14.8';
-import { Game } from './state.js?v=28.14.8';
+import { scheduleViewportResize, view } from './canvas.js?v=28.14.9';
+import { W, H } from './config.js?v=28.14.9';
+import { Game } from './state.js?v=28.14.9';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
-const CAM_SPAN=700,CAM_CX={barra:290,mesas:930};
+/* v28.14.9: CAM_CX.barra 290→270 centra el kiosco (su eje visual: pico del tejado y
+   rótulo están en x=270). Ajuste mínimo: la vista se mueve 20 unidades de mundo
+   (~3% del encuadre) y el kiosco queda con margen simétrico en vez de pegado a la izquierda. */
+const CAM_SPAN=700,CAM_CX={barra:270,mesas:930};
 const cam={mode:'todo'};
 try{const m=sessionStorage.getItem('lali-oli.cam');if(m==='barra'||m==='mesas')cam.mode=m;}catch(e){}
 let camInputsKey='';

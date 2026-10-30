@@ -1,15 +1,16 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.8';
-import { Audio } from './audio.js?v=28.14.8';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.8';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.8';
-import { showReportUI } from './report.js?v=28.14.8';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.8';
-import { onNet } from './net-sync.js?v=28.14.8';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.8';
+import { $ } from './util.js?v=28.14.9';
+import { Audio } from './audio.js?v=28.14.9';
+import { Game, NET_SIM, Net } from './state.js?v=28.14.9';
+import { pendingIdx, slotOf } from './sim.js?v=28.14.9';
+import { showReportUI } from './report.js?v=28.14.9';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.9';
+import { onNet } from './net-sync.js?v=28.14.9';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.9';
 import {
-  peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus
-} from './net-rtc.js?v=28.14.8';
+  peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
+  GUEST_RETRY, nextGuestRetryMs
+} from './net-rtc.js?v=28.14.9';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -18,8 +19,7 @@ const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 function newCode(){ let c = ''; for (let i = 0; i < 4; i++) c += LETTERS[Math.floor(Math.random() * LETTERS.length)]; return c; }
 
 const PEERJS_CLOUDS = [
-  { host: '0.peerjs.com', port: 443, path: '/', secure: true },
-  { host: 'peerjs-server.herokuapp.com', port: 443, path: '/', secure: true }
+  { host: '0.peerjs.com', port: 443, path: '/', secure: true }
 ];
 const CLOUD_KEY = 'lali-oli.peerjs-cloud';
 let cloudIdx = 0;
@@ -81,6 +81,9 @@ function attachConn(c, { onOpen, onFail }){
     Net.peer = false;
     onNet({ t: 'peer', on: false });
   });
+  // v28.14.9: PeerJS no emite 'failed' en DataConnection; sin esto el reintento
+  // entre servidores y la recuperación del invitado nunca se disparaban.
+  c.on('error', () => { if (!opened) onFail && onFail(); });
   c.on('failed', () => {
     if (!opened) onFail && onFail();
   });
@@ -124,8 +127,15 @@ function hostStart(attempt = 0){
   const code = newCode();
   Net.role = 'host'; Net.me = 'p1'; Net.code = code; Net.signalingReady = false;
   lobbyStatus('Creando sala…');
-  const peerId = hostPeerId(code);
-  makePeer(peerId, {
+  hostListen(code);
+}
+
+/** v28.14.9: la sala del anfitrión se reconstruye sola con el MISMO código si el
+    servidor de señalización suelta la conexión (típico al pasar el juego a
+    segundo plano en el móvil para mandar el código). Así el invitado no
+    necesita que se genere una sala nueva. */
+function hostListen(code, attempt = 0){
+  makePeer(hostPeerId(code), {
     open: () => {
       Net.signalingReady = true;
       saveCloudIdx();
@@ -141,14 +151,30 @@ function hostStart(attempt = 0){
     },
     error: e => {
       if (e && e.type === 'unavailable-id' && attempt < 6) {
-        lobbyStatus('Código ocupado, generando otro…');
-        hostStart(attempt + 1);
+        // el registro anterior puede tardar unos segundos en expirar en el servidor
+        lobbyStatus('Código ocupado, reactivando sala…');
+        setTimeout(() => { if (Net.role === 'host' && Net.code === code) hostListen(code, attempt + 1); }, 1500);
         return;
       }
       Net.signalingReady = false;
       lobbyError(peerErrorMessage(e, 'host'));
     }
   });
+  const thisPeer = peer;
+  peer.on('close', () => {
+    // solo si este peer seguía siendo el actual: makePeer destruye los anteriores a propósito
+    if (peer !== thisPeer || Net.role !== 'host' || Net.code !== code) return;
+    setTimeout(() => { if (Net.role === 'host' && Net.code === code) hostListen(code); }, 1500);
+  });
+}
+
+/** v28.14.9: el invitado reintenta la conexión mientras espera. Antes, un único
+    peer.connect fallido (anfitrión aún no registrado, o su sala reactivándose
+    tras pasar el juego a segundo plano) dejaba el "Buscando anfitrión…"
+    para siempre sin volver a intentarlo. */
+let guestRetryTimer = null, guestRetries = 0;
+function stopGuestRetry(){
+  if (guestRetryTimer) { clearTimeout(guestRetryTimer); guestRetryTimer = null; }
 }
 
 function guestJoin(code, cloudTry = 0){
@@ -156,39 +182,63 @@ function guestJoin(code, cloudTry = 0){
   cloudIdx = cloudTry;
   const gen = ++joinGen;
   clearGuestSearch();
+  stopGuestRetry();
+  guestRetries = 0;
   lobbyStatus('Preparando conexión…');
   const targetId = hostPeerId(code);
+  const connectGuest = () => {
+    if (gen !== joinGen || !peer || peer.destroyed) return;
+    conn = peer.connect(targetId, connectOptions());
+    attachConn(conn, {
+      onOpen: () => {
+        if (gen !== joinGen) return;
+        stopGuestRetry();
+        Net.peer = true;
+        renderLobby();
+        lobbyStatus('');
+        netSend({ t: 'hello', name: Net.names.p2 });
+        onNet({ t: 'peer', on: true });
+      },
+      onFail: () => {
+        if (gen !== joinGen) return;
+        clearGuestSearch();
+        if (cloudTry + 1 < PEERJS_CLOUDS.length) {
+          lobbyStatus('No encontrado en este servidor, probando otro…');
+          guestJoin(code, cloudTry + 1);
+          return;
+        }
+        scheduleGuestRetry();
+      }
+    });
+  };
+  const scheduleGuestRetry = () => {
+    if (gen !== joinGen) return;
+    if (guestRetries >= GUEST_RETRY.maxAttempts) {
+      clearGuestSearch();
+      lobbyError(peerErrorMessage({ type: 'peer-unavailable' }, 'guest'));
+      return;
+    }
+    stopGuestRetry();
+    const delay = nextGuestRetryMs(guestRetries);
+    guestRetryTimer = setTimeout(() => {
+      if (gen !== joinGen || Net.role !== 'guest') return;
+      guestRetries++;
+      connectGuest();
+    }, delay);
+  };
   makePeer(null, {
     open: () => {
       if (gen !== joinGen) return;
       saveCloudIdx();
       startGuestSearch(cloudTry);
-      conn = peer.connect(targetId, connectOptions());
-      attachConn(conn, {
-        onOpen: () => {
-          if (gen !== joinGen) return;
-          Net.peer = true;
-          renderLobby();
-          lobbyStatus('');
-          netSend({ t: 'hello', name: Net.names.p2 });
-          onNet({ t: 'peer', on: true });
-        },
-        onFail: () => {
-          if (gen !== joinGen) return;
-          clearGuestSearch();
-          if (cloudTry + 1 < PEERJS_CLOUDS.length) {
-            lobbyStatus('No encontrado en este servidor, probando otro…');
-            guestJoin(code, cloudTry + 1);
-            return;
-          }
-          lobbyError(peerErrorMessage({ type: 'peer-unavailable' }, 'guest'));
-        }
-      });
+      connectGuest();
     },
     error: e => {
       if (gen !== joinGen) return;
       if (isTransientJoinPeerError(e)) {
+        // el anfitrión puede (re)registrarse en cualquier momento: seguir buscando
         startGuestSearch(cloudTry);
+        scheduleGuestRetry();
         return;
       }
       if (cloudIdx + 1 < PEERJS_CLOUDS.length && (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error')) {
@@ -199,8 +249,15 @@ function guestJoin(code, cloudTry = 0){
         return;
       }
       clearGuestSearch();
+      stopGuestRetry();
       lobbyError(peerErrorMessage(e, 'guest'));
     }
+  });
+  const thisPeer = peer;
+  peer.on('close', () => {
+    // solo si este peer seguía siendo el actual: reconstruir el enlace del invitado
+    if (peer !== thisPeer || gen !== joinGen) return;
+    setTimeout(() => { if (gen === joinGen && Net.role === 'guest' && Net.code === code) guestJoin(code, cloudTry); }, 1500);
   });
 }
 
@@ -227,6 +284,7 @@ export function netDirty(){ Net.sendT = 1e9; Net.revDirty = true; }
 export function leaveCoop(){
   joinGen++;
   clearGuestSearch();
+  stopGuestRetry();
   Net.signalingReady = false;
   if (conn) { try { conn.close(); } catch (e) {} conn = null; }
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
@@ -236,6 +294,7 @@ export function leaveCoop(){
 export function goSolo(){
   joinGen++;
   clearGuestSearch();
+  stopGuestRetry();
   if (conn) { try { conn.close(); } catch (e) {} conn = null; }
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
   Net.role = 'solo'; Net.me = 'p1'; Net.peer = false;
@@ -249,3 +308,10 @@ export function goSolo(){
   else if (Game.mode === 'report') showReportUI();
   else if (Game.mode === 'lobby') { hideAll(); Game.mode = 'title'; $('#title').classList.add('show'); }
 }
+
+// v28.14.9: al volver a primer plano (móvil en segundo plano), reanimar el enlace
+// de señalización si el servidor lo soltó mientras la pestaña estaba dormida.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !peer) return;
+  if (peer.disconnected && !peer.destroyed) { try { peer.reconnect(); } catch (e) {} }
+});

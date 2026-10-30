@@ -49,7 +49,15 @@ export function isTransientJoinPeerError(e){
 export function guestSearchStatus(cloudTry, cloudsTotal, attemptSec){
   const srv = cloudsTotal > 1 ? ` (servidor ${cloudTry + 1}/${cloudsTotal})` : '';
   const wait = attemptSec > 0 ? ` · ${attemptSec}s` : '';
-  return `Buscando anfitrión…${srv}${wait} Comprueba el código o espera a que pulse «Crear partida».`;
+  return `Buscando anfitrión…${srv}${wait} Comprueba el código. Si tu pareja tiene el juego en segundo plano, que lo abra un momento.`;
+}
+
+/** Reintento del invitado: el anfitrión puede (re)registrarse en cualquier momento
+    (móvil en segundo plano, reconexión del servidor de señalización), así que
+    peer-unavailable nunca es definitivo mientras el jugador siga en la sala. */
+export const GUEST_RETRY = { firstMs: 3000, maxMs: 6000, maxAttempts: 40 };
+export function nextGuestRetryMs(attempt){
+  return Math.min(GUEST_RETRY.firstMs + Math.min(Math.max(attempt, 0), 10) * 300, GUEST_RETRY.maxMs);
 }
 
 export function peerErrorMessage(e, role = 'guest'){
