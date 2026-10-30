@@ -1,6 +1,6 @@
-import { Game, Net } from './state.js?v=28.19.0';
-import { setSpeed, toastLocal } from './ui.js?v=28.19.0';
-import { netLostInfo } from './net-lobby.js?v=28.19.0';
+import { Game, Net } from './state.js?v=28.20.0';
+import { setSpeed, toastLocal } from './ui.js?v=28.20.0';
+import { netLostInfo } from './net-lobby.js?v=28.20.0';
 const Base=window.Peer;
 let sessionToken;try{sessionToken=sessionStorage.getItem('lali-oli.peer-token');if(!sessionToken){sessionToken=crypto.randomUUID();sessionStorage.setItem('lali-oli.peer-token',sessionToken);}}catch(e){sessionToken=String(Date.now())+Math.random();}
 function notice(text){const el=document.querySelector('#lobby-status');if(el)el.textContent=text;}

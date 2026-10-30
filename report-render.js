@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.19.0';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.19.0';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.19.0';
-import { rr } from './icons.js?v=28.19.0';
-import { Audio } from './audio.js?v=28.19.0';
-import { reputation } from './ratings-model.mjs?v=28.19.0';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.19.0';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.19.0';
-import { netAct, netDirty } from './net.js?v=28.19.0';
-import { dayStarsSummary, buildRevModel, opinionLine, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.19.0';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=28.20.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=28.20.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=28.20.0';
+import { rr } from './icons.js?v=28.20.0';
+import { Audio } from './audio.js?v=28.20.0';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=28.20.0';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages } from './state.js?v=28.20.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=28.20.0';
+import { netAct, netDirty } from './net.js?v=28.20.0';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=28.20.0';
 
 export function endDay(){
   Game.mode='report';
@@ -51,13 +51,49 @@ export function reportStatsHtml(s, m){
   const acc=m.acc;
   const repDelta=Game.rep-acc.repStart;
   const net=operatingResult(s,acc);
+  const pub=dayStarsSummary(s);
+  const sat=experienceSummary(s.visits||[]);
+  const dist=pub.dist||{1:0,2:0,3:0,4:0,5:0};
+  const maxD=Math.max(1,...Object.values(dist));
+  const hist=[5,4,3,2,1].map(k=>{
+    const n=dist[k]||0;
+    return `<div class="rep-hist-row" title="${n} reseñas de ${k} estrella${k>1?'s':''}"><span class="rep-hist-k">${k}★</span><span class="rep-hist-track"><i class="rep-hist-fill h${k}" style="width:${Math.round(n/maxD*100)}%"></i></span><span class="rep-hist-n">${n}</span></div>`;
+  }).join('');
+  const starBar=avg=>{const w=Math.round(clamp(avg||0,0,5)/5*100);return `<span class="rep-stars"><span class="rep-stars-bg">★★★★★</span><span class="rep-stars-fg" style="width:${w}%">★★★★★</span></span>`;};
+  const kpi=(k,v,cls='')=>`<div class="rep-kpi"><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`;
+  const tips=(s.tips||0)+(s.tipsP||0);
+  const notes=[];
+  if(s.lost) notes.push(`<p>Clientes perdidos: <b>${[s.lostPrice?s.lostPrice+' por precios altos':'',s.lostQueue?s.lostQueue+' por cola llena':'',s.lostPatience?s.lostPatience+' por esperar demasiado':'',s.lostStock?s.lostStock+' porque no quedaba género':''].filter(Boolean).join(', ')}</b>.</p>`);
+  if(s.regVisits) notes.push(`<p>Habituales hoy: <b>${s.regVisits} visita${s.regVisits>1?'s':''}</b>. Atendedlos bien y volverán más fieles.</p>`);
+  if(Game.buzz>0.03) notes.push(`<p>Boca a boca: los habituales contentos traen amigos (<b>+${Math.round(Game.buzz*12)}%</b> de afluencia mañana).</p>`);
+  if((s.beachRentals||0)>0) notes.push(`<p>Alquileres de hamacas: <b>${s.beachRentals}</b>.</p>`);
   return `
-    <div class="kpis">
-      <div class="kpi"><div class="k">Atendidos</div><div class="v">${s.served}</div></div>
-      <div class="kpi"><div class="k">Perdidos</div><div class="v">${s.lost}</div></div>
-      <div class="kpi"><div class="k">Reputación del kiosco</div><div class="v" style="color:#d98a12">${Game.rep.toFixed(1)} <small style="font-size:14px;color:${repDelta>=0?'#3f8a3a':'#c73e2a'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</small></div></div>
+    <section class="rep-hero">
+      <div class="rep-hero-main">
+        <p class="eyebrow">Valoración del día</p>
+        <div class="rep-hero-avg">
+          <span class="rep-avg-n">${pub.count?pub.avg.toFixed(1):'—'}</span>
+          <div class="rep-avg-r">
+            ${starBar(pub.avg)}
+            <span class="rep-avg-c">${pub.count?pub.count+' valoraciones'+(m.cards.length?' · '+m.cards.length+' con comentario':''):'Sin valoraciones todavía'}</span>
+          </div>
+        </div>
+        <p class="rep-hero-note">${pub.count?'La media pública de hoy marca la reputación del kiosco.':'Atiende bien la barra y la terraza para ganarte las primeras valoraciones.'}</p>
+      </div>
+      <div class="rep-hist" aria-label="Reparto de reseñas">${hist}</div>
+    </section>
+    <div class="rep-mini">
+      <div class="rep-mini-i"><span class="k">Satisfacción interna</span><span class="v">${sat.avg==null?'—':sat.avg.toFixed(2)+' / 5'}</span></div>
+      <div class="rep-mini-i"><span class="k">Reputación del kiosco</span><span class="v">${Game.rep.toFixed(2)} <b class="${repDelta>=0?'pos':'neg'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</b></span></div>
+      <div class="rep-mini-i"><span class="k">Resultado del día</span><span class="v ${net>=0?'pos':'neg'}">${net>=0?'+':'−'}${eur(Math.abs(net))}</span></div>
     </div>
-    <p class="muted" style="margin:0 24px 12px">${opinionLine(s)} Alquileres de hamacas: ${s.beachRentals||0}.</p>
+    <div class="rep-kpis">
+      ${kpi('Atendidos',s.served)}
+      ${kpi('Perdidos',s.lost,s.lost?'neg':'')}
+      ${kpi('Propinas',tips>0.01?'+'+eur(tips):'—',tips>0.01?'pos':'')}
+      ${kpi('En caja',eur(Game.money),Game.money<0?'neg':'')}
+    </div>
+    <p class="rep-sec-h">Caja del día</p>
     <div class="stats">
       <span>Ventas en barra</span><span class="pos">+${eur(s.revenue-s.tips-(s.tipsP||0))}</span>
       ${s.tips>0.5?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(s.tips)}</span>`:''}
@@ -72,11 +108,12 @@ export function reportStatsHtml(s, m){
       ${ledgerHtml(s)}<span class="total">Resultado operativo (base caja)</span><span class="total ${net>=0?'pos':'neg'}">${net>=0?'+':'−'}${eur(Math.abs(net))}</span>
       <span class="total">En caja</span><span class="total">${eur(Game.money)}</span>
     </div>
-    <div style="padding:0 24px 12px;display:flex;flex-wrap:wrap;gap:6px">${acc.soldStr||'<span class="muted" style="margin:0">Hoy no se vendió nada.</span>'}</div>
-    ${acc.spoilLines.length?`<p class="muted" style="margin:0 24px 12px">Se ha estropeado: ${acc.spoilLines.join(', ')} (${eur(acc.spoilVal)}).</p>`:''}
-    ${s.lost?`<p class="muted" style="margin:0 24px 12px">Clientes perdidos: ${[s.lostPrice?s.lostPrice+' por precios altos':'',s.lostQueue?s.lostQueue+' por cola llena':'',s.lostPatience?s.lostPatience+' por esperar demasiado':'',s.lostStock?s.lostStock+' porque no quedaba género':''].filter(Boolean).join(', ')}.</p>`:''}
-    ${s.regVisits?`<p class="muted" style="margin:0 24px 12px">Habituales hoy: ${s.regVisits} visita${s.regVisits>1?'s':''}. Atendedlos bien y volverán más fieles.</p>`:''}
-    ${Game.buzz>0.03?`<p class="muted" style="margin:0 24px 12px">Boca a boca: los habituales contentos traen amigos (+${Math.round(Game.buzz*12)}% de afluencia mañana).</p>`:''}
+    <p class="rep-sec-h">Detalles del día</p>
+    <div class="rep-notes">
+      <div class="rep-tags">${acc.soldStr||'<span class="muted" style="margin:0">Hoy no se vendió nada.</span>'}</div>
+      ${acc.spoilLines.length?`<p>Se ha estropeado: <b>${acc.spoilLines.join(', ')}</b> (${eur(acc.spoilVal)}).</p>`:''}
+      ${notes.map(n=>n).join('')}
+    </div>
     ${capitalNote(s)}${isCoop()?teamHtml(s):''}`;
 }
 export function reviewsWrapHtml(m){ return `<div class="reviews">${reviewsSectionHtml(m)}</div>`; }
@@ -151,20 +188,24 @@ export function teamHtml(s){
 }
 
 export function reviewsSectionHtml(m){
+  const left=REV_RESP_MAX-m.respCount;
+  const ava=name=>{const h=String(name||'?').split('').reduce((a,c)=>((a*31)+c.charCodeAt(0))%997,7);const hue=h%360;return `style="background:hsl(${hue} 42% 87%);color:hsl(${hue} 48% 26%)"`;};
   const cards=m.cards.map(c=>{
+    const st=c.stars>=4?'sc-good':c.stars===3?'sc-mid':'sc-bad';
     const loc=c.town?`<span class="rev-loc">${escapeHtml(c.town)}</span>`:'';
-    const head=`<div class="rev-head"><div class="rev-who"><b>${escapeHtml(c.name)}</b>${loc}</div><span class="rev-stars">${stars(c.stars)}</span></div>`;
+    const head=`<div class="rev-h"><b>${escapeHtml(c.name)}</b>${loc}<span class="rev-stars ${st}" title="${c.stars} de 5"><b>${'★'.repeat(c.stars)}</b><span>${'☆'.repeat(5-c.stars)}</span></span></div>`;
     const body=`<p class="rev-text">${c.text}</p>`;
     let foot='';
     if(c.resp){
-      foot=`<p class="muted">Respuesta enviada: ${c.resp==='invita'?'invitación':"disculpas"} (+${c.respGain} de reputación).</p>`;
+      foot=`<p class="rev-sent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>${c.resp==='invita'?'Invitación enviada':'Disculpas enviadas'} · +${c.respGain} de reputación</p>`;
     } else if(c.stars<=2){
       foot=`<div class="net-actions">
-        <button class="btn" onclick="window.__respondReview('${c.vid}','disculpa')">Disculparte</button>
-        <button class="btn" onclick="window.__respondReview('${c.vid}','invita')">Invitar (${REV_INVITE_COST} €)</button>
+        <button class="btn sm" onclick="window.__respondReview('${c.vid}','disculpa')">Disculparse</button>
+        <button class="btn sm teal" onclick="window.__respondReview('${c.vid}','invita')">Invitar a volver · ${REV_INVITE_COST} €</button>
       </div>`;
     }
-    return `<div class="review">${head}${body}${foot}</div>`;
+    return `<article class="review"><span class="rev-ava" ${ava(c.name)}>${escapeHtml(String(c.name||'?').charAt(0).toUpperCase())}</span><div class="rev-b">${head}${body}${foot}</div></article>`;
   }).join('');
-  return `<p class="eyebrow">Reseñas del día</p>${cards||'<p class="muted">Hoy no quedó ninguna reseña.</p>'}`;
+  const head=`<div class="rev-sec-h"><p class="eyebrow" style="margin:0">Reseñas del día</p>${left>0&&m.cards.length?`<span class="rev-left">${left} respuesta${left>1?'s':''} disponible${left>1?'s':''}</span>`:''}</div>`;
+  return `${head}${cards||'<p class="muted">Hoy no quedó ninguna reseña.</p>'}`;
 }

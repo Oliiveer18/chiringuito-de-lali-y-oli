@@ -1,5 +1,5 @@
-export const VERSION='v28.19.0';
-export const LABEL='v28.19.0 · currículums equilibrados: cada candidato tiene ventajas y desventajas reales (ritmo, especialidad y disponibilidad) con sueldo proporcional a lo que produce, y nombres de NPCs corregidos';
+export const VERSION='v28.20.0';
+export const LABEL='v28.20.0 · informe de fin de jornada rediseñado: panel de valoración con media y reparto de reseñas, KPIs del día, reseñas en tarjetas profesionales con avatar y respuestas visibles';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

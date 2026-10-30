@@ -1,6 +1,6 @@
 /* ui-polish v27.77: clima de hoy, agenda compacta, reseñas y sistema unificado de estrellas. */
-import { Game } from './state.js?v=28.19.0';
-import { SPECIAL_DAYS, WEATHER } from './config.js?v=28.19.0';
+import { Game } from './state.js?v=28.20.0';
+import { SPECIAL_DAYS, WEATHER } from './config.js?v=28.20.0';
 const svgWrap=inner=>`<svg class="wicon" viewBox="0 0 24 24" aria-hidden="true">${inner}</svg>`;
 const SUN=svgWrap('<circle cx="12" cy="12" r="5" fill="#f5b82e"/><g stroke="#f5b82e" stroke-width="2" stroke-linecap="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></g>');
 const CLOUD=svgWrap('<circle cx="9" cy="9" r="4" fill="#f5b82e"/><path d="M7 18h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.5 3.5 0 0 0 7 18z" fill="#cfd8dc"/>');
@@ -22,39 +22,23 @@ function agenda(){
 document.addEventListener('plan-tab-repaint',agenda);
 
 function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
-function starCount(card){const el=card.querySelector('.rev-stars');if(!el)return 0;const m=el.textContent.match(/★|☆/g)||[];return m.filter(c=>c==='★').length;}
 function polishReviews(){
+ // v28.20: la valoración media y el reparto los pinta el propio informe (rep-hero);
+ // aquí solo se ordenan las reseñas duplicadas y el desplegable «ver todas».
  const rep=document.getElementById('rep-body');
  if(!rep||Game.mode!=='report')return;
  const seen=new Set();
  const cards=[...rep.querySelectorAll('.review')];
  cards.forEach(card=>{
-  const txt=card.querySelector('.rev-text');
-  const starsEl=card.querySelector('.rev-stars');
-  if(starsEl&&!starsEl.dataset.polished){const filled=starCount(card);starsEl.dataset.polished='1';starsEl.innerHTML=`<span class="stars"><b>${'★'.repeat(filled)}</b><span>${'☆'.repeat(5-filled)}</span></span>`;}
-  card.querySelectorAll('.net-actions .btn').forEach(b=>{const t=b.textContent||'';if(t.includes('Disculparte'))b.classList.add('primary');else if(t.includes('Invitar'))b.classList.add('teal');});
-  const nameEl=card.querySelector('.rev-head b');
+  const nameEl=card.querySelector('.rev-h b');
   const name=norm(nameEl?nameEl.textContent:'');
   if(name&&seen.has(name)){card.classList.add('dup');}else{if(name)seen.add(name);card.classList.remove('dup');}
  });
  const visible=cards.filter(c=>!c.classList.contains('dup'));
  visible.forEach((c,i)=>c.classList.toggle('extra',i>=3&&!rep.classList.contains('show-all')));
- const wrap=rep.querySelector('.reviews');
- if(!wrap)return;
- let summary=wrap.querySelector('.rev-summary');
- if(visible.length){
-  const total=visible.reduce((a,c)=>a+starCount(c),0);
-  const avg=visible.length?total/visible.length:0;
-  const pos=visible.filter(c=>starCount(c)>=4).length;
-  const neu=visible.filter(c=>starCount(c)===3).length;
-  const neg=visible.filter(c=>starCount(c)<=2).length;
-  const html=`<div class="rev-summary"><div><span class="k">Valoración media</span><b>${avg.toFixed(1)} ★</b></div><div><span class="k">Reseñas</span><b>${visible.length}</b></div><div><span class="k">Reparto</span><b>${pos} positivas · ${neu} neutras · ${neg} negativas</b></div></div>`;
-  if(!summary){wrap.insertAdjacentHTML('afterbegin',html);summary=wrap.querySelector('.rev-summary');}
-  else summary.outerHTML=html;
- } else if(summary)summary.remove();
  let btn=rep.querySelector('#btn-all-reviews');
  if(visible.length>3){
-  if(!btn){btn=document.createElement('button');btn.id='btn-all-reviews';btn.className='btn text';btn.type='button';btn.addEventListener('click',()=>rep.classList.toggle('show-all'));wrap.after(btn);}
+  if(!btn){btn=document.createElement('button');btn.id='btn-all-reviews';btn.className='btn text';btn.type='button';btn.addEventListener('click',()=>rep.classList.toggle('show-all'));rep.querySelector('.reviews').after(btn);}
   btn.textContent=rep.classList.contains('show-all')?'Mostrar menos comentarios':`Ver todos los comentarios (${visible.length})`;
  } else if(btn)btn.remove();
 }
@@ -65,26 +49,11 @@ const CSS=`
 .agenda-title{margin:10px 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
 .agenda{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
 .agenda .fc{width:auto;flex:none}
-.stars{font-size:18px;letter-spacing:2px;line-height:1}
-.stars b{color:#e0a83f;font-weight:400}
-.stars span{color:#d8cbb2;font-weight:400}
-.rev-summary .stars{font-size:22px}
 #hud-rep{color:#e0a83f;font-size:14px;letter-spacing:1px}
 .review.extra{display:none}
 #rep-body.show-all .review.extra{display:block}
 #btn-all-reviews{margin:0 24px 14px;display:inline-block}
-.rev-summary{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--sand);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 12px}
-.rev-summary .k{display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
-.rev-summary b{font:700 18px/1.2 var(--font-d);color:var(--ink)}
-.review{background:var(--sand);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
 .review.dup{display:none}
-.rev-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.rev-who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
-.rev-loc{font-size:12px;color:var(--ink-2);font-weight:600}
-.rev-text{margin:8px 0 10px;color:var(--ink);line-height:1.5;overflow-wrap:anywhere}
-.net-actions{display:flex;gap:8px;flex-wrap:wrap}
-.net-actions .btn.primary{background:linear-gradient(180deg,#ee6d49,var(--coral));border-color:var(--coral-d);color:#fff}
-.net-actions .btn.teal{background:var(--teal);border-color:var(--teal-d);color:#fff}
 `;
 function injectCss(){if(document.getElementById('ui-polish-css'))return;const s=document.createElement('style');s.id='ui-polish-css';s.textContent=CSS;document.head.append(s);}
 injectCss();

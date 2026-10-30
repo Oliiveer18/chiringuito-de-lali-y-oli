@@ -1,9 +1,9 @@
 /* Modelo de visitas y reseñas. Lo importa report.js. */
-import { ITEMS, SEC_PER_HOUR, who } from './config.js?v=28.19.0';
-import { clamp, escapeHtml, eur2 } from './util.js?v=28.19.0';
-import { visitStars, experienceSummary } from './ratings-model.mjs?v=28.19.0';
-import { decideAll, opinionCounts } from './opinions-model.mjs?v=28.19.0';
-import { Game, closeHour, weatherToday } from './state.js?v=28.19.0';
+import { ITEMS, SEC_PER_HOUR, who } from './config.js?v=28.20.0';
+import { clamp, escapeHtml, eur2 } from './util.js?v=28.20.0';
+import { visitStars, experienceSummary } from './ratings-model.mjs?v=28.20.0';
+import { decideAll, opinionCounts } from './opinions-model.mjs?v=28.20.0';
+import { Game, closeHour, weatherToday } from './state.js?v=28.20.0';
 
 export function recordVisit(c, extra){
   if(!Game.dayStats) return;
@@ -244,7 +244,13 @@ export function waitMinsLabel(v){
   if(v.queueSec<2) return 'sin espera';
   return Math.max(5, Math.round(v.queueSec/SEC_PER_HOUR*60/5)*5)+' min';
 }
-export function fill(t,v){ return t.replace('{items}',itemsStr(v)).replace('{asked}',askedStr(v)||itemsStr(v)).replace('{price}',eur2(v.total||0)).replace('{tip}',eur2(v.tipAmt||0)).replace('{mins}',waitMinsLabel(v).replace(' min','')); }
+export function fill(t,v){
+  // v28.20: sustituir TODAS las apariciones; una reseña junta varias frases con {mins}/{price}.
+  const r=(ph,val)=>t.split(ph).join(val);
+  t=r('{items}',itemsStr(v)); t=r('{asked}',askedStr(v)||itemsStr(v));
+  t=r('{price}',eur2(v.total||0)); t=r('{tip}',eur2(v.tipAmt||0));
+  return r('{mins}',waitMinsLabel(v).replace(' min',''));
+}
 
 export function triggerFor(v, rng){
   if(v.lost) return v.lost==='espera'?'colaLenta' : v.lost==='lleno'?'colaLlena' : v.lost==='caro'?'preciosAltos' : 'sinStock';
