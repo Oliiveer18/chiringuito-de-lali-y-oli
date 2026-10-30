@@ -1,8 +1,9 @@
 /* Pruebas del enlace cooperativo (ICE, mensajes de error) sin WebRTC real. */
+import { readFileSync } from 'node:fs';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=28.15.0';
+} from './net-rtc.js?v=28.16.0';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {
@@ -12,11 +13,22 @@ const check = (name, cond, extra) => {
 
 console.log('peerRtcConfig');
 const cfg = peerRtcConfig();
-check('iceServers presentes', Array.isArray(cfg.iceServers) && cfg.iceServers.length >= 2);
+check('iceServers presentes', Array.isArray(cfg.iceServers) && cfg.iceServers.length >= 1);
 check('incluye STUN Google', cfg.iceServers.some(s => String(s.urls).includes('stun.l.google.com')));
-check('incluye TURN relay', cfg.iceServers.some(s => String(s.urls).includes('openrelay.metered.ca') || String(s.urls).includes('global.relay.metered.ca')));
-check('TURN con credenciales', cfg.iceServers.some(s => s.username && s.credential));
+// v28.16: los TURN públicos de openrelay están muertos (dominio a dirección falsa,
+// sin candidatos relay); no deben volver a la lista. Quedan STUN + TURN_CONFIG.
+check('sin TURN muertos', !cfg.iceServers.some(s => String(s.urls).includes('metered.ca')));
 check('pool ICE > 0', cfg.iceCandidatePoolSize >= 4);
+
+console.log('forma del constructor de Peer (regresión v28.16)');
+// La sala se rompió en v28.14.3 al pasar el id DENTRO del objeto de opciones:
+// PeerJS ignora options.id (asigna un UUID) y el invitado recibía
+// "peer-unavailable" para siempre. El id debe ir como primer argumento.
+const netLinkSrc = readFileSync('net-link.js', 'utf8');
+check('makePeer pasa el id como primer argumento', /new Peer\(id \|\| undefined, peerOptions\(\)\)/.test(netLinkSrc));
+check('ya no usa options.id', !/new Peer\(peerOptions\(id\)\)/.test(netLinkSrc));
+check('peerOptions ya no inyecta id', !/opts\.id = id/.test(netLinkSrc));
+check('hostListen registra con el id de la sala', /makePeer\(hostPeerId\(code\)/.test(netLinkSrc));
 
 console.log('hostPeerId');
 check('CHAU → id esperado', hostPeerId('CHAU') === 'chiringuito-lali-oli-CHAU');
@@ -32,7 +44,7 @@ check('peer-unavailable es transitorio', isTransientJoinPeerError({ type: 'peer-
 check('browser-incompatible no transitorio', !isTransientJoinPeerError({ type: 'browser-incompatible' }));
 check('texto buscando anfitrión', guestSearchStatus(0, 2, 5).includes('Buscando anfitrión'));
 
-console.log('reintento del invitado (v28.15.0)');
+console.log('reintento del invitado (v28.16.0)');
 check('hay límite de intentos', Number.isInteger(GUEST_RETRY.maxAttempts) && GUEST_RETRY.maxAttempts >= 20, GUEST_RETRY.maxAttempts);
 check('primer reintento ≥ 2s', nextGuestRetryMs(0) >= 2000, nextGuestRetryMs(0));
 check('primer reintento ≤ 6s', nextGuestRetryMs(0) <= 6000, nextGuestRetryMs(0));
@@ -40,7 +52,7 @@ check('retroceso suave y acotado', nextGuestRetryMs(1) >= nextGuestRetryMs(0) &&
 check('techo máximo de espera', nextGuestRetryMs(50) <= GUEST_RETRY.maxMs, nextGuestRetryMs(50));
 check('no dispara en 0ms ni negativo', nextGuestRetryMs(-3) > 0 && nextGuestRetryMs(0) > 0);
 
-console.log('recuperación al volver a primer plano (v28.15.0)');
+console.log('recuperación al volver a primer plano (v28.16.0)');
 const vr = visibilityRecovery;
 check('anfitrión sin partida, peer sano → re-registra igualmente (por si es zombi)', vr({ peerAlive: true, peerDisconnected: false, role: 'host', code: 'NNED', hasConn: false }) === 'host-relisten');
 check('partida en marcha y peer sano → nada', vr({ peerAlive: true, peerDisconnected: false, role: 'host', code: 'NNED', hasConn: true }) === null);
@@ -53,7 +65,7 @@ check('invitado jugando y peer sano → nada', vr({ peerAlive: true, peerDisconn
 check('sin rol ni código → nada', vr({ peerAlive: false, peerDisconnected: false, role: 'solo', code: null, hasConn: false }) === null);
 check('anfitrión sin código → nada', vr({ peerAlive: false, peerDisconnected: false, role: 'host', code: null, hasConn: false }) === null);
 
-console.log('retroceso de reconstrucción (v28.15.0)');
+console.log('retroceso de reconstrucción (v28.16.0)');
 check('primera muerte espera 1.5s', restartBackoffMs(1) === 1500, restartBackoffMs(1));
 check('segunda muerte dobla a 3s', restartBackoffMs(2) === 3000, restartBackoffMs(2));
 check('tercera muerte 6s', restartBackoffMs(3) === 6000, restartBackoffMs(3));

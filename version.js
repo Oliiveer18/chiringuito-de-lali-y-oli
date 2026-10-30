@@ -1,5 +1,5 @@
-export const VERSION='v28.15.0';
-export const LABEL='v28.15.0 · reconexión en mitad de la partida con mensajes claros, fondo prerrenderizado y exportar/importar partidas como archivo';
+export const VERSION='v28.16.0';
+export const LABEL='v28.16.0 · ARREGLADO el cooperativo: la sala volvió a registrarse con su código y podéis conectar (además: sin TURN muertos)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

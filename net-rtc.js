@@ -1,5 +1,9 @@
 /* Configuración WebRTC / ICE y mensajes de error del cooperativo (sin PeerJS). */
-const OPEN_RELAY = { username: 'openrelayproject', credential: 'openrelayproject' };
+// v28.16: los TURN públicos gratuitos (openrelay.metered.ca) están muertos — el
+// dominio resuelve a una dirección falsa y no asigna candidatos relay desde
+// 2025/26. Quedan los STUN (directos y con IP pública, cubren la inmensa
+// mayoría de casos, incluidos dos móviles en la misma red) y el gancho
+// window.TURN_CONFIG por si algún día se configura un TURN propio.
 const ICE_SERVERS = [
   {
     urls: [
@@ -9,21 +13,6 @@ const ICE_SERVERS = [
       'stun:global.stun.twilio.com:3478',
       'stun:stun.cloudflare.com:3478'
     ]
-  },
-  {
-    urls: [
-      'turn:openrelay.metered.ca:80',
-      'turn:openrelay.metered.ca:443',
-      'turn:openrelay.metered.ca:443?transport=tcp',
-      'turns:openrelay.metered.ca:443',
-      'turns:openrelay.metered.ca:443?transport=tcp',
-      'turn:global.relay.metered.ca:80',
-      'turn:global.relay.metered.ca:443',
-      'turn:global.relay.metered.ca:443?transport=tcp',
-      'turns:global.relay.metered.ca:443',
-      'turns:global.relay.metered.ca:443?transport=tcp'
-    ],
-    ...OPEN_RELAY
   }
 ];
 
@@ -57,7 +46,7 @@ export function guestSearchStatus(cloudTry, cloudsTotal, attemptSec){
     peer-unavailable nunca es definitivo mientras el jugador siga en la sala. */
 export const GUEST_RETRY = { firstMs: 3000, maxMs: 6000, maxAttempts: 40 };
 
-/** v28.15.0: qué hacer al volver a primer plano. Si el móvil pasó el juego a
+/** v28.16.0: qué hacer al volver a primer plano. Si el móvil pasó el juego a
     segundo plano, el servidor de señalización puede haber soltado el registro de
     la sala mientras el peer local quedó "zombi": aparenta estar sano pero su
     socket lleva muerto un rato y ni 'disconnected' ni 'close' se dispararon.
@@ -71,7 +60,7 @@ export function visibilityRecovery({ peerAlive, peerDisconnected, role, code, ha
   if (role === 'guest' && code) return 'guest-rejoin';
   return null;
 }
-/** v28.15.0: retroceso exponencial para reconstruir el enlace tras la muerte del
+/** v28.16.0: retroceso exponencial para reconstruir el enlace tras la muerte del
     peer. Reintentar cada 1.5s para siempre (red inestable, servidor saturado)
     martillea el servidor; cada muerte consecutiva dobla la espera (1.5s → 3s →
     6s → … → 30s máx.). */
