@@ -1,35 +1,33 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { requestFloorClean } from "../floor-service.js?v=28.20.0";
-import { requestFloorCustomer } from "../floor-service.js?v=28.20.0";
-import { floorAway } from "../floor-service.js?v=28.20.0";
-import { releaseFloorCustomer } from "../floor-service.js?v=28.20.0";
-import { factor } from "../professional-model.mjs?v=28.20.0";
-import { ITEMS } from "../config.js?v=28.20.0";
-import { PERSONALITIES } from "../config.js?v=28.20.0";
-import { TYPES } from "../config.js?v=28.20.0";
-import { stationOf } from "../config.js?v=28.20.0";
-import { clamp } from "../util.js?v=28.20.0";
-import { eur2 } from "../util.js?v=28.20.0";
-import { rand } from "../util.js?v=28.20.0";
-import { rnd } from "../util.js?v=28.20.0";
-import { Audio } from "../audio.js?v=28.20.0";
-import { satisfaction } from "../ratings-model.mjs?v=28.20.0";
-import { Game } from "../state.js?v=28.20.0";
-import { Net } from "../state.js?v=28.20.0";
-import { hostLive, staffOnDuty } from "../state.js?v=28.20.0";
-import { isCoop } from "../state.js?v=28.20.0";
-import { lvl } from "../state.js?v=28.20.0";
-import { navSetTarget } from "../nav.js?v=28.20.0";
-import { recordVisit } from "../report.js?v=28.20.0";
-import { updateStockbar } from "../ui.js?v=28.20.0";
-import { addSat } from "./economy.js?v=28.20.0";
-import { announceSub } from "./orders.js?v=28.20.0";
-import { charge } from "./economy.js?v=28.20.0";
-import { chooseSubstitute } from "./orders.js?v=28.20.0";
-import { leaveQueue } from "./customers.js?v=28.20.0";
-import { pendingIdx } from "./orders.js?v=28.20.0";
-import { regularOutcome } from "./customers.js?v=28.20.0";
-import { servable } from "./day.js?v=28.20.0";
+import { requestFloorClean } from "../floor-service.js?v=28.21.0";
+import { requestFloorCustomer } from "../floor-service.js?v=28.21.0";
+import { floorAway } from "../floor-service.js?v=28.21.0";
+import { releaseFloorCustomer } from "../floor-service.js?v=28.21.0";
+import { factor } from "../professional-model.mjs?v=28.21.0";
+import { ITEMS } from "../config.js?v=28.21.0";
+import { PERSONALITIES } from "../config.js?v=28.21.0";
+import { TYPES } from "../config.js?v=28.21.0";
+import { stationOf } from "../config.js?v=28.21.0";
+import { clamp } from "../util.js?v=28.21.0";
+import { eur2 } from "../util.js?v=28.21.0";
+import { rand } from "../util.js?v=28.21.0";
+import { rnd } from "../util.js?v=28.21.0";
+import { Audio } from "../audio.js?v=28.21.0";
+import { satisfaction } from "../ratings-model.mjs?v=28.21.0";
+import { Game } from "../state.js?v=28.21.0";
+import { Net } from "../state.js?v=28.21.0";
+import { hostLive, staffOnDuty } from "../state.js?v=28.21.0";
+import { isCoop } from "../state.js?v=28.21.0";
+import { lvl } from "../state.js?v=28.21.0";
+import { navSetTarget } from "../nav.js?v=28.21.0";
+import { recordVisit } from "../report.js?v=28.21.0";
+import { updateStockbar } from "../ui.js?v=28.21.0";
+import { addSat } from "./economy.js?v=28.21.0";
+import { charge } from "./economy.js?v=28.21.0";
+import { leaveQueue } from "./customers.js?v=28.21.0";
+import { pendingIdx } from "./orders.js?v=28.21.0";
+import { regularOutcome } from "./customers.js?v=28.21.0";
+import { servable } from "./day.js?v=28.21.0";
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
@@ -45,18 +43,9 @@ export function startPart(c, slot){if(!slot||floorAway(slot.who))return false;
   let take = slot.station==='all' ? pend : pend.filter(i=>stationOf(c.order[i])===slot.station);
   let penalty = 1;
   if(!take.length){ take = pend; penalty = 1.6; }
-  const P = PERSONALITIES[c.personality] || PERSONALITIES.tranquilo;
-  for(const i of take){
-    if(Game.stock[c.order[i]]>0) continue;
-    if(P.flex && c.subs[i]===undefined){
-      const sub = chooseSubstitute(c, c.order[i]);
-      c.subs[i]=sub;
-      if(sub){ c.order[i]=sub; announceSub(c, sub); }
-    }
-  }
   const avail = take.filter(i=>Game.stock[c.order[i]]>0);
   for(const i of take){ if(Game.stock[c.order[i]]<=0){ c.itemSt[i]=3; c.missing++; const id=c.order[i]; Game.dayStats.stockOuts[id]=(Game.dayStats.stockOuts[id]||0)+1; } }
-  if(!avail.length){ Game.floaters.push({x:c.x,y:c.y-120,text:c.subs&&Object.values(c.subs).includes(null)?'No queda nada parecido':'No queda',t:0,color:'#ffd9cf'}); checkComplete(c); updateStockbar(); return true; }
+  if(!avail.length){ Game.floaters.push({x:c.x,y:c.y-120,text:'No queda',t:0,color:'#ffd9cf'}); checkComplete(c); updateStockbar(); return true; }
   for(const i of avail){ Game.stock[c.order[i]]--; c.itemSt[i]=1; }
   if(c.patience<=0 || c.anger===3){ c.patience=Math.max(c.patience, c.maxPatience*0.3); c.anger=Math.min(c.anger,1); c.angerT=0; c.graceT=null; }
   c.inPrep++; c.state='prep';

@@ -1,11 +1,11 @@
-import {leaguePanel} from './management-ui.js?v=28.20.0';
+import {leaguePanel} from './management-ui.js?v=28.21.0';
 // v23: nombre por carrera y panel de las tres ligas simultáneas.
-import {Game,Net,simProgressDay} from './state.js?v=28.20.0';
-import {Plan} from './ui.js?v=28.20.0';
-import {netDirty} from './net.js?v=28.20.0';
-import {escapeHtml as E,eur} from './util.js?v=28.20.0';
-import {ctx,view} from './canvas.js?v=28.20.0';
-import * as R from './market-model.mjs?v=28.20.0';
+import {Game,Net,simProgressDay} from './state.js?v=28.21.0';
+import {Plan} from './ui.js?v=28.21.0';
+import {netDirty} from './net.js?v=28.21.0';
+import {escapeHtml as E,eur} from './util.js?v=28.21.0';
+import {ctx,view} from './canvas.js?v=28.21.0';
+import * as R from './market-model.mjs?v=28.21.0';
 let draft=null,area=0,tier=0,detail=null;
 const day=()=>simProgressDay();
 const name=()=>R.nameValue(Game.upgrades.kioskName);
@@ -133,13 +133,24 @@ const css=document.createElement('style');css.textContent=`
 .lg-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:99px;background:linear-gradient(180deg,#fff6dc,#fdecc0);border:1px solid #e4c47e;font-weight:700;font-size:12.5px}
 .lg-badge svg{width:15px;height:15px;fill:#d99a1c}
 .lg-weekpoints h3{font-size:17px}
-.lg-weekpoints table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
-.lg-weekpoints th{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);text-align:right;padding:7px 8px;border-bottom:2px solid var(--line-2)}
-.lg-weekpoints th:first-child{text-align:left}
-.lg-weekpoints td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
-.lg-weekpoints td:first-child{text-align:left;font-weight:700}
-.lg-wp-t{position:relative;font-weight:800}
-.lg-wp-t i{position:absolute;left:0;bottom:1px;height:3px;border-radius:99px;background:linear-gradient(90deg,var(--teal),#5cc4a7);opacity:.85}
+.mk-card{background:var(--paper);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px}
+.lg-wp-how{margin:8px 0 12px}
+.lg-wp-how p{font-size:12.5px;color:var(--ink-2);margin-bottom:7px}
+.lg-wp-how ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:6px 14px;margin:0}
+.lg-wp-how li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);line-height:1.35;min-width:0}
+.lg-wp-how li b{color:var(--ink);white-space:nowrap}
+.sw{width:11px;height:11px;border-radius:3.5px;flex:none}
+.sw.svc,.lg-wp-bar .svc{background:#5ac8fa}
+.sw.rat,.lg-wp-bar .rat{background:#ffd60a}
+.sw.mar,.lg-wp-bar .mar{background:#30d158}
+.sw.com,.lg-wp-bar .com{background:#bf5af2}
+.lg-wp-rows{display:flex;flex-direction:column;gap:8px;margin:12px 0 10px}
+.lg-wp-row{display:flex;align-items:center;gap:10px;min-width:0}
+.lg-wp-day{font-weight:800;font-size:12px;color:var(--teal-d);min-width:36px;flex:none}
+.lg-wp-bar{flex:1;display:flex;height:15px;border-radius:99px;background:var(--line);overflow:hidden;min-width:0}
+.lg-wp-bar i{display:block;height:100%;flex:none}
+.lg-wp-tot{font-weight:800;font-variant-numeric:tabular-nums;min-width:28px;text-align:right;flex:none}
+.lg-wp-note{font-size:11.5px;color:var(--ink-2);margin-top:8px}
 .lg-wp-sum{font-size:13.5px}
 .lg-wp-sum b{font:600 17px var(--font-d);color:var(--teal-d)}
 .lg-wp-diff{font-weight:700;font-size:12.5px}

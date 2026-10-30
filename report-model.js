@@ -1,9 +1,9 @@
 /* Modelo de visitas y reseñas. Lo importa report.js. */
-import { ITEMS, SEC_PER_HOUR, who } from './config.js?v=28.20.0';
-import { clamp, escapeHtml, eur2 } from './util.js?v=28.20.0';
-import { visitStars, experienceSummary } from './ratings-model.mjs?v=28.20.0';
-import { decideAll, opinionCounts } from './opinions-model.mjs?v=28.20.0';
-import { Game, closeHour, weatherToday } from './state.js?v=28.20.0';
+import { ITEMS, SEC_PER_HOUR, who } from './config.js?v=28.21.0';
+import { clamp, escapeHtml, eur2 } from './util.js?v=28.21.0';
+import { visitStars, experienceSummary } from './ratings-model.mjs?v=28.21.0';
+import { decideAll, opinionCounts } from './opinions-model.mjs?v=28.21.0';
+import { Game, closeHour, weatherToday } from './state.js?v=28.21.0';
 
 export function recordVisit(c, extra){
   if(!Game.dayStats) return;
@@ -253,7 +253,7 @@ export function fill(t,v){
 }
 
 export function triggerFor(v, rng){
-  if(v.lost) return v.lost==='espera'?'colaLenta' : v.lost==='lleno'?'colaLlena' : v.lost==='caro'?'preciosAltos' : 'sinStock';
+  if(v.lost) return (v.lost==='espera'||v.lost==='cierre')?'colaLenta' : v.lost==='lleno'?'colaLlena' : v.lost==='caro'?'preciosAltos' : 'sinStock';
   if(v.missing>0 || v.substituted) return 'sinStock';
   if(v.waitFrac>0.55) return 'colaLenta';
   if(v.priceF>0.3) return 'preciosAltos';
