@@ -57,16 +57,16 @@ export function guestSearchStatus(cloudTry, cloudsTotal, attemptSec){
     peer-unavailable nunca es definitivo mientras el jugador siga en la sala. */
 export const GUEST_RETRY = { firstMs: 3000, maxMs: 6000, maxAttempts: 40 };
 
-/** v28.14.11: qué hacer al volver la pestaña a primer plano. El peer de señalización
-    puede quedar vivo-desconectado o morir del todo — el servidor suelta el registro
-    de la sala cuando el móvil pasa el juego a segundo plano. reconnect() NO siempre
-    restaura el registro, así que si no hay partida en marcha (hasConn) lo fiable es
-    reconstruir el enlace con el MISMO código: el anfitrión re-registra su sala y
-    el invitado reanuda la búsqueda. Con la partida en marcha solo se reanima la
-    señalización (reconnect), porque destruir el peer mataría el enlace de datos. */
+/** v28.14.12: qué hacer al volver a primer plano. Si el móvil pasó el juego a
+    segundo plano, el servidor de señalización puede haber soltado el registro de
+    la sala mientras el peer local quedó "zombi": aparenta estar sano pero su
+    socket lleva muerto un rato y ni 'disconnected' ni 'close' se dispararon.
+    Por eso, sin partida en marcha (hasConn), lo fiable es re-registrar SIEMPRE
+    la sala con el MISMO código (el anfitrión) o reanudar la búsqueda (el
+    invitado). Con la partida en marcha no se destruye el peer (mataría el
+    enlace de datos WebRTC): solo se reanima la señalización con reconnect(). */
 export function visibilityRecovery({ peerAlive, peerDisconnected, role, code, hasConn }){
-  if (peerAlive && !peerDisconnected) return null;
-  if (hasConn) return 'reconnect';
+  if (hasConn) return (!peerAlive || peerDisconnected) ? 'reconnect' : null;
   if (role === 'host' && code) return 'host-relisten';
   if (role === 'guest' && code) return 'guest-rejoin';
   return null;

@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=28.14.11';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.14.11';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.14.11';
-import { ICON_URL } from './icons.js?v=28.14.11';
-import { Audio } from './audio.js?v=28.14.11';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=28.14.11';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.14.11';
-import { advanceFromReport } from './report.js?v=28.14.11';
-import { netAct, netDirty } from './net.js?v=28.14.11';
-import { drawPerson } from './render.js?v=28.14.11';
-import { iconFor } from './ui-polish.js?v=28.14.11';
-import { renderTab } from './ui.js?v=28.14.11';
+import { trackCost } from './bookkeeping.js?v=28.14.12';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.14.12';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.14.12';
+import { ICON_URL } from './icons.js?v=28.14.12';
+import { Audio } from './audio.js?v=28.14.12';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=28.14.12';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.14.12';
+import { advanceFromReport } from './report.js?v=28.14.12';
+import { netAct, netDirty } from './net.js?v=28.14.12';
+import { drawPerson } from './render.js?v=28.14.12';
+import { iconFor } from './ui-polish.js?v=28.14.12';
+import { renderTab } from './ui.js?v=28.14.12';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
