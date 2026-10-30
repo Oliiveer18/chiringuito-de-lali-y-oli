@@ -4,7 +4,7 @@
 import pw from '/home/user/node_modules/playwright-core/index.mjs';
 const { chromium } = pw;
 
-const base = 'http://localhost:8123';
+const base = process.env.RT_BASE || 'http://localhost:8123';
 const log = (...a) => console.log(new Date().toLocaleTimeString('es-ES'), ...a);
 
 const browser = await chromium.launch({ headless: true });
