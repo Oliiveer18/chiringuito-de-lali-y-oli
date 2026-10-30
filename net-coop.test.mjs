@@ -1,8 +1,8 @@
 /* Pruebas del enlace cooperativo (ICE, mensajes de error) sin WebRTC real. */
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
-  GUEST_RETRY, nextGuestRetryMs, visibilityRecovery
-} from './net-rtc.js?v=28.14.12';
+  GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
+} from './net-rtc.js?v=28.14.13';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {
@@ -32,7 +32,7 @@ check('peer-unavailable es transitorio', isTransientJoinPeerError({ type: 'peer-
 check('browser-incompatible no transitorio', !isTransientJoinPeerError({ type: 'browser-incompatible' }));
 check('texto buscando anfitrión', guestSearchStatus(0, 2, 5).includes('Buscando anfitrión'));
 
-console.log('reintento del invitado (v28.14.12)');
+console.log('reintento del invitado (v28.14.13)');
 check('hay límite de intentos', Number.isInteger(GUEST_RETRY.maxAttempts) && GUEST_RETRY.maxAttempts >= 20, GUEST_RETRY.maxAttempts);
 check('primer reintento ≥ 2s', nextGuestRetryMs(0) >= 2000, nextGuestRetryMs(0));
 check('primer reintento ≤ 6s', nextGuestRetryMs(0) <= 6000, nextGuestRetryMs(0));
@@ -40,7 +40,7 @@ check('retroceso suave y acotado', nextGuestRetryMs(1) >= nextGuestRetryMs(0) &&
 check('techo máximo de espera', nextGuestRetryMs(50) <= GUEST_RETRY.maxMs, nextGuestRetryMs(50));
 check('no dispara en 0ms ni negativo', nextGuestRetryMs(-3) > 0 && nextGuestRetryMs(0) > 0);
 
-console.log('recuperación al volver a primer plano (v28.14.12)');
+console.log('recuperación al volver a primer plano (v28.14.13)');
 const vr = visibilityRecovery;
 check('anfitrión sin partida, peer sano → re-registra igualmente (por si es zombi)', vr({ peerAlive: true, peerDisconnected: false, role: 'host', code: 'NNED', hasConn: false }) === 'host-relisten');
 check('partida en marcha y peer sano → nada', vr({ peerAlive: true, peerDisconnected: false, role: 'host', code: 'NNED', hasConn: true }) === null);
@@ -52,6 +52,13 @@ check('invitado jugando con peer muerto → solo reconnect', vr({ peerAlive: fal
 check('invitado jugando y peer sano → nada', vr({ peerAlive: true, peerDisconnected: false, role: 'guest', code: 'NNED', hasConn: true }) === null);
 check('sin rol ni código → nada', vr({ peerAlive: false, peerDisconnected: false, role: 'solo', code: null, hasConn: false }) === null);
 check('anfitrión sin código → nada', vr({ peerAlive: false, peerDisconnected: false, role: 'host', code: null, hasConn: false }) === null);
+
+console.log('retroceso de reconstrucción (v28.14.13)');
+check('primera muerte espera 1.5s', restartBackoffMs(1) === 1500, restartBackoffMs(1));
+check('segunda muerte dobla a 3s', restartBackoffMs(2) === 3000, restartBackoffMs(2));
+check('tercera muerte 6s', restartBackoffMs(3) === 6000, restartBackoffMs(3));
+check('techo de 30s', restartBackoffMs(10) === 30000 && restartBackoffMs(100) === 30000, restartBackoffMs(10));
+check('crece siempre', restartBackoffMs(4) > restartBackoffMs(3) && restartBackoffMs(5) > restartBackoffMs(4));
 
 console.log('\n' + ok + ' ok, ' + ko + ' fallos');
 if (ko) process.exit(1);

@@ -1,16 +1,16 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=28.14.12';
-import { Audio } from './audio.js?v=28.14.12';
-import { Game, NET_SIM, Net } from './state.js?v=28.14.12';
-import { pendingIdx, slotOf } from './sim.js?v=28.14.12';
-import { showReportUI } from './report.js?v=28.14.12';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.12';
-import { onNet } from './net-sync.js?v=28.14.12';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.12';
+import { $ } from './util.js?v=28.14.13';
+import { Audio } from './audio.js?v=28.14.13';
+import { Game, NET_SIM, Net } from './state.js?v=28.14.13';
+import { pendingIdx, slotOf } from './sim.js?v=28.14.13';
+import { showReportUI } from './report.js?v=28.14.13';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=28.14.13';
+import { onNet } from './net-sync.js?v=28.14.13';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=28.14.13';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
-  GUEST_RETRY, nextGuestRetryMs, visibilityRecovery
-} from './net-rtc.js?v=28.14.12';
+  GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
+} from './net-rtc.js?v=28.14.13';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -81,7 +81,7 @@ function attachConn(c, { onOpen, onFail }){
     Net.peer = false;
     onNet({ t: 'peer', on: false });
   });
-  // v28.14.12: PeerJS no emite 'failed' en DataConnection; sin esto el reintento
+  // v28.14.13: PeerJS no emite 'failed' en DataConnection; sin esto el reintento
   // entre servidores y la recuperación del invitado nunca se disparaban.
   c.on('error', () => { if (!opened) onFail && onFail(); });
   c.on('failed', () => {
@@ -130,14 +130,26 @@ function hostStart(attempt = 0){
   hostListen(code);
 }
 
-/** v28.14.12: la sala del anfitrión se reconstruye sola con el MISMO código si el
+/** v28.14.13: la sala del anfitrión se reconstruye sola con el MISMO código si el
     servidor de señalización suelta la conexión (típico al pasar el juego a
     segundo plano en el móvil para mandar el código). Así el invitado no
     necesita que se genere una sala nueva. */
+/** v28.14.13: retroceso exponencial para las reconstrucciones de enlace. Si la sala
+    muere en cuanto se registra (red inestable, servidor saturado), reintentar cada
+    1.5s para siempre martillea el servidor. Cada muerte consecutiva dobla la espera
+    (1.5s → 3s → 6s → … → 30s); si el enlace aguanta 20s seguidos, el contador se
+    reinicia y el siguiente problema volverá a responder rápido. */
+let hostRestarts = 0, hostStableTimer = null;
+function markHostStable(){
+  clearTimeout(hostStableTimer);
+  hostStableTimer = setTimeout(() => { hostRestarts = 0; }, 20000);
+}
+
 function hostListen(code, attempt = 0){
   makePeer(hostPeerId(code), {
     open: () => {
       Net.signalingReady = true;
+      markHostStable();
       saveCloudIdx();
       renderLobby();
       lobbyStatus('');
@@ -145,7 +157,7 @@ function hostListen(code, attempt = 0){
     connection: c => {
       conn = c;
       attachConn(c, {
-        onOpen: () => { Net.peer = true; onNet({ t: 'peer', on: true }); },
+        onOpen: () => { hostRestarts = 0; Net.peer = true; onNet({ t: 'peer', on: true }); },
         onFail: () => {}
       });
     },
@@ -164,15 +176,19 @@ function hostListen(code, attempt = 0){
   peer.on('close', () => {
     // solo si este peer seguía siendo el actual: makePeer destruye los anteriores a propósito
     if (peer !== thisPeer || Net.role !== 'host' || Net.code !== code) return;
-    setTimeout(() => { if (Net.role === 'host' && Net.code === code) hostListen(code); }, 1500);
+    // v28.14.13: retroceso exponencial — una muerte tras otra no debe martillear el servidor
+    clearTimeout(hostStableTimer);
+    hostRestarts++;
+    const delay = restartBackoffMs(hostRestarts);
+    setTimeout(() => { if (Net.role === 'host' && Net.code === code) hostListen(code); }, delay);
   });
 }
 
-/** v28.14.12: el invitado reintenta la conexión mientras espera. Antes, un único
+/** v28.14.13: el invitado reintenta la conexión mientras espera. Antes, un único
     peer.connect fallido (anfitrión aún no registrado, o su sala reactivándose
     tras pasar el juego a segundo plano) dejaba el "Buscando anfitrión…"
     para siempre sin volver a intentarlo. */
-let guestRetryTimer = null, guestRetries = 0;
+let guestRetryTimer = null, guestRetries = 0, guestRestarts = 0;
 function stopGuestRetry(){
   if (guestRetryTimer) { clearTimeout(guestRetryTimer); guestRetryTimer = null; }
 }
@@ -193,6 +209,7 @@ function guestJoin(code, cloudTry = 0){
       onOpen: () => {
         if (gen !== joinGen) return;
         stopGuestRetry();
+        guestRestarts = 0; // enlace sano: el retroceso vuelve a empezar desde 1.5s
         Net.peer = true;
         renderLobby();
         lobbyStatus('');
@@ -257,7 +274,10 @@ function guestJoin(code, cloudTry = 0){
   peer.on('close', () => {
     // solo si este peer seguía siendo el actual: reconstruir el enlace del invitado
     if (peer !== thisPeer || gen !== joinGen) return;
-    setTimeout(() => { if (gen === joinGen && Net.role === 'guest' && Net.code === code) guestJoin(code, cloudTry); }, 1500);
+    // v28.14.13: retroceso exponencial, igual que la sala del anfitrión
+    guestRestarts++;
+    const delay = restartBackoffMs(guestRestarts);
+    setTimeout(() => { if (gen === joinGen && Net.role === 'guest' && Net.code === code) guestJoin(code, cloudTry); }, delay);
   });
 }
 
@@ -309,7 +329,7 @@ export function goSolo(){
   else if (Game.mode === 'lobby') { hideAll(); Game.mode = 'title'; $('#title').classList.add('show'); }
 }
 
-// v28.14.12: al volver a primer plano (móvil en segundo plano), reanimar el enlace.
+// v28.14.13: al volver a primer plano (móvil en segundo plano), reanimar el enlace.
 // Si no hay partida en marcha y el peer de señalización no está sano (murió o quedó
 // desconectado al fondo), se reconstruye el enlace completo con el MISMO código:
 // el anfitrión re-registra su sala y el invitado reanuda la búsqueda. Con la

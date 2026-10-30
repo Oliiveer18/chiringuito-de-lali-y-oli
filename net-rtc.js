@@ -57,7 +57,7 @@ export function guestSearchStatus(cloudTry, cloudsTotal, attemptSec){
     peer-unavailable nunca es definitivo mientras el jugador siga en la sala. */
 export const GUEST_RETRY = { firstMs: 3000, maxMs: 6000, maxAttempts: 40 };
 
-/** v28.14.12: qué hacer al volver a primer plano. Si el móvil pasó el juego a
+/** v28.14.13: qué hacer al volver a primer plano. Si el móvil pasó el juego a
     segundo plano, el servidor de señalización puede haber soltado el registro de
     la sala mientras el peer local quedó "zombi": aparenta estar sano pero su
     socket lleva muerto un rato y ni 'disconnected' ni 'close' se dispararon.
@@ -71,6 +71,14 @@ export function visibilityRecovery({ peerAlive, peerDisconnected, role, code, ha
   if (role === 'guest' && code) return 'guest-rejoin';
   return null;
 }
+/** v28.14.13: retroceso exponencial para reconstruir el enlace tras la muerte del
+    peer. Reintentar cada 1.5s para siempre (red inestable, servidor saturado)
+    martillea el servidor; cada muerte consecutiva dobla la espera (1.5s → 3s →
+    6s → … → 30s máx.). */
+export function restartBackoffMs(restarts){
+  return Math.min(1500 * Math.pow(2, Math.max(restarts - 1, 0)), 30000);
+}
+
 export function nextGuestRetryMs(attempt){
   return Math.min(GUEST_RETRY.firstMs + Math.min(Math.max(attempt, 0), 10) * 300, GUEST_RETRY.maxMs);
 }

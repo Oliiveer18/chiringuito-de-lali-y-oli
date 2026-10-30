@@ -1,15 +1,15 @@
 /* Mensajes, snapshot y estado del invitado. Lo importa net.js. */
-import { floorCommand } from './floor-service.js?v=28.14.12';
-import { $, clamp, escapeHtml } from './util.js?v=28.14.12';
-import { Audio } from './audio.js?v=28.14.12';
-import { Game, Net, guestCust, hostLive, isGuest, repairForecast } from './state.js?v=28.14.12';
-import { TABLE_POS } from './world.js?v=28.14.12';
-import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.14.12';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.12';
-import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.12';
-import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.14.12';
-import { netDirty, netSend } from './net-link.js?v=28.14.12';
-import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.14.12';
+import { floorCommand } from './floor-service.js?v=28.14.13';
+import { $, clamp, escapeHtml } from './util.js?v=28.14.13';
+import { Audio } from './audio.js?v=28.14.13';
+import { Game, Net, guestCust, hostLive, isGuest, repairForecast } from './state.js?v=28.14.13';
+import { TABLE_POS } from './world.js?v=28.14.13';
+import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.14.13';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.13';
+import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.13';
+import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.14.13';
+import { netDirty, netSend } from './net-link.js?v=28.14.13';
+import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.14.13';
 export function onNet(m){
   switch(m.t){
     case 'created': Net.role='host'; Net.me='p1'; Net.code=m.code; renderLobby(); break;
