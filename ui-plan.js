@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=28.14.7';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.14.7';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.14.7';
-import { ICON_URL } from './icons.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=28.14.7';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.14.7';
-import { advanceFromReport } from './report.js?v=28.14.7';
-import { netAct, netDirty } from './net.js?v=28.14.7';
-import { drawPerson } from './render.js?v=28.14.7';
-import { iconFor } from './ui-polish.js?v=28.14.7';
-import { renderTab } from './ui.js?v=28.14.7';
+import { trackCost } from './bookkeeping.js?v=28.14.8';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=28.14.8';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=28.14.8';
+import { ICON_URL } from './icons.js?v=28.14.8';
+import { Audio } from './audio.js?v=28.14.8';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=28.14.8';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=28.14.8';
+import { advanceFromReport } from './report.js?v=28.14.8';
+import { netAct, netDirty } from './net.js?v=28.14.8';
+import { drawPerson } from './render.js?v=28.14.8';
+import { iconFor } from './ui-polish.js?v=28.14.8';
+import { renderTab } from './ui.js?v=28.14.8';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
@@ -27,7 +27,7 @@ export function showPlanUI(){
   renderForecast(); renderTab(); refreshPlanMoney(); updateReadyUI();
 }
 export function renderForecast(){
-  const w=weatherToday(), tw=Game.forecast[Game.day];
+  const w=weatherToday(), tw=weatherAt(Game.day+1);
   const ev=SPECIAL_DAYS[Game.day];
   let html = `<div class="fc today"><div class="k">Hoy</div><div class="v">${iconFor(w)}<span>${WEATHER[w].label}</span></div><div class="d">${WEATHER[w].desc}${isWeekend(simProgressDay())?' Fin de semana: más gente del pueblo.':''}</div></div>`;
   if(ev) html += `<div class="fc event"><div class="k">Evento</div><div class="v">${ev.title}</div><div class="d">${ev.desc}</div></div>`;

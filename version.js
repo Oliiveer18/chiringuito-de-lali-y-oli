@@ -1,5 +1,5 @@
-export const VERSION='v28.14.7';
-export const LABEL='v28.14.7 · pestaña Mejoras compacta; sin línea de autoguardado';
+export const VERSION='v28.14.8';
+export const LABEL='v28.14.8 · pronóstico a prueba de partidas antiguas y coop: adiós al error de la ficha del tiempo';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

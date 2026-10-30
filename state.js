@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY } from './config.js?v=28.14.7';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY, WEATHER } from './config.js?v=28.14.8';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -37,7 +37,17 @@ export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('te
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Game.upgrades.workforce?.team?.[st.id]?.wage??st.wage):0), 0); }
 
-export function weatherToday(){ return Game.forecast[Game.day-1]; }
+/* v28.14.8: el pronóstico puede venir de partidas antiguas o del canal coop con
+   huecos o claves retiradas; siempre se resuelve a una clave válida de WEATHER
+   (fallback 'sol') antes de leer .label/.desc. Así evitamos el TypeError de ui-plan. */
+export function weatherAt(d){ const w=Game.forecast?.[d-1]; return WEATHER[w]?w:'sol'; }
+export function weatherToday(){ return weatherAt(Game.day); }
+/** Normaliza un pronóstico externo: claves válidas y longitud de temporada completa. */
+export function repairForecast(f){
+  const need=SEASON_DAYS+1, src=Array.isArray(f)?f:[], out=[];
+  for(let i=0;i<need;i++){ const w=src[i]; out.push(WEATHER[w]?w:'sol'); }
+  return out;
+}
 export function dayName(d){ return DAY_NAMES[(d-1)%7]; }
 export function isWeekend(d){ return (d-1)%7>=5; }
 

@@ -1,15 +1,15 @@
 /* Mensajes, snapshot y estado del invitado. Lo importa net.js. */
-import { floorCommand } from './floor-service.js?v=28.14.7';
-import { $, clamp, escapeHtml } from './util.js?v=28.14.7';
-import { Audio } from './audio.js?v=28.14.7';
-import { Game, Net, guestCust, hostLive, isGuest } from './state.js?v=28.14.7';
-import { TABLE_POS } from './world.js?v=28.14.7';
-import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.14.7';
-import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.7';
-import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.7';
-import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.14.7';
-import { netDirty, netSend } from './net-link.js?v=28.14.7';
-import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.14.7';
+import { floorCommand } from './floor-service.js?v=28.14.8';
+import { $, clamp, escapeHtml } from './util.js?v=28.14.8';
+import { Audio } from './audio.js?v=28.14.8';
+import { Game, Net, guestCust, hostLive, isGuest, repairForecast } from './state.js?v=28.14.8';
+import { TABLE_POS } from './world.js?v=28.14.8';
+import { cleanFx, cleanTable, hud, newSeason, servable, slotOf, tryServe } from './sim.js?v=28.14.8';
+import { applyRevResp, refreshReportUI, revSigOf, showReportUI } from './report.js?v=28.14.8';
+import { Plan, applyPlanAction, applyUrgent, refreshPlanMoney, renderForecast, renderTab, renderUrgent, setSpeed, showFinalUI, showPlan, showPlanUI, showServiceUI, toastLocal, toggleReady, updateHud, updateReadyUI, updateStockbar } from './ui.js?v=28.14.8';
+import { REJECT_MSG, guestPendTick } from './net-guest.js?v=28.14.8';
+import { netDirty, netSend } from './net-link.js?v=28.14.8';
+import { hideNetMsg, lobbyError, netLost, renderLobby, showPing } from './net-lobby.js?v=28.14.8';
 export function onNet(m){
   switch(m.t){
     case 'created': Net.role='host'; Net.me='p1'; Net.code=m.code; renderLobby(); break;
@@ -96,7 +96,7 @@ export function netTick(dt){
 export function applyState(m){
   const prevMode = Net.lastMode;
   Object.assign(Game,{day:m.day, money:m.money, rep:m.rep, hour:m.hour, speed:m.speed, closing:m.closing, stock:m.stock, prices:m.prices, enabled:m.enabled,
-    upgrades:m.upgrades, staff:m.staff, forecast:m.forecast, season:m.season, buzz:m.buzz});
+    upgrades:m.upgrades, staff:m.staff, forecast:repairForecast(m.forecast), season:m.season, buzz:m.buzz});
   Net.names=m.names; Net.roles=m.roles; Net.ready=m.ready;
   for(const a of (m.acks||[])){
     const p=Net.pend.get(a.q);
