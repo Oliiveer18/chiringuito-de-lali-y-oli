@@ -1,5 +1,5 @@
-export const VERSION='v29.4.4';
-export const LABEL='v29.4.4 · bañistas bien tumbados (cabeza en el respaldo, sin sombrero), la peña del partido del Tenerife llega de verdad en grupo y el influencer se le ve hacer su foto · sin menú de copiar al mantener pulsado en móvil';
+export const VERSION='v29.4.5';
+export const LABEL='v29.4.5 · averías reales (sombrilla, altavoz, algodonera, batidora — adiós al "cristal roto") con informe de incidencias al cerrar la jornada · nuevos eventos visibles: club de running, yate y marejada';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

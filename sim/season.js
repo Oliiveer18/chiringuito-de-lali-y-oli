@@ -1,23 +1,23 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged.
    Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
-import { ITEMS } from "../config.js?v=29.4.4";
-import { W } from "../config.js?v=29.4.4";
-import { ITEM_IDS } from "../config.js?v=29.4.4";
-import { REGULARS } from "../config.js?v=29.4.4";
-import { SEASON_DAYS } from "../config.js?v=29.4.4";
-import { START_MONEY } from "../config.js?v=29.4.4";
-import { clamp } from "../util.js?v=29.4.4";
-import { rnd } from "../util.js?v=29.4.4";
-import { Audio } from "../audio.js?v=29.4.4";
-import { Game, simProgressDay } from "../state.js?v=29.4.4";
-import { closeHour } from "../state.js?v=29.4.4";
-import { setTimeoutGame } from "../state.js?v=29.4.4";
-import { buildTables } from "../world.js?v=29.4.4";
-import { toast } from "../ui.js?v=29.4.4";
-import { updateStockbar } from "../ui.js?v=29.4.4";
-import { spawnCustomer } from "./customers.js?v=29.4.4";
-export { buildSeasonForecast } from "./forecast.js?v=29.4.4";
-import { buildSeasonForecast } from "./forecast.js?v=29.4.4";
+import { ITEMS } from "../config.js?v=29.4.5";
+import { W } from "../config.js?v=29.4.5";
+import { ITEM_IDS } from "../config.js?v=29.4.5";
+import { REGULARS } from "../config.js?v=29.4.5";
+import { SEASON_DAYS } from "../config.js?v=29.4.5";
+import { START_MONEY } from "../config.js?v=29.4.5";
+import { clamp } from "../util.js?v=29.4.5";
+import { rnd } from "../util.js?v=29.4.5";
+import { Audio } from "../audio.js?v=29.4.5";
+import { Game, simProgressDay } from "../state.js?v=29.4.5";
+import { closeHour } from "../state.js?v=29.4.5";
+import { setTimeoutGame } from "../state.js?v=29.4.5";
+import { buildTables } from "../world.js?v=29.4.5";
+import { toast } from "../ui.js?v=29.4.5";
+import { updateStockbar } from "../ui.js?v=29.4.5";
+import { spawnCustomer } from "./customers.js?v=29.4.5";
+export { buildSeasonForecast } from "./forecast.js?v=29.4.5";
+import { buildSeasonForecast } from "./forecast.js?v=29.4.5";
 
 const ARRIVALS_CAP = 1.72;
 const PEAK_CAP = 0.30;
@@ -133,4 +133,19 @@ export const RANDOM_EVENTS = [
     for(let i=0;i<n;i++) setTimeoutGame(()=>spawnCustomer('local'), i*0.45);
     toast('Partido del CD Tenerife','Baja una peña de '+n+' vecinos del partido con sed de cerveza. ¡Se dispara!','good'); }},
   {id:'apagon', w:1, run(){ const lost=Math.floor(Game.stock.batido*0.5); Game.stock.batido-=lost; updateStockbar(); toast('Se va la luz un rato','La batidora se queda parada y se estropean '+lost+' plátanos.','bad'); Audio.bad(); }},
+  /* v29.4.5: más eventos con NPCs que se ven de verdad durante la jornada */
+  {id:'running', w:2, run(){ Game.mods.batido=true; Game.mods.mix={local:1.3};
+    /* el club de running baja tras entrenar por el paseo: sed de batido */
+    const n=4+Math.floor(rnd()*2);
+    for(let i=0;i<n;i++) setTimeoutGame(()=>spawnCustomer('local'), i*0.4);
+    toast('Club de running','Baja un club entero tras entrenar por el paseo: '+n+' vecinos con sed de batido.','good'); }},
+  {id:'yate', w:2, run(){ const n=3+Math.floor(rnd()*2);
+    /* un yate ancla frente a la playa y su tripulación baja a la barra */
+    for(let i=0;i<n;i++) setTimeoutGame(()=>spawnCustomer('turista'), i*0.5);
+    Game.rep=clamp(Game.rep+0.1,0,5);
+    toast('Yate frente a la playa','La tripulación de un yate baja a probar la barra. Clientes exigentes y generosos.','good'); }},
+  {id:'marejada', w:2, run(){ const n=3+Math.floor(rnd()*2);
+    /* con el mar así no se puede surfear: los surfistas se quedan en la barra */
+    for(let i=0;i<n;i++) setTimeoutGame(()=>spawnCustomer('surfista'), i*0.4);
+    toast('Marejada','Olas imposibles: los surfistas cuelgan las tablas y se apelotonan en el kiosco.','good'); }},
 ];

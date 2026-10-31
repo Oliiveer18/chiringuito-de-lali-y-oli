@@ -94,3 +94,90 @@ test('v29.4.4: spawnCustomer devuelve al cliente creado (lo usa el floater del i
   const c = sim.spawnCustomer('turista');
   assert.ok(c && Game.customers.includes(c), 'devuelve el cliente y ya está en la escena');
 });
+
+/* ---- v29.4.5: averías reales + informe de incidencias + eventos nuevos ---- */
+const feats = await import(`./features.js?v=${v}`);
+const bk = await import(`./bookkeeping.js?v=${v}`);
+const { incidentsHtml } = await import(`./report-render.js?v=${v}`);
+
+test('v29.4.5: las averías son reales — ni un "cristal roto" en el kiosco', () => {
+  prepService();
+  // kiosco completo: algodonera, sombrillas y altavoz pueden averiarse
+  Game.upgrades = { ...Game.upgrades, algodonera: 1, sombrillas: 1, altavoz: 1 };
+  for (let i = 0; i < 40; i++) feats.runMishap();
+  const inc = Game.dayStats.incidents || [];
+  assert.ok(inc.length > 0, 'se registraron incidencias');
+  for (const i of inc)
+    assert.ok(/algodonera|sombrilla|altavoz|proveedor/i.test(i.what), 'avería real del kiosco: ' + i.what);
+  assert.ok(!inc.some(i => /cristal/i.test(i.what)), 'en el kiosco no hay cristales');
+});
+
+test('v29.4.5: la sombrilla rota cuesta 90 € y queda registrada con hora y estado', () => {
+  prepService();
+  Game.upgrades = { sombrillas: 1 }; // sin altavoz ni algodonera: solo sombrilla o proveedor
+  for (const id of cfg.ITEM_IDS) Game.stock[id] = 0; // sin género: el proveedor no pierde nada
+  const m0 = Game.money;
+  // el reparto es aleatorio entre sombrilla y proveedor (sin pérdidas): repetir hasta la sombrilla
+  let inc = null;
+  for (let i = 0; i < 60 && !inc; i++) {
+    feats.runMishap();
+    inc = (Game.dayStats.incidents || []).find(x => x.what.includes('sombrilla'));
+  }
+  assert.ok(inc, 'salió la avería de la sombrilla');
+  assert.equal(Game.money, m0 - 90, 'el técnico cobra 90 €');
+  assert.deepEqual(inc, { what: 'El viento partió una sombrilla', cost: 90, state: 'reparada', hour: 13 });
+});
+
+test('v29.4.5: la algodonera averiada queda pendiente y repararla cierra la incidencia (150 €)', () => {
+  prepService();
+  bk.logIncident('La algodonera se ha atascado', null, 'pendiente');
+  Game.upgrades.algodoneraRoto = 1;
+  Game.money = 200;
+  assert.equal(feats.repairMachine(), true);
+  assert.equal(Game.money, 50, 'la reparación cuesta 150 €');
+  const inc = Game.dayStats.incidents[0];
+  assert.equal(inc.state, 'reparada');
+  assert.equal(inc.cost, 150);
+});
+
+test('v29.4.5: el informe de jornada muestra las incidencias organizadas (hora, coste y estado)', () => {
+  prepService();
+  Game.dayStats.incidents = [
+    { what: 'El viento partió una sombrilla', cost: 90, state: 'reparada', hour: 14.5 },
+    { what: 'La algodonera se ha atascado', cost: null, state: 'pendiente', hour: 16.2 },
+  ];
+  const html = incidentsHtml(Game.dayStats);
+  assert.ok(html.includes('Incidencias y reparaciones'), 'título de la sección');
+  assert.ok(html.includes('El viento partió una sombrilla'));
+  assert.ok(html.includes('14:30') && html.includes('16:12'), 'hora de cada incidencia');
+  assert.ok(html.includes('pendiente'), 'estado pendiente visible');
+  assert.ok(/−90\s*€|−90\s/.test(html), 'coste con formato de dinero');
+  assert.ok(html.includes('warn'), 'la pendiente se resalta');
+  // sin incidencias no se muestra la sección (informe limpio)
+  assert.equal(incidentsHtml({ incidents: [] }), '');
+  assert.equal(incidentsHtml({}), '');
+});
+
+test('v29.4.5: club de running — 4-5 vecinos en grupo con sed de batido', () => {
+  prepService();
+  const ev = sim.RANDOM_EVENTS.find(e => e.id === 'running');
+  ev.run();
+  assert.equal(Game.mods.batido, true, 'el batido pesa el doble');
+  assert.equal(Game.mods.mix.local, 1.3);
+  fireTimers();
+  const club = Game.customers.filter(c => c.type === 'local');
+  assert.ok(club.length >= 4 && club.length <= 5, 'club de running: ' + club.length + ' vecinos');
+});
+
+test('v29.4.5: yate y marejada — turistas y surfistas que se ven llegar', () => {
+  prepService();
+  const rep0 = Game.rep;
+  sim.RANDOM_EVENTS.find(e => e.id === 'yate').run();
+  fireTimers();
+  assert.ok(Game.customers.filter(c => c.type === 'turista').length >= 3, 'la tripulación del yate baja');
+  assert.ok(Game.rep > rep0, 'el yate deja buena reputación');
+  prepService();
+  sim.RANDOM_EVENTS.find(e => e.id === 'marejada').run();
+  fireTimers();
+  assert.ok(Game.customers.filter(c => c.type === 'surfista').length >= 3, 'los surfistas cuelgan las tablas');
+});

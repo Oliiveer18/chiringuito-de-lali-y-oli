@@ -9,9 +9,9 @@ export {
   itemsStr, askedStr, waitMinsLabel, fill, triggerFor, reviewText,
   REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP, Rev,
   buildRevModel,
-} from './report-model.js?v=29.4.4';
+} from './report-model.js?v=29.4.5';
 export {
   endDay, reportStatsHtml, reviewsWrapHtml, revSigOf, wageLine,
   respondReview, applyRevResp, refreshReportUI, advanceFromReport,
   showReportUI, teamHtml, reviewsSectionHtml,
-} from './report-render.js?v=29.4.4';
+} from './report-render.js?v=29.4.5';

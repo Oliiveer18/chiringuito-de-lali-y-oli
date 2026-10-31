@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.4.4';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.4.4';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.4.4';
-import { rr } from './icons.js?v=29.4.4';
-import { Audio } from './audio.js?v=29.4.4';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=29.4.4';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.4.4';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.4.4';
-import { netAct, netDirty } from './net.js?v=29.4.4';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.4.4';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.4.5';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.4.5';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.4.5';
+import { rr } from './icons.js?v=29.4.5';
+import { Audio } from './audio.js?v=29.4.5';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=29.4.5';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.4.5';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.4.5';
+import { netAct, netDirty } from './net.js?v=29.4.5';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.4.5';
 
 export function endDay(){
   Game.mode='report';
@@ -117,7 +117,21 @@ export function reportStatsHtml(s, m){
       ${acc.spoilLines.length?`<p>Se ha estropeado: <b>${acc.spoilLines.join(', ')}</b> (${eur(acc.spoilVal)}).</p>`:''}
       ${notes.map(n=>n).join('')}
     </div>
+    ${incidentsHtml(s)}
     ${capitalNote(s)}${teamPanelHtml(s,m)}`;
+}
+/* v29.4.5: incidencias y reparaciones de la jornada — cada avería real
+   (sombrilla, altavoz, algodonera, batidora, proveedor) con su hora, coste y
+   estado. Solo se muestra si hubo alguna. */
+export function incidentsHtml(s){
+  const list=s?.incidents||[]; if(!list.length) return '';
+  const hh=h=>String(Math.floor(h)).padStart(2,'0')+':'+String(Math.round((h%1)*60)).padStart(2,'0');
+  const rows=list.map(i=>{
+    const pend=i.state==='pendiente';
+    const cost=i.cost!=null?'−'+eur(i.cost):(pend?'pendiente':'sin coste');
+    return `<div class="rep-incident${pend?' warn':''}"><span class="ic">${pend?'⚠️':'🔧'}</span><span class="t">${escapeHtml(i.what)}</span><span class="h">${hh(i.hour)}</span><span class="c${i.cost!=null?' neg':''}">${cost}</span></div>`;
+  }).join('');
+  return `<p class="rep-sec-h">Incidencias y reparaciones</p><div class="rep-incidents">${rows}</div>`;
 }
 export function reviewsWrapHtml(m){ return `<div class="reviews">${reviewsSectionHtml(m)}</div>`; }
 export function revSigOf(m){ return m ? m.day+'#'+m.respCount+'#'+m.cards.map(c=>c.vid+':'+(c.resp||0)).join(',') : ''; }

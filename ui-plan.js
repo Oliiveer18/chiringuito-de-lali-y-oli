@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=29.4.4';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=29.4.4';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=29.4.4';
-import { ICON_URL } from './icons.js?v=29.4.4';
-import { Audio } from './audio.js?v=29.4.4';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=29.4.4';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=29.4.4';
-import { advanceFromReport } from './report.js?v=29.4.4';
-import { netAct, netDirty } from './net.js?v=29.4.4';
-import { drawPerson } from './render.js?v=29.4.4';
-import { iconFor } from './ui-polish.js?v=29.4.4';
-import { renderTab, toast } from './ui.js?v=29.4.4';
+import { trackCost } from './bookkeeping.js?v=29.4.5';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=29.4.5';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=29.4.5';
+import { ICON_URL } from './icons.js?v=29.4.5';
+import { Audio } from './audio.js?v=29.4.5';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=29.4.5';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=29.4.5';
+import { advanceFromReport } from './report.js?v=29.4.5';
+import { netAct, netDirty } from './net.js?v=29.4.5';
+import { drawPerson } from './render.js?v=29.4.5';
+import { iconFor } from './ui-polish.js?v=29.4.5';
+import { renderTab, toast } from './ui.js?v=29.4.5';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};

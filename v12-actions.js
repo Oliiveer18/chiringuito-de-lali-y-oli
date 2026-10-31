@@ -1,28 +1,28 @@
 /* Incidentes, publicaciones y pedidos. Lo importa v12.js. */
-import { trackCost } from './bookkeeping.js?v=29.4.4';
-import { capturePhoto } from './management-ui.js?v=29.4.4';
-import { Game, Net, itemUnlocked, setTimeoutGame } from './state.js?v=29.4.4';
-import { ITEMS } from './config.js?v=29.4.4';
-import { rnd, clamp } from './util.js?v=29.4.4';
-import { toast } from './ui.js?v=29.4.4';
-import { netDirty } from './net.js?v=29.4.4';
-import { spawnCustomer } from './sim.js?v=29.4.4';
-import { onGuestAction } from './coopbridge.js?v=29.4.4';
-import { postEffect, influEffect } from './social-model.js?v=29.4.4';
-import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=29.4.4';
-import { addPend } from './v12-day.js?v=29.4.4';
-import { rt } from './v12-state.js?v=29.4.4';
+import { trackCost, logIncident, resolvePending } from './bookkeeping.js?v=29.4.5';
+import { capturePhoto } from './management-ui.js?v=29.4.5';
+import { Game, Net, itemUnlocked, setTimeoutGame } from './state.js?v=29.4.5';
+import { ITEMS } from './config.js?v=29.4.5';
+import { rnd, clamp } from './util.js?v=29.4.5';
+import { toast } from './ui.js?v=29.4.5';
+import { netDirty } from './net.js?v=29.4.5';
+import { spawnCustomer } from './sim.js?v=29.4.5';
+import { onGuestAction } from './coopbridge.js?v=29.4.5';
+import { postEffect, influEffect } from './social-model.js?v=29.4.5';
+import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=29.4.5';
+import { addPend } from './v12-day.js?v=29.4.5';
+import { rt } from './v12-state.js?v=29.4.5';
 export function runIncident(){
  const t=Game.upgrades.incidentTipo;delete Game.upgrades.incidentHora;if(!t)return;
- if(t==='batidora'){Game.upgrades.batidoraRota=1;Game.enabled.batido=false;toast('Se rompe la batidora','Los batidos quedan bloqueados. Reparadla (120 €) o quitadlos hoy.','bad');}
+ if(t==='batidora'){Game.upgrades.batidoraRota=1;Game.enabled.batido=false;logIncident('Se rompió la batidora',null,'pendiente');toast('Se rompe la batidora','Los batidos quedan bloqueados. Reparadla (120 €) o quitadlos hoy.','bad');}
  else if(t==='vip'){rt.vipBase=Game.dayStats?Game.dayStats.served:0;rt.vipDone=false;rt.vipIds=[];for(let i=0;i<2;i++)setTimeoutGame(()=>{if(Game.mode!=='service')return;spawnCustomer('turista');const c=Game.customers[Game.customers.length-1];if(c){c.vip=true;rt.vipIds.push(c.id);}},i*0.8);toast('Cliente VIP','Ha llegado un cliente importante con acompañante. Atendedlo rápido: gran propina y reputación.','good');}
  else if(t==='punta'){rt.puntaEnd=Game.t+120;Game.mods.arr*=1.45;toast('Hora punta doble','Llegan turistas y locales a la vez. ¡Repartíos las colas!','bad');}
  else if(t==='inspeccion'){const dirty=Game.tables.filter(x=>x.state==='dirty').length;if(dirty>=1){const fine=100*Math.min(4,dirty);Game.money-=fine;Game.dayStats.fines=(Game.dayStats.fines||0)+fine;Game.rep=clamp(Game.rep-0.15,0,5);toast('Inspección de Sanidad',dirty+' mesa(s) sucia(s). Multa: '+fine+' €.','bad');}else{Game.rep=clamp(Game.rep+0.15,0,5);toast('Inspección de Sanidad','Todo limpio. +0,15 de valoración.','good');}}
  else if(t==='grupo'){const n=3+Math.floor(rnd()*4);for(let i=0;i<n;i++)setTimeoutGame(()=>{if(Game.mode==='service')spawnCustomer(rnd()<0.6?'turista':'local');},i*1.2);toast('Grupo en el kiosco','Ha llegado un grupo de '+n+' personas. Muchos pedidos y pocas mesas.','bad');}
  netDirty();
 }
-export function repairBatidora(){if(!Game.upgrades.batidoraRota)return;if(Game.money<120){toast('Sin caja','La reparación cuesta 120 €.','bad');return;}Game.money-=120;trackCost(120,'repairs');Game.upgrades.batidoraReparaT=20;delete Game.upgrades.batidoraRota;toast('Reparando batidora','El técnico llega en 20 segundos.','');netDirty();}
-export function quitBatidos(){if(!Game.upgrades.batidoraRota)return;Game.upgrades.batidoraQuitada=1;delete Game.upgrades.batidoraRota;toast('Batidos fuera del menú','Hoy no habrá batidos.','');netDirty();}
+export function repairBatidora(){if(!Game.upgrades.batidoraRota)return;if(Game.money<120){toast('Sin caja','La reparación cuesta 120 €.','bad');return;}Game.money-=120;trackCost(120,'repairs');resolvePending(120);Game.upgrades.batidoraReparaT=20;delete Game.upgrades.batidoraRota;toast('Reparando batidora','El técnico llega en 20 segundos.','');netDirty();}
+export function quitBatidos(){if(!Game.upgrades.batidoraRota)return;Game.upgrades.batidoraQuitada=1;delete Game.upgrades.batidoraRota;resolvePending(null,'fuera de menú');toast('Batidos fuera del menú','Hoy no habrá batidos.','');netDirty();}
 export function publish(id){const P=POSTS[id],U=Game.upgrades;if(!P||U.socialPostDia===Game.day)return;if(Game.money<P.cost){toast('Sin caja','No llega para publicar.','bad');return;}if(P.req&&!P.req()){toast('No disponible',P.reqTxt||'No cumples el requisito.','bad');return;}
  const trendId=(U.socialTrendDia===Game.day)?U.socialTrend:null,prevId=(U.socialPostDia===Game.day-1)?U.socialPost:null;
  const fx=postEffect({id,P,f:U[FOL]||0,rating:U[RAT]||3,trendId,prevId});

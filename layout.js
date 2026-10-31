@@ -1,7 +1,7 @@
-import { scheduleViewportResize, view, setViewTarget } from './canvas.js?v=29.4.4';
-import { computeView, camMode, setCamMode } from './camera.js?v=29.4.4';
-import { W, H } from './config.js?v=29.4.4';
-import { Game } from './state.js?v=29.4.4';
+import { scheduleViewportResize, view, setViewTarget } from './canvas.js?v=29.4.5';
+import { computeView, camMode, setCamMode } from './camera.js?v=29.4.5';
+import { W, H } from './config.js?v=29.4.5';
+import { Game } from './state.js?v=29.4.5';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 /* v29.0.0: la cámara está unificada en camera.js. Los modos barra/mesas ya no

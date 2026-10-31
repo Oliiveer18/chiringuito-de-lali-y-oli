@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=29.4.4';
+} from './net-rtc.js?v=29.4.5';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {

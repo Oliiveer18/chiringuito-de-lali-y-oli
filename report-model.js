@@ -1,9 +1,9 @@
 /* Modelo de visitas y reseñas. Lo importa report.js. */
-import { ITEMS, SEC_PER_HOUR, who } from './config.js?v=29.4.4';
-import { clamp, escapeHtml, eur2 } from './util.js?v=29.4.4';
-import { visitStars, experienceSummary } from './ratings-model.mjs?v=29.4.4';
-import { decideAll, opinionCounts } from './opinions-model.mjs?v=29.4.4';
-import { Game, closeHour, weatherToday } from './state.js?v=29.4.4';
+import { ITEMS, SEC_PER_HOUR, who } from './config.js?v=29.4.5';
+import { clamp, escapeHtml, eur2 } from './util.js?v=29.4.5';
+import { visitStars, experienceSummary } from './ratings-model.mjs?v=29.4.5';
+import { decideAll, opinionCounts } from './opinions-model.mjs?v=29.4.5';
+import { Game, closeHour, weatherToday } from './state.js?v=29.4.5';
 
 export function recordVisit(c, extra){
   if(!Game.dayStats) return;

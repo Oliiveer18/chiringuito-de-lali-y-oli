@@ -1,5 +1,5 @@
-import {Game,Net,simProgressDay} from './state.js?v=29.4.4';
-import {escapeHtml,eur} from './util.js?v=29.4.4';
+import {Game,Net,simProgressDay} from './state.js?v=29.4.5';
+import {escapeHtml,eur} from './util.js?v=29.4.5';
 const allowed=new Set(['delivery','social','influencers','compensations','repairs','shows','production','interest','staffExtras','posters','upgrades','training']);
 const labels={delivery:'Compras al repartidor',social:'Publicaciones de Chiringo',influencers:'Colaboraciones',compensations:'Compensaciones de Chiringo',repairs:'Reparaciones',shows:'Espectaculos (neto de devoluciones)',production:'Produccion de algodon',interest:'Intereses',staffExtras:'Primas de personal',posters:'Promocion de eventos',upgrades:'Mejoras',training:'Formacion'};
 const n=v=>Number.isFinite(v)?v:0;
@@ -13,3 +13,17 @@ export function totalExtras(s){return Object.values(s.extraCosts||{}).reduce((a,
 export function operatingResult(s,a){return n(s.revenue)+n(s.hamacas)-n(a.wage)-n(a.rent)-n(s.fines)-n(s.urgent)-n(s.purchases)-n(s.courtesies)-totalExtras(s);}
 export function ledgerHtml(s){return Object.entries(s.extraCosts||{}).filter(([,v])=>n(v)!==0).map(([k,v])=>'<span>'+escapeHtml(labels[k]||k)+'</span><span class="'+(v>=0?'neg':'pos')+'">'+(v>=0?'−':'+')+eur(Math.abs(v))+'</span>').join('');}
 export function capitalNote(s){const rows=Object.entries(s.investments||{}).filter(([,v])=>n(v)>0);return (rows.length?'<p class="muted" style="margin:0 24px 12px">Inversiones registradas, fuera del resultado operativo: '+rows.map(([k,v])=>escapeHtml(labels[k]||k)+' '+eur(v)).join(' · ')+'.</p>':'')+(Game.upgrades.accountingLegacyUnknown?'<p class="muted">Esta partida antigua no guardaba el coste pendiente de compras. No se han inventado ni vuelto a cobrar importes anteriores a la actualizacion.</p>':'');}
+
+/* v29.4.5: libro de incidencias y reparaciones de la jornada. Cada avería es
+   REAL (algodonera, sombrillas, altavoz, batidora, proveedor — en el kiosco no
+   hay "cristales") y queda registrada con hora, coste y estado para el
+   informe de fin de día. */
+export function logIncident(what,cost,state){
+  const s=Game.dayStats; if(!s) return null;
+  const e={what,cost,state,hour:Math.round(Game.hour*10)/10};
+  (s.incidents||(s.incidents=[])).push(e); return e;
+}
+export function resolvePending(cost,state='reparada'){
+  const list=Game.dayStats?.incidents; if(!list) return;
+  for(let i=list.length-1;i>=0;i--){ if(list[i].state==='pendiente'){ list[i].cost=cost; list[i].state=state; return; } }
+}

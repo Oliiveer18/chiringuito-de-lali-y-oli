@@ -2,7 +2,7 @@
    audio.js
    Sonidos sintetizados con WebAudio; en coop el anfitrión reenvía los del invitado.
    ========================================================= */
-import { Game, Net, hostLive } from './state.js?v=29.4.4';
+import { Game, Net, hostLive } from './state.js?v=29.4.5';
 
 // ---------- Audio ----------
 export const Audio = {

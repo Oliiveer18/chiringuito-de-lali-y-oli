@@ -157,3 +157,13 @@
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* v29.4.5: incidencias y reparaciones de la jornada en el informe */
+.rep-incidents{margin:0 24px 14px;display:flex;flex-direction:column;gap:6px}
+.rep-incident{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;color:var(--ink-2)}
+.rep-incident .ic{font-size:15px}
+.rep-incident .t{color:var(--ink);font-weight:600}
+.rep-incident .h{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.rep-incident .c{font-weight:700;color:var(--ink)}
+.rep-incident .c.neg{color:#c73e2a}
+.rep-incident.warn{border-color:#e4b95b;background:#fdf6e7}
+.rep-incident.warn .c{color:#a4651f}
