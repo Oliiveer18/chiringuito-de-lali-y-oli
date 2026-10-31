@@ -1,20 +1,20 @@
-import {trackCost,operatingResult} from './bookkeeping.js?v=29.4.5';
-import {closeSocialDay} from './v12.js?v=29.4.5';
+import {trackCost,operatingResult} from './bookkeeping.js?v=29.4.9';
+import {closeSocialDay} from './v12.js?v=29.4.9';
 // Integración v22: el anfitrión calcula; los invitados reciben upgrades.progression.
-import {Game,Net,simProgressDay} from './state.js?v=29.4.5';
-import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=29.4.5';
-import {Plan,toast} from './ui.js?v=29.4.5';
-import {refreshReportUI} from './report.js?v=29.4.5';
-import {netDirty} from './net.js?v=29.4.5';
-import {guestSend,onGuestAction} from './coopbridge.js?v=29.4.5';
-import {escapeHtml as E,eur} from './util.js?v=29.4.5';
-import * as M from './progression-model.mjs?v=29.4.5';
-import { iconFor } from './ui-polish.js?v=29.4.5';
-import { tabHtml as careerTabHtml } from './career-ui.js?v=29.4.5';
+import {Game,Net,simProgressDay} from './state.js?v=29.4.9';
+import {ITEMS,WEATHER,SPECIAL_DAYS,RENT} from './config.js?v=29.4.9';
+import {Plan,toast} from './ui.js?v=29.4.9';
+import {refreshReportUI} from './report.js?v=29.4.9';
+import {netDirty} from './net.js?v=29.4.9';
+import {guestSend,onGuestAction} from './coopbridge.js?v=29.4.9';
+import {escapeHtml as E,eur} from './util.js?v=29.4.9';
+import * as M from './progression-model.mjs?v=29.4.9';
+import { iconFor } from './ui-polish.js?v=29.4.9';
+import { tabHtml as careerTabHtml } from './career-ui.js?v=29.4.9';
 const day=()=>simProgressDay();
 const pget=()=>Game.upgrades.progression;
 let metric='cash',windowSize=30;
-function ensure(){if(!pget())Game.upgrades.progression=M.initial(Game.upgrades.career?.id||'charco');return pget();}
+function ensure(){if(!pget())Game.upgrades.progression=M.initial(Game.upgrades.career?.id||'charco');const p=pget();if(M.regrade(p))netDirty();return p;}
 function prepare(){if(Net.role==='guest')return;const p=ensure(),d=day();if(!p.goal||p.goal.day!==d){p.goal=M.goalFor(p,d);p.poster=false;netDirty();}}
 function buyPoster(expected){if(Net.role==='guest'||Game.mode!=='plan'||expected!==day())return;const p=ensure();if(!SPECIAL_DAYS[Game.day]||p.poster||Game.money<30)return;Game.money-=30;trackCost(30,'posters');p.poster=true;toast('Cartel instalado','30 € · preparación del evento mejorada.','good');netDirty();}
 onGuestAction('progressPoster',d=>buyPoster(d));
@@ -29,7 +29,9 @@ function service(){if(Net.role==='guest')return;const p=ensure(),d=day();if(p.st
  if(rival)toast('Competencia local','−3 % de afluencia: estáis entre los últimos tres de la liga.','');
  if(bonus)toast('Evento preparado','+'+Math.round(bonus*100)+' % de afluencia por vuestra preparación.','good');
  netDirty();}
-function figs(s,a,p){const sales=M.num(s.revenue)+M.num(s.hamacas),profit=operatingResult(s,a);return {served:s.served,lost:s.lost,rating:Game.rep,waste:a.spoilVal,revenue:s.revenue,sales,profit,cash:Game.money,cashDelta:Game.money-M.num(p.start&&p.start.cash!=null?p.start.cash:Game.money),followers:Game.upgrades.socialFollowers||0};}
+// v29.4.9: el margen y el record de ventas cuentan tambien las hamacas: son
+// ventas como cualquier otra y antes quedaban fuera del "revenue" de la jornada.
+function figs(s,a,p){const sales=M.num(s.revenue)+M.num(s.hamacas),profit=operatingResult(s,a);return {served:s.served,lost:s.lost,rating:Game.rep,waste:a.spoilVal,revenue:sales,sales,profit,cash:Game.money,cashDelta:Game.money-M.num(p.start&&p.start.cash!=null?p.start.cash:Game.money),followers:Game.upgrades.socialFollowers||0};}
 function close(){if(Net.role==='guest'||!Game.dayStats)return;closeSocialDay();const p=ensure(),d=day();const s=Game.dayStats,a=Game.revModel?.acc;if(p.last>=d){if(a&&p.last===d){const am=M.amend(p,{day:d,...figs(s,a,p)});if(am.changed){Game.upgrades.progression=am.p;netDirty();}}return;}
  if(!a)return;
  const profit=operatingResult(s,a);
@@ -41,7 +43,7 @@ function close(){if(Net.role==='guest'||!Game.dayStats)return;closeSocialDay();c
  if(out.awards.length)toast('Logros desbloqueados',out.awards.join(' · '),'good');
  if(out.reward)refreshReportUI();
  netDirty();}
-function gradeHtml(p){const r=p.history.at(-1);if(!r)return '';return `<section class="pg-card pg-grade"><header class="pg-section-head"><h3>Jornada ${r.day} · Nota ${r.grade.letter}</h3></header><p class="pg-lead">${r.grade.score}/100 · Meta ${r.goalOk?'cumplida (+20 €)':'no cumplida'}</p><ul class="pg-grade-list">${r.grade.components.map(([label,v,w])=>`<li>${label}: ${Math.round(v*100)}/100 · peso ${w}%</li>`).join('')}</ul><p>Ventas ${eur(r.sales!==undefined?r.sales:r.revenue)} · resultado operativo ${eur(r.profit)} · variación de caja ${eur(r.cashDelta||0)}. La recompensa no está incluida en el resultado operativo.</p></section>`;}
+function gradeHtml(p){const r=p.history.at(-1);if(!r)return '';return `<section class="pg-card pg-grade"><header class="pg-section-head"><h3>Jornada ${r.day} · Nota ${r.grade.letter}</h3></header><p class="pg-lead">${r.grade.score}/100 · Meta ${r.goalOk?'cumplida (+20 €)':'no cumplida'}</p><ul class="pg-grade-list">${r.grade.components.map(([label,v,w])=>`<li>${label}: ${Math.round(v*100)}/100 · peso ${w}%</li>`).join('')}</ul><p class="pg-grade-note">Esta nota es la puntuación que suma en las Ligas: máximo 100 puntos por jornada (servicio 40, valoración 25, margen 20, comunidad 15).</p><p>Ventas ${eur(r.sales!==undefined?r.sales:r.revenue)} · resultado operativo ${eur(r.profit)} · variación de caja ${eur(r.cashDelta||0)}. La recompensa no está incluida en el resultado operativo.</p></section>`;}
 function chart(p){const h=p.history.slice(-windowSize),vals=h.map(r=>M.num(r[metric]));if(!vals.length)return '<p>El historial comienza en el próximo cierre; no se inventan jornadas anteriores.</p>';
  const lo=Math.min(...vals),hi=Math.max(...vals),range=hi-lo||1;
  const points=vals.map((v,i)=>`${50+i*620/Math.max(1,vals.length-1)},${175-(v-lo)*140/range}`).join(' ');

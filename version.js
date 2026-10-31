@@ -1,5 +1,5 @@
-export const VERSION='v29.4.8';
-export const LABEL='v29.4.8 · precio de hamacas con deslizador y botones -/+ reforzados para iPhone, iPad y Mac';
+export const VERSION='v29.4.9';
+export const LABEL='v29.4.9 · una sola puntuación por jornada: la nota del informe y los puntos de la liga son el mismo número (servicio 40, valoración 25, margen 20, comunidad 15), el margen cuenta también las hamacas, los rivales puntúan igual y las partidas guardadas se reconvierten';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

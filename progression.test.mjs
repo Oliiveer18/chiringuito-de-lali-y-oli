@@ -23,4 +23,13 @@ assert.equal(p.history.length,120);assert.equal(p.streaks.clean,500);
 assert.equal(p.achievements['Primera jornada'],1);
 assert.equal(M.readiness({cerveza:20},{camarero:true},true,'cerveza').every(x=>x.ok),true);
 assert.equal(M.grade({served:0,lost:0,rating:0,waste:0,revenue:0,profit:0}).letter,'D');
-console.log('OK: 500 jornadas, 87 NPC, tres tablas de diez por ámbito, revisión semanal, cierres idempotentes y persistencia JSON.');
+// v29.4.9: la nota del informe y los puntos de la liga son el mismo numero.
+// Antes el informe usaba su propia formula (merma 15 + valoracion 30) y la liga
+// otra (margen 20 + comunidad 15): 78 en el informe y 66 en la liga el mismo dia.
+import {dailyPoints} from './management-model.mjs';
+for(const r of p.history)assert.equal(r.grade.score,dailyPoints({served:r.served,lost:r.lost,rating:r.rating,revenue:r.revenue,profit:r.profit,followers:r.followers}).total,'la nota debe coincidir con los puntos de liga');
+// La reconversion de partidas guardadas recalcula las notas una sola vez.
+const saved=JSON.parse(JSON.stringify(p));delete saved.formula;
+assert.equal(M.regrade(saved),true);assert.equal(M.regrade(saved),false);
+assert.deepEqual(saved.history.map(r=>r.grade.score),p.history.map(r=>r.grade.score));
+console.log('OK: 500 jornadas, 87 NPC, tres tablas de diez por ámbito, revisión semanal, cierres idempotentes, nota=puntos de liga y persistencia JSON.');

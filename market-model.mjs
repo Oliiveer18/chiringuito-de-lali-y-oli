@@ -1,5 +1,5 @@
-import {tieVector} from './professional-model.mjs?v=29.4.5';
-import {weeklyPoints} from './management-model.mjs?v=29.4.5';
+import {tieVector} from './professional-model.mjs?v=29.4.9';
+import {dailyPoints,weeklyPoints} from './management-model.mjs?v=29.4.9';
 // v23: tres ligas simultáneas. Simulación económica resumida y determinista por cierre.
 export const AREAS=['Pueblo','Isla','Nación'],TIERS=['Bronce','Plata','Oro'];
 const names=['La Brisa','El Muelle','La Gaviota','Salitre','La Toalla','El Faro','La Duna','La Sombrilla','El Ancla','La Ola','El Coral','La Caleta','El Alisio','La Arena','El Mirador','Las Palmeras','La Orilla','El Timón','La Espuma','El Velero','El Cangrejo','El Pez Azul','La Costa','El Horizonte','Las Conchas','El Puerto','La Marea','El Refugio','El Islote'];
@@ -42,9 +42,11 @@ export function step(state,day,context={}){
   const profit=actualRevenue-cost;n.cash+=profit;
   const rating=cap(n.quality-Math.min(.8,lost*.025)-Math.max(0,n.price-1)*.3,1,5);
   n.followers=Math.max(0,Math.round(n.followers*(1-.015)+(rating-2)*2+(promotion?8:0)));
-  const service=affordable+lost?affordable/(affordable+lost):0;
-  const g=Math.round(service*40+rating/5*30+15+cap(profit/Math.max(1,actualRevenue),0,1)*15);
-  n.history.push({day,served:affordable,lost:lost+served-affordable,revenue:actualRevenue,profit,rating,followers:n.followers,grade:{score:g}});n.history=n.history.slice(-30);
+  // v29.4.9: los rivales puntuan con la misma formula que el jugador (dailyPoints);
+  // antes su "grade" interno usaba otra formula distinta de la de la tabla.
+  const row={day,served:affordable,lost:lost+served-affordable,revenue:actualRevenue,profit,rating,followers:n.followers};
+  row.grade={score:dailyPoints(row).total};
+  n.history.push(row);n.history=n.history.slice(-30);
   if(n.cash < -300){n.lastAction='Reestructuración: reduce actividad';n.capacity=Math.max(15,n.capacity-3);n.staff=0;}
  }
  s.last=day;return s;

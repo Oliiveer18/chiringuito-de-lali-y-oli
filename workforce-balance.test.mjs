@@ -12,7 +12,9 @@ import { candidates, PRESENCE_PRICE } from './management-model.mjs';
 
 // ---------- 1. Sueldos proporcionales (modelo puro) ----------
 
-const BASE = { camarero: 55, cocinero: 65, limpiador: 30, terraza: 60 };
+// Bases salariales de management-model.mjs (duplicadas en el "Ajuste profesional:
+// sueldos x2" de v29.4.x; antes eran 55/65/30/60 y el test quedó desincronizado).
+const BASE = { camarero: 110, cocinero: 130, limpiador: 60, terraza: 120 };
 
 function pool() {
   const out = [];
