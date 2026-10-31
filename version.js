@@ -1,5 +1,5 @@
-export const VERSION='v29.4.5';
-export const LABEL='v29.4.5 · averías reales (sombrilla, altavoz, algodonera, batidora — adiós al "cristal roto") con informe de incidencias al cerrar la jornada · nuevos eventos visibles: club de running, yate y marejada';
+export const VERSION='v29.4.6';
+export const LABEL='v29.4.6 · controles de precio compatibles con iPhone, iPad y Mac: los botones menos y más funcionan sin selección de texto ni resaltado verde';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

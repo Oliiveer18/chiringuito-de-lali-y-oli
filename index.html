@@ -15,10 +15,24 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=chillax@500,600,700&display=swap">
-<link rel="stylesheet" href="style.css?v=29.4.5">
+<link rel="stylesheet" href="style.css?v=29.4.6">
 <style id="tabs-fix">
   #plan .tabs{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   #plan .tabs .tab{touch-action:pan-x}
+  /* v29.4.6: botones de precio estables en iOS: sin selección de texto,
+     sin llamada contextual y sin resaltado verde al tocar. */
+  .price button,.btn{
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .price button{
+    -webkit-appearance:none;
+    appearance:none;
+    line-height:1;
+  }
 </style>
 </head>
 <body>
@@ -43,13 +57,11 @@
     <button id="btn-sound" class="hud-btn quiet" type="button" aria-label="Sonido activado" data-sound="on"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 4.5L6.5 8.5H3.5v3h3l4.5 4V4.5z" fill="currentColor"/><path d="M14.2 8.8a3.8 3.8 0 010 2.4M16 6.5a6.5 6.5 0 010 7" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/></svg><span class="snd-lbl">Sonido: sí</span></button>
   </div>
 </header>
-<!-- v29.2: el inventario cuelga del lateral derecho como raíl vertical:
-     visible sin molestar y plegable a un botón. -->
 <div id="stockbar" class="stockbar hidden"><div class="stock-list" aria-label="Género en stock"></div><button id="stock-toggle" class="stock-toggle" type="button" aria-label="Plegar inventario" aria-expanded="true"><svg viewBox="0 0 20 20"><path d="M10 5v10m0 0l-4-4m4 4l4-4"/></svg></button></div>
 <div id="hint" class="hint hidden"></div>
 <div id="toasts" class="toasts"></div>
-<div id="rotate" class="rotate-pill"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M20.5 9.5a8.5 8.5 0 00-5-4.5M3.5 14.5a8.5 8.5 0 005 4.5"/></svg>Gira el móvil para ver todo el chiringuito</div>
-<section id="title" class="overlay show"><div class="screen center"><div class="title-card"><div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0f8b8d"/><path d="M8 40c6-4 10-4 16 0s10 4 16 0 10-4 16 0v16H8z" fill="#fffdf8" opacity=".92"/><path d="M32 12v26" stroke="#fffdf8" stroke-width="3" stroke-linecap="round"/><path d="M14 24c4-10 14-13 18-12-1 8-8 14-18 12zM50 24c-4-10-14-13-18-12 1 8 8 14 18 12z" fill="#e8603c"/></svg></div><p class="eyebrow">Chiringuito Charco Azul · Tenerife</p><h1>Chiringuito de Lali y Oli</h1><p class="lead">Compra el género, ajusta la carta y sirve a turistas y vecinos antes de que pierdan la paciencia. Treinta días para comprar la concesión.</p><div class="title-actions"><button id="btn-start" class="btn primary big">Jugar en solitario</button><button id="btn-coop" class="btn big ghost"><svg viewBox="0 0 20 20" class="ico"><path d="M7 9a3 3 0 100-6 3 3 0 000 6zm7 1a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1 17c0-3 2.7-5 6-5s6 2 6 5zm12.5-4.6c2.9.1 5.5 1.7 5.5 4.6h-4.3c0-1.8-.5-3.4-1.2-4.6z"/></svg>Jugar online con tu pareja</button></div><p class="fine">Cada uno en su móvil · Mejor en horizontal</p><p class="fine ver-line" id="ver-title">v29.4.5</p></div></div></section>
+<div id="rotate" class="rotate-pill"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M20.5 9.5a8.5 8.5 0 00-5-4.5M3.5 14.5a8.5 8.5 0 015 4.5"/></svg>Gira el móvil para ver todo el chiringuito</div>
+<section id="title" class="overlay show"><div class="screen center"><div class="title-card"><div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0f8b8d"/><path d="M8 40c6-4 10-4 16 0s10 4 16 0 10-4 16 0v16H8z" fill="#fffdf8" opacity=".92"/><path d="M32 12v26" stroke="#fffdf8" stroke-width="3"/></svg></div><p class="eyebrow">Chiringuito Charco Azul · Tenerife</p><h1>Chiringuito de Lali y Oli</h1><p class="lead">Compra el género, ajusta la carta y sirve a turistas y vecinos antes de que pierdan la paciencia. Treinta días para comprar la concesión.</p><div class="title-actions"><button id="btn-start" class="btn primary big">Jugar en solitario</button><button id="btn-coop" class="btn big ghost"><svg viewBox="0 0 20 20" class="ico"><path d="M7 9a3 3 0 100-6 3 3 0 000 6zm7 1a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1 17c0-3 2.7-5 6-5s6 6 5 6zm12.5-4.6c2.9.1 5.5 1.7 5.5 4.6h-4.3c0-1.8-.5-3.4-1.2-4.6z"/></svg>Jugar online con tu pareja</button></div><p class="fine">Cada uno en su móvil · Mejor en horizontal</p><p class="fine ver-line" id="ver-title">v29.4.6</p></div></div></section>
 <section id="lobby" class="overlay"><div class="screen center"><div class="panel lobby-card"><p class="eyebrow">Cooperativo online</p><h2>Sala de juego</h2><div class="field"><label for="lobby-name">Tu nombre</label><input id="lobby-name" type="text" maxlength="14" placeholder="Cómo te llamas" autocomplete="nickname" autocapitalize="words" spellcheck="false"></div><div id="lobby-choose" class="lobby-step"><button id="btn-create" class="btn primary big block">Crear partida</button><div class="or"><span>o únete a la de tu pareja</span></div><div class="join-row"><input id="lobby-join-code" type="text" inputmode="text" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código de la partida"><button id="btn-join" class="btn big">Unirme</button></div></div><div id="lobby-host" class="lobby-step hidden"><p class="muted center-text">Pásale este código a tu pareja</p><div id="lobby-code" class="code-box">····</div><p id="lobby-peer" class="peer-status"></p><p class="eyebrow small">Reparto de puestos</p><div id="role-pick" class="seg"><button data-role="barra">Barra · bebidas</button><button data-role="cocina">Cocina · platos</button></div><p id="role-note" class="muted center-text"></p><button id="btn-lobby-go" class="btn primary big block" disabled>Empezar la temporada</button></div><div id="lobby-guest" class="lobby-step hidden"><p id="guest-info" class="guest-info"></p></div><p id="lobby-status" class="lobby-status" role="status"></p><button id="btn-lobby-back" class="btn text">← Volver</button></div></div></section>
 <section id="plan" class="overlay"><div class="screen"><div class="panel sheet"><div class="sheet-head"><div><p id="plan-eyebrow" class="eyebrow"></p><h2 id="plan-title"></h2></div><div class="cash"><span class="k">En caja</span><b id="plan-money" class="v"></b><p id="plan-costs" class="cash-note"></p></div></div><div id="forecast" class="forecast"></div><nav class="tabs" role="tablist"><button class="tab on" data-tab="compras" role="tab">Compras y precios</button><button class="tab" data-tab="mejoras" role="tab">Mejoras</button><button class="tab" data-tab="personal" role="tab">Personal</button><button class="tab" data-tab="show" role="tab">Show</button><button class="tab" data-tab="red" role="tab">Red</button></nav><div id="tab-body" class="tab-body"></div><div class="sheet-foot"><button id="btn-open" class="btn primary big">Abrir el chiringuito</button></div></div></div></section>
 <section id="report" class="overlay"><div class="screen"><div class="panel sheet"><div class="sheet-head"><div><p id="rep-eyebrow" class="eyebrow"></p><h2 id="rep-title"></h2></div></div><div id="rep-body" class="rep-body"></div><div class="sheet-foot"><span id="rep-status" class="rep-status"></span><button id="btn-next" class="btn primary big">Siguiente día</button></div></div></div></section>
@@ -90,7 +102,7 @@
     try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
   });
 </script>
-<script type="module" src="ui-polish.js?v=29.4.5"></script>
-<script type="module" src="game.js?v=29.4.5"></script>
+<script type="module" src="ui-polish.js?v=29.4.6"></script>
+<script type="module" src="game.js?v=29.4.6"></script>
 </body>
 </html>

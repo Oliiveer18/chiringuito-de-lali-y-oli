@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=29.4.5';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=29.4.5';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=29.4.5';
-import { ICON_URL } from './icons.js?v=29.4.5';
-import { Audio } from './audio.js?v=29.4.5';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=29.4.5';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=29.4.5';
-import { advanceFromReport } from './report.js?v=29.4.5';
-import { netAct, netDirty } from './net.js?v=29.4.5';
-import { drawPerson } from './render.js?v=29.4.5';
-import { iconFor } from './ui-polish.js?v=29.4.5';
-import { renderTab, toast } from './ui.js?v=29.4.5';
+import { trackCost } from './bookkeeping.js?v=29.4.6';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=29.4.6';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=29.4.6';
+import { ICON_URL } from './icons.js?v=29.4.6';
+import { Audio } from './audio.js?v=29.4.6';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=29.4.6';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=29.4.6';
+import { advanceFromReport } from './report.js?v=29.4.6';
+import { netAct, netDirty } from './net.js?v=29.4.6';
+import { drawPerson } from './render.js?v=29.4.6';
+import { iconFor } from './ui-polish.js?v=29.4.6';
+import { renderTab, toast } from './ui.js?v=29.4.6';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
@@ -23,7 +23,7 @@ export function showPlanUI(){
   $('#plan').classList.add('show');
   $('#plan-eyebrow').textContent = `Día ${Game.day} de ${SEASON_DAYS} · ${dayName(Game.day)} · 8:30`;
   const greet = ['Buenos días','Arriba, que hay playa','A por otro día','Huele a salitre','Otra mañana en la costa'];
-  $('#plan-title').textContent = simProgressDay()===1 ? 'Tu primer día' : greet[Game.day%greet.length]; // title: only true career day 1; eyebrow stays season-local
+  $('#plan-title').textContent = simProgressDay()===1 ? 'Tu primer día' : greet[Game.day%greet.length];
   renderForecast(); renderTab(); refreshPlanMoney(); updateReadyUI();
 }
 export function renderForecast(){
@@ -101,10 +101,6 @@ export function applyPlanAction(who, d){
   renderTab(); refreshPlanMoney(); netDirty();
 }
 
-/* v28.18: "listo" idempotente. Antes era un toggle: un doble clic o un mensaje
-   perdido dejaba a la pareja esperando en el informe para siempre. Ahora pulsar
-   siempre significa "estoy listo" (nunca desmarca), y el invitado reintenta el
-   aviso cada 0.6 s hasta que el anfitrión cambia de pantalla. */
 export function readyOn(who){
   if(Game.mode!=='plan' && Game.mode!=='report') return;
   if(Net.ready[who]) { updateReadyUI(); return; }
