@@ -19,7 +19,7 @@ async function play(page) {
   await page.waitForSelector('#plan.show', { timeout: 15000 });
   // stock variado para ver estados: normal, bajo y agotado
   await page.evaluate(async () => {
-    const { Game } = await import('./state.js?v=29.1.0');
+    const { Game } = await import('./state.js?v=29.2.0');
     for (const id of Object.keys(Game.stock)) Game.stock[id] = 25;
     Game.stock.papas = 4; Game.stock.queso = 0;
   });
