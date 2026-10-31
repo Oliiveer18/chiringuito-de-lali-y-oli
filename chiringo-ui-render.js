@@ -1,11 +1,11 @@
-import {photoThread} from './management-ui.js?v=29.4.3';
-import { Game } from './state.js?v=29.4.3';
-import { ITEMS } from './config.js?v=29.4.3';
-import { ICON_URL } from './icons.js?v=29.4.3';
-import { drawPerson } from './render.js?v=29.4.3';
-import { escapeHtml, eur } from './util.js?v=29.4.3';
-import { influBrief } from './social-model.js?v=29.4.3';
-import { POSTS, INFLU } from './v12.js?v=29.4.3';
+import {photoThread} from './management-ui.js?v=29.4.4';
+import { Game } from './state.js?v=29.4.4';
+import { ITEMS } from './config.js?v=29.4.4';
+import { ICON_URL } from './icons.js?v=29.4.4';
+import { drawPerson } from './render.js?v=29.4.4';
+import { escapeHtml, eur } from './util.js?v=29.4.4';
+import { influBrief } from './social-model.js?v=29.4.4';
+import { POSTS, INFLU } from './v12.js?v=29.4.4';
 
 const FOL = 'socialFollowers', RAT = 'socialRating', TAB = 'chiringo';
 const KIOSCO = 'El Charco Azul';

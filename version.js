@@ -1,5 +1,5 @@
-export const VERSION='v29.4.3';
-export const LABEL='v29.4.3 · bañistas que saben qué hora es: con menos de una hora de playa no alquilan, la estancia va en medias horas (0,5/1/1,5/2/2,5/3 h) y nadie paga tiempo que no puede disfrutar antes del cierre';
+export const VERSION='v29.4.4';
+export const LABEL='v29.4.4 · bañistas bien tumbados (cabeza en el respaldo, sin sombrero), la peña del partido del Tenerife llega de verdad en grupo y el influencer se le ve hacer su foto · sin menú de copiar al mantener pulsado en móvil';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

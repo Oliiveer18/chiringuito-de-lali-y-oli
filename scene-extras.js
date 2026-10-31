@@ -1,13 +1,17 @@
-import {Game,lvl} from './state.js?v=29.4.3';
-import {drawPerson} from './render.js?v=29.4.3';
+import {Game,lvl} from './state.js?v=29.4.4';
+import {drawPerson} from './render.js?v=29.4.4';
 /* v29.3: bañista de verdad. El mismo muñeco llega andando desde la derecha,
    se tumba en la tumbona (cabeza a la izquierda) el tiempo exacto que ha
    pagado y se levanta y se va. La etiqueta sobre la sombrilla muestra el
    tiempo restante de su estancia. */
 export function drawBeachGuest(c,x,y,i,T){const s=Game.upgrades.beach?.slots[i];if(Game.mode!=='service'||!s||s.state==='free')return;const g=s.guest||{};c.save();
  if(s.state==='occupied'){
-  c.translate(x+18,y+3);c.rotate(-Math.PI/2);
-  drawPerson(c,0,0,{skin:g.skin||'#e0a97e',shirt:g.shirt||'#0f8b8d',hat:g.hat||null,scale:.52,pose:'lie',t:T,look:{walk:{},hair:{style:'corto',color:g.hair||'#2a211c'},acc:[]}});
+  /* v29.4.4: tumbado bien orientado. La tumbona tiene el respaldo elevado en
+     el extremo derecho (drawHamaca), así que la cabeza va ahí: rotate(+90°)
+     lleva la cabeza a la derecha y dir:-1 deja la cara mirando al cielo.
+     El sombrero se quita: nadie se tumba a tomar el sol con sombrero puesto. */
+  c.translate(x-10,y+3);c.rotate(Math.PI/2);
+  drawPerson(c,0,0,{skin:g.skin||'#e0a97e',shirt:g.shirt||'#0f8b8d',hat:null,scale:.52,dir:-1,pose:'lie',t:T,look:{walk:{},hair:{style:'corto',color:g.hair||'#2a211c'},acc:[]}});
   c.restore();
   // etiqueta: tiempo restante de la estancia pagada
   const hour=Game.hour+(Game.closing?(Game.closeT||0)/16:0),rem=Math.max(0,s.end-hour);

@@ -2,26 +2,26 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=29.4.3';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=29.4.3';
-import { ICON_URL } from './icons.js?v=29.4.3';
-import { Audio } from './audio.js?v=29.4.3';
-import { Game, Net, activeItems, closeHour, dayName, hamacaCount, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=29.4.3';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=29.4.3';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=29.4.3';
-import { canvas, toWorld } from './canvas.js?v=29.4.3';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=29.4.3';
-import { drawPerson } from './render.js?v=29.4.3';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=29.4.4';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=29.4.4';
+import { ICON_URL } from './icons.js?v=29.4.4';
+import { Audio } from './audio.js?v=29.4.4';
+import { Game, Net, activeItems, closeHour, dayName, hamacaCount, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=29.4.4';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=29.4.4';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=29.4.4';
+import { canvas, toWorld } from './canvas.js?v=29.4.4';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=29.4.4';
+import { drawPerson } from './render.js?v=29.4.4';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, readyOn, toggleReady,
-} from './ui-plan.js?v=29.4.3';
+} from './ui-plan.js?v=29.4.4';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=29.4.3';
-import { renderMejorasTab } from './ui-mejoras.js?v=29.4.3';
+} from './ui-service.js?v=29.4.4';
+import { renderMejorasTab } from './ui-mejoras.js?v=29.4.4';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -111,8 +111,8 @@ export function routePlanTab(){
   const b=$('#tab-body');
   if(b){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; delete b.__mkNode; }
   renderForecast();
-  if(Plan.tab==='show') import('./features.js?v=29.4.3').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
-  else if(Plan.tab==='red') import('./v12-ui.js?v=29.4.3').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
+  if(Plan.tab==='show') import('./features.js?v=29.4.4').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
+  else if(Plan.tab==='red') import('./v12-ui.js?v=29.4.4').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
   document.dispatchEvent(new Event('plan-tab-repaint'));
 }
 export function estimateCustomers(){

@@ -5,9 +5,9 @@
    solo se mide el viewport, se escribe `view` (con transición suave) y se
    convierten coordenadas pantalla↔mundo.
    ========================================================= */
-import { H, W } from './config.js?v=29.4.3';
-import { $ } from './util.js?v=29.4.3';
-import { computeView, camMode } from './camera.js?v=29.4.3';
+import { H, W } from './config.js?v=29.4.4';
+import { $ } from './util.js?v=29.4.4';
+import { computeView, camMode } from './camera.js?v=29.4.4';
 
 // ---------- Entrada ----------
 export const canvas=$('#game'), ctx=canvas.getContext('2d');

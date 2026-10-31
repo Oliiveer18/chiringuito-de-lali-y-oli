@@ -19,6 +19,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:#073c40;color:var(--ink);font:500 15px/1.45 var(--font);
   -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-touch-callout:none; /* v29.4.4: sin menú de "copiar" al mantener pulsado en móvil */
   -webkit-user-select:none;user-select:none}
 input{-webkit-user-select:text;user-select:text}
 .hidden{display:none!important}
@@ -177,7 +178,7 @@ input[type=text]:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4p
 .row.locked>img{filter:grayscale(1)}
 .ctrl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .price{display:flex;align-items:center;border-radius:11px;background:var(--sand-2);border:1px solid var(--line-2);overflow:hidden}
-.price button{width:38px;height:36px;border:0;background:transparent;font:700 20px/1 var(--font);color:var(--teal-d)}
+.price button{width:38px;height:36px;border:0;background:transparent;font:700 20px/1 var(--font);color:var(--teal-d);-webkit-touch-callout:none}
 .price button:hover{background:rgba(15,139,141,.14)}
 .price button:active{background:rgba(15,139,141,.26)}
 .price .val{min-width:62px;text-align:center;font:600 15px var(--font-d);font-variant-numeric:tabular-nums}

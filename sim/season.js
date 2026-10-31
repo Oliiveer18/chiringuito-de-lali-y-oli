@@ -1,22 +1,23 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged.
    Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
-import { ITEMS } from "../config.js?v=29.4.3";
-import { ITEM_IDS } from "../config.js?v=29.4.3";
-import { REGULARS } from "../config.js?v=29.4.3";
-import { SEASON_DAYS } from "../config.js?v=29.4.3";
-import { START_MONEY } from "../config.js?v=29.4.3";
-import { clamp } from "../util.js?v=29.4.3";
-import { rnd } from "../util.js?v=29.4.3";
-import { Audio } from "../audio.js?v=29.4.3";
-import { Game, simProgressDay } from "../state.js?v=29.4.3";
-import { closeHour } from "../state.js?v=29.4.3";
-import { setTimeoutGame } from "../state.js?v=29.4.3";
-import { buildTables } from "../world.js?v=29.4.3";
-import { toast } from "../ui.js?v=29.4.3";
-import { updateStockbar } from "../ui.js?v=29.4.3";
-import { spawnCustomer } from "./customers.js?v=29.4.3";
-export { buildSeasonForecast } from "./forecast.js?v=29.4.3";
-import { buildSeasonForecast } from "./forecast.js?v=29.4.3";
+import { ITEMS } from "../config.js?v=29.4.4";
+import { W } from "../config.js?v=29.4.4";
+import { ITEM_IDS } from "../config.js?v=29.4.4";
+import { REGULARS } from "../config.js?v=29.4.4";
+import { SEASON_DAYS } from "../config.js?v=29.4.4";
+import { START_MONEY } from "../config.js?v=29.4.4";
+import { clamp } from "../util.js?v=29.4.4";
+import { rnd } from "../util.js?v=29.4.4";
+import { Audio } from "../audio.js?v=29.4.4";
+import { Game, simProgressDay } from "../state.js?v=29.4.4";
+import { closeHour } from "../state.js?v=29.4.4";
+import { setTimeoutGame } from "../state.js?v=29.4.4";
+import { buildTables } from "../world.js?v=29.4.4";
+import { toast } from "../ui.js?v=29.4.4";
+import { updateStockbar } from "../ui.js?v=29.4.4";
+import { spawnCustomer } from "./customers.js?v=29.4.4";
+export { buildSeasonForecast } from "./forecast.js?v=29.4.4";
+import { buildSeasonForecast } from "./forecast.js?v=29.4.4";
 
 const ARRIVALS_CAP = 1.72;
 const PEAK_CAP = 0.30;
@@ -115,11 +116,21 @@ export function difficultyRush(hour,profile=difficultyProfile()){
 }
 
 export const RANDOM_EVENTS = [
-  {id:'influencer', w:3, run(){ Game.rep=clamp(Game.rep+0.35,0,5); Game.mods.arr*=1.3; toast('Un influencer en tu barra','Se ha hecho una foto con un barraquito. Llega más gente el resto del día.','good'); Audio.good(); }},
+  {id:'influencer', w:3, run(){ Game.rep=clamp(Game.rep+0.35,0,5); Game.mods.arr*=1.3;
+    /* v29.4.4: el influencer no es solo un aviso — se le ve llegar a la barra
+       y hace su foto (floater), como promete el toast. */
+    const inf=spawnCustomer('turista');
+    if(inf) Game.floaters.push({x:clamp(inf.x,60,W-60),y:inf.y-95,text:'📷 ¡Un influencer!',t:0,color:'#ffe9a8'});
+    toast('Un influencer en tu barra','Se ha hecho una foto con un barraquito. Llega más gente el resto del día.','good'); Audio.good(); }},
   {id:'sanidad', w:2, run(){ const dirty=Game.tables.filter(t=>t.state==='dirty').length;
       if(dirty>=2){ Game.money-=200; Game.dayStats.fines+=200; Game.rep=clamp(Game.rep-0.25,0,5); toast('Inspección de sanidad','Había '+dirty+' mesas sucias. Multa de 200 €.','bad'); Audio.bad(); }
       else { Game.rep=clamp(Game.rep+0.1,0,5); toast('Inspección de sanidad','Todo limpio y en orden. Buena nota.','good'); Audio.good(); } }},
   {id:'guagua', w:3, run(){ for(let i=0;i<6;i++) setTimeoutGame(()=>spawnCustomer('turista'), i*0.6); toast('Llega una guagua de turistas','Un grupo baja de excursión con mucha sed.','good'); }},
-  {id:'futbol', w:2, run(){ Game.mods.beer=true; Game.mods.mix={local:1.6}; toast('Partido del CD Tenerife','Los vecinos vienen a verlo. Se dispara la cerveza.','good'); }},
+  {id:'futbol', w:2, run(){ Game.mods.beer=true; Game.mods.mix={local:1.6};
+    /* v29.4.4: la peña baja de verdad — se les ve llegar en grupo (como la
+       guagua de turistas) y con el doble de peso de cerveza en los pedidos. */
+    const n=4+Math.floor(rnd()*3);
+    for(let i=0;i<n;i++) setTimeoutGame(()=>spawnCustomer('local'), i*0.45);
+    toast('Partido del CD Tenerife','Baja una peña de '+n+' vecinos del partido con sed de cerveza. ¡Se dispara!','good'); }},
   {id:'apagon', w:1, run(){ const lost=Math.floor(Game.stock.batido*0.5); Game.stock.batido-=lost; updateStockbar(); toast('Se va la luz un rato','La batidora se queda parada y se estropean '+lost+' plátanos.','bad'); Audio.bad(); }},
 ];
