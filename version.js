@@ -1,5 +1,5 @@
-export const VERSION='v29.4.6';
-export const LABEL='v29.4.6 · controles de precio compatibles con iPhone, iPad y Mac: los botones menos y más funcionan sin selección de texto ni resaltado verde';
+export const VERSION='v29.4.7';
+export const LABEL='v29.4.7 · arreglo de módulos: comprar hamacas, editar precios y los botones menos/más vuelven a funcionar en iPhone, iPad y Mac';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
