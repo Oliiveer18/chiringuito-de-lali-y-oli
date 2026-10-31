@@ -31,6 +31,10 @@ export function requestTask(s,{kind,target,requestedBy=null,legs,priority=0}){
 function release(s,t){const a=s.actors.find(a=>a.id===t.actor);if(a?.task===t.id)a.task=null;const table=s.tables.find(x=>x.id===t.target);if(table?.claim===t.id){table.claim=null;if(t.kind==='escort'&&table.state==='reserved')table.state='free';}}
 export function cancelTask(s,id){const t=s.tasks.find(t=>t.id===id);if(!t||!ACTIVE.has(t.state))return false;release(s,t);t.state='cancelled';s.events.push({id:t.id+':cancel',task:t.id,type:'cancelled'});return true;}
 function eligible(a,t){if(t.kind==='clean'&&t.requestedBy&&a.id!==t.requestedBy)return false;if(a.task||a.busy||!a.can?.includes(t.kind))return false;if(a.player)return t.requestedBy===a.id;return !!t.requestedBy||a.auto?.includes(t.kind);}
+/* v29.2: ¿podría este actor quedarse la tarea si no estuviese ocupado volviendo
+   a casa? Se usa para interrumpir el regreso: el personal no da vueltas hasta
+   su puesto para luego volver a salir. */
+export function couldTake(a,t){if(!t||t.state!=='queued')return false;if(t.kind==='clean'&&t.requestedBy&&a.id!==t.requestedBy)return false;if(!a.can?.includes(t.kind))return false;if(a.player)return t.requestedBy===a.id;return !!t.requestedBy||a.auto?.includes(t.kind);}
 export function assignTasks(s,planPath){
  const queue=s.tasks.filter(t=>t.state==='queued').sort((a,b)=>(b.priority+(s.time-b.created)*2)-(a.priority+(s.time-a.created)*2)||a.created-b.created||a.id.localeCompare(b.id));
  for(const t of queue){if(t.kind==='clean'&&s.tables.find(x=>x.id===t.target)?.state!=='dirty'){cancelTask(s,t.id);continue;}

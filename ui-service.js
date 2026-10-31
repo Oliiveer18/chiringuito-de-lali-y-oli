@@ -1,12 +1,12 @@
 /* Servicio, cierre, urgente y avisos. Lo importa ui.js. */
-import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=29.1.0';
-import { $, eur, hhmm, stars } from './util.js?v=29.1.0';
-import { ICON_URL } from './icons.js?v=29.1.0';
-import { Audio } from './audio.js?v=29.1.0';
-import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, simProgressDay, weatherToday } from './state.js?v=29.1.0';
-import { buyStock, newSeason } from './sim.js?v=29.1.0';
-import { hideAll, Plan, showPlan } from './ui-plan.js?v=29.1.0';
-import { netAct, netDirty } from './net.js?v=29.1.0';
+import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=29.2.0';
+import { $, eur, hhmm, stars } from './util.js?v=29.2.0';
+import { ICON_URL } from './icons.js?v=29.2.0';
+import { Audio } from './audio.js?v=29.2.0';
+import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, simProgressDay, weatherToday } from './state.js?v=29.2.0';
+import { buyStock, newSeason } from './sim.js?v=29.2.0';
+import { hideAll, Plan, showPlan } from './ui-plan.js?v=29.2.0';
+import { netAct, netDirty } from './net.js?v=29.2.0';
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
   $('#hud-role').classList.toggle('hidden', !isCoop()); $('#btn-ping').classList.toggle('hidden', !isCoop());
@@ -65,8 +65,9 @@ export function updateHud(){
    pasa a estado bajo o agotado; la preferencia manual se recuerda. */
 let stockMini=false;try{stockMini=localStorage.getItem('lalioli-stockmini')==='1';}catch(e){}
 let stockLowSeen=new Set();
-/* v29.1: la franja vive dentro del HUD. Plegada queda en un solo botón
-   "Inventario" con un badge que cuenta productos en estado bajo o agotado. */
+/* v29.2: la franja de inventario vive al pie de pantalla, fuera del HUD.
+   Plegada queda en una píldora "Inventario" con un badge que cuenta
+   productos en estado bajo o agotado. */
 let stockAlerts=0;
 function applyStockMode(){const bar=$('#stockbar');if(!bar)return;bar.classList.toggle('mini',stockMini);const tg=$('#stock-toggle');if(!tg)return;tg.setAttribute('aria-expanded',String(!stockMini));tg.setAttribute('aria-label',stockMini?'Desplegar inventario':'Plegar inventario');
   if(stockMini){tg.innerHTML='<span class="mini-lbl">Inventario</span>'+(stockAlerts>0?`<span class="mini-badge">${stockAlerts}</span>`:'');}

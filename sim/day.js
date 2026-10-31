@@ -1,63 +1,64 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { beginLedgerDay } from "../bookkeeping.js?v=29.1.0";
-import { initFloor } from "../floor-service.js?v=29.1.0";
-import { updateFloor } from "../floor-service.js?v=29.1.0";
-import { updateFloorCustomer } from "../floor-service.js?v=29.1.0";
-import { floorHasWork } from "../floor-service.js?v=29.1.0";
-import { staffOnDuty } from "../state.js?v=29.1.0";
-import { stationOf } from "../config.js?v=29.1.0";
-import { abortFloor } from "../floor-service.js?v=29.1.0";
-import { ANGER_MIN_STAGE } from "../config.js?v=29.1.0";
-import { DRINKS } from "../config.js?v=29.1.0";
-import { HOUR_CURVE } from "../config.js?v=29.1.0";
-import { PERSONALITIES } from "../config.js?v=29.1.0";
-import { SEC_PER_HOUR } from "../config.js?v=29.1.0";
-import { SPECIAL_DAYS } from "../config.js?v=29.1.0";
-import { W } from "../config.js?v=29.1.0";
-import { WAIT_TABLE_MAX } from "../config.js?v=29.1.0";
-import { WEATHER } from "../config.js?v=29.1.0";
-import { rand } from "../util.js?v=29.1.0";
-import { rnd } from "../util.js?v=29.1.0";
-import { Audio } from "../audio.js?v=29.1.0";
-import { startBeach } from "../beach.js?v=29.1.0";
-import { updateBeach } from "../beach.js?v=29.1.0";
-import { Game } from "../state.js?v=29.1.0";
-import { Net } from "../state.js?v=29.1.0";
-import { closeHour } from "../state.js?v=29.1.0";
-import { gameTimers } from "../state.js?v=29.1.0";
-import { isCoop } from "../state.js?v=29.1.0";
-import { isWeekend } from "../state.js?v=29.1.0";
-import { lvl } from "../state.js?v=29.1.0";
-import { simProgressDay } from "../state.js?v=29.1.0";
-import { weatherToday } from "../state.js?v=29.1.0";
-import { QUEUE_POS } from "../world.js?v=29.1.0";
-import { buildTables } from "../world.js?v=29.1.0";
-import { navSetTarget } from "../nav.js?v=29.1.0";
-import { navStep } from "../nav.js?v=29.1.0";
-import { endDay } from "../report.js?v=29.1.0";
-import { recordVisit } from "../report.js?v=29.1.0";
-import { setSpeed } from "../ui.js?v=29.1.0";
-import { showServiceUI } from "../ui.js?v=29.1.0";
-import { toast } from "../ui.js?v=29.1.0";
-import { updateHud } from "../ui.js?v=29.1.0";
-import { RANDOM_EVENTS } from "./season.js?v=29.1.0";
-import { abandonFloor } from "./service.js?v=29.1.0";
-import { addSat } from "./economy.js?v=29.1.0";
-import { commitClean } from "./service.js?v=29.1.0";
-import { completeFloorOrder } from "./service.js?v=29.1.0";
-import { difficultyProfile } from "./season.js?v=29.1.0";
-import { difficultyRush } from "./season.js?v=29.1.0";
-import { repArrivalMult } from "./season.js?v=29.1.0";
-import { finishSlot } from "./service.js?v=29.1.0";
-import { giveUpPending } from "./service.js?v=29.1.0";
-import { leaveQueue } from "./customers.js?v=29.1.0";
-import { payAndGo } from "./service.js?v=29.1.0";
-import { payAndSeat } from "./service.js?v=29.1.0";
-import { pendingIdx } from "./orders.js?v=29.1.0";
-import { regularOutcome } from "./customers.js?v=29.1.0";
-import { scheduleRegulars } from "./customers.js?v=29.1.0";
-import { spawnCustomer } from "./customers.js?v=29.1.0";
-import { startPart } from "./service.js?v=29.1.0";
+import { beginLedgerDay } from "../bookkeeping.js?v=29.2.0";
+import { initFloor } from "../floor-service.js?v=29.2.0";
+import { updateFloor } from "../floor-service.js?v=29.2.0";
+import { updateFloorCustomer } from "../floor-service.js?v=29.2.0";
+import { floorHasWork } from "../floor-service.js?v=29.2.0";
+import { staffOnDuty } from "../state.js?v=29.2.0";
+import { stationOf } from "../config.js?v=29.2.0";
+import { abortFloor } from "../floor-service.js?v=29.2.0";
+import { ANGER_MIN_STAGE } from "../config.js?v=29.2.0";
+import { DRINKS } from "../config.js?v=29.2.0";
+import { HOUR_CURVE } from "../config.js?v=29.2.0";
+import { PERSONALITIES } from "../config.js?v=29.2.0";
+import { SEC_PER_HOUR } from "../config.js?v=29.2.0";
+import { SPECIAL_DAYS } from "../config.js?v=29.2.0";
+import { W } from "../config.js?v=29.2.0";
+import { WAIT_TABLE_MAX } from "../config.js?v=29.2.0";
+import { WEATHER } from "../config.js?v=29.2.0";
+import { rand } from "../util.js?v=29.2.0";
+import { rnd } from "../util.js?v=29.2.0";
+import { Audio } from "../audio.js?v=29.2.0";
+import { startBeach } from "../beach.js?v=29.2.0";
+import { updateBeach } from "../beach.js?v=29.2.0";
+import { Game } from "../state.js?v=29.2.0";
+import { Net } from "../state.js?v=29.2.0";
+import { closeHour } from "../state.js?v=29.2.0";
+import { gameTimers } from "../state.js?v=29.2.0";
+import { isCoop } from "../state.js?v=29.2.0";
+import { isWeekend } from "../state.js?v=29.2.0";
+import { lvl } from "../state.js?v=29.2.0";
+import { simProgressDay } from "../state.js?v=29.2.0";
+import { weatherToday } from "../state.js?v=29.2.0";
+import { QUEUE_POS } from "../world.js?v=29.2.0";
+import { buildTables } from "../world.js?v=29.2.0";
+import { navSetTarget } from "../nav.js?v=29.2.0";
+import { navStep } from "../nav.js?v=29.2.0";
+import { endDay } from "../report.js?v=29.2.0";
+import { recordVisit } from "../report.js?v=29.2.0";
+import { setSpeed } from "../ui.js?v=29.2.0";
+import { showServiceUI } from "../ui.js?v=29.2.0";
+import { toast } from "../ui.js?v=29.2.0";
+import { updateHud } from "../ui.js?v=29.2.0";
+import { RANDOM_EVENTS } from "./season.js?v=29.2.0";
+import { abandonFloor } from "./service.js?v=29.2.0";
+import { addSat } from "./economy.js?v=29.2.0";
+import { countStranded, tableStateAfterMeal } from "./lost.js?v=29.2.0";
+import { commitClean } from "./service.js?v=29.2.0";
+import { completeFloorOrder } from "./service.js?v=29.2.0";
+import { difficultyProfile } from "./season.js?v=29.2.0";
+import { difficultyRush } from "./season.js?v=29.2.0";
+import { repArrivalMult } from "./season.js?v=29.2.0";
+import { finishSlot } from "./service.js?v=29.2.0";
+import { giveUpPending } from "./service.js?v=29.2.0";
+import { leaveQueue } from "./customers.js?v=29.2.0";
+import { payAndGo } from "./service.js?v=29.2.0";
+import { payAndSeat } from "./service.js?v=29.2.0";
+import { pendingIdx } from "./orders.js?v=29.2.0";
+import { regularOutcome } from "./customers.js?v=29.2.0";
+import { scheduleRegulars } from "./customers.js?v=29.2.0";
+import { spawnCustomer } from "./customers.js?v=29.2.0";
+import { startPart } from "./service.js?v=29.2.0";
 
 export function servable(c){return c&&(['floorWaitEscort','floorMenu','floorReady'].includes(c.state)||(['queue','prep','floorWaitingPrep'].includes(c.state)&&pendingIdx(c).length>0));}
 
@@ -121,7 +122,12 @@ export function update(dt){
     Game.closeT+=dt;
     for(const c of Game.customers) if(c.floorTableId==null&&c.state==='prep' && c.inPrep===0 && pendingIdx(c).length) giveUpPending(c);
     const busy = Game.customers.some(c=>c.state!=='gone')||floorHasWork();
-    if(Game.closeT>3.5 && (!busy || Game.closeT>45)){ abortFloor();endDay(); return; }
+    if(Game.closeT>3.5 && (!busy || Game.closeT>45)){
+      /* v29.2: al forzar el cierre, los clientes de barra sin resolver también
+         cuentan como perdidos por cierre: antes se descartaban sin sumar. */
+      countStranded(Game.customers, Game.dayStats, recordVisit, regularOutcome);
+      abortFloor();endDay(); return;
+    }
   }
   Game.slots.forEach(s=>{
     if(s.cust){ s.t+=dt; if(s.t>=s.total) finishSlot(s); }
@@ -204,7 +210,7 @@ export function update(dt){
         const hasFood = c.served.some(id=>!DRINKS.includes(id));
         const dur = c.act==='drink'?2.0:3.0;
         if(c.actT>dur){ c.act = c.act==='drink' ? (hasFood?'eat':'drink') : (hasDrink?'drink':'eat'); c.actT=0; }
-        if(c.eatT<=0){ const t=c.table; t.cust=null; t.state= rnd()<0.75?'dirty':'free'; t.dirtyT=0; c.table=null; c.state='leave'; c.act = c.sat>0.6?'bye':'walk'; c.actT=0; navSetTarget(c, rnd()<0.8?W+60:-60, rand(660,700)); }
+        if(c.eatT<=0){ const t=c.table; t.cust=null; /* v29.2: todo cliente que come en mesa deja la mesa sucia */ t.state=tableStateAfterMeal(); t.dirtyT=0; c.table=null; c.state='leave'; c.act = c.sat>0.6?'bye':'walk'; c.actT=0; navSetTarget(c, rnd()<0.8?W+60:-60, rand(660,700)); }
         break;
       }
       case 'waitTable': {

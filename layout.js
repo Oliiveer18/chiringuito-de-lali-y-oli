@@ -1,7 +1,7 @@
-import { scheduleViewportResize, view, setViewTarget } from './canvas.js?v=29.1.0';
-import { computeView, camMode, setCamMode } from './camera.js?v=29.1.0';
-import { W, H } from './config.js?v=29.1.0';
-import { Game } from './state.js?v=29.1.0';
+import { scheduleViewportResize, view, setViewTarget } from './canvas.js?v=29.2.0';
+import { computeView, camMode, setCamMode } from './camera.js?v=29.2.0';
+import { W, H } from './config.js?v=29.2.0';
+import { Game } from './state.js?v=29.2.0';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 /* v29.0.0: la cámara está unificada en camera.js. Los modos barra/mesas ya no
@@ -46,12 +46,15 @@ function place(){
 }
 function refresh(){scheduleViewportResize();requestAnimationFrame(()=>{applyCam(true);place();});}
 function measure(){
-  /* v29.1: el inventario y las vistas viven dentro del HUD: solo hay UI arriba.
-     --bottom-ui se fija a 0 para que la cámara no reserve margen inferior. */
+  /* v29.2: arriba vive el HUD (estado + vistas) y abajo la franja de inventario.
+     La cámara reserva margen para ambas y --inv-h avisa a reparto y tutorial. */
   const e=document.getElementById('hud');
-  const v=e&&e.getClientRects().length?e.getBoundingClientRect().height:0;
-  root.style.setProperty('--top-ui',v+'px');root.style.setProperty('--bottom-ui','0px');
-  uiTop=v;uiBottom=0;
+  const sb=document.getElementById('stockbar');
+  const v=e&&e.getClientRects().length&&!e.classList.contains('hidden')?e.getBoundingClientRect().height:0;
+  const sv=sb&&sb.getClientRects().length&&!sb.classList.contains('hidden')?sb.getBoundingClientRect().height:0;
+  root.style.setProperty('--top-ui',v+'px');root.style.setProperty('--bottom-ui',sv+'px');
+  root.style.setProperty('--inv-h',sv+'px');
+  uiTop=v;uiBottom=sv;
   refresh();
 }
 /* v29.1: el segmento de vistas es markup estático del HUD (index.html);
@@ -76,7 +79,11 @@ function setCam(m){
 bar.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b)setCam(b.dataset.cam);});
 try{const m=sessionStorage.getItem('lali-oli.cam');if(m==='barra'||m==='mesas')setCamMode(m);}catch(e){}
 setCam(camMode());
-if(window.ResizeObserver){const observer=new ResizeObserver(measure);const h=document.getElementById('hud');if(h)observer.observe(h);}
+if(window.ResizeObserver){const observer=new ResizeObserver(measure);const h=document.getElementById('hud');if(h)observer.observe(h);const sb=document.getElementById('stockbar');if(sb)observer.observe(sb);}
+/* v29.2: la franja de inventario cambia de tamaño al plegarse o al entrar
+   en partida: la cámara y los paneles flotantes deben enterarse. */
+const sbEl=document.getElementById('stockbar');
+if(sbEl&&window.MutationObserver){new MutationObserver(()=>measure()).observe(sbEl,{attributes:true,attributeFilter:['class']});}
 window.addEventListener('resize',measure);window.addEventListener('orientationchange',measure);
 measure();
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>{applyCam(true);place();});

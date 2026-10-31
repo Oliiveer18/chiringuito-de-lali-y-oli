@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=chillax@500,600,700&display=swap">
-<link rel="stylesheet" href="style.css?v=29.1.0">
+<link rel="stylesheet" href="style.css?v=29.2.0">
 <style id="tabs-fix">
   #plan .tabs{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   #plan .tabs .tab{touch-action:pan-x}
@@ -28,7 +28,6 @@
   <div class="hud-group hud-time"><span id="hud-day" class="hud-day"></span><b id="hud-clock" class="hud-clock"></b><span id="hud-weather" class="hud-weather"></span></div>
   <div class="hud-group hud-biz"><span id="hud-money" class="hud-money"></span><span id="hud-rep" class="hud-rep"></span></div>
   <span id="hud-role" class="hud-role hidden"></span>
-  <div id="stockbar" class="stockbar hidden"><div class="stock-list" aria-label="Género en stock"></div><button id="stock-toggle" class="stock-toggle" type="button" aria-label="Plegar inventario" aria-expanded="true"><svg viewBox="0 0 20 20"><path d="M10 5v10m0 0l-4-4m4 4l4-4"/></svg></button></div>
   <div id="cam-bar" class="cam-bar" role="group" aria-label="Vista del chiringuito"><button type="button" data-cam="todo">Todo</button><button type="button" data-cam="barra">Barra y cola</button><button type="button" data-cam="mesas">Mesas <span class="cam-badge"></span></button></div>
   <div class="hud-spacer"></div>
   <div class="speed" role="group" aria-label="Velocidad del juego">
@@ -44,6 +43,9 @@
     <button id="btn-sound" class="hud-btn quiet" type="button" aria-label="Sonido activado" data-sound="on"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 4.5L6.5 8.5H3.5v3h3l4.5 4V4.5z" fill="currentColor"/><path d="M14.2 8.8a3.8 3.8 0 010 2.4M16 6.5a6.5 6.5 0 010 7" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/></svg><span class="snd-lbl">Sonido: sí</span></button>
   </div>
 </header>
+<!-- v29.2: el inventario baja al pie de pantalla como franja propia: grande,
+     legible y lejos de la barra de estado. -->
+<div id="stockbar" class="stockbar hidden"><div class="stock-list" aria-label="Género en stock"></div><button id="stock-toggle" class="stock-toggle" type="button" aria-label="Plegar inventario" aria-expanded="true"><svg viewBox="0 0 20 20"><path d="M10 5v10m0 0l-4-4m4 4l4-4"/></svg></button></div>
 <div id="hint" class="hint hidden"></div>
 <div id="toasts" class="toasts"></div>
 <div id="rotate" class="rotate-pill"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M20.5 9.5a8.5 8.5 0 00-5-4.5M3.5 14.5a8.5 8.5 0 005 4.5"/></svg>Gira el móvil para ver todo el chiringuito</div>
@@ -88,7 +90,7 @@
     try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
   });
 </script>
-<script type="module" src="ui-polish.js?v=29.1.0"></script>
-<script type="module" src="game.js?v=29.1.0"></script>
+<script type="module" src="ui-polish.js?v=29.2.0"></script>
+<script type="module" src="game.js?v=29.2.0"></script>
 </body>
 </html>

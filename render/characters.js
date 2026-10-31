@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=29.1.0";
-import { clamp } from "../util.js?v=29.1.0";
+import { Net } from "../state.js?v=29.2.0";
+import { clamp } from "../util.js?v=29.2.0";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR } from "../config.js?v=29.1.0";
-import { W } from "../config.js?v=29.1.0";
-import { rr } from "../icons.js?v=29.1.0";
-import { Game } from "../state.js?v=29.1.0";
-import { PCOLORS } from "./scene.js?v=29.1.0";
-import { drawPictogram } from "./scene.js?v=29.1.0";
-import { drawHeldItem } from "./items.js?v=29.1.0";
+import { PERSONALITIES, WHO_COLOR, stationOf } from "../config.js?v=29.2.0";
+import { W } from "../config.js?v=29.2.0";
+import { rr } from "../icons.js?v=29.2.0";
+import { Game } from "../state.js?v=29.2.0";
+import { PCOLORS } from "./scene.js?v=29.2.0";
+import { drawPictogram } from "./scene.js?v=29.2.0";
+import { drawHeldItem } from "./items.js?v=29.2.0";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -181,7 +181,9 @@ export function drawPersonalityBadge(c,cu,bx,by,bw){
 
 export function drawFloorWorker(c,a,T){
   const t=Game.floor.tasks.find(t=>t.id===a.task),slot=Game.slots.find(s=>s.who===a.id),moving=t?.state==='walking'||a.returning;
-  const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?'cook':'idle';
+  /* v29.2: cada puesto trabaja a su forma en la sala: la cocinera cocina
+     (con vapor), el camarero agita la coctelera y quien limpia, friega. */
+  const pose=moving?'walk':t?.state==='working'?(t.kind==='clean'?'clean':'menu'):slot?.cust?((a.role==='cocinero'||(a.player&&(slot.items||[]).some(i=>stationOf(slot.cust.order[i])==='cocina')))?'cook':'shake'):'idle';
   // punto de contacto único: brazo y trapo siguen el mismo punto sobre la mesa
   let wipePt=null;
   if(pose==='clean'&&t&&t.kind==='clean'&&t.state==='working'){
@@ -189,6 +191,11 @@ export function drawFloorWorker(c,a,T){
     if(tb){const side=Math.sign(a.x-tb.x)||1;wipePt={x:tb.x+side*(16+Math.sin(T*5)*12),y:tb.y-20+Math.cos(T*2.5)*3};}
   }
   drawPerson(c,a.x,a.y,{shirt:a.role==='cocinero'?'#ffffff':a.role==='limpiador'?'#f5b82e':a.player?'#e8603c':'#237d85',skin:a.id==='p2'?'#f2c9a5':'#c58a5c',look:{hair:{style:a.id==='p2'?'largo':'corto',color:'#49372d'},walk:{}},type:'staff',uniform:a.player?(Net.roles[a.id]||'barra'):a.role==='cocinero'?'cocina':a.role,hat:(a.role==='cocinero'||a.player&&Net.roles[a.id]==='cocina')?'chef':a.role==='limpiador'?'gorra':'pañuelo',pose,t:T,ph:a.phase,moving,dir:a.dir,wipePt});
+  // v29.2: la cocinera suelta vapor de cocina mientras prepara
+  if(a.role==='cocinero'&&pose==='cook'){
+    c.fillStyle='rgba(255,255,255,.4)';
+    for(let i=0;i<3;i++){c.beginPath();c.arc(a.x+34+i*10+Math.sin(T*3+i)*6,a.y-70-((T*30+i*20)%50),6,0,7);c.fill();}
+  }
   // fregar: trapo sobre la mesa y brillo mientras se limpia
   if(wipePt){
     c.fillStyle='#fff6e6';c.beginPath();c.ellipse(wipePt.x,wipePt.y,11,6,0,0,7);c.fill();
@@ -210,6 +217,10 @@ export function drawFloorWorker(c,a,T){
   c.textAlign='center';c.font='700 10px system-ui';c.fillStyle='#fffdf8';c.strokeStyle='#163b3d';c.lineWidth=3;
   // mientras limpia, la mesa ya muestra "Limpiando · nombre": se evita duplicar y chocar
   const cleaning=t&&t.kind==='clean'&&t.state==='working';
-  const text=a.name+' · '+(a.returning?'Volviendo':t?t.kind==='clean'?'Limpieza':'Terraza':slot?.cust?'Preparando':'Disponible');
+  /* v29.2: camarero y cocinera viven dentro del kiosco, junto a jugador@:
+     las etiquetas con estado "Disponible" se solapaban entre sí. Ahora el
+     rótulo es solo el nombre y el estado solo aparece si está haciendo algo. */
+  const status=a.returning?'Volviendo':t?(t.kind==='clean'?'Limpiando':'Terraza'):slot?.cust?'Preparando':null;
+  const text=status?a.name+' · '+status:a.name;
   if(!cleaning){c.strokeText(text,a.x,a.y-105);c.fillText(text,a.x,a.y-105);}
 }

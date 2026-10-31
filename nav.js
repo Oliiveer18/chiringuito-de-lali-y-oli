@@ -2,9 +2,9 @@
    nav.js
    Navegación A* por cuadrícula: rutas de clientes que no atraviesan mesas.
    ========================================================= */
-import { H, W } from './config.js?v=29.1.0';
-import { clamp, lerp } from './util.js?v=29.1.0';
-import { Game } from './state.js?v=29.1.0';
+import { H, W } from './config.js?v=29.2.0';
+import { clamp, lerp } from './util.js?v=29.2.0';
+import { Game } from './state.js?v=29.2.0';
 
 // ---------- Navegación (mejora 1): rutas que no atraviesan mesas ----------
 export const NAV = {cs:10, gw:0, gh:0, blocked:null, cx:0, cy:0};
@@ -16,8 +16,13 @@ export function navRebuild(){
     const gy0=Math.max(0,Math.floor(y0/NAV.cs)), gy1=Math.min(NAV.gh-1,Math.ceil(y1/NAV.cs)-1);
     for(let gy=gy0; gy<=gy1; gy++) for(let gx=gx0; gx<=gx1; gx++) NAV.blocked[gy*NAV.gw+gx]=1;
   };
-  const R=8;
-  for(const t of Game.tables) block(t.x-64-R, t.y-28-R, t.x+64+R, t.y+16+R);
+  /* v29.2: el rectángulo de bloqueo de cada mesa bajaba de 144 px de ancho con
+     mesas cada 148 px: quedaban huecos de 4 px, impasables para la cuadrícula de
+     10 px. El único pasillo vertical entre el pasillo central y el inferior era
+     la columna izquierda (x≈555), así que ir de una mesa a la vecina obligaba a
+     rodear toda la terraza. Se bloquea solo la huella real (sillas incluidas,
+     116 px) dejando calles de ~30 px entre mesas y entre filas. */
+  for(const t of Game.tables) block(t.x-58, t.y-30, t.x+58, t.y+20);
   block(20,150,540,540);
 }
 export function navCellFree(gx,gy){ return gx>=0&&gy>=0&&gx<NAV.gw&&gy<NAV.gh&&!NAV.blocked[gy*NAV.gw+gx]; }

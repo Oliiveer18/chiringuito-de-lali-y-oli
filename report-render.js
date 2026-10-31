@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.1.0';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.1.0';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.1.0';
-import { rr } from './icons.js?v=29.1.0';
-import { Audio } from './audio.js?v=29.1.0';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=29.1.0';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, staffOnDuty } from './state.js?v=29.1.0';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.1.0';
-import { netAct, netDirty } from './net.js?v=29.1.0';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.1.0';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.2.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.2.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.2.0';
+import { rr } from './icons.js?v=29.2.0';
+import { Audio } from './audio.js?v=29.2.0';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=29.2.0';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, staffOnDuty } from './state.js?v=29.2.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.2.0';
+import { netAct, netDirty } from './net.js?v=29.2.0';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.2.0';
 
 export function endDay(){
   Game.mode='report';
@@ -64,6 +64,7 @@ export function reportStatsHtml(s, m){
   const tips=(s.tips||0)+(s.tipsP||0);
   const notes=[];
   if(s.lost) notes.push(`<p>Clientes perdidos: <b>${[s.lostPrice?s.lostPrice+' por precios altos':'',s.lostQueue?s.lostQueue+' por cola llena':'',s.lostPatience?s.lostPatience+' por esperar demasiado':'',s.lostStock?s.lostStock+' porque no quedaba lo que pedían':'',s.lostClose?s.lostClose+' por cerrar con ellos esperando':''].filter(Boolean).join(', ')}</b>.</p>`);
+  if(s.noTable) notes.push(`<p>Sin mesa: <b>${s.noTable} cliente${s.noTable>1?'s':''}</b> pagó${s.noTable>1?'ron':''} para llevar sin sitio donde sentarse. Amplía la terraza o contrata ayuda de sala.</p>`);
   if(s.regVisits) notes.push(`<p>Habituales hoy: <b>${s.regVisits} visita${s.regVisits>1?'s':''}</b>. Atendedlos bien y volverán más fieles.</p>`);
   if(Game.buzz>0.03) notes.push(`<p>Boca a boca: los habituales contentos traen amigos (<b>+${Math.round(Game.buzz*12)}%</b> de afluencia mañana).</p>`);
   if((s.beachRentals||0)>0) notes.push(`<p>Alquileres de hamacas: <b>${s.beachRentals}</b>.</p>`);
