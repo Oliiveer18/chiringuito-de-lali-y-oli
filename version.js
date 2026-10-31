@@ -1,5 +1,5 @@
 export const VERSION='v29.2.0';
-export const LABEL='v29.2.0 · jornada honesta: clientes perdidos bien contados (también los del cierre forzado y los que se van sin mesa), mesas siempre sucias tras comer, rutas directas entre mesas sin vueltas, inventario abajo en franja grande y legible, camarero y cocinera visibles dentro del kiosco';
+export const LABEL='v29.2.0 · jornada honesta: clientes perdidos bien contados (solo quienes se van por mesa sucia), mesas siempre sucias tras comer, rutas directas entre mesas sin vueltas, inventario en raíl lateral que no estorba, camarero y cocinera visibles dentro del kiosco';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
