@@ -1,5 +1,5 @@
-export const VERSION='v29.4.0';
-export const LABEL='v29.4.0 · composición nueva en horizontal: el kiosco respira en su punto focal (mostrador a 1/3 del ancho, playa a la izquierda) sin perder de vista ni la última mesa';
+export const VERSION='v29.4.1';
+export const LABEL='v29.4.1 · movimiento fluido: los clientes que se van salen de verdad (despawn fuera de encuadre, sin NPCs trabados en los bordes ni temblores) y las salidas ya no se apiñan a la vista';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

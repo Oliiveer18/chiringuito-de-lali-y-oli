@@ -1,35 +1,37 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { releaseFloorCustomer } from "../floor-service.js?v=29.4.0";
-import { ITEMS } from "../config.js?v=29.4.0";
-import { PKEYS } from "../config.js?v=29.4.0";
-import { QUEUE_SPOTS } from "../config.js?v=29.4.0";
-import { REGULARS } from "../config.js?v=29.4.0";
-import { SEC_PER_HOUR } from "../config.js?v=29.4.0";
-import { TYPES } from "../config.js?v=29.4.0";
-import { W } from "../config.js?v=29.4.0";
-import { WEATHER } from "../config.js?v=29.4.0";
-import { stationOf } from "../config.js?v=29.4.0";
-import { who } from "../config.js?v=29.4.0";
-import { clamp } from "../util.js?v=29.4.0";
-import { pickW } from "../util.js?v=29.4.0";
-import { rand } from "../util.js?v=29.4.0";
-import { rnd } from "../util.js?v=29.4.0";
-import { Game } from "../state.js?v=29.4.0";
-import { activeItems } from "../state.js?v=29.4.0";
-import { closeHour } from "../state.js?v=29.4.0";
-import { isCoop } from "../state.js?v=29.4.0";
-import { isWeekend } from "../state.js?v=29.4.0";
-import { itemUnlocked } from "../state.js?v=29.4.0";
-import { lvl } from "../state.js?v=29.4.0";
-import { simProgressDay } from "../state.js?v=29.4.0";
-import { setTimeoutGame } from "../state.js?v=29.4.0";
-import { weatherToday } from "../state.js?v=29.4.0";
-import { QUEUE_POS } from "../world.js?v=29.4.0";
-import { custSeq } from "../world.js?v=29.4.0";
-import { genLook } from "../world.js?v=29.4.0";
-import { navSetTarget } from "../nav.js?v=29.4.0";
-import { recordVisit } from "../report.js?v=29.4.0";
-import { difficultyProfile } from "./season.js?v=29.4.0";
+import { releaseFloorCustomer } from "../floor-service.js?v=29.4.1";
+import { ITEMS } from "../config.js?v=29.4.1";
+import { PKEYS } from "../config.js?v=29.4.1";
+import { QUEUE_SPOTS } from "../config.js?v=29.4.1";
+import { REGULARS } from "../config.js?v=29.4.1";
+import { SEC_PER_HOUR } from "../config.js?v=29.4.1";
+import { TYPES } from "../config.js?v=29.4.1";
+import { W } from "../config.js?v=29.4.1";
+import { WEATHER } from "../config.js?v=29.4.1";
+import { stationOf } from "../config.js?v=29.4.1";
+import { who } from "../config.js?v=29.4.1";
+import { clamp } from "../util.js?v=29.4.1";
+import { pickW } from "../util.js?v=29.4.1";
+import { rand } from "../util.js?v=29.4.1";
+import { rnd } from "../util.js?v=29.4.1";
+import { Game } from "../state.js?v=29.4.1";
+import { activeItems } from "../state.js?v=29.4.1";
+import { closeHour } from "../state.js?v=29.4.1";
+import { isCoop } from "../state.js?v=29.4.1";
+import { isWeekend } from "../state.js?v=29.4.1";
+import { itemUnlocked } from "../state.js?v=29.4.1";
+import { lvl } from "../state.js?v=29.4.1";
+import { simProgressDay } from "../state.js?v=29.4.1";
+import { setTimeoutGame } from "../state.js?v=29.4.1";
+import { weatherToday } from "../state.js?v=29.4.1";
+import { QUEUE_POS } from "../world.js?v=29.4.1";
+import { custSeq } from "../world.js?v=29.4.1";
+import { genLook } from "../world.js?v=29.4.1";
+import { EXIT_X_R } from "../world.js?v=29.4.1";
+import { EXIT_X_L } from "../world.js?v=29.4.1";
+import { navSetTarget } from "../nav.js?v=29.4.1";
+import { recordVisit } from "../report.js?v=29.4.1";
+import { difficultyProfile } from "./season.js?v=29.4.1";
 
 export function spawnCustomer(forceType, opts){
   const difficulty=difficultyProfile();
@@ -82,7 +84,7 @@ export function spawnCustomer(forceType, opts){
   const avgRatio = activeItems().reduce((s,id)=>s+Game.prices[id]/ITEMS[id].ref,0)/Math.max(1,activeItems().length);
   const priceDeter = clamp((avgRatio-1)*T.elas*0.55,0,0.9);
   if(keys.length===0 || rnd()<priceDeter){
-    c.state='walkby'; c.mood='caro'; c.moodT=3; navSetTarget(c, fromRight? -60 : W+60, 690); c.y=rand(684,700);
+    c.state='walkby'; c.mood='caro'; c.moodT=3; navSetTarget(c, fromRight? EXIT_X_L : EXIT_X_R, 690); c.y=rand(684,700);
     Game.dayStats.lostPrice++; Game.dayStats.lost++; recordVisit(c,{lost:'caro'}); if(regular) regularOutcome(c,0);
     Game.customers.push(c); return;
   }
@@ -103,7 +105,7 @@ export function spawnCustomer(forceType, opts){
   const taken = new Set(Game.customers.filter(o=>o.spot>=0).map(o=>o.spot));
   let spot=-1; for(let i=0;i<QUEUE_SPOTS;i++) if(!taken.has(i)){ spot=i; break; }
   if(spot<0){
-    c.state='walkby'; c.mood='lleno'; c.moodT=3; navSetTarget(c, fromRight? -60 : W+60, 690); c.y=rand(684,700);
+    c.state='walkby'; c.mood='lleno'; c.moodT=3; navSetTarget(c, fromRight? EXIT_X_L : EXIT_X_R, 690); c.y=rand(684,700);
     Game.dayStats.lostQueue++; Game.dayStats.lost++; recordVisit(c,{lost:'lleno'}); if(regular) regularOutcome(c,0);
     Game.customers.push(c); return;
   }
@@ -140,4 +142,4 @@ export function scheduleRegulars(){
   }
 }
 
-export function leaveQueue(c){if(c.floorTableId!=null)releaseFloorCustomer(c); c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? -60 : W+60, rand(660,700)); }
+export function leaveQueue(c){if(c.floorTableId!=null)releaseFloorCustomer(c); c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? EXIT_X_L : EXIT_X_R, rand(660,700)); }

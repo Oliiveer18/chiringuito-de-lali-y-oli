@@ -2,9 +2,16 @@
    nav.js
    Navegación A* por cuadrícula: rutas de clientes que no atraviesan mesas.
    ========================================================= */
-import { H, W } from './config.js?v=29.4.0';
-import { clamp, lerp } from './util.js?v=29.4.0';
-import { Game } from './state.js?v=29.4.0';
+import { H, W } from './config.js?v=29.4.1';
+import { clamp, lerp } from './util.js?v=29.4.1';
+import { Game } from './state.js?v=29.4.1';
+import { GEO } from './camera.js?v=29.4.1';
+
+/* v29.4.1: margen de despawn de las salidas. La cámara horizontal enmarca el
+   mundo con LAND_MARGIN de playa extra a cada lado (x de -64 a W+64): el cliente
+   que se va debe desaparecer más allá de esa playa visible (más el ancho del
+   sprite) para que nunca se le vea hacer "pop" al salir de pantalla. */
+export const EXIT_MARGIN = GEO.LAND_MARGIN + 24;
 
 // ---------- Navegación (mejora 1): rutas que no atraviesan mesas ----------
 export const NAV = {cs:10, gw:0, gh:0, blocked:null, cx:0, cy:0};
@@ -80,6 +87,12 @@ export function navFind(x0,y0,x1,y1){
 }
 export function navSetTarget(c, x, y, approach){
   c.tx=x; c.ty=y; c.navApproach=approach||null;
+  /* v29.4.1: objetivos de salida. Los clientes que se van apuntan fuera del
+     mundo (x=W+60 o x=-60) y esa celda no existe en la cuadrícula: el paso
+     final nunca se completaba y se quedaban vibrando en el borde. Ahora el
+     objetivo fuera del mundo marca navExit: el cliente puede cruzar el borde
+     sin colisión (fuera no hay obstáculos) y despawnea fuera de pantalla. */
+  c.navExit = x<0 || x>=W || y<0 || y>=H;
   if(approach){
     c.path=navFind(c.x,c.y,approach.x,approach.y);
     c.finalHop=true;
@@ -88,6 +101,9 @@ export function navSetTarget(c, x, y, approach){
     c.finalHop=false;
   }
   c.navIdx=0;
+  /* v29.4.1: plan nuevo, vigilancia limpia (se conserva stuckN para que la
+     escalada a paso franco siga funcionando si el bloqueo persiste). */
+  c.navBestD=null; c.stuckT=0;
 }
 /* v29.3: replanifica conservando el approach original (el último salto hasta la
    silla entra en la huella de la mesa y solo se recorre en modo finalHop). */
@@ -98,7 +114,14 @@ export function navStep(c, dt, mul){
   let px=c.tx, py=c.ty;
   if(c.path && c.navIdx<c.path.length){
     const wp=c.path[c.navIdx];
-    if(Math.hypot(wp.x-c.x,wp.y-c.y)<10){ c.navIdx++; }
+    /* v29.4.1: al consumir un waypoint se reinicia la vigilancia anti-atasco.
+       Antes, la mejor distancia se registraba contra el tramo anterior: al
+       cambiar de waypoint (o al agotar la ruta y pasar al objetivo final) la
+       distancia daba un salto hacia arriba, el vigilante lo leía como "sin
+       progreso" y replanificaba en bucle: el cliente orbitaba entre el waypoint
+       y su destino sin llegar nunca — sobre todo en la salida hacia fuera del
+       mundo. Cada tramo empieza con la vigilancia limpia. */
+    if(Math.hypot(wp.x-c.x,wp.y-c.y)<10){ c.navIdx++; c.navBestD=null; c.stuckT=0; }
     if(c.navIdx<c.path.length){ const w=c.path[c.navIdx]; px=w.x; py=w.y; }
   }
   let dx=px-c.x, dy=py-c.y; const d=Math.hypot(dx,dy);
@@ -126,10 +149,16 @@ export function navStep(c, dt, mul){
      y la vigilancia anti-atasco se encarga del resto). El último salto hasta la
      silla (finalHop) y las casillas ya bloqueadas quedan exentos. */
   let mx=vx*dt, my=vy*dt;
-  if((mx||my) && !c.finalHop && navFreeAt(c.x,c.y)){
-    if(!navFreeAt(c.x+mx,c.y+my)){
-      if(mx && navFreeAt(c.x+mx,c.y)) my=0;
-      else if(my && navFreeAt(c.x,c.y+my)) mx=0;
+  /* v29.4.1: con navExit (objetivo fuera del mundo), el exterior de la cuadrícula
+     se considera libre: el cliente cruza el borde sin quedarse pegado a la pared
+     invisible del límite del mundo. El exterior coincide exactamente con los
+     límites de la cuadrícula (x<0, x>=W, y<0, y>=H): sin rendijas. Dentro del
+     mundo el deslizamiento sigue activo: no se puede atravesar mesas. */
+  const freeAt=(x,y)=> (c.navExit && (x<0||x>=W||y<0||y>=H)) || navFreeAt(x,y);
+  if((mx||my) && !c.finalHop && freeAt(c.x,c.y)){
+    if(!freeAt(c.x+mx,c.y+my)){
+      if(mx && freeAt(c.x+mx,c.y)) my=0;
+      else if(my && freeAt(c.x,c.y+my)) mx=0;
       else { mx=0; my=0; }
     }
   }
@@ -138,7 +167,10 @@ export function navStep(c, dt, mul){
   c.stridePh=(c.stridePh||0)+moved*0.11*(c.look&&c.look.walk?c.look.walk.stride:1);
   if(Math.abs(vx)>3) c.dir=vx<0?-1:1;
   c.movingSpd=Math.hypot(vx,vy);
-  const done = d<5 && !(c.path && c.navIdx<c.path.length);
+  const done = (d<5 || (c.navExit && (c.x<-EXIT_MARGIN || c.x>W+EXIT_MARGIN || c.y<-EXIT_MARGIN || c.y>H+EXIT_MARGIN))) && !(c.path && c.navIdx<c.path.length);
+  /* v29.4.1: con navExit el cliente despawnea cuando ya está del todo fuera del
+     encuadre (EXIT_MARGIN: más allá de la playa visible). Antes el objetivo
+     inalcanzable hacía que se quedara temblando en el borde indefinidamente. */
   /* v29.3: vigilancia anti-atasco. Dos clientes que se cruzan en un pasillo de
      30 px entre mesas podían empujarse mutuamente sin progreso neto y quedarse
      quietos el resto de la jornada. Si un cliente camina pero no se acerca a su
