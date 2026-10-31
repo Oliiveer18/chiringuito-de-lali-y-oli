@@ -2,26 +2,26 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=29.4.1';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=29.4.1';
-import { ICON_URL } from './icons.js?v=29.4.1';
-import { Audio } from './audio.js?v=29.4.1';
-import { Game, Net, activeItems, closeHour, dayName, hamacaCount, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=29.4.1';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=29.4.1';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=29.4.1';
-import { canvas, toWorld } from './canvas.js?v=29.4.1';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=29.4.1';
-import { drawPerson } from './render.js?v=29.4.1';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=29.4.2';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=29.4.2';
+import { ICON_URL } from './icons.js?v=29.4.2';
+import { Audio } from './audio.js?v=29.4.2';
+import { Game, Net, activeItems, closeHour, dayName, hamacaCount, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=29.4.2';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=29.4.2';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=29.4.2';
+import { canvas, toWorld } from './canvas.js?v=29.4.2';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=29.4.2';
+import { drawPerson } from './render.js?v=29.4.2';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, readyOn, toggleReady,
-} from './ui-plan.js?v=29.4.1';
+} from './ui-plan.js?v=29.4.2';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=29.4.1';
-import { renderMejorasTab } from './ui-mejoras.js?v=29.4.1';
+} from './ui-service.js?v=29.4.2';
+import { renderMejorasTab } from './ui-mejoras.js?v=29.4.2';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -40,7 +40,10 @@ export function hamacaHint(p){
   return '<span class="tag bad">Nadie alquila</span>';
 }
 function planComprasCartaHtml(){
-  let h = `<section class="plan-panel plan-unified"><p class="plan-panel-k">Compras y carta</p><p class="muted plan-panel-d">Compra stock para la jornada y fija el <b>precio de venta</b> de cada producto. Referencia = lo que espera la gente del pueblo. Unas ${Math.round(estimateCustomers())} visitas previstas hoy.</p>`;
+  /* v29.4.2: "Compras y precios" (antes "Compras y carta"): aquí se fija el
+     precio de todo lo que se cobra — productos y, si hay hamacas, el precio
+     por hora de la playa. La carta de bebida/comida es solo una parte. */
+  let h = `<section class="plan-panel plan-unified"><p class="plan-panel-k">Compras y precios</p><p class="muted plan-panel-d">Compra stock para la jornada y fija el <b>precio de venta</b> de cada producto${lvl('hamacas')?' y el <b>precio por hora</b> de las hamacas (sección Playa)':''}. Referencia = lo que espera la gente del pueblo. Unas ${Math.round(estimateCustomers())} visitas previstas hoy.</p>`;
   for(const id of ITEM_IDS){
     const it=ITEMS[id], un=itemUnlocked(id);
     const sp = lvl('nevera')?it.spoilF:it.spoil;
@@ -108,8 +111,8 @@ export function routePlanTab(){
   const b=$('#tab-body');
   if(b){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; delete b.__mkNode; }
   renderForecast();
-  if(Plan.tab==='show') import('./features.js?v=29.4.1').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
-  else if(Plan.tab==='red') import('./v12-ui.js?v=29.4.1').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
+  if(Plan.tab==='show') import('./features.js?v=29.4.2').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
+  else if(Plan.tab==='red') import('./v12-ui.js?v=29.4.2').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
   document.dispatchEvent(new Event('plan-tab-repaint'));
 }
 export function estimateCustomers(){

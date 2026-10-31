@@ -1,5 +1,5 @@
-export const VERSION='v29.4.1';
-export const LABEL='v29.4.1 · movimiento fluido: los clientes que se van salen de verdad (despawn fuera de encuadre, sin NPCs trabados en los bordes ni temblores) y las salidas ya no se apiñan a la vista';
+export const VERSION='v29.4.2';
+export const LABEL='v29.4.2 · hamacas sin errores: comprar mejoras ya no revienta el plan (toast importada) y la pestaña se llama "Compras y precios" — ahí se fija el precio de los productos y el precio por hora de las hamacas (sección Playa)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

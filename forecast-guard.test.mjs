@@ -36,9 +36,9 @@ globalThis.addEventListener = globalThis.addEventListener || (() => {});
 globalThis.MutationObserver = class { observe() {} };
 
 // ---------- módulos reales ----------
-const { Game, weatherToday, weatherAt, repairForecast } = await import('./state.js?v=29.4.1');
-const plan = await import('./ui-plan.js?v=29.4.1');
-const cfg = await import('./config.js?v=29.4.1');
+const { Game, weatherToday, weatherAt, repairForecast } = await import('./state.js?v=29.4.2');
+const plan = await import('./ui-plan.js?v=29.4.2');
+const cfg = await import('./config.js?v=29.4.2');
 const forecastEl = () => elements['#forecast'].innerHTML;
 
 let ok = 0, ko = 0;

@@ -1,10 +1,10 @@
-import { Game, Net, gameTimers, guestCust, repairForecast } from './state.js?v=29.4.1';
-import { newSeason } from './sim.js?v=29.4.1';
-import { showPlan, Plan } from './ui.js?v=29.4.1';
-import { buildTables } from './world.js?v=29.4.1';
-import { netDirty } from './net.js?v=29.4.1';
-import { showReportUI } from './report.js?v=29.4.1';
-import { encode, decode, copy, valid, uid, parseLibrary, mergeImported, exportFileName, FIELDS } from './saves-io.mjs?v=29.4.1';
+import { Game, Net, gameTimers, guestCust, repairForecast } from './state.js?v=29.4.2';
+import { newSeason } from './sim.js?v=29.4.2';
+import { showPlan, Plan } from './ui.js?v=29.4.2';
+import { buildTables } from './world.js?v=29.4.2';
+import { netDirty } from './net.js?v=29.4.2';
+import { showReportUI } from './report.js?v=29.4.2';
+import { encode, decode, copy, valid, uid, parseLibrary, mergeImported, exportFileName, FIELDS } from './saves-io.mjs?v=29.4.2';
 const KEY='lali-oli.library.v2', BACK=KEY+'.backup';
 const fields=FIELDS;
 let library=[],active=null,pending=null,bypass=false,last='',locked=false;

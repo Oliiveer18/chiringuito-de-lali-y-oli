@@ -1,5 +1,5 @@
 /* Pruebas de las utilidades puras de guardado (exportar/importar, v28.15). */
-import { encode, decode, copy, uid, valid, parseLibrary, mergeImported, exportFileName } from './saves-io.mjs?v=29.4.1';
+import { encode, decode, copy, uid, valid, parseLibrary, mergeImported, exportFileName } from './saves-io.mjs?v=29.4.2';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {

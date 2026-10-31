@@ -10,7 +10,7 @@
    4. Los modos barra/mesas funcionan en AMBAS orientaciones y centran su eje.
    Uso: node camera.test.mjs */
 import assert from 'node:assert/strict';
-import { computeView, setCamMode, camMode, GEO, CAM_MODES } from './camera.js?v=29.4.1';
+import { computeView, setCamMode, camMode, GEO, CAM_MODES } from './camera.js?v=29.4.2';
 
 const { W, H } = GEO;
 const ok = (name, fn) => { try { fn(); console.log('ok -', name); } catch (e) { console.error('FAIL:', name, '\n', e.message); process.exitCode = 1; } };

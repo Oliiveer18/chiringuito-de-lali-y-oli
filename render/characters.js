@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=29.4.1";
-import { clamp } from "../util.js?v=29.4.1";
+import { Net } from "../state.js?v=29.4.2";
+import { clamp } from "../util.js?v=29.4.2";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR, stationOf } from "../config.js?v=29.4.1";
-import { W } from "../config.js?v=29.4.1";
-import { rr } from "../icons.js?v=29.4.1";
-import { Game } from "../state.js?v=29.4.1";
-import { PCOLORS } from "./scene.js?v=29.4.1";
-import { drawPictogram } from "./scene.js?v=29.4.1";
-import { drawHeldItem } from "./items.js?v=29.4.1";
+import { PERSONALITIES, WHO_COLOR, stationOf } from "../config.js?v=29.4.2";
+import { W } from "../config.js?v=29.4.2";
+import { rr } from "../icons.js?v=29.4.2";
+import { Game } from "../state.js?v=29.4.2";
+import { PCOLORS } from "./scene.js?v=29.4.2";
+import { drawPictogram } from "./scene.js?v=29.4.2";
+import { drawHeldItem } from "./items.js?v=29.4.2";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};

@@ -27,12 +27,12 @@ globalThis.document = {
 globalThis.localStorage = { getItem: () => null, setItem: () => {} };
 globalThis.innerWidth = 1280; globalThis.innerHeight = 720;
 
-const v = readFileSync(new URL('./version.js', import.meta.url), 'utf8').match(/VERSION='(v[^']+)'/)[1];
-const { W } = await import(`./config.js?${v}`);
-const { Game } = await import(`./state.js?${v}`);
-const { navRebuild, navSetTarget, navStep, navFreeAt, EXIT_MARGIN } = await import(`./nav.js?${v}`);
-const { EXIT_X_R, EXIT_X_L } = await import(`./world.js?${v}`);
-const { GEO } = await import(`./camera.js?${v}`);
+const v = readFileSync(new URL('./version.js', import.meta.url), 'utf8').match(/VERSION='v([^']+)'/)[1];
+const { W } = await import(`./config.js?v=${v}`);
+const { Game } = await import(`./state.js?v=${v}`);
+const { navRebuild, navSetTarget, navStep, navFreeAt, EXIT_MARGIN } = await import(`./nav.js?v=${v}`);
+const { EXIT_X_R, EXIT_X_L } = await import(`./world.js?v=${v}`);
+const { GEO } = await import(`./camera.js?v=${v}`);
 
 /* Terraza completa como buildTables() con las mejoras al máximo. */
 Game.tables = [
@@ -86,7 +86,7 @@ test('no hay muro invisible en el borde: el cliente cruza la columna exterior si
 });
 
 test('mientras camina hacia la salida no atraviesa ninguna mesa', () => {
-  const c = mk(900, 630); // entre las dos filas de mesas
+  const c = mk(900, 580); // pasillo entre las dos filas de mesas
   navSetTarget(c, EXIT_X_R, 690);
   let t = 0;
   while (t < 30) {
