@@ -40,9 +40,6 @@ export function hamacaHint(p){
   return '<span class="tag bad">Nadie alquila</span>';
 }
 function planComprasCartaHtml(){
-  /* v29.4.2: "Compras y precios" (antes "Compras y carta"): aquí se fija el
-     precio de todo lo que se cobra — productos y, si hay hamacas, el precio
-     por hora de la playa. La carta de bebida/comida es solo una parte. */
   let h = `<section class="plan-panel plan-unified"><p class="plan-panel-k">Compras y precios</p><p class="muted plan-panel-d">Compra stock para la jornada y fija el <b>precio de venta</b> de cada producto${lvl('hamacas')?' y el <b>precio por hora</b> de las hamacas (sección Playa)':''}. Referencia = lo que espera la gente del pueblo. Unas ${Math.round(estimateCustomers())} visitas previstas hoy.</p>`;
   for(const id of ITEM_IDS){
     const it=ITEMS[id], un=itemUnlocked(id);
@@ -55,16 +52,18 @@ function planComprasCartaHtml(){
     h += `<div class="row plan-product"><img src="${ICON_URL[id]}" alt=""><div class="plan-product-main"><div class="name">${it.name}</div><div class="sub">Compra ${eur2(it.cost)} · almacén <b>${Game.stock[id]}</b> · referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
     <div class="ctrl plan-product-ctrl">
       <div class="plan-ctrl-block"><span class="plan-ctrl-label">Stock</span><div class="plan-buy-btns">${[10,25,50].map(n=>`<button class="btn sm primary stock-buy" data-buy="${id}" data-n="${n}" ${Game.money<it.cost*n?'disabled':''}><span class="stock-buy-qty plan-buy-qty">+${n}</span><span class="stock-buy-total plan-buy-amt">${eur(it.cost*n)}</span></button>`).join('')}</div></div>
-      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span><div class="price"><button type="button" data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button type="button" data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div></div>
+      <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span><div class="price"><button type="button" data-price="${id}" data-d="-0.1" aria-label="Bajar precio">-</button><span class="val">${eur2(Game.prices[id])}</span><button type="button" data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div></div>
       <div class="plan-ctrl-block plan-ctrl-carta"><button type="button" class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera de carta'}</button></div>
     </div></div>`;
   }
-  /* v29.3: sección de playa — precio por hora de las hamacas (solo si hay hamacas). */
+  /* v29.4.8: sección de playa — precio por hora de las hamacas con botones
+     reforzados y deslizador directo. */
   if(lvl('hamacas')){
-    const hp=(Number.isFinite(Game.prices.hamacas)&&Game.prices.hamacas>0)?Game.prices.hamacas:3;
+    const hp=(Number.isFinite(Number(Game.prices.hamacas))&&Number(Game.prices.hamacas)>0)?Number(Game.prices.hamacas):3;
     h += `</section><section class="plan-panel plan-unified"><p class="plan-panel-k">Playa</p><p class="muted plan-panel-d">Hamacas de alquiler: fija el <b>precio por hora</b>. Los bañistas deciden si se tumban y cuánto tiempo pagar según ese precio y <b>según lo que queda de jornada</b>: con menos de una hora de playa ya no alquilan, y nunca pagan horas que no puedan disfrutar antes del cierre. Referencia: 3 €/h.</p>
       <div class="row plan-price-row"><div class="plan-beach-ico" aria-hidden="true">⛱</div><div><div class="name">Hamacas (${hamacaCount()} de 8)</div><div class="sub">Ingreso = precio × horas contratadas ${hamacaHint(hp)}</div></div>
-      <div class="ctrl"><div class="price"><button type="button" data-hprice="1" data-d="-0.5" aria-label="Bajar precio">−</button><span class="val">${eur2(hp)} €/h</span><button type="button" data-hprice="1" data-d="0.5" aria-label="Subir precio">+</button></div></div></div>`;
+      <div class="ctrl"><div class="price"><button type="button" data-hprice="1" data-d="-0.5" aria-label="Bajar precio">-</button><span class="val">${eur2(hp)} €/h</span><button type="button" data-hprice="1" data-d="0.5" aria-label="Subir precio">+</button></div>
+      <input class="hamaca-slider" type="range" min="0.5" max="12" step="0.5" value="${hp}" data-hrange="1" aria-label="Precio de hamacas por hora"></div></div>`;
   }
   return h + '</section>';
 }
@@ -75,7 +74,7 @@ function planCartaSectionHtml(){
     if(!un){ h+=`<div class="row locked"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Bloqueado</div></div></div>`; continue; }
     const margin = Game.prices[id]-it.cost;
     h += `<div class="row plan-price-row"><img src="${ICON_URL[id]}" alt=""><div><div class="name">${it.name}</div><div class="sub">Referencia ${eur2(it.ref)} · margen ${eur2(margin)} ${demandHint(id)}</div></div>
-    <div class="ctrl"><div class="price"><button data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div>
+    <div class="ctrl"><div class="price"><button data-price="${id}" data-d="-0.1" aria-label="Bajar precio">-</button><span class="val">${eur2(Game.prices[id])}</span><button data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div>
     <button class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera'}</button></div></div>`;
   }
   return h + '</section>';
@@ -84,7 +83,6 @@ export function renderTab(){
   if(Plan.tab==='carta')Plan.tab='compras';
   document.querySelectorAll('#plan .tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===Plan.tab));
   const b=$('#tab-body'); let h=''; if(Plan.tab==='personal'){document.dispatchEvent(new Event('workforce-paint'));return;}
-  // Pestanas de otros modulos (p. ej. Carrera) pintan su propio contenido: no se borra en cada actualizacion de dinero o cooperativo.
   if(!['compras','carta','mejoras','personal'].includes(Plan.tab)){ document.dispatchEvent(new Event('plan-tab-repaint')); return; }
   if(Plan.tab==='compras'){
     h += planComprasCartaHtml();
@@ -123,11 +121,10 @@ export function estimateCustomers(){
   if(isCoop()) tot*=1.4;
   return tot;
 }
-// respuestas del propietario y "Ver más reseñas": delegación en el informe
 $('#rep-body').addEventListener('click',e=>{
   const b=(e.target && e.target.closest)? e.target.closest('button') : null;
   if(!b || b.disabled) return;
-  if(b.dataset.revmore!=null){ Rev.expanded=true; refreshReportUI(); return; } // local: no afecta a la pareja
+  if(b.dataset.revmore!=null){ Rev.expanded=true; refreshReportUI(); return; }
   if(b.dataset.vid!=null){ respondReview(+b.dataset.vid, b.dataset.kind); return; }
 });
 $('#tab-body').addEventListener('click',e=>{
@@ -149,7 +146,6 @@ $('#btn-next').addEventListener('click',()=>{ Audio.click();
   pressReady(); });
 $('#btn-start').addEventListener('click',()=>{ Audio.init(); Audio.good(); Net.role='solo'; Net.me='p1'; newSeason(); Plan.tab='compras'; showPlan(); });
 
-// Pedido urgente sigue disponible vía overlay #urgent si se reabre por código; botón retirado del HUD.
 const btnUrgent=document.getElementById('btn-urgent');
 if(btnUrgent) btnUrgent.addEventListener('click',()=>{ if(Game.mode!=='service') return; Audio.click();
   if(!isCoop()){ prevSpeed=Game.speed; setSpeed(0); }
@@ -168,7 +164,6 @@ sndBtn.addEventListener('click',()=>{ Audio.init(); setSoundLabel(Audio.toggle()
 canvas.addEventListener('pointerdown',e=>{
   if(Game.mode!=='service' || Game.speed===0) return;
   const p=toWorld(e.clientX,e.clientY);
-  // clientes en cola
   let best=null, bd=1e9;
   for(const c of Game.customers){ if(!servable(c)) continue; const dx=p.x-c.x, dy=p.y-(c.y-45); const d=Math.hypot(dx*1.2,dy*0.8); if(d<75 && d<bd){bd=d;best=c;} }
   if(best){ if(isGuest()) guestServe(best); else tryServe(best,'p1'); return; }
