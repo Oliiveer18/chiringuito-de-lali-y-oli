@@ -52,6 +52,15 @@
 .rep-notes p{margin:6px 0;font-size:13px;color:var(--ink-2)}
 .rep-notes b{color:var(--ink)}
 .rep-tags{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+/* v29.4.10: explicación plegable de las tres capas de la valoración */
+.rep-explain{margin:0 24px 12px;padding:10px 16px;border-radius:14px;border:1px solid var(--line);background:var(--sand)}
+.rep-explain summary{cursor:pointer;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+.rep-explain-body{font-size:13px;line-height:1.55;color:var(--ink-2)}
+.rep-explain-body p{margin:8px 0 0}
+.rep-explain-body ol{margin:6px 0 0 18px;padding:0}
+.rep-explain-body li{margin:6px 0}
+.rep-explain-body b{color:var(--ink)}
+.rep-explain-body .pos{color:var(--good)} .rep-explain-body .neg{color:var(--bad)}
 .reviews{margin:2px 0 0;padding:0 24px}
 .rev-sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:14px 0 4px}
 .rev-left{font-size:11.5px;font-weight:700;color:var(--ink-2)}
@@ -137,7 +146,7 @@
   .fc{width:180px;padding:8px 12px}
   .sheet-foot{padding:10px 16px}
   .kpis,.stats,.team{margin-left:16px;margin-right:16px}
-  .rep-hero,.rep-mini,.rep-kpis,.rep-sec-h,.rep-notes,.reviews{margin-left:16px;margin-right:16px}
+  .rep-hero,.rep-mini,.rep-kpis,.rep-sec-h,.rep-notes,.rep-explain,.reviews{margin-left:16px;margin-right:16px}
 }
 @media (max-width:640px){
   .sheet-head{flex-direction:column;align-items:stretch}

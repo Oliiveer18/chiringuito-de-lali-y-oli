@@ -1,23 +1,23 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged.
    Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
-import { ITEMS } from "../config.js?v=29.4.9";
-import { W } from "../config.js?v=29.4.9";
-import { ITEM_IDS } from "../config.js?v=29.4.9";
-import { REGULARS } from "../config.js?v=29.4.9";
-import { SEASON_DAYS } from "../config.js?v=29.4.9";
-import { START_MONEY } from "../config.js?v=29.4.9";
-import { clamp } from "../util.js?v=29.4.9";
-import { rnd } from "../util.js?v=29.4.9";
-import { Audio } from "../audio.js?v=29.4.9";
-import { Game, simProgressDay } from "../state.js?v=29.4.9";
-import { closeHour } from "../state.js?v=29.4.9";
-import { setTimeoutGame } from "../state.js?v=29.4.9";
-import { buildTables } from "../world.js?v=29.4.9";
-import { toast } from "../ui.js?v=29.4.9";
-import { updateStockbar } from "../ui.js?v=29.4.9";
-import { spawnCustomer } from "./customers.js?v=29.4.9";
-export { buildSeasonForecast } from "./forecast.js?v=29.4.9";
-import { buildSeasonForecast } from "./forecast.js?v=29.4.9";
+import { ITEMS } from "../config.js?v=29.4.10";
+import { W } from "../config.js?v=29.4.10";
+import { ITEM_IDS } from "../config.js?v=29.4.10";
+import { REGULARS } from "../config.js?v=29.4.10";
+import { SEASON_DAYS } from "../config.js?v=29.4.10";
+import { START_MONEY } from "../config.js?v=29.4.10";
+import { clamp } from "../util.js?v=29.4.10";
+import { rnd } from "../util.js?v=29.4.10";
+import { Audio } from "../audio.js?v=29.4.10";
+import { Game, simProgressDay } from "../state.js?v=29.4.10";
+import { closeHour } from "../state.js?v=29.4.10";
+import { setTimeoutGame } from "../state.js?v=29.4.10";
+import { buildTables } from "../world.js?v=29.4.10";
+import { toast } from "../ui.js?v=29.4.10";
+import { updateStockbar } from "../ui.js?v=29.4.10";
+import { spawnCustomer } from "./customers.js?v=29.4.10";
+export { buildSeasonForecast } from "./forecast.js?v=29.4.10";
+import { buildSeasonForecast } from "./forecast.js?v=29.4.10";
 
 const ARRIVALS_CAP = 1.72;
 const PEAK_CAP = 0.30;

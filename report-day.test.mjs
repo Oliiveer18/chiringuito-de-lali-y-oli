@@ -35,8 +35,9 @@ globalThis.navigator = {};
 const V = (await import('node:fs')).readFileSync(new URL('./version.js', import.meta.url), 'utf8').match(/VERSION='(v[0-9.]+)'/)[1].replace('v', '');
 const { Game, Net } = await import(`./state.js?v=${V}`);
 await import(`./coopbridge.js?v=${V}`);
-const { reportStatsHtml, reviewsSectionHtml, applyRevResp, refreshReportUI } = await import(`./report-render.js?v=${V}`);
+const { reportStatsHtml, reviewsSectionHtml, applyRevResp, refreshReportUI, repExplainHtml } = await import(`./report-render.js?v=${V}`);
 const { dayStarsSummary, buildRevModel } = await import(`./report-model.js?v=${V}`);
+const { experienceSummary } = await import(`./ratings-model.mjs?v=${V}`);
 
 // día de prueba: 5 visitas con satisfacciones variadas
 function fakeVisits() {
@@ -119,4 +120,23 @@ test('responder a una reseña sube la reputación y queda anotado', async () => 
   assert.equal(mala.resp, 'disculpa', 'respuesta anotada');
   assert.ok(Game.rep > rep0, 'la reputación sube');
   assert.equal(m.respCount, 1, 'contador de respuestas');
+});
+
+test('v29.4.10: el informe explica las tres capas con los números del día', async () => {
+  setup();
+  const s = Game.dayStats;
+  const m = buildRevModel(s, dayStarsSummary(s));
+  m.acc = { wage: 60, rent: 20, spoilVal: 0, spoilLines: [], soldStr: '', repStart: 3.5 };
+  const html = reportStatsHtml(s, m);
+  assert.ok(html.includes('¿Cómo se calcula la valoración?'), 'bloque explicativo plegable');
+  assert.ok(html.includes('Satisfacción de cada cliente'), 'capa 1: satisfacción interna');
+  assert.ok(html.includes('Reseñas públicas'), 'capa 2: reseñas públicas');
+  assert.ok(html.includes('Reputación del kiosco'), 'capa 3: reputación acumulada');
+  const exp = repExplainHtml(s, m.acc);
+  const sat = experienceSummary(s.visits);
+  assert.ok(exp.includes(sat.avg.toFixed(2) + '★'), 'media de estrellas del día');
+  assert.ok(exp.includes('peso del día'), 'peso del día');
+  assert.ok(exp.includes('3.50 → 3.50'), 'trayectoria de reputación con el repStart del día');
+  // sin clientes: la reputación no se mueve y el bloque no engaña
+  assert.ok(repExplainHtml({ visits: [] }, { repStart: 4 }).includes('no se mueve sin clientes'), 'día sin clientes');
 });

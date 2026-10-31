@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.4.9';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.4.9';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.4.9';
-import { rr } from './icons.js?v=29.4.9';
-import { Audio } from './audio.js?v=29.4.9';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=29.4.9';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.4.9';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.4.9';
-import { netAct, netDirty } from './net.js?v=29.4.9';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.4.9';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.4.10';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.4.10';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.4.10';
+import { rr } from './icons.js?v=29.4.10';
+import { Audio } from './audio.js?v=29.4.10';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=29.4.10';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.4.10';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.4.10';
+import { netAct, netDirty } from './net.js?v=29.4.10';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.4.10';
 
 export function endDay(){
   Game.mode='report';
@@ -49,6 +49,30 @@ export function endDay(){
   Audio.good();
   netDirty();
 }
+/* v29.4.10: explica las tres capas (satisfacción por cliente, reseñas públicas y
+   reputación acumulada) con los números reales del día. El cálculo era correcto,
+   pero invisible: el jugador no podía saber por qué se movía la valoración. */
+export function repExplainHtml(s,acc){
+  const sat=experienceSummary(s.visits||[]);
+  const weight=sat.weight||0,alpha=.25*weight/(weight+14);
+  const repStart=Number.isFinite(acc?.repStart)?acc.repStart:s.repStart;
+  const repDelta=Game.rep-repStart;
+  const hoy=weight
+    ?`Hoy: media de <b>${sat.avg.toFixed(2)}★</b> entre ${sat.count} clientes · peso del día ${Math.round(alpha*100)} % · reputación ${repStart.toFixed(2)} → ${Game.rep.toFixed(2)} (<b class="${repDelta>=0?'pos':'neg'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</b>).`
+    :'Hoy no entró nadie: la reputación no se mueve sin clientes.';
+  return `<details class="rep-explain">
+    <summary>¿Cómo se calcula la valoración?</summary>
+    <div class="rep-explain-body">
+      <p>Son <b>tres números distintos</b> y cada uno mide una cosa:</p>
+      <ol>
+        <li><b>Satisfacción de cada cliente</b> (interna, de 0 a 1): parte de 0,88. La bajan la espera (−0,48 por la paciencia gastada), los precios por encima de la referencia (−0,60), los pedidos con faltas (−0,30) y las mesas sucias (−0,04 por mesa). La suben servir rápido (+0,08), la música del altavoz (+0,015), el servicio sincronizado en pareja (+0,025) y los precios por debajo de la referencia (hasta +0,03). Ese número se traduce en estrellas: ≥0,90 son 5★, ≥0,72 son 4★, ≥0,52 son 3★ y ≥0,30 son 2★.</li>
+        <li><b>Reseñas públicas</b>: no todo el mundo opina. Solo se publican hasta 3–8 reseñas por día (según avanzas en la temporada) y con más probabilidad cuanto más extremo fue el día. La media grande de arriba es solo de esas reseñas.</li>
+        <li><b>Reputación del kiosco</b> (de 0,5 a 5): el número acumulado del HUD. Cada día se acerca un poco a la media de estrellas de <em>todos</em> los clientes, no solo de las reseñas: con pocas visitas casi no se mueve y con la barra llena pesa más. Como mucho sube +0,20 o baja −0,35 en una jornada. Los eventos (VIP, inspecciones de sanidad) también la mueven.</li>
+      </ol>
+      <p>${hoy}</p>
+    </div>
+  </details>`;
+}
 export function reportStatsHtml(s, m){
   const acc=m.acc;
   const repDelta=Game.rep-acc.repStart;
@@ -84,6 +108,7 @@ export function reportStatsHtml(s, m){
       </div>
       <div class="rep-hist" aria-label="Reparto de reseñas">${hist}</div>
     </section>
+    ${repExplainHtml(s,acc)}
     <div class="rep-mini">
       <div class="rep-mini-i"><span class="k">Satisfacción interna</span><span class="v">${sat.avg==null?'—':sat.avg.toFixed(2)+' / 5'}</span></div>
       <div class="rep-mini-i"><span class="k">Reputación del kiosco</span><span class="v">${Game.rep.toFixed(2)} <b class="${repDelta>=0?'pos':'neg'}">${repDelta>=0?'+':''}${repDelta.toFixed(2)}</b></span></div>

@@ -1,8 +1,8 @@
-import {Game,Net,itemUnlocked} from './state.js?v=29.4.9';
-import {ITEMS} from './config.js?v=29.4.9';
-import {ICON_URL} from './icons.js?v=29.4.9';
-import {escapeHtml,eur2} from './util.js?v=29.4.9';
-import {guestSend} from './coopbridge.js?v=29.4.9';
+import {Game,Net,itemUnlocked} from './state.js?v=29.4.10';
+import {ITEMS} from './config.js?v=29.4.10';
+import {ICON_URL} from './icons.js?v=29.4.10';
+import {escapeHtml,eur2} from './util.js?v=29.4.10';
+import {guestSend} from './coopbridge.js?v=29.4.10';
 /* v29.1: en jornada el reparto ofrece SOLO el pack medio (10 unidades).
    Los packs de 5 y 20 desaparecen del panel: comprar stock con clientes
    esperando tiene que ser una decisión rápida, sin comparar tres precios.
