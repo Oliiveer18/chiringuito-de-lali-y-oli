@@ -68,11 +68,11 @@ globalThis.document = {
 el('stockbar').append = () => {}; // contenedor estático
 
 // ---------- carga de módulos ----------
-const { Game } = await import('./state.js?v=29.2.0');
-const us = await import('./ui-service.js?v=29.2.0');
-const { ITEMS } = await import('./config.js?v=29.2.0');
-await import('./features.js?v=29.2.0'); // añade algodón
-await import('./v14.js?v=29.2.0');      // añade agua, refresco, helado, gofre, cóctel, churros
+const { Game } = await import('./state.js?v=29.3.0');
+const us = await import('./ui-service.js?v=29.3.0');
+const { ITEMS } = await import('./config.js?v=29.3.0');
+await import('./features.js?v=29.3.0'); // añade algodón
+await import('./v14.js?v=29.3.0');      // añade agua, refresco, helado, gofre, cóctel, churros
 
 // ---------- 1. chips con icono + contador y estados con color ----------
 Game.mode = 'service'; Game.upgrades = {}; Game.enabled = {}; Game.stock = {};

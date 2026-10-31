@@ -17,7 +17,7 @@
    - Nunca se recorta más de MAX_SKY_CROP de cielo, y la banda jugable protegida
      (del rótulo y≈186 al suelo y=720) queda por debajo del HUD.
    ========================================================= */
-import { W, H } from './config.js?v=29.2.0';
+import { W, H } from './config.js?v=29.3.0';
 
 /* Geometría protegida del mundo. Los tests de geometría (camera.test.mjs)
    validan el encuadre contra estos valores: si una futura mejora del kiosco

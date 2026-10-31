@@ -85,3 +85,6 @@ body.portrait .hint{top:calc(var(--game-top) + var(--top-ui,0px) + 72px)!importa
   #delivery-panel article img{width:24px!important;height:24px!important}
   #delivery-panel .btn{padding:5px 9px;font-size:11.5px;min-height:26px}
 }
+
+/* v29.3: icono de la fila de hamacas en el panel de precios. */
+.plan-price-row .plan-beach-ico{width:44px;height:44px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--sand);border-radius:12px}

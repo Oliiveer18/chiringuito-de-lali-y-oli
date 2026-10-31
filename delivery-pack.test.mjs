@@ -36,9 +36,9 @@ function mkPanel() {
 }
 
 // ---------- carga de módulos ----------
-const { Game, Net } = await import('./state.js?v=29.2.0');
-const dp = await import('./delivery-panel.js?v=29.2.0');
-const { ITEMS } = await import('./config.js?v=29.2.0');
+const { Game, Net } = await import('./state.js?v=29.3.0');
+const dp = await import('./delivery-panel.js?v=29.3.0');
+const { ITEMS } = await import('./config.js?v=29.3.0');
 
 // ---------- estado de partida en servicio ----------
 Game.mode = 'service'; Game.money = 100; Game.upgrades = {}; Game.enabled = {}; Game.stock = {};
@@ -86,7 +86,7 @@ Game.money = 100;
 
 // ---------- 6. la invitada también pide por el pack medio ----------
 Net.role = 'guest';
-const { sent } = await import('./net.js?v=29.2.0');
+const { sent } = await import('./net.js?v=29.3.0');
 panel.handlers.click({ target: { closest: sel => (sel === 'button' ? btn10 : null) } });
 const last = sent[sent.length - 1];
 assert.ok(last && last.a === 'mod' && last.k === 'delivery' && last.p.id === 'cerveza' && last.p.qty === 10,

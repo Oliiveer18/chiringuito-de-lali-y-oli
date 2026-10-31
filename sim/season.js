@@ -1,22 +1,22 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged.
    Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
-import { ITEMS } from "../config.js?v=29.2.0";
-import { ITEM_IDS } from "../config.js?v=29.2.0";
-import { REGULARS } from "../config.js?v=29.2.0";
-import { SEASON_DAYS } from "../config.js?v=29.2.0";
-import { START_MONEY } from "../config.js?v=29.2.0";
-import { clamp } from "../util.js?v=29.2.0";
-import { rnd } from "../util.js?v=29.2.0";
-import { Audio } from "../audio.js?v=29.2.0";
-import { Game, simProgressDay } from "../state.js?v=29.2.0";
-import { closeHour } from "../state.js?v=29.2.0";
-import { setTimeoutGame } from "../state.js?v=29.2.0";
-import { buildTables } from "../world.js?v=29.2.0";
-import { toast } from "../ui.js?v=29.2.0";
-import { updateStockbar } from "../ui.js?v=29.2.0";
-import { spawnCustomer } from "./customers.js?v=29.2.0";
-export { buildSeasonForecast } from "./forecast.js?v=29.2.0";
-import { buildSeasonForecast } from "./forecast.js?v=29.2.0";
+import { ITEMS } from "../config.js?v=29.3.0";
+import { ITEM_IDS } from "../config.js?v=29.3.0";
+import { REGULARS } from "../config.js?v=29.3.0";
+import { SEASON_DAYS } from "../config.js?v=29.3.0";
+import { START_MONEY } from "../config.js?v=29.3.0";
+import { clamp } from "../util.js?v=29.3.0";
+import { rnd } from "../util.js?v=29.3.0";
+import { Audio } from "../audio.js?v=29.3.0";
+import { Game, simProgressDay } from "../state.js?v=29.3.0";
+import { closeHour } from "../state.js?v=29.3.0";
+import { setTimeoutGame } from "../state.js?v=29.3.0";
+import { buildTables } from "../world.js?v=29.3.0";
+import { toast } from "../ui.js?v=29.3.0";
+import { updateStockbar } from "../ui.js?v=29.3.0";
+import { spawnCustomer } from "./customers.js?v=29.3.0";
+export { buildSeasonForecast } from "./forecast.js?v=29.3.0";
+import { buildSeasonForecast } from "./forecast.js?v=29.3.0";
 
 const ARRIVALS_CAP = 1.72;
 const PEAK_CAP = 0.30;
@@ -66,6 +66,8 @@ function curveSmooth(d) {
 export function newSeason(){
   Object.assign(Game,{day:1,money:START_MONEY,rep:3.0,hour:10,upgrades:{},staff:{},customers:[],floaters:[],particles:[],season:{revenue:0,served:0,lost:0,bestDay:0,bestDayN:1}, lastDebt:false, starsLog:[], revUsed:{}, revPrev:{}, pendingPurchases:0});
   for(const id of ITEM_IDS){ Game.stock[id]= ITEMS[id].unlock?0:15; Game.prices[id]=ITEMS[id].ref; Game.enabled[id]=true; }
+  /* v29.3: precio por hora de las hamacas (referencia 3 €/h). */
+  Game.prices.hamacas=3;
   Game.regulars={}; Game.regVisited={}; Game.buzz=0;
   for(const r of REGULARS) Game.regulars[r.id]={loyalty:1,visits:0,next:2+Math.floor(rnd()*3)};
   Game.forecast=buildSeasonForecast();

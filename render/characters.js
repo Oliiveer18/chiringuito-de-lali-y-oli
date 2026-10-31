@@ -1,13 +1,13 @@
-import { Net } from "../state.js?v=29.2.0";
-import { clamp } from "../util.js?v=29.2.0";
+import { Net } from "../state.js?v=29.3.0";
+import { clamp } from "../util.js?v=29.3.0";
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { PERSONALITIES, WHO_COLOR, stationOf } from "../config.js?v=29.2.0";
-import { W } from "../config.js?v=29.2.0";
-import { rr } from "../icons.js?v=29.2.0";
-import { Game } from "../state.js?v=29.2.0";
-import { PCOLORS } from "./scene.js?v=29.2.0";
-import { drawPictogram } from "./scene.js?v=29.2.0";
-import { drawHeldItem } from "./items.js?v=29.2.0";
+import { PERSONALITIES, WHO_COLOR, stationOf } from "../config.js?v=29.3.0";
+import { W } from "../config.js?v=29.3.0";
+import { rr } from "../icons.js?v=29.3.0";
+import { Game } from "../state.js?v=29.3.0";
+import { PCOLORS } from "./scene.js?v=29.3.0";
+import { drawPictogram } from "./scene.js?v=29.3.0";
+import { drawHeldItem } from "./items.js?v=29.3.0";
 
 export function drawPerson(c,x,y,o){
   const look=o.look||{};
@@ -60,6 +60,7 @@ export function drawPerson(c,x,y,o){
     case 'angry': arm(shL,-62,4,-52); arm(shR,-62,-4,-52); break;
     case 'shake': arm(shL,-62,-8,-58); arm(shR,-62,8,-58); break;   // barra: agita la cocktelera
     case 'cook':  arm(shL,-62,-14,-46); arm(shR,-62,26,-54); break; // cocina: espátula sobre la plancha
+    case 'lie':   arm(shL,-62,-8,-36); arm(shR,-62,8,-36); break;   // v29.3: tumbado en la hamaca, brazos sobre la toalla
     default: arm(shL,-62,-18,-42+Math.sin(t*1.6)*1); arm(shR,-62,18,-42-Math.sin(t*1.6)*1); // idle / wait
   }
   // cabeza

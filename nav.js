@@ -2,9 +2,9 @@
    nav.js
    Navegación A* por cuadrícula: rutas de clientes que no atraviesan mesas.
    ========================================================= */
-import { H, W } from './config.js?v=29.2.0';
-import { clamp, lerp } from './util.js?v=29.2.0';
-import { Game } from './state.js?v=29.2.0';
+import { H, W } from './config.js?v=29.3.0';
+import { clamp, lerp } from './util.js?v=29.3.0';
+import { Game } from './state.js?v=29.3.0';
 
 // ---------- Navegación (mejora 1): rutas que no atraviesan mesas ----------
 export const NAV = {cs:10, gw:0, gh:0, blocked:null, cx:0, cy:0};
@@ -79,7 +79,7 @@ export function navFind(x0,y0,x1,y1){
   return sm;
 }
 export function navSetTarget(c, x, y, approach){
-  c.tx=x; c.ty=y;
+  c.tx=x; c.ty=y; c.navApproach=approach||null;
   if(approach){
     c.path=navFind(c.x,c.y,approach.x,approach.y);
     c.finalHop=true;
@@ -89,6 +89,9 @@ export function navSetTarget(c, x, y, approach){
   }
   c.navIdx=0;
 }
+/* v29.3: replanifica conservando el approach original (el último salto hasta la
+   silla entra en la huella de la mesa y solo se recorre en modo finalHop). */
+function navRepPlan(c){ navSetTarget(c, c.tx, c.ty, c.navApproach||null); }
 // avanza por la ruta: frenado al llegar, separación solo mientras camina y deslizamiento junto a mesas
 export function navStep(c, dt, mul){
   const speed=c.speed*(mul||1);
@@ -102,7 +105,7 @@ export function navStep(c, dt, mul){
   const brake = d<70 ? clamp(d/70,0.25,1) : 1;
   let vx=dx/(d||1)*speed*brake, vy=dy/(d||1)*speed*brake;
   // Separación y esquiva solo mientras camina: evita temblores al estar quieto en la cola
-  if(d>12){
+  if(d>12 && !c.navPass){
     for(const o of Game.customers){
       if(o===c) continue;
       const ox=c.x-o.x, oy=c.y-o.y, od=Math.hypot(ox,oy);
@@ -115,12 +118,49 @@ export function navStep(c, dt, mul){
     }
   }
   const nl=Math.hypot(vx,vy); if(nl>speed){ vx=vx/nl*speed; vy=vy/nl*speed; }
-  const mx=vx*dt, my=vy*dt; c.x+=mx; c.y+=my;
+  /* v29.3: deslizamiento — con la separación activa un cliente podía ser empujado
+     dentro de la huella bloqueada de una mesa o del quiosco y desde ahí ya no
+     había ruta posible: se quedaba trabado entre las mesas para siempre. Ahora
+     el paso se descompone en ejes: si el movimiento completo choca, se prueba
+     solo X, solo Y, y si ambos chocan no se avanza (se queda pegado a la pared
+     y la vigilancia anti-atasco se encarga del resto). El último salto hasta la
+     silla (finalHop) y las casillas ya bloqueadas quedan exentos. */
+  let mx=vx*dt, my=vy*dt;
+  if((mx||my) && !c.finalHop && navFreeAt(c.x,c.y)){
+    if(!navFreeAt(c.x+mx,c.y+my)){
+      if(mx && navFreeAt(c.x+mx,c.y)) my=0;
+      else if(my && navFreeAt(c.x,c.y+my)) mx=0;
+      else { mx=0; my=0; }
+    }
+  }
+  c.x+=mx; c.y+=my;
   const moved=Math.hypot(mx,my);
   c.stridePh=(c.stridePh||0)+moved*0.11*(c.look&&c.look.walk?c.look.walk.stride:1);
   if(Math.abs(vx)>3) c.dir=vx<0?-1:1;
   c.movingSpd=Math.hypot(vx,vy);
   const done = d<5 && !(c.path && c.navIdx<c.path.length);
+  /* v29.3: vigilancia anti-atasco. Dos clientes que se cruzan en un pasillo de
+     30 px entre mesas podían empujarse mutuamente sin progreso neto y quedarse
+     quietos el resto de la jornada. Si un cliente camina pero no se acerca a su
+     destino (la mejor distancia no mejora en 1,5 s), se replanifica la ruta; si
+     sigue bloqueado, se le concede paso franco (deja de esquivar a los demás)
+     hasta que vuelva a progresar. Nadie se queda trabado entre las mesas. */
+  if(!done && d>14 && !c.finalHop){
+    if(c.navBestD==null || d < c.navBestD-3){
+      c.navBestD=d; c.stuckT=0; c.stuckN=0; c.navPass=false;
+    } else {
+      c.navBestD=Math.min(c.navBestD==null?d:c.navBestD,d);
+      c.stuckT=(c.stuckT||0)+dt;
+      if(c.stuckT>1.5){
+        c.stuckT=0; c.stuckN=(c.stuckN||0)+1;
+        if(c.stuckN>=2) c.navPass=true;      // paso franco: atraviesa el embotellamiento
+        else navRepPlan(c);                  // replanifica la ruta
+        c.navBestD=null;
+      }
+    }
+  } else if(done){
+    c.navBestD=null; c.stuckT=0; c.stuckN=0; c.navPass=false;
+  }
   if(done){ c.movingSpd=0; c.exemptTable=null; }
   return done;
 }

@@ -1,19 +1,21 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.2.0';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.2.0';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.2.0';
-import { rr } from './icons.js?v=29.2.0';
-import { Audio } from './audio.js?v=29.2.0';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=29.2.0';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, staffOnDuty } from './state.js?v=29.2.0';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.2.0';
-import { netAct, netDirty } from './net.js?v=29.2.0';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.2.0';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.3.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.3.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.3.0';
+import { rr } from './icons.js?v=29.3.0';
+import { Audio } from './audio.js?v=29.3.0';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=29.3.0';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.3.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.3.0';
+import { netAct, netDirty } from './net.js?v=29.3.0';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.3.0';
 
 export function endDay(){
   Game.mode='report';
   const s=Game.dayStats;
-  const wage=wages(), rent=RENT;
+  /* v29.3: sueldos por tiempo realmente trabajado (redondeado a 0,1 €).
+     El resto de la partida (ingresos, alquiler, etc.) no cambia. */
+  const wage=Math.round(workedWages(s)*10)/10, rent=RENT;
   let spoilVal=0; const spoilLines=[];
   for(const id of ITEM_IDS){
     const rate = lvl('nevera')?ITEMS[id].spoilF:ITEMS[id].spoil;
@@ -119,7 +121,13 @@ export function reportStatsHtml(s, m){
 }
 export function reviewsWrapHtml(m){ return `<div class="reviews">${reviewsSectionHtml(m)}</div>`; }
 export function revSigOf(m){ return m ? m.day+'#'+m.respCount+'#'+m.cards.map(c=>c.vid+':'+(c.resp||0)).join(',') : ''; }
-export function wageLine(s,acc){ return acc.wage?`<span>Sueldos</span><span class="neg">−${eur(acc.wage)}</span>`:''; }
+export function wageLine(s,acc){
+  if(!acc.wage) return '';
+  /* v29.3: los sueldos se pagan por horas trabajadas: se muestra cuánto ha
+     trabajado el equipo de las horas abiertas de la jornada. */
+  const workedH=Object.values(s?.staffWork||{}).reduce((a,b)=>a+b,0)/SEC_PER_HOUR;
+  return `<span>Sueldos (${workedH.toFixed(1).replace('.',',')} h trabajadas)</span><span class="neg">−${eur(acc.wage)}</span>`;
+}
 
 export function respondReview(vid, kind){
   if(isGuest()){ netAct({a:'revresp', vid, kind, day:Game.day}); return; }
@@ -191,10 +199,11 @@ export function staffRowsHtml(s){
     if(!Game.staff[role])continue;
     const b=(s.by&&s.by[STAFF_WHO[role]])||{};
     const name=(e&&e.name)||STAFF_WHO[role];
+    const wH=((s.staffWork&&s.staffWork[role])||0)/SEC_PER_HOUR;
     let stats;
-    if(role==='terraza') stats=`<span><b>${b.escort||0}</b> acompañados</span><span><b>${b.orders||0}</b> comandas</span><span><b>${b.delivered||0}</b> servidos</span>`;
-    else if(role==='limpiador') stats=`<span><b>${b.clean||0}</b> mesas limpiadas</span>`;
-    else stats=`<span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span>${role==='camarero'?`<span><b>${s.staffClients||0}</b> clientes</span>`:''}`;
+    if(role==='terraza') stats=`<span><b>${b.escort||0}</b> acompañados</span><span><b>${b.orders||0}</b> comandas</span><span><b>${b.delivered||0}</b> servidos</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>`;
+    else if(role==='limpiador') stats=`<span><b>${b.clean||0}</b> mesas limpiadas</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>`;
+    else stats=`<span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>${role==='camarero'?`<span><b>${s.staffClients||0}</b> clientes</span>`:''}`;
     h+=`<div class="mate"><div class="mate-h"><span class="dot" style="background:${STAFF_COLOR[role]}"></span><b>${escapeHtml(name)}</b><span class="tag">${STAFF_LABEL[role]}</span></div><div class="mate-s">${stats}</div></div>`;
   }
   return h;
@@ -215,7 +224,7 @@ export function teamPanelHtml(s,m){
     const b=(s.by&&s.by[STAFF_WHO[role]])||{};
     items+=b.items||0; clean+=b.clean||0; ter+=(b.escort||0)+(b.orders||0)+(b.delivered||0);
   }
-  const sum=`<p class="team-note">Resumen del personal: <b>${hired}</b> contratado${hired>1?'s':''} · <b>${onDuty}</b> de turno hoy · sueldos <b>${eur(acc.wage||0)}</b>. Han preparado <b>${items}</b> producto${items!==1?'s':''}, limpiado <b>${clean}</b> mesa${clean!==1?'s':''} y atendido la terraza en <b>${ter}</b> momento${ter!==1?'s':''}.</p>`;
+  const sum=`<p class="team-note">Resumen del personal: <b>${hired}</b> contratado${hired>1?'s':''} · <b>${onDuty}</b> de turno hoy · sueldos <b>${eur(acc.wage||0)}</b> (solo por el tiempo trabajado). Han preparado <b>${items}</b> producto${items!==1?'s':''}, limpiado <b>${clean}</b> mesa${clean!==1?'s':''} y atendido la terraza en <b>${ter}</b> momento${ter!==1?'s':''}.</p>`;
   if(isCoop()) return teamHtml(s)+`<div class="team"><p class="eyebrow">El personal</p>${rows}${sum}</div>`;
   const b=(s.by&&s.by.p1)||{};
   const you=`<div class="mate"><div class="mate-h"><span class="dot" style="background:#0f8b8d"></span><b>Tú</b><span class="tag">Barra y sala</span></div><div class="mate-s"><span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span><span><b>${b.clean||0}</b> mesas</span></div></div>`;

@@ -1,33 +1,33 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { requestFloorClean } from "../floor-service.js?v=29.2.0";
-import { requestFloorCustomer } from "../floor-service.js?v=29.2.0";
-import { floorAway } from "../floor-service.js?v=29.2.0";
-import { releaseFloorCustomer } from "../floor-service.js?v=29.2.0";
-import { factor } from "../professional-model.mjs?v=29.2.0";
-import { ITEMS } from "../config.js?v=29.2.0";
-import { PERSONALITIES } from "../config.js?v=29.2.0";
-import { TYPES } from "../config.js?v=29.2.0";
-import { stationOf } from "../config.js?v=29.2.0";
-import { clamp } from "../util.js?v=29.2.0";
-import { eur2 } from "../util.js?v=29.2.0";
-import { rand } from "../util.js?v=29.2.0";
-import { rnd } from "../util.js?v=29.2.0";
-import { Audio } from "../audio.js?v=29.2.0";
-import { satisfaction } from "../ratings-model.mjs?v=29.2.0";
-import { Game } from "../state.js?v=29.2.0";
-import { Net } from "../state.js?v=29.2.0";
-import { hostLive, staffOnDuty } from "../state.js?v=29.2.0";
-import { isCoop } from "../state.js?v=29.2.0";
-import { lvl } from "../state.js?v=29.2.0";
-import { navSetTarget } from "../nav.js?v=29.2.0";
-import { recordVisit } from "../report.js?v=29.2.0";
-import { updateStockbar } from "../ui.js?v=29.2.0";
-import { addSat } from "./economy.js?v=29.2.0";
-import { charge } from "./economy.js?v=29.2.0";
-import { leaveQueue } from "./customers.js?v=29.2.0";
-import { pendingIdx } from "./orders.js?v=29.2.0";
-import { regularOutcome } from "./customers.js?v=29.2.0";
-import { servable } from "./day.js?v=29.2.0";
+import { requestFloorClean } from "../floor-service.js?v=29.3.0";
+import { requestFloorCustomer } from "../floor-service.js?v=29.3.0";
+import { floorAway } from "../floor-service.js?v=29.3.0";
+import { releaseFloorCustomer } from "../floor-service.js?v=29.3.0";
+import { factor } from "../professional-model.mjs?v=29.3.0";
+import { ITEMS } from "../config.js?v=29.3.0";
+import { PERSONALITIES } from "../config.js?v=29.3.0";
+import { TYPES } from "../config.js?v=29.3.0";
+import { stationOf } from "../config.js?v=29.3.0";
+import { clamp } from "../util.js?v=29.3.0";
+import { eur2 } from "../util.js?v=29.3.0";
+import { rand } from "../util.js?v=29.3.0";
+import { rnd } from "../util.js?v=29.3.0";
+import { Audio } from "../audio.js?v=29.3.0";
+import { satisfaction } from "../ratings-model.mjs?v=29.3.0";
+import { Game } from "../state.js?v=29.3.0";
+import { Net } from "../state.js?v=29.3.0";
+import { hostLive, staffOnDuty } from "../state.js?v=29.3.0";
+import { isCoop } from "../state.js?v=29.3.0";
+import { lvl } from "../state.js?v=29.3.0";
+import { navSetTarget } from "../nav.js?v=29.3.0";
+import { recordVisit } from "../report.js?v=29.3.0";
+import { updateStockbar } from "../ui.js?v=29.3.0";
+import { addSat } from "./economy.js?v=29.3.0";
+import { charge } from "./economy.js?v=29.3.0";
+import { leaveQueue } from "./customers.js?v=29.3.0";
+import { pendingIdx } from "./orders.js?v=29.3.0";
+import { regularOutcome } from "./customers.js?v=29.3.0";
+import { servable } from "./day.js?v=29.3.0";
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
@@ -51,7 +51,12 @@ export function startPart(c, slot){if(!slot||floorAway(slot.who))return false;
   c.inPrep++; c.state='prep';
   if(c.tServe==null) c.tServe=Game.t;
   slot.cust=c; slot.items=avail; slot.t=0;
-  slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * (slot.who==='yeray'?1.15*factor(Game.upgrades.workforce?.team?.camarero,avail.map(i=>({station:stationOf(c.order[i]),complex:ITEMS[c.order[i]].prep>=2}))):1);
+  /* v29.3: el personal ya no trabaja al doble de la velocidad de la jugadora.
+     Un puesto cuesta ~50 €/día y podía producir hasta ~250 €/día: demasiado
+     rentable y la partida se jugaba sola. Duplicando su tiempo por pedido,
+     cada contratado produce aproximadamente la mitad que antes (~125 €/día). */
+  const staffSlow = (slot.who==='yeray'||slot.who==='carmela') ? 2 : 1;
+  slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * staffSlow * (slot.who==='yeray'?1.15*factor(Game.upgrades.workforce?.team?.camarero,avail.map(i=>({station:stationOf(c.order[i]),complex:ITEMS[c.order[i]].prep>=2}))):1);
   slot.chefHelp=!!Game.staff.cocinero&&!floorAway('carmela');slot.cover = penalty>1;
   if(avail.some(i=>stationOf(c.order[i])==='cocina')) Audio.sizzle(); else Audio.start();
   updateStockbar();

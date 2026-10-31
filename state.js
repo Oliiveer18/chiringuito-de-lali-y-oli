@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, STAFF, START_MONEY, WEATHER } from './config.js?v=29.2.0';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=29.3.0';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -47,6 +47,22 @@ export function activeItems(){ return ITEM_IDS.filter(id=>itemUnlocked(id) && Ga
 export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('terraza')); }
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Game.upgrades.workforce?.team?.[st.id]?.wage??st.wage):0), 0); }
+/* v29.3: sueldo por tiempo realmente trabajado. La jornada completa (de 10:00 al
+   cierre) vale el sueldo íntegro; cada minuto sin tareas en manos lo reduce en
+   proporción. Los contratados ya no cobran las horas en que no hacen nada. */
+export function workedWages(s){
+  const full = Math.max(1,(closeHour()-10))*SEC_PER_HOUR;
+  let sum=0;
+  for(const st of STAFF){
+    if(!Game.staff[st.id]) continue;
+    const w = Game.upgrades.workforce?.team?.[st.id]?.wage ?? st.wage;
+    const worked = s?.staffWork?.[st.id]||0;
+    sum += w*Math.min(1, worked/full);
+  }
+  return sum;
+}
+/** Horas de jornada abierta (para informar en el informe). */
+export function openHours(){ return Math.max(1,(closeHour()-10)); }
 
 /* v28.16.0: el pronóstico puede venir de partidas antiguas o del canal coop con
    huecos o claves retiradas; siempre se resuelve a una clave válida de WEATHER

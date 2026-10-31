@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=29.2.0';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=29.2.0';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=29.2.0';
-import { ICON_URL } from './icons.js?v=29.2.0';
-import { Audio } from './audio.js?v=29.2.0';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=29.2.0';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=29.2.0';
-import { advanceFromReport } from './report.js?v=29.2.0';
-import { netAct, netDirty } from './net.js?v=29.2.0';
-import { drawPerson } from './render.js?v=29.2.0';
-import { iconFor } from './ui-polish.js?v=29.2.0';
-import { renderTab } from './ui.js?v=29.2.0';
+import { trackCost } from './bookkeeping.js?v=29.3.0';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=29.3.0';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=29.3.0';
+import { ICON_URL } from './icons.js?v=29.3.0';
+import { Audio } from './audio.js?v=29.3.0';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=29.3.0';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=29.3.0';
+import { advanceFromReport } from './report.js?v=29.3.0';
+import { netAct, netDirty } from './net.js?v=29.3.0';
+import { drawPerson } from './render.js?v=29.3.0';
+import { iconFor } from './ui-polish.js?v=29.3.0';
+import { renderTab } from './ui.js?v=29.3.0';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
@@ -86,6 +86,8 @@ export function applyPlanAction(who, d){
   const by = isCoop() ? Net.names[who] : null;
   if(d.buy){ buyStock(d.buy,+d.n); }
   else if(d.price){ const id=d.price; Game.prices[id]=Math.round(clamp(Game.prices[id]+ (+d.d)*(ITEMS[id].ref>8?5:1), 0.5, ITEMS[id].ref*3)*10)/10; }
+  /* v29.3: precio por hora de las hamacas (paso de 0,5 €, de 0,5 a 12 €/h). */
+  else if(d.hprice){ Game.prices.hamacas=Math.round(clamp((Number.isFinite(Game.prices.hamacas)?Game.prices.hamacas:3)+(+d.d)*0.5, 0.5, 12)*2)/2; }
   else if(d.toggle){ const id=d.toggle; Game.enabled[id]=!Game.enabled[id]; if(!activeItems().length) Game.enabled[id]=true; }
   else if(d.up){ const u=UPGRADES.find(x=>x.id===d.up), l=lvl(u.id), cost=u.levels[l]; const locked=u.req && !lvl(u.req);
     if(cost!=null && !locked && Game.money>=cost){ Game.money-=cost;trackCost(cost,'upgrades',true); Game.upgrades[u.id]=l+1; Audio.good(); toast(u.name,(by?by+' lo ha instalado. ':'Instalado. ')+u.desc,'good'); } }

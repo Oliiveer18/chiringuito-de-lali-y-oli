@@ -2,26 +2,26 @@
    ui.js
    Pantallas y HUD: plan de apertura, servicio, urgente, avisos (toasts) y acciones del jugador.
    ========================================================= */
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=29.2.0';
-import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=29.2.0';
-import { ICON_URL } from './icons.js?v=29.2.0';
-import { Audio } from './audio.js?v=29.2.0';
-import { Game, Net, activeItems, closeHour, dayName, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=29.2.0';
-import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=29.2.0';
-import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=29.2.0';
-import { canvas, toWorld } from './canvas.js?v=29.2.0';
-import { guestClean, guestServe, netAct, netDirty } from './net.js?v=29.2.0';
-import { drawPerson } from './render.js?v=29.2.0';
+import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, STATION_COLOR, STATION_LABEL, UPGRADES, WEATHER, who } from './config.js?v=29.3.0';
+import { $, clamp, escapeHtml, eur, eur2, hhmm, stars } from './util.js?v=29.3.0';
+import { ICON_URL } from './icons.js?v=29.3.0';
+import { Audio } from './audio.js?v=29.3.0';
+import { Game, Net, activeItems, closeHour, dayName, hamacaCount, hostLive, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherToday } from './state.js?v=29.3.0';
+import { buyStock, cleanTable, difficultyProfile, difficultyRush, newSeason, repArrivalMult, servable, startDay, tryServe } from './sim.js?v=29.3.0';
+import { Rev, advanceFromReport, refreshReportUI, respondReview } from './report.js?v=29.3.0';
+import { canvas, toWorld } from './canvas.js?v=29.3.0';
+import { guestClean, guestServe, netAct, netDirty } from './net.js?v=29.3.0';
+import { drawPerson } from './render.js?v=29.3.0';
 import {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
   applyPlanAction, pressReady, readyOn, toggleReady,
-} from './ui-plan.js?v=29.2.0';
+} from './ui-plan.js?v=29.3.0';
 import {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
-} from './ui-service.js?v=29.2.0';
-import { renderMejorasTab } from './ui-mejoras.js?v=29.2.0';
+} from './ui-service.js?v=29.3.0';
+import { renderMejorasTab } from './ui-mejoras.js?v=29.3.0';
 export {
   hideAll, Plan, showPlan, showPlanUI, renderForecast, refreshPlanMoney, updateReadyUI,
   flashMoney, demandHint, avatarCache, staffAvatar,
@@ -31,6 +31,14 @@ export {
   showServiceUI, showFinal, showFinalUI, renderUrgent, applyUrgent,
   updateHud, updateStockbar, setSpeed, toastsEl, toast, toastLocal,
 };
+/* v29.3: pista de demanda para el precio por hora de las hamacas. */
+export function hamacaHint(p){
+  if(p<1.8) return '<span class="tag good">Vuelan: hasta los bañistas sin sombrilla</span>';
+  if(p<=3.6) return '<span class="tag">Precio justo</span>';
+  if(p<=5.5) return '<span class="tag mid">Caro: estancias más cortas</span>';
+  if(p<=8) return '<span class="tag bad">Muy caro: casi nadie se tumba</span>';
+  return '<span class="tag bad">Nadie alquila</span>';
+}
 function planComprasCartaHtml(){
   let h = `<section class="plan-panel plan-unified"><p class="plan-panel-k">Compras y carta</p><p class="muted plan-panel-d">Compra stock para la jornada y fija el <b>precio de venta</b> de cada producto. Referencia = lo que espera la gente del pueblo. Unas ${Math.round(estimateCustomers())} visitas previstas hoy.</p>`;
   for(const id of ITEM_IDS){
@@ -47,6 +55,13 @@ function planComprasCartaHtml(){
       <div class="plan-ctrl-block"><span class="plan-ctrl-label">Precio venta</span><div class="price"><button type="button" data-price="${id}" data-d="-0.1" aria-label="Bajar precio">−</button><span class="val">${eur2(Game.prices[id])}</span><button type="button" data-price="${id}" data-d="0.1" aria-label="Subir precio">+</button></div></div>
       <div class="plan-ctrl-block plan-ctrl-carta"><button type="button" class="btn sm ${Game.enabled[id]?'teal':''}" data-toggle="${id}">${Game.enabled[id]?'En carta':'Fuera de carta'}</button></div>
     </div></div>`;
+  }
+  /* v29.3: sección de playa — precio por hora de las hamacas (solo si hay hamacas). */
+  if(lvl('hamacas')){
+    const hp=(Number.isFinite(Game.prices.hamacas)&&Game.prices.hamacas>0)?Game.prices.hamacas:3;
+    h += `</section><section class="plan-panel plan-unified"><p class="plan-panel-k">Playa</p><p class="muted plan-panel-d">Hamacas de alquiler: fija el <b>precio por hora</b>. Los bañistas deciden si se tumban y cuánto tiempo pagar según ese precio. Referencia: 3 €/h.</p>
+      <div class="row plan-price-row"><div class="plan-beach-ico" aria-hidden="true">⛱</div><div><div class="name">Hamacas (${hamacaCount()} de 8)</div><div class="sub">Ingreso = precio × horas contratadas ${hamacaHint(hp)}</div></div>
+      <div class="ctrl"><div class="price"><button type="button" data-hprice="1" data-d="-0.5" aria-label="Bajar precio">−</button><span class="val">${eur2(hp)} €/h</span><button type="button" data-hprice="1" data-d="0.5" aria-label="Subir precio">+</button></div></div></div>`;
   }
   return h + '</section>';
 }
@@ -75,7 +90,7 @@ export function renderTab(){
   } else if(Plan.tab==='mejoras'){
     h += renderMejorasTab();
   } else if(Plan.tab==='personal'){
-    h += `<p class="muted" style="margin:0 0 6px">El sueldo se paga cada día al cerrar. Puedes contratar o despedir cada mañana.</p>`;
+    h += `<p class="muted" style="margin:0 0 6px">El sueldo se paga cada día al cerrar y <b>solo por el tiempo trabajado</b>: un día tranquilo cuesta menos. Puedes contratar o despedir cada mañana.</p>`;
     for(const st of STAFF){
       const hired=!!Game.staff[st.id];
       h += `<div class="row"><img src="${staffAvatar(st.id)}" alt=""><div><div class="name">${st.name}</div><div class="sub">${st.desc} · ${eur(st.wage)}/día</div></div>
@@ -93,8 +108,8 @@ export function routePlanTab(){
   const b=$('#tab-body');
   if(b){ delete b.__owner; delete b.__last; delete b.__rd; delete b.__pgNode; delete b.__mkNode; }
   renderForecast();
-  if(Plan.tab==='show') import('./features.js?v=29.2.0').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
-  else if(Plan.tab==='red') import('./v12-ui.js?v=29.2.0').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
+  if(Plan.tab==='show') import('./features.js?v=29.3.0').then(m=>{ if(Plan.tab==='show') m.renderShow?.(); });
+  else if(Plan.tab==='red') import('./v12-ui.js?v=29.3.0').then(m=>{ if(Plan.tab==='red') m.renderRed?.(); });
   document.dispatchEvent(new Event('plan-tab-repaint'));
 }
 export function estimateCustomers(){
