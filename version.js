@@ -1,5 +1,5 @@
-export const VERSION='v29.4.7';
-export const LABEL='v29.4.7 · arreglo de módulos: comprar hamacas, editar precios y los botones menos/más vuelven a funcionar en iPhone, iPad y Mac';
+export const VERSION='v29.4.8';
+export const LABEL='v29.4.8 · precio de hamacas con deslizador y botones -/+ reforzados para iPhone, iPad y Mac';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

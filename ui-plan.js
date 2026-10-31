@@ -81,14 +81,31 @@ export function staffAvatar(id){
   avatarCache[id]=cv.toDataURL(); return avatarCache[id];
 }
 
+/* v29.4.8: los botones - y + de precios se aplican en pointerdown, antes de
+   cualquier otro manejador. Así iOS no puede convertir el toque en selección
+   de texto ni bloquear la acción. El click posterior se ignora 600 ms. */
+let pointerPriceAt=0;
+document.addEventListener('pointerdown',e=>{
+  const b=e.target.closest?.('button[data-price],button[data-hprice]');
+  if(!b||b.disabled||isGuest())return;
+  e.preventDefault();
+  pointerPriceAt=Date.now();
+  applyPlanAction('p1',{...b.dataset,_pointer:true});
+},{capture:true});
+
 export function applyPlanAction(who, d){
   if(Game.mode!=='plan') return;
   const by = isCoop() ? Net.names[who] : null;
   if(d.buy){ buyStock(d.buy,+d.n); }
-  else if(d.price){ const id=d.price; Game.prices[id]=Math.round(clamp(Game.prices[id]+ (+d.d)*(ITEMS[id].ref>8?5:1), 0.5, ITEMS[id].ref*3)*10)/10; }
-  /* v29.4.7: precio por hora de las hamacas. Parseo defensivo: si el valor
+  else if(d.price){
+    if(!d._pointer && Date.now()-pointerPriceAt<600) return;
+    const id=d.price;
+    Game.prices[id]=Math.round(clamp(Game.prices[id]+ (+d.d)*(ITEMS[id].ref>8?5:1), 0.5, ITEMS[id].ref*3)*10)/10;
+  }
+  /* v29.4.8: precio por hora de las hamacas. Parseo defensivo: si el valor
      guardado no es numérico, parte de 3 €/h; siempre respeta 0,5–12 €/h. */
   else if(d.hprice){
+    if(!d._pointer && Date.now()-pointerPriceAt<600) return;
     const current=Number(Game.prices.hamacas);
     const base=Number.isFinite(current)&&current>0?current:3;
     Game.prices.hamacas=Math.round(clamp(base+(Number(d.d)||0)*0.5,0.5,12)*2)/2;
@@ -100,6 +117,22 @@ export function applyPlanAction(who, d){
   if(Net.ready.p1||Net.ready.p2){ if(d.up||d.staff||d.buy){ /* cambios: se mantiene el listo */ } }
   renderTab(); refreshPlanMoney(); netDirty();
 }
+
+/* v29.4.8: deslizador directo para el precio de las hamacas. Aunque los
+   botones fallaran en algún navegador, siempre podrás bajar/subir arrastrando. */
+document.addEventListener('input',e=>{
+  const r=e.target.closest?.('input[data-hrange]');
+  if(!r||isGuest())return;
+  const v=Number(r.value);
+  if(!Number.isFinite(v))return;
+  Game.prices.hamacas=Math.round(clamp(v,0.5,12)*2)/2;
+  const val=r.parentElement?.querySelector('.val');
+  if(val)val.textContent=eur2(Game.prices.hamacas)+' €/h';
+  refreshPlanMoney(); netDirty();
+});
+document.addEventListener('change',e=>{
+  if(e.target.closest?.('input[data-hrange]')&&!isGuest())renderTab();
+});
 
 export function readyOn(who){
   if(Game.mode!=='plan' && Game.mode!=='report') return;
