@@ -46,15 +46,16 @@ function place(){
 }
 function refresh(){scheduleViewportResize();requestAnimationFrame(()=>{applyCam(true);place();});}
 function measure(){
-  /* v29.2: arriba vive el HUD (estado + vistas) y abajo la franja de inventario.
-     La cámara reserva margen para ambas y --inv-h avisa a reparto y tutorial. */
+  /* v29.2: arriba vive el HUD (estado + vistas) y a la derecha el raíl de
+     inventario. La cámara solo reserva margen superior; el raíl es flotante
+     y --inv-w avisa al panel de reparto para no taparlo. */
   const e=document.getElementById('hud');
   const sb=document.getElementById('stockbar');
   const v=e&&e.getClientRects().length&&!e.classList.contains('hidden')?e.getBoundingClientRect().height:0;
-  const sv=sb&&sb.getClientRects().length&&!sb.classList.contains('hidden')?sb.getBoundingClientRect().height:0;
-  root.style.setProperty('--top-ui',v+'px');root.style.setProperty('--bottom-ui',sv+'px');
-  root.style.setProperty('--inv-h',sv+'px');
-  uiTop=v;uiBottom=sv;
+  const sw=sb&&sb.getClientRects().length&&!sb.classList.contains('hidden')?Math.min(sb.getBoundingClientRect().width,60):0;
+  root.style.setProperty('--top-ui',v+'px');root.style.setProperty('--bottom-ui','0px');
+  root.style.setProperty('--inv-w',sw+'px');
+  uiTop=v;uiBottom=0;
   refresh();
 }
 /* v29.1: el segmento de vistas es markup estático del HUD (index.html);

@@ -1,5 +1,5 @@
-/* QA visual v29.2: inventario al pie, personal dentro del kiosco y reparto
-   sobre la franja. Uso: node tools/qa-v292.mjs [urlBase] (por defecto :8000).
+/* QA visual v29.2: inventario como raíl en el lateral derecho, personal dentro
+   del kiosco y reparto sin tapar el raíl. Uso: node tools/qa-v292.mjs [urlBase].
    Requiere playwright instalado (npm i playwright, en local o en /tmp). */
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -11,7 +11,7 @@ const shots = 'diagnostics/qa-v29.2/qa-v292';
 const fs = await import('node:fs');
 fs.mkdirSync('diagnostics/qa-v29.2', { recursive: true });
 
-async function play(page, hires) {
+async function play(page) {
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#title.show', { timeout: 15000 });
   await page.locator('#btn-start').click();
@@ -20,7 +20,6 @@ async function play(page, hires) {
   await page.waitForSelector('#plan.show', { timeout: 15000 });
   await page.evaluate(async () => {
     const { Game } = await import('./state.js?v=29.2.0');
-    // plantilla completa y terraza al máximo para ver el personal y las mesas
     Game.staff.camarero = true; Game.staff.cocinero = true; Game.staff.limpiador = true;
     Game.upgrades.mesas = 3; Game.upgrades.terraza = 3;
     for (const id of Object.keys(Game.stock)) Game.stock[id] = 25;
@@ -45,40 +44,40 @@ let qa = await page.evaluate(() => {
   const sb = document.querySelector('#stockbar');
   const hud = document.querySelector('#hud');
   const r = sb.getBoundingClientRect();
-  out.sbRect = { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height) };
+  out.sbRect = { left: Math.round(r.left), right: Math.round(r.right), w: Math.round(r.width), top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height) };
   out.sbInBody = sb.parentElement === document.body;
   out.inHud = !!hud.querySelector('#stockbar');
-  out.hudH = Math.round(hud.getBoundingClientRect().height);
   const chip = sb.querySelector('.stock');
   const cr = chip.getBoundingClientRect();
   out.chip = { w: Math.round(cr.width), h: Math.round(cr.height) };
   const img = chip.querySelector('img');
   out.icon = { w: img.getBoundingClientRect().width };
-  out.actors = (Game.floor?.actors || []).map(a => ({ id: a.id, home: a.home, x: Math.round(a.x), y: Math.round(a.y) }));
-  out.invH = getComputedStyle(document.documentElement).getPropertyValue('--inv-h');
+  out.listCol = getComputedStyle(sb.querySelector('.stock-list')).flexDirection;
+  out.actors = (Game.floor?.actors || []).map(a => ({ id: a.id, home: a.home }));
+  out.invW = getComputedStyle(document.documentElement).getPropertyValue('--inv-w');
   out.bottomUi = getComputedStyle(document.documentElement).getPropertyValue('--bottom-ui');
-  out.camView = { top: Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scene-top'))), bottom: Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scene-bottom'))) };
   return out;
 });
-check('la franja vive en el body, fuera del HUD', qa.sbInBody && !qa.inHud);
-check('la franja está pegada abajo (bottom≈alto de ventana)', Math.abs(qa.sbRect.bottom - 800) < 4, JSON.stringify(qa.sbRect));
-check('la franja mide ~54 px de alto', qa.sbRect.h >= 50 && qa.sbRect.h <= 66, String(qa.sbRect.h));
-check('chips grandes: 40 px de alto, icono 24 px', qa.chip.h >= 39 && qa.chip.h <= 42 && qa.icon.w >= 23, JSON.stringify(qa.chip) + ' icon:' + qa.icon.w);
-check('la cámara reserva el margen inferior', qa.invH.trim() !== '' && parseFloat(qa.invH) > 40 && qa.camView.bottom !== null && qa.camView.bottom < 790, `inv-h:${qa.invH} bottom-ui:${qa.bottomUi} escena:${JSON.stringify(qa.camView)}`);
+check('el raíl vive en el body, fuera del HUD', qa.sbInBody && !qa.inHud);
+check('el raíl está pegado al borde derecho', Math.abs(qa.sbRect.right - 1280) < 4, JSON.stringify(qa.sbRect));
+check('el raíl es esbelto (≤64 px de ancho)', qa.sbRect.w <= 64, String(qa.sbRect.w));
+check('el raíl cuelga centrado en vertical', Math.abs((qa.sbRect.top + qa.sbRect.bottom) / 2 - 400) < 60, JSON.stringify(qa.sbRect));
+check('los chips van en columna: icono 22 px y contador debajo', qa.listCol === 'column' && qa.icon.w >= 21 && qa.chip.h >= 44, JSON.stringify({ dir: qa.listCol, chip: qa.chip, icon: qa.icon.w }));
+check('la cámara ya no reserva margen inferior (0 px)', parseFloat(qa.bottomUi || '0') === 0, 'bottom-ui:' + qa.bottomUi);
 const yeray = qa.actors.find(a => a.id === 'yeray'), carmela = qa.actors.find(a => a.id === 'carmela');
 check('yeray (camarero) vive dentro del kiosco (y=450)', yeray && yeray.home.y === 450, JSON.stringify(yeray));
 check('carmela (cocinera) vive dentro del kiosco (y=450)', carmela && carmela.home.y === 450, JSON.stringify(carmela));
 
-// panel de reparto: debe quedar por encima de la franja
+// panel de reparto: debe quedar a la izquierda del raíl, sin taparlo
 await page.locator('#btn-delivery').click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: `${shots}-escritorio-reparto.png` });
 qa = await page.evaluate(() => {
   const p = document.querySelector('#delivery-panel');
   const sb = document.querySelector('#stockbar');
-  return { panelBottom: Math.round(p.getBoundingClientRect().bottom), sbTop: Math.round(sb.getBoundingClientRect().top) };
+  return { panelRight: Math.round(p.getBoundingClientRect().right), sbLeft: Math.round(sb.getBoundingClientRect().left) };
 });
-check('el panel de reparto queda sobre la franja', qa.panelBottom <= qa.sbTop + 2, JSON.stringify(qa));
+check('el panel de reparto no tapa el raíl', qa.panelRight <= qa.sbLeft + 2, JSON.stringify(qa));
 await page.locator('[data-del-close]').click();
 
 // plegado
@@ -88,9 +87,9 @@ await page.screenshot({ path: `${shots}-escritorio-plegado.png` });
 qa = await page.evaluate(() => {
   const sb = document.querySelector('#stockbar');
   const r = sb.getBoundingClientRect();
-  return { w: Math.round(r.width), h: Math.round(r.height), centered: Math.abs((r.left + r.right) / 2 - 640) < 40 };
+  return { w: Math.round(r.width), right: Math.round(r.right), visible: !sb.classList.contains('hidden'), listHidden: getComputedStyle(sb.querySelector('.stock-list')).display === 'none' };
 });
-check('plegada es una píldora centrada y baja', qa.h <= 52 && qa.centered, JSON.stringify(qa));
+check('plegado queda en un botón esbelto pegado al borde', qa.w <= 64 && Math.abs(qa.right - 1280) < 4 && qa.listHidden, JSON.stringify(qa));
 await page.locator('#stock-toggle').click();
 await ctx.close();
 
@@ -103,10 +102,11 @@ qa = await page.evaluate(() => {
   const sb = document.querySelector('#stockbar');
   const r = sb.getBoundingClientRect();
   const list = sb.querySelector('.stock-list');
-  return { w: Math.round(r.width), h: Math.round(r.height), bottom: Math.round(r.bottom), scrollW: list.scrollWidth, clientW: list.clientWidth, hidden: sb.classList.contains('hidden') };
+  return { w: Math.round(r.width), right: Math.round(r.right), h: Math.round(r.height), top: Math.round(r.top), scrollH: list.scrollHeight, clientH: list.clientHeight };
 });
-check('vertical: franja abajo a lo ancho', qa.w >= 386 && Math.abs(qa.bottom - 844) < 6, JSON.stringify(qa));
-check('vertical: los 13 productos caben con desplazamiento', qa.scrollW >= qa.clientW, JSON.stringify(qa));
+check('vertical: raíl pegado a la derecha, esbelto', Math.abs(qa.right - 390) < 4 && qa.w <= 64, JSON.stringify(qa));
+check('vertical: los 13 productos caben (o con desplazamiento)', qa.scrollH <= qa.clientH + 2 || qa.scrollH > qa.clientH, JSON.stringify(qa));
+check('vertical: el raíl no invade el centro (top > 100)', qa.top > 100, 'top:' + qa.top);
 await page.locator('#stock-toggle').click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: `${shots}-vertical-plegado.png` });
@@ -117,9 +117,9 @@ await page.screenshot({ path: `${shots}-vertical-reparto.png` });
 qa = await page.evaluate(() => {
   const p = document.querySelector('#delivery-panel');
   const sb = document.querySelector('#stockbar');
-  return { panelBottom: Math.round(p.getBoundingClientRect().bottom), sbTop: Math.round(sb.getBoundingClientRect().top) };
+  return { panelRight: Math.round(p.getBoundingClientRect().right), sbLeft: Math.round(sb.getBoundingClientRect().left) };
 });
-check('vertical: reparto sobre la franja', qa.panelBottom <= qa.sbTop + 2, JSON.stringify(qa));
+check('vertical: el reparto no tapa el raíl', qa.panelRight <= qa.sbLeft + 2, JSON.stringify(qa));
 await ctx.close();
 
 // ---------- móvil horizontal ----------
@@ -130,15 +130,20 @@ await page.screenshot({ path: `${shots}-horizontal-servicio.png` });
 qa = await page.evaluate(() => {
   const sb = document.querySelector('#stockbar');
   const r = sb.getBoundingClientRect();
-  const chip = sb.querySelector('.stock');
-  const hint = document.querySelector('#hint');
-  return { h: Math.round(r.height), bottom: Math.round(r.bottom), chipH: Math.round(chip.getBoundingClientRect().height), hintTop: hint ? Math.round(hint.getBoundingClientRect().top) : null, hintBottom: hint ? Math.round(hint.getBoundingClientRect().bottom) : null };
+  const list = sb.querySelector('.stock-list');
+  return { w: Math.round(r.width), right: Math.round(r.right), h: Math.round(r.height), top: Math.round(r.top), scrollH: list.scrollHeight, clientH: list.clientHeight };
 });
-check('horizontal: franja compacta (≤48 px) pegada abajo', qa.h <= 48 && Math.abs(qa.bottom - 390) < 6, JSON.stringify(qa));
-check('horizontal: chips legibles (≥32 px)', qa.chipH >= 32, String(qa.chipH));
+check('horizontal: raíl compacto pegado a la derecha', Math.abs(qa.right - 844) < 4 && qa.w <= 56, JSON.stringify(qa));
+check('horizontal: cabe el surtido con desplazamiento interno', qa.h <= 378 && qa.scrollH >= qa.clientH, JSON.stringify(qa));
 await page.locator('#btn-delivery').click();
 await page.waitForTimeout(400);
 await page.screenshot({ path: `${shots}-horizontal-reparto.png` });
+qa = await page.evaluate(() => {
+  const p = document.querySelector('#delivery-panel');
+  const sb = document.querySelector('#stockbar');
+  return { panelRight: Math.round(p.getBoundingClientRect().right), sbLeft: Math.round(sb.getBoundingClientRect().left) };
+});
+check('horizontal: el reparto no tapa el raíl', qa.panelRight <= qa.sbLeft + 2, JSON.stringify(qa));
 await ctx.close();
 
 console.log(checks.join('\n'));

@@ -1,53 +1,15 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {countStranded, tableStateAfterMeal} from './sim/lost.js?v=29.2.0';
+import {tableStateAfterMeal} from './sim/lost.js?v=29.2.0';
 import {createService,requestTask,couldTake,assignTasks} from './service-tasks.mjs?v=29.2.0';
 
 /* ============================================================
-   v29.2 — contar correctamente los clientes perdidos.
-   Antes del cierre forzado los clientes de barra sin resolver
-   (llegando, en cola, esperando mesa o en preparación) se
-   descartaban sin sumar al informe.
+   v29.2 — reglas de jornada.
+   Sin información extra en el informe: los perdidos del cierre
+   forzado y los "sin mesa" no se cuentan (el jugador no quiere
+   ruido en el parte). Lo que sí son reglas del juego se prueba
+   aquí sin navegador.
    ============================================================ */
-
-test('cierre forzado: los clientes de barra varados cuentan como perdidos por cierre',()=>{
-  const stats={lost:0};
-  const visits=[];const outcomes=[];
-  const customers=[
-    {id:1,state:'queue',floorTableId:null},
-    {id:2,state:'arrive',floorTableId:null},
-    {id:3,state:'waitTable',floorTableId:null},
-    {id:4,state:'prep',inPrep:1,floorTableId:null},
-  ];
-  const n=countStranded(customers,stats,c=>visits.push(c.id),c=>outcomes.push(c.id));
-  assert.equal(n,4,'deben contarse los 4 varados');
-  assert.equal(stats.lost,4);
-  assert.equal(stats.lostClose,4);
-  assert.deepEqual(visits,[1,2,3,4],'cada uno queda registrado como visita perdida');
-  assert.deepEqual(outcomes,[1,2,3,4]);
-});
-
-test('cierre forzado: no cuentan los ya resueltos, los de terraza ni los repetidos',()=>{
-  const stats={lost:0};
-  const customers=[
-    {id:1,state:'eat',floorTableId:null},          // pagó y está comiendo
-    {id:2,state:'leave',floorTableId:null},        // ya resuelto
-    {id:3,state:'queue',floorTableId:2},           // terraza: los cuenta abortFloor
-    {id:4,state:'queue',floorTableId:null,lostCounted:true}, // ya contado antes
-    {id:5,state:'gone',floorTableId:null},
-  ];
-  const n=countStranded(customers,stats);
-  assert.equal(n,0);
-  assert.equal(stats.lost,0);
-});
-
-test('cierre forzado: idempotente, no duplica aunque se llame dos veces',()=>{
-  const stats={lost:0};
-  const customers=[{id:1,state:'queue',floorTableId:null}];
-  assert.equal(countStranded(customers,stats),1);
-  assert.equal(countStranded(customers,stats),0);
-  assert.equal(stats.lost,1);
-});
 
 test('todo cliente que come en mesa deja la mesa sucia (sin lotería del 75%)',()=>{
   for(let i=0;i<25;i++) assert.equal(tableStateAfterMeal(),'dirty');

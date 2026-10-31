@@ -43,7 +43,7 @@ import { updateHud } from "../ui.js?v=29.2.0";
 import { RANDOM_EVENTS } from "./season.js?v=29.2.0";
 import { abandonFloor } from "./service.js?v=29.2.0";
 import { addSat } from "./economy.js?v=29.2.0";
-import { countStranded, tableStateAfterMeal } from "./lost.js?v=29.2.0";
+import { tableStateAfterMeal } from "./lost.js?v=29.2.0";
 import { commitClean } from "./service.js?v=29.2.0";
 import { completeFloorOrder } from "./service.js?v=29.2.0";
 import { difficultyProfile } from "./season.js?v=29.2.0";
@@ -122,12 +122,7 @@ export function update(dt){
     Game.closeT+=dt;
     for(const c of Game.customers) if(c.floorTableId==null&&c.state==='prep' && c.inPrep===0 && pendingIdx(c).length) giveUpPending(c);
     const busy = Game.customers.some(c=>c.state!=='gone')||floorHasWork();
-    if(Game.closeT>3.5 && (!busy || Game.closeT>45)){
-      /* v29.2: al forzar el cierre, los clientes de barra sin resolver también
-         cuentan como perdidos por cierre: antes se descartaban sin sumar. */
-      countStranded(Game.customers, Game.dayStats, recordVisit, regularOutcome);
-      abortFloor();endDay(); return;
-    }
+    if(Game.closeT>3.5 && (!busy || Game.closeT>45)){ abortFloor();endDay(); return; }
   }
   Game.slots.forEach(s=>{
     if(s.cust){ s.t+=dt; if(s.t>=s.total) finishSlot(s); }

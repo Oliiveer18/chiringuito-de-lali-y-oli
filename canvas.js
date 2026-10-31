@@ -52,9 +52,11 @@ export function resize(){
   const cw=Math.max(1,Math.round(width*dpr)),ch=Math.max(1,Math.round(height*dpr));
   if(canvas.width!==cw)canvas.width=cw;
   if(canvas.height!==ch)canvas.height=ch;
-  const hud=document.getElementById('hud'),stock=document.getElementById('stockbar');
+  const hud=document.getElementById('hud');
+  /* v29.2: el inventario es un raíl lateral flotante: la cámara ya no
+     reserva margen inferior, solo el superior del HUD. */
   const top=hud&&hud.getClientRects().length?hud.getBoundingClientRect().height+4:0;
-  const bottom=stock&&stock.getClientRects().length?stock.getBoundingClientRect().height+4:0;
+  const bottom=0;
   root.style.setProperty('--top-ui',top+'px');
   root.style.setProperty('--bottom-ui',bottom+'px');
   const styles=getComputedStyle(root);

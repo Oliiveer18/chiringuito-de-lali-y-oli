@@ -64,7 +64,6 @@ export function reportStatsHtml(s, m){
   const tips=(s.tips||0)+(s.tipsP||0);
   const notes=[];
   if(s.lost) notes.push(`<p>Clientes perdidos: <b>${[s.lostPrice?s.lostPrice+' por precios altos':'',s.lostQueue?s.lostQueue+' por cola llena':'',s.lostPatience?s.lostPatience+' por esperar demasiado':'',s.lostStock?s.lostStock+' porque no quedaba lo que pedían':'',s.lostClose?s.lostClose+' por cerrar con ellos esperando':''].filter(Boolean).join(', ')}</b>.</p>`);
-  if(s.noTable) notes.push(`<p>Sin mesa: <b>${s.noTable} cliente${s.noTable>1?'s':''}</b> pagó${s.noTable>1?'ron':''} para llevar sin sitio donde sentarse. Amplía la terraza o contrata ayuda de sala.</p>`);
   if(s.regVisits) notes.push(`<p>Habituales hoy: <b>${s.regVisits} visita${s.regVisits>1?'s':''}</b>. Atendedlos bien y volverán más fieles.</p>`);
   if(Game.buzz>0.03) notes.push(`<p>Boca a boca: los habituales contentos traen amigos (<b>+${Math.round(Game.buzz*12)}%</b> de afluencia mañana).</p>`);
   if((s.beachRentals||0)>0) notes.push(`<p>Alquileres de hamacas: <b>${s.beachRentals}</b>.</p>`);
