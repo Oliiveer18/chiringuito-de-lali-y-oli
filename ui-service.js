@@ -1,12 +1,12 @@
 /* Servicio, cierre, urgente y avisos. Lo importa ui.js. */
-import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=28.22.0';
-import { $, eur, hhmm, stars } from './util.js?v=28.22.0';
-import { ICON_URL } from './icons.js?v=28.22.0';
-import { Audio } from './audio.js?v=28.22.0';
-import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, simProgressDay, weatherToday } from './state.js?v=28.22.0';
-import { buyStock, newSeason } from './sim.js?v=28.22.0';
-import { hideAll, Plan, showPlan } from './ui-plan.js?v=28.22.0';
-import { netAct, netDirty } from './net.js?v=28.22.0';
+import { GOAL, ITEMS, STATION_COLOR, STATION_LABEL, WEATHER } from './config.js?v=29.1.0';
+import { $, eur, hhmm, stars } from './util.js?v=29.1.0';
+import { ICON_URL } from './icons.js?v=29.1.0';
+import { Audio } from './audio.js?v=29.1.0';
+import { Game, Net, activeItems, dayName, hostLive, isCoop, isGuest, simProgressDay, weatherToday } from './state.js?v=29.1.0';
+import { buyStock, newSeason } from './sim.js?v=29.1.0';
+import { hideAll, Plan, showPlan } from './ui-plan.js?v=29.1.0';
+import { netAct, netDirty } from './net.js?v=29.1.0';
 export function showServiceUI(){
   hideAll(); $('#hud').classList.remove('hidden'); $('#stockbar').classList.remove('hidden');
   $('#hud-role').classList.toggle('hidden', !isCoop()); $('#btn-ping').classList.toggle('hidden', !isCoop());
@@ -65,15 +65,20 @@ export function updateHud(){
    pasa a estado bajo o agotado; la preferencia manual se recuerda. */
 let stockMini=false;try{stockMini=localStorage.getItem('lalioli-stockmini')==='1';}catch(e){}
 let stockLowSeen=new Set();
-function applyStockMode(){const bar=$('#stockbar');if(!bar)return;bar.classList.toggle('mini',stockMini);const tg=$('#stock-toggle');if(!tg)return;tg.setAttribute('aria-expanded',String(!stockMini));tg.setAttribute('aria-label',stockMini?'Desplegar inventario':'Plegar inventario');tg.innerHTML=stockMini?'<svg viewBox="0 0 20 20"><path d="M10 5v10m0 0l-4-4m4 4l4-4"/></svg>':'<svg viewBox="0 0 20 20"><path d="M10 15V5m0 0l-4 4m4-4l4 4"/></svg>';}
+/* v29.1: la franja vive dentro del HUD. Plegada queda en un solo botón
+   "Inventario" con un badge que cuenta productos en estado bajo o agotado. */
+let stockAlerts=0;
+function applyStockMode(){const bar=$('#stockbar');if(!bar)return;bar.classList.toggle('mini',stockMini);const tg=$('#stock-toggle');if(!tg)return;tg.setAttribute('aria-expanded',String(!stockMini));tg.setAttribute('aria-label',stockMini?'Desplegar inventario':'Plegar inventario');
+  if(stockMini){tg.innerHTML='<span class="mini-lbl">Inventario</span>'+(stockAlerts>0?`<span class="mini-badge">${stockAlerts}</span>`:'');}
+  else{tg.innerHTML='<svg viewBox="0 0 20 20"><path d="M10 15V5m0 0l-4 4m4-4l4 4"/></svg>';}}
 document.addEventListener('click',e=>{if(!e.target.closest?.('#stock-toggle'))return;stockMini=!stockMini;try{localStorage.setItem('lalioli-stockmini',stockMini?'1':'0');}catch(err){}applyStockMode();});
 export function updateStockbar(){
   const list=$('#stockbar .stock-list');if(!list)return;
   const items=activeItems();let newLow=false;const low=new Set();
   for(const id of items){const n=Game.stock[id];if(n===0||n<6){low.add(id);if(!stockLowSeen.has(id))newLow=true;}}
-  stockLowSeen=low;
+  stockLowSeen=low;stockAlerts=low.size;
   if(newLow&&stockMini){stockMini=false;try{localStorage.setItem('lalioli-stockmini','0');}catch(e){}}
-  list.innerHTML=items.map(id=>{const n=Game.stock[id];return `<div class="stock ${n===0?'out':n<6?'low':''}" title="${ITEMS[id].name}"><img src="${ICON_URL[id]}" alt="${ITEMS[id].name}">${n}</div>`;}).join('');
+  list.innerHTML=items.map(id=>{const n=Game.stock[id];return `<div class="stock ${n===0?'out':n<6?'low':''}" title="${ITEMS[id].name}"><img src="${ICON_URL[id]}" alt="${ITEMS[id].name}"><b class="n">${n}</b></div>`;}).join('');
   applyStockMode();
 }
 export function setSpeed(s){ Game.speed=s; document.querySelectorAll('.speed button').forEach(b=>b.classList.toggle('on', +b.dataset.speed===s)); }

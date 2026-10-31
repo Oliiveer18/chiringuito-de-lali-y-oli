@@ -1,5 +1,5 @@
-export const VERSION='v28.22.0';
-export const LABEL='v28.22.0 · informe con el personal en solitario: fila del jugador y métricas de cada contratado (preparados, vendidos, mesas, terraza) con resumen de plantilla, y el personal fuera de turno ya no aparece parado en el kiosco';
+export const VERSION='v29.1.0';
+export const LABEL='v29.1.0 · barra superior profesional: estado, inventario y vistas en un solo centro de control arriba, pantalla despejada abajo y reparto en jornada solo con el pack medio (10 uds)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

@@ -31,7 +31,8 @@ npm run check    # Alias de npm test
 ## Estructura
 
 - Núcleo: `state.js`, `config.js`, `sim.js`, `ui.js`, `render.js`, `report.js`, `net.js`, `world.js`.
-- Guardado y fiabilidad: `saves.js`, `reliability.js`, `layout.js`.
+- Cámara y encuadre: `camera.js` (cámara unificada v29, ambas orientaciones y modos de vista) y `layout.js` (medición de HUD y barra de vistas).
+- Guardado y fiabilidad: `saves.js`, `reliability.js`.
 - Ampliaciones: `features.js`, `v12.js` y `v14.js`.
 - Herramientas: `serve.js` y las pruebas `*.test.mjs`.
 - `legacy/`: código heredado que ya no forma parte del juego activo.

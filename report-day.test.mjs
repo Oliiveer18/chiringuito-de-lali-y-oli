@@ -11,8 +11,8 @@ import assert from 'node:assert/strict';
 
 globalThis.window = globalThis;
 globalThis.setInterval = fn => 1;
-const canvas = () => ({ width: 1280, height: 720, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {} } });
-const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, querySelectorAll: () => [], setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }), scrollTop: 0 });
+const canvas = () => ({ width: 1280, height: 720, getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }), toDataURL: () => 'data:x', addEventListener() {}, style: {}, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } } });
+const el = () => ({ dataset: {}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } }, append() {}, appendChild() {}, remove() {}, querySelector: () => null, querySelectorAll: () => [], setAttribute() {}, addEventListener() {}, innerHTML: '', textContent: '', childElementCount: 0, children: [], getClientRects: () => [], getBoundingClientRect: () => ({ height: 0, top: 0, left: 0, width: 0 }), scrollTop: 0 });
 const byId = {};
 globalThis.document = {
   querySelector: s => (s === '#game' ? canvas() : el()),
@@ -30,7 +30,9 @@ globalThis.MutationObserver = class { observe() {} };
 globalThis.Peer = class {};
 globalThis.navigator = {};
 
-const V = '28.22.0';
+/* v29: la versión se lee de version.js para que los tests nunca queden en una
+   versión distinta a la del juego (dos copias de módulo = estado duplicado). */
+const V = (await import('node:fs')).readFileSync(new URL('./version.js', import.meta.url), 'utf8').match(/VERSION='(v[0-9.]+)'/)[1].replace('v', '');
 const { Game, Net } = await import(`./state.js?v=${V}`);
 await import(`./coopbridge.js?v=${V}`);
 const { reportStatsHtml, reviewsSectionHtml, applyRevResp, refreshReportUI } = await import(`./report-render.js?v=${V}`);

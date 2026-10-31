@@ -16,7 +16,7 @@
 }
 body.portrait .speed button{width:32px;min-width:32px}
 .cam-bar{display:none;position:fixed;z-index:22;left:50%;top:calc(var(--game-top) + var(--game-height) - var(--bottom-ui,0px) - 8px);transform:translate(-50%,-100%);gap:4px;padding:4px;border-radius:14px;background:rgba(8,40,44,.92);box-shadow:var(--sh-2);max-width:calc(100% - 24px)}
-body.portrait.playing .cam-bar{display:flex}
+body.playing .cam-bar{display:flex}
 .cam-bar button{position:relative;min-height:40px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:rgba(255,255,255,.82);font:700 13px/1 var(--font);white-space:nowrap}
 .cam-bar button.on{background:#fff;color:var(--teal-dd)}
 .cam-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border-radius:99px;background:var(--coral);color:#fff;font-size:11px}

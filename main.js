@@ -2,16 +2,16 @@
    main.js
    Arranque: bucle principal, exposición de pruebas (window.__api/__test) y arranque inicial.
    ========================================================= */
-import { ITEMS, UPGRADES } from './config.js?v=28.22.0';
-import { buildIcons } from './icons.js?v=28.22.0';
-import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=28.22.0';
-import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=28.22.0';
-import { endDay } from './report.js?v=28.22.0';
-import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=28.22.0';
-import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=28.22.0';
-import { render } from './render.js?v=28.22.0';
-import { ctx } from './canvas.js?v=28.22.0';
-import './variety.js?v=28.22.0';
+import { ITEMS, UPGRADES } from './config.js?v=29.1.0';
+import { buildIcons } from './icons.js?v=29.1.0';
+import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=29.1.0';
+import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=29.1.0';
+import { endDay } from './report.js?v=29.1.0';
+import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=29.1.0';
+import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=29.1.0';
+import { render } from './render.js?v=29.1.0';
+import { ctx, tickView } from './canvas.js?v=29.1.0';
+import './variety.js?v=29.1.0';
 
 // ---------- Bucle ----------
 let last=performance.now(), acc=0; const STEP=1/60;
@@ -20,6 +20,7 @@ function frame(now){
   if(isGuest()) guestTick(dt);
   else if(!manualTime){ acc+=dt*(Game.mode==='service'?Game.speed:1); while(acc>=STEP){ update(STEP); acc-=STEP; } }
   netTick(dt);
+  tickView(dt); // v29: transición suave del encuadre
   render();
   if(window.__betaDraw){ try{ window.__betaDraw(ctx); }catch(e){ console.error('betaDraw', e); } }
   requestAnimationFrame(frame);
