@@ -1,7 +1,7 @@
-import {Game,Net,hamacaCount,weatherToday,closeHour} from './state.js?v=29.3.0';
-import {createBeach,stepBeach} from './beach-model.mjs?v=29.3.0';
-import {SEC_PER_HOUR} from './config.js?v=29.3.0';
-import {netDirty} from './net.js?v=29.3.0';
+import {Game,Net,hamacaCount,weatherToday,closeHour} from './state.js?v=29.4.0';
+import {createBeach,stepBeach} from './beach-model.mjs?v=29.4.0';
+import {SEC_PER_HOUR} from './config.js?v=29.4.0';
+import {netDirty} from './net.js?v=29.4.0';
 export function startBeach(){Game.upgrades.beach=createBeach(hamacaCount());Game.dayStats.beachRentals=0;}
 export function updateBeach(){if(Net.role==='guest'||!Game.dayStats)return;if(!Game.upgrades.beach)startBeach();
   /* v29.3: el precio de la hamaca lo fija la jugadora en el plan (€/hora);

@@ -2,16 +2,16 @@
    main.js
    Arranque: bucle principal, exposición de pruebas (window.__api/__test) y arranque inicial.
    ========================================================= */
-import { ITEMS, UPGRADES } from './config.js?v=29.3.0';
-import { buildIcons } from './icons.js?v=29.3.0';
-import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=29.3.0';
-import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=29.3.0';
-import { endDay } from './report.js?v=29.3.0';
-import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=29.3.0';
-import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=29.3.0';
-import { render } from './render.js?v=29.3.0';
-import { ctx, tickView } from './canvas.js?v=29.3.0';
-import './variety.js?v=29.3.0';
+import { ITEMS, UPGRADES } from './config.js?v=29.4.0';
+import { buildIcons } from './icons.js?v=29.4.0';
+import { Game, NET_SIM, Net, isGuest, weatherToday } from './state.js?v=29.4.0';
+import { buyStock, cleanTable, newSeason, spawnCustomer, startDay, tryServe, update } from './sim.js?v=29.4.0';
+import { endDay } from './report.js?v=29.4.0';
+import { Plan, pressReady, showPlan, toggleReady } from './ui.js?v=29.4.0';
+import { applyState, guestClean, guestServe, guestTick, netOpen, netSend, netTick } from './net.js?v=29.4.0';
+import { render } from './render.js?v=29.4.0';
+import { ctx, tickView } from './canvas.js?v=29.4.0';
+import './variety.js?v=29.4.0';
 
 // ---------- Bucle ----------
 let last=performance.now(), acc=0; const STEP=1/60;

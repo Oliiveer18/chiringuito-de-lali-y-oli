@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=29.3.0';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=29.4.0';
 
 // ---------- Estado del juego ----------
 export const Game = {

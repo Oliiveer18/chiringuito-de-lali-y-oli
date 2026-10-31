@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {tableStateAfterMeal} from './sim/lost.js?v=29.3.0';
-import {createService,requestTask,couldTake,assignTasks} from './service-tasks.mjs?v=29.3.0';
+import {tableStateAfterMeal} from './sim/lost.js?v=29.4.0';
+import {createService,requestTask,couldTake,assignTasks} from './service-tasks.mjs?v=29.4.0';
 
 /* ============================================================
    v29.2 — reglas de jornada.

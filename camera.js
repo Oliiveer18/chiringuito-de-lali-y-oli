@@ -8,16 +8,17 @@
    prueban camera.test.mjs y los tests de geometría. Reglas de encuadre:
 
    - 'todo' vertical: encaja el ancho del mundo (comportamiento histórico).
-   - 'todo' horizontal: encaja ancho + LAND_MARGIN de playa a cada lado, para que
-     el kiosco (parcela izquierda) no quede pegado al borde de la ventana y las
-     mesas respiren a la derecha. El fondo se extiende de forma natural: el
-     renderizador ya pinta cielo/mar/arena a pantalla completa.
+   - 'todo' horizontal (v29.4): el mundo se desplaza a su punto focal — el
+     mostrador cae a ~1/3 del ancho de pantalla, con playa respirando a la
+     izquierda del kiosco — y el borde jugable derecho (última mesa con su
+     sombrilla) nunca se sale de pantalla. El fondo se extiende de forma
+     natural: el renderizador ya pinta cielo/mar/arena a pantalla completa.
    - 'barra'/'mesas': zoom de 700 unidades centrado en el eje del kiosco o de
      las mesas. Desde v29 funcionan en AMBAS orientaciones.
    - Nunca se recorta más de MAX_SKY_CROP de cielo, y la banda jugable protegida
      (del rótulo y≈186 al suelo y=720) queda por debajo del HUD.
    ========================================================= */
-import { W, H } from './config.js?v=29.3.0';
+import { W, H } from './config.js?v=29.4.0';
 
 /* Geometría protegida del mundo. Los tests de geometría (camera.test.mjs)
    validan el encuadre contra estos valores: si una futura mejora del kiosco
@@ -34,6 +35,15 @@ export const GEO = {
   PARCEL: { x0: 40, x1: 540 },
   /** Playa extra visible a cada lado en horizontal, modo 'todo' (unidades de mundo). */
   LAND_MARGIN: 64,
+  /* v29.4 — composición horizontal: en vez de centrar el mundo completo (que
+     dejaba el kiosco pegado a la izquierda), el punto focal del kiosco cae a
+     FOCUS_FRAC del ancho de pantalla y el borde jugable derecho siempre visible. */
+  /** X del mundo que actúa de punto focal: el mostrador del kiosco. */
+  FOCUS_X: 280,
+  /** Fracción del ancho de pantalla donde cae el punto focal (~1/3). */
+  FOCUS_FRAC: 0.35,
+  /** Borde jugable derecho: última mesa con su sombrilla (x≈1276). */
+  RIGHT_PLAYABLE: 1276,
 };
 
 /* Ancho de encuadre (span) y eje horizontal (cx) de cada modo de vista.
@@ -78,7 +88,16 @@ export function computeView({ width, height, top = 0, bottom = 0, safeL = 0, saf
          cielo). Si sobra pantalla: centrado (se extiende cielo y arena). */
       oy = worldH >= height ? (height - worldH) : (height - worldH) / 2;
     }
-    ox = safeL + (aw - W * s) / 2;
+    /* v29.4 — composición: el mundo ya no se centra completo (dejaba el kiosco
+       pegado a la izquierda). El punto focal (mostrador, FOCUS_X) cae a
+       FOCUS_FRAC del ancho, con playa respirando a su izquierda, y el borde
+       jugable derecho (última mesa + sombrilla, RIGHT_PLAYABLE) nunca se sale
+       de pantalla. Si no hay holgura, se vuelve al centrado histórico. */
+    const worldW = W * s;
+    const centered = (aw - worldW) / 2;
+    const focus = aw * GEO.FOCUS_FRAC - GEO.FOCUS_X * s;
+    const maxOx = aw - GEO.RIGHT_PLAYABLE * s - 6;
+    ox = safeL + Math.max(centered, Math.min(focus, maxOx));
   } else {
     /* Zoom (barra/mesas): span fijo centrado en el eje del modo, con la banda
        vertical completa protegida del HUD/stockbar. Funciona en ambas

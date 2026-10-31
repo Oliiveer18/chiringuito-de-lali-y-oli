@@ -1,5 +1,5 @@
-export const VERSION='v29.3.0';
-export const LABEL='v29.3.0 · clientes que no se traban entre las mesas, cierre a las 8 en punto con informe inmediato, sueldos solo por el tiempo trabajado, hamacas de verdad con precio por hora y personal a mitad de ritmo';
+export const VERSION='v29.4.0';
+export const LABEL='v29.4.0 · composición nueva en horizontal: el kiosco respira en su punto focal (mostrador a 1/3 del ancho, playa a la izquierda) sin perder de vista ni la última mesa';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;
