@@ -15,11 +15,10 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=chillax@500,600,700&display=swap">
-<link rel="stylesheet" href="style.css?v=29.4.5">
+<link rel="stylesheet" href="style.css?v=29.4.8">
 <style id="tabs-fix">
   #plan .tabs{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   #plan .tabs .tab{touch-action:pan-x}
-  /* v29.4.8: botones de precio estables en iOS. */
   .price button,.btn{
     user-select:none;
     -webkit-user-select:none;
@@ -32,7 +31,6 @@
     appearance:none;
     line-height:1;
   }
-  /* v29.4.8: deslizador de hamacas */
   .hamaca-slider{
     width:100%;
     max-width:260px;
@@ -109,7 +107,21 @@
     try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
   });
 </script>
-<script type="module" src="ui-polish.js?v=29.4.5"></script>
-<script type="module" src="game.js?v=29.4.5"></script>
+<script>
+  /* v29.4.8: actualización forzada para la web-app de la pantalla de inicio. */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      let refreshed = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshed) return;
+        refreshed = true;
+        location.reload();
+      });
+    });
+  }
+</script>
+<script type="module" src="ui-polish.js?v=29.4.8"></script>
+<script type="module" src="game.js?v=29.4.8"></script>
 </body>
 </html>
