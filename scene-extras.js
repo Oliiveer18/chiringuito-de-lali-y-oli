@@ -1,5 +1,5 @@
-import {Game,lvl} from './state.js?v=29.4.2';
-import {drawPerson} from './render.js?v=29.4.2';
+import {Game,lvl} from './state.js?v=29.4.3';
+import {drawPerson} from './render.js?v=29.4.3';
 /* v29.3: bañista de verdad. El mismo muñeco llega andando desde la derecha,
    se tumba en la tumbona (cabeza a la izquierda) el tiempo exacto que ha
    pagado y se levanta y se va. La etiqueta sobre la sombrilla muestra el

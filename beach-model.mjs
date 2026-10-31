@@ -7,13 +7,37 @@
    - El ingreso es exactamente precio × horas contratadas.
    - Se les ve llegar andando, tumbarse en la tumbona y levantarse cuando se
      acaba el tiempo pagado (ni un segundo más).
+   v29.4.3: además SABEN QUÉ HORA ES (decideSession): con menos de una hora de
+   playa no alquilan, la estancia va en medias horas y nunca pagan tiempo que
+   no pueden disfrutar antes del cierre.
    El módulo sigue siendo puro (sin acceso a Game): la pantalla se lee en
    beach.js y el estado se sincroniza entero en el modo cooperativo. */
 const rnd=Math.random;
 const rand=(a,b)=>a+rnd()*(b-a);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pick=a=>a[Math.floor(rnd()*a.length)];
+/* v29.4.3: el bañista sabe qué hora es. Antes la estancia era un sorteo capado
+   por el cierre (decimales raros tipo 1,37 h y ninguna garantía explícita de
+   que el tiempo pagado cupiera entero antes de cerrar). Ahora la decisión es
+   una función pura con contrato claro:
+   - con menos de MIN_LEFT (1 h) de playa por delante, el bañista NI SE TUMBA:
+     no tiene sentido pagar una hamaca que vas a disfrutar 20 minutos;
+   - la estancia se elige en MEDIAS HORAS (0,5 / 1 / 1,5 / 2 / 2,5 / 3 h): lo
+     que pagas es lo que se ve en la etiqueta, sin decimales feos;
+   - nunca paga más tiempo del que le queda de día: la decisión + el paseo
+     hasta la tumbona + la estancia acaban al menos CLOSE_MARGIN antes del
+     cierre. Nadie paga 3 h para quedarse 20 minutos. */
 export const REF_PRICE=3, MAX_SESSIONS=3;
+export const MIN_LEFT=1, MIN_SESSION=0.5, MAX_SESSION=3, WALK_TIME=0.12, CLOSE_MARGIN=0.25;
+/* ¿cuánto tiempo alquila un bañista al que le quedan `remaining` horas de
+   playa con la hamaca a `p` €/h? null = no alquila (llegó tarde). */
+export function decideSession(p, remaining, r=rnd){
+  if(!(remaining>=MIN_LEFT)) return null;
+  const want=(0.75+r()*1.75)*Math.pow(REF_PRICE/(p>0?p:REF_PRICE),0.4); // deseo según precio
+  const cap=Math.min(MAX_SESSION, remaining-WALK_TIME-CLOSE_MARGIN);    // lo que cabe de verdad
+  const hours=Math.floor(Math.min(want,cap)*2)/2;                       // medias horas, sin pasarse
+  return hours>=MIN_SESSION?hours:null;
+}
 /* gustos de bañista: camiseta, piel y pelo; se guardan en el slot para que el
    mismo muñeco que llega es el que se tumba y el que se va. */
 const SHIRTS=['#e8603c','#0f8b8d','#f5b82e','#5b6ee1','#d94f8a','#3f8a3a','#ffffff','#9a5bd6','#ff9f43'];
@@ -27,15 +51,14 @@ export function stepBeach(old,hour,closing,weather,closeH=20,price=REF_PRICE){
  const p=Number.isFinite(price)&&price>0?price:REF_PRICE;
  s.slots.forEach((slot,i)=>{
   if(closing){if(slot.state==='occupied'||slot.state==='arriving'){slot.state='leaving';slot.started=hour;slot.end=hour+.12;}else if(slot.state==='leaving'&&hour>=slot.end){slot.state='free';slot.next=closeH+1;}return;}
-  if(slot.state==='free'&&hour>=slot.next&&slot.sessions<MAX_SESSIONS&&hour<=closeH-1.5){
+  if(slot.state==='free'&&hour>=slot.next&&slot.sessions<MAX_SESSIONS){
    /* decisión del NPC: ¿alquila esta hamaca? Depende del precio por hora
-      (por encima de ~6 €/h casi nadie se tumba) y del clima. */
+      (por encima de ~6 €/h casi nadie se tumba) y del clima. La estancia la
+      fija decideSession, que ya sabe cuánta playa le queda al día. */
    const take=clamp(1.15-p/5,0.05,0.92)*(W_ARRIVE[weather]??0.5);
-   if(rnd()<take){
-    /* ¿cuánto tiempo paga? Los bañistas generosos estiran la estancia si el
-       precio es razonable; nadie paga más horas de las que quedan de día. */
-    const hours=clamp(rand(0.75,2.5)*Math.pow(REF_PRICE/p,0.4),0.5,Math.min(3,closeH-hour-0.25));
-    slot.state='arriving';slot.started=hour;slot.end=hour+0.12;slot.hours=hours;
+   const h=decideSession(p, closeH-hour);
+   if(h!=null&&rnd()<take){
+    slot.state='arriving';slot.started=hour;slot.end=hour+WALK_TIME;slot.hours=h;
     slot.guest={shirt:pick(SHIRTS),skin:pick(SKINS),hair:pick(HAIR),hat:rnd()<0.45?'sombrero':null};
    } else slot.next=hour+rand(0.35,0.8);
   }

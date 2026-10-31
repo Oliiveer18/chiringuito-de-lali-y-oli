@@ -1,22 +1,22 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged.
    Balance curve uses simProgressDay() (continuous career track). Calendar events use Game.day 1..SEASON_DAYS. */
-import { ITEMS } from "../config.js?v=29.4.2";
-import { ITEM_IDS } from "../config.js?v=29.4.2";
-import { REGULARS } from "../config.js?v=29.4.2";
-import { SEASON_DAYS } from "../config.js?v=29.4.2";
-import { START_MONEY } from "../config.js?v=29.4.2";
-import { clamp } from "../util.js?v=29.4.2";
-import { rnd } from "../util.js?v=29.4.2";
-import { Audio } from "../audio.js?v=29.4.2";
-import { Game, simProgressDay } from "../state.js?v=29.4.2";
-import { closeHour } from "../state.js?v=29.4.2";
-import { setTimeoutGame } from "../state.js?v=29.4.2";
-import { buildTables } from "../world.js?v=29.4.2";
-import { toast } from "../ui.js?v=29.4.2";
-import { updateStockbar } from "../ui.js?v=29.4.2";
-import { spawnCustomer } from "./customers.js?v=29.4.2";
-export { buildSeasonForecast } from "./forecast.js?v=29.4.2";
-import { buildSeasonForecast } from "./forecast.js?v=29.4.2";
+import { ITEMS } from "../config.js?v=29.4.3";
+import { ITEM_IDS } from "../config.js?v=29.4.3";
+import { REGULARS } from "../config.js?v=29.4.3";
+import { SEASON_DAYS } from "../config.js?v=29.4.3";
+import { START_MONEY } from "../config.js?v=29.4.3";
+import { clamp } from "../util.js?v=29.4.3";
+import { rnd } from "../util.js?v=29.4.3";
+import { Audio } from "../audio.js?v=29.4.3";
+import { Game, simProgressDay } from "../state.js?v=29.4.3";
+import { closeHour } from "../state.js?v=29.4.3";
+import { setTimeoutGame } from "../state.js?v=29.4.3";
+import { buildTables } from "../world.js?v=29.4.3";
+import { toast } from "../ui.js?v=29.4.3";
+import { updateStockbar } from "../ui.js?v=29.4.3";
+import { spawnCustomer } from "./customers.js?v=29.4.3";
+export { buildSeasonForecast } from "./forecast.js?v=29.4.3";
+import { buildSeasonForecast } from "./forecast.js?v=29.4.3";
 
 const ARRIVALS_CAP = 1.72;
 const PEAK_CAP = 0.30;
