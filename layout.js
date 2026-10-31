@@ -1,7 +1,7 @@
-import { scheduleViewportResize, view, setViewTarget } from './canvas.js?v=29.0.0';
-import { computeView, camMode, setCamMode } from './camera.js?v=29.0.0';
-import { W, H } from './config.js?v=29.0.0';
-import { Game } from './state.js?v=29.0.0';
+import { scheduleViewportResize, view, setViewTarget } from './canvas.js?v=29.1.0';
+import { computeView, camMode, setCamMode } from './camera.js?v=29.1.0';
+import { W, H } from './config.js?v=29.1.0';
+import { Game } from './state.js?v=29.1.0';
 const root=document.documentElement;
 let uiTop=0,uiBottom=0;
 /* v29.0.0: la cámara está unificada en camera.js. Los modos barra/mesas ya no
@@ -46,20 +46,27 @@ function place(){
 }
 function refresh(){scheduleViewportResize();requestAnimationFrame(()=>{applyCam(true);place();});}
 function measure(){
-  for(const [id,key]of [['hud','--top-ui'],['stockbar','--bottom-ui']]){
-    const e=document.getElementById(id),v=e&&e.getClientRects().length?e.getBoundingClientRect().height:0;
-    root.style.setProperty(key,v+'px');if(id==='hud')uiTop=v;else uiBottom=v;
-  }
+  /* v29.1: el inventario y las vistas viven dentro del HUD: solo hay UI arriba.
+     --bottom-ui se fija a 0 para que la cámara no reserve margen inferior. */
+  const e=document.getElementById('hud');
+  const v=e&&e.getClientRects().length?e.getBoundingClientRect().height:0;
+  root.style.setProperty('--top-ui',v+'px');root.style.setProperty('--bottom-ui','0px');
+  uiTop=v;uiBottom=0;
   refresh();
 }
-const bar=document.createElement('div');
-bar.id='cam-bar';bar.className='cam-bar';bar.setAttribute('role','group');bar.setAttribute('aria-label','Vista del chiringuito');
-for(const [k,t]of [['todo','Todo'],['barra','Barra y cola'],['mesas','Mesas']]){
-  const b=document.createElement('button');b.type='button';b.dataset.cam=k;b.textContent=t;
-  if(k==='mesas'){const s=document.createElement('span');s.className='cam-badge';b.append(s);}
-  bar.append(b);
+/* v29.1: el segmento de vistas es markup estático del HUD (index.html);
+   si faltara (carga sin refrescar) se crea dentro del propio HUD. */
+let bar=document.getElementById('cam-bar');
+if(!bar){
+  bar=document.createElement('div');
+  bar.id='cam-bar';bar.className='cam-bar';bar.setAttribute('role','group');bar.setAttribute('aria-label','Vista del chiringuito');
+  for(const [k,t]of [['todo','Todo'],['barra','Barra y cola'],['mesas','Mesas']]){
+    const b=document.createElement('button');b.type='button';b.dataset.cam=k;b.textContent=t;
+    if(k==='mesas'){const s=document.createElement('span');s.className='cam-badge';b.append(s);}
+    bar.append(b);
+  }
+  (document.getElementById('hud')||document.body).append(bar);
 }
-document.body.append(bar);
 function setCam(m){
   setCamMode(m);try{sessionStorage.setItem('lali-oli.cam',m);}catch(e){}
   document.body.classList.toggle('cam-zoom',m!=='todo');
@@ -69,7 +76,7 @@ function setCam(m){
 bar.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b)setCam(b.dataset.cam);});
 try{const m=sessionStorage.getItem('lali-oli.cam');if(m==='barra'||m==='mesas')setCamMode(m);}catch(e){}
 setCam(camMode());
-if(window.ResizeObserver){const observer=new ResizeObserver(measure);for(const id of ['hud','stockbar'])observer.observe(document.getElementById(id));}
+if(window.ResizeObserver){const observer=new ResizeObserver(measure);const h=document.getElementById('hud');if(h)observer.observe(h);}
 window.addEventListener('resize',measure);window.addEventListener('orientationchange',measure);
 measure();
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>{applyCam(true);place();});

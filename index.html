@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=chillax@500,600,700&display=swap">
-<link rel="stylesheet" href="style.css?v=29.0.0">
+<link rel="stylesheet" href="style.css?v=29.1.0">
 <style id="tabs-fix">
   #plan .tabs{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   #plan .tabs .tab{touch-action:pan-x}
@@ -28,6 +28,8 @@
   <div class="hud-group hud-time"><span id="hud-day" class="hud-day"></span><b id="hud-clock" class="hud-clock"></b><span id="hud-weather" class="hud-weather"></span></div>
   <div class="hud-group hud-biz"><span id="hud-money" class="hud-money"></span><span id="hud-rep" class="hud-rep"></span></div>
   <span id="hud-role" class="hud-role hidden"></span>
+  <div id="stockbar" class="stockbar hidden"><div class="stock-list" aria-label="Género en stock"></div><button id="stock-toggle" class="stock-toggle" type="button" aria-label="Plegar inventario" aria-expanded="true"><svg viewBox="0 0 20 20"><path d="M10 5v10m0 0l-4-4m4 4l4-4"/></svg></button></div>
+  <div id="cam-bar" class="cam-bar" role="group" aria-label="Vista del chiringuito"><button type="button" data-cam="todo">Todo</button><button type="button" data-cam="barra">Barra y cola</button><button type="button" data-cam="mesas">Mesas <span class="cam-badge"></span></button></div>
   <div class="hud-spacer"></div>
   <div class="speed" role="group" aria-label="Velocidad del juego">
     <button data-speed="0" aria-label="Pausa" title="Pausa (P)"><svg viewBox="0 0 16 16"><rect x="3.5" y="3" width="3" height="10" rx="1"/><rect x="9.5" y="3" width="3" height="10" rx="1"/></svg></button>
@@ -43,7 +45,6 @@
   </div>
 </header>
 <div id="hint" class="hint hidden"></div>
-<div id="stockbar" class="stockbar hidden"><div class="stock-list" aria-label="Género en stock"></div><button id="stock-toggle" class="stock-toggle" type="button" aria-label="Plegar inventario" aria-expanded="true"><svg viewBox="0 0 20 20"><path d="M10 5v10m0 0l-4-4m4 4l4-4"/></svg></button></div>
 <div id="toasts" class="toasts"></div>
 <div id="rotate" class="rotate-pill"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M20.5 9.5a8.5 8.5 0 00-5-4.5M3.5 14.5a8.5 8.5 0 005 4.5"/></svg>Gira el móvil para ver todo el chiringuito</div>
 <section id="title" class="overlay show"><div class="screen center"><div class="title-card"><div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0f8b8d"/><path d="M8 40c6-4 10-4 16 0s10 4 16 0 10-4 16 0v16H8z" fill="#fffdf8" opacity=".92"/><path d="M32 12v26" stroke="#fffdf8" stroke-width="3" stroke-linecap="round"/><path d="M14 24c4-10 14-13 18-12-1 8-8 14-18 12zM50 24c-4-10-14-13-18-12 1 8 8 14 18 12z" fill="#e8603c"/></svg></div><p class="eyebrow">Chiringuito Charco Azul · Tenerife</p><h1>Chiringuito de Lali y Oli</h1><p class="lead">Compra el género, ajusta la carta y sirve a turistas y vecinos antes de que pierdan la paciencia. Treinta días para comprar la concesión.</p><div class="title-actions"><button id="btn-start" class="btn primary big">Jugar en solitario</button><button id="btn-coop" class="btn big ghost"><svg viewBox="0 0 20 20" class="ico"><path d="M7 9a3 3 0 100-6 3 3 0 000 6zm7 1a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1 17c0-3 2.7-5 6-5s6 2 6 5zm12.5-4.6c2.9.1 5.5 1.7 5.5 4.6h-4.3c0-1.8-.5-3.4-1.2-4.6z"/></svg>Jugar online con tu pareja</button></div><p class="fine">Cada uno en su móvil · Mejor en horizontal</p><p class="fine ver-line" id="ver-title">v28.22.0</p></div></div></section>
@@ -87,7 +88,7 @@
     try { bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' }); } catch(err) { bar.scrollLeft = Math.max(0, left); }
   });
 </script>
-<script type="module" src="ui-polish.js?v=29.0.0"></script>
-<script type="module" src="game.js?v=29.0.0"></script>
+<script type="module" src="ui-polish.js?v=29.1.0"></script>
+<script type="module" src="game.js?v=29.1.0"></script>
 </body>
 </html>
