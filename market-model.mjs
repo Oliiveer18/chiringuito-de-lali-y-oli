@@ -9,7 +9,7 @@ export function hash(s){let h=2166136261;for(const c of String(s)){h=Math.imul(h
 const random=(s,k)=>hash(s+':'+k)/4294967296;
 export function points(h,day=Math.max(1,...h.map(r=>r.day||0))){return weeklyPoints(h,day).total;}
 export function migrate(seed,oldLeague=0,day=0){
- const npcs=AREAS.flatMap((area,a)=>names.map((name,i)=>({id:`npc-${a}-${i}`,name:name+' · '+area,area:a,style:styles[hash(seed+a+':'+i)%6],cash:1200+a*1000+i*20,capacity:30+a*18+i,staff:1,quality:3.1+i*.025,price:1,followers:40+a*100+i*10,history:[],lastAction:'Apertura',actions:[],reserve:300})));
+ const npcs=AREAS.flatMap((area,a)=>names.map((name,i)=>({id:`npc-${a}-${i}`,name:name+' · '+area,area:a,style:styles[hash(seed+a+':'+i)%6],cash:1200+a*1000+i*20,capacity:30+a*14+i,staff:1,quality:2.9+i*.02,price:1,followers:40+a*100+i*10,history:[],lastAction:'Apertura',actions:[],reserve:300})));
  const groups=AREAS.map((_,a)=>[['player',...npcs.filter(n=>n.area===a).slice(0,9).map(n=>n.id)],npcs.filter(n=>n.area===a).slice(9,19).map(n=>n.id),npcs.filter(n=>n.area===a).slice(19).map(n=>n.id)]);
  // Conserva la categoría alcanzada en el antiguo ámbito sin bloquear los otros.
  const area=Math.floor(Math.max(0,Math.min(8,oldLeague))/3),tier=oldLeague%3;
@@ -26,13 +26,13 @@ export function step(state,day,context={}){
   if(n.cash>=250+n.reserve)candidates.push({key:'quality',value:n.quality<4?65:10,cost:250});
   if(n.cash>=80+n.reserve)candidates.push({key:'promotion',value:n.style==='De moda'?75:25,cost:80});
   const pick=candidates.sort((a,b)=>b.value-a.value||a.key.localeCompare(b.key))[0];let promotion=0;
-  if(pick.key==='capacity')spend(n,'Amplió capacidad',500,()=>{n.capacity+=8;},day);
-  if(pick.key==='quality')spend(n,'Formación del equipo',250,()=>{n.quality=cap(n.quality+.12,1,5);},day);
+  if(pick.key==='capacity')spend(n,'Amplió capacidad',500,()=>{n.capacity+=5;},day);
+  if(pick.key==='quality')spend(n,'Formación del equipo',250,()=>{n.quality=cap(n.quality+.08,1,5);},day);
   if(pick.key==='promotion')spend(n,'Campaña de promoción',80,()=>{promotion=.15;},day);
   if(pick.key==='reserve')n.lastAction='Protege su caja';
   if(prev?.profit<0)n.price=cap(n.price+.02,.8,1.5);else if(prev?.lost>8)n.price=cap(n.price+.01,.8,1.5);
   const weather=n.area===0?context.weather:['sol','panza','viento','calima'][Math.floor(random(s.seed,n.id+':weather:'+day)*4)];
-  const demand=(38+n.area*24)*(weather==='panza'?.75:1)*(1+promotion)*(context.event&&n.area===0&&n.style==='Turístico'?1.25:1)*(0.9+random(s.seed,n.id+':demand:'+day)*.2);
+  const demand=(30+n.area*18)*(weather==='panza'?.75:1)*(1+promotion)*(context.event&&n.area===0&&n.style==='Turístico'?1.25:1)*(0.9+random(s.seed,n.id+':demand:'+day)*.2);
   const served=Math.max(0,Math.floor(Math.min(n.capacity,demand/(n.price*n.price))));
   const lost=Math.max(0,Math.round(demand-served)),revenue=served*8*n.price;
   const ingredients=served*2.5,overhead=45+n.staff*35;

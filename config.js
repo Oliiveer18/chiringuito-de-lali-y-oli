@@ -61,7 +61,7 @@ export const REGULARS = [
   {id:'kike',   name:'Kike',        type:'surfista', personality:'tranquilo', fav:'cerveza',
    look:{shirt:'#3f8a3a', skin:'#e0a97e', hair:{style:'rastas',  color:'#2a211c'}, acc:['collar'],    build:1.00, height:1.02, walk:{stride:0.80, bob:0.9, sway:true}}},
   {id:'hannah', name:'Hannah',     type:'turista',  personality:'generoso',  fav:'queso',
-   look:{shirt:'#e8603c', skin:'#f7d6bd', hair:{style:'largo',  color:'#d9b35a'}, acc:['gafasSol'],  build:1.00, height:1.04, walk:{stride:1.00, bob:1.0, sway:false}}},
+   look:{shirt:'#e8603c', skin:'#f7d6bd', hair:{style:'largo',  color:'#d9b35a'}, acc:['gafasSol'],  build:1.00, height:1.04, walk:{stride:1.00, bob:0.8, sway:true}}},
 ];
 
 export const WEATHER = {
@@ -91,9 +91,9 @@ export const UPGRADES = [
 ];
 
 export const STAFF = [
-  {id:'camarero', name:'Yeray, camarero',          desc:'Atiende la cola él solo, en paralelo contigo.', wage:55},
-  {id:'cocinero', name:'Carmela, cocinera',        desc:'Todo se prepara un 40% más rápido.', wage:65},
-  {id:'limpiador',name:'Acaymo, ayudante',         desc:'Recoge las mesas sucias sin que se lo pidan.', wage:30},
+  {id:'camarero', name:'Yeray, camarero',          desc:'Atiende la cola él solo, en paralelo contigo.', wage:110},
+  {id:'cocinero', name:'Carmela, cocinera',        desc:'Todo se prepara un 40% más rápido.', wage:130},
+  {id:'limpiador',name:'Acaymo, ayudante',         desc:'Recoge las mesas sucias sin que se lo pidan.', wage:60},
 ];
 
 export const HOUR_CURVE = {10:0.55,11:0.75,12:0.95,13:1.15,14:1.2,15:1.0,16:0.85,17:0.8,18:0.85,19:0.75,20:0.95,21:0.65};
@@ -106,4 +106,4 @@ export const NAMES = {
 export const REG_TOWN = {chano:'Arona', mari:'Adeje', fefo:'Los Cristianos', dacil:'El Médano', kike:'Las Américas', hannah:'Hamburgo'};
 export function who(type){ const a=NAMES[type]; return a[Math.floor(rnd()*a.length)]; }
 
-STAFF.push({id:'terraza',name:'Camarero de terraza',desc:'Acompaña, toma pedidos, recoge y entrega las comandas. Puede ayudar a limpiar.',wage:60});
+STAFF.push({id:'terraza',name:'Camarero de terraza',desc:'Acompaña, toma pedidos, recoge y entrega las comandas. Puede ayudar a limpiar.',wage:120});

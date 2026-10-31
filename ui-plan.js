@@ -86,8 +86,13 @@ export function applyPlanAction(who, d){
   const by = isCoop() ? Net.names[who] : null;
   if(d.buy){ buyStock(d.buy,+d.n); }
   else if(d.price){ const id=d.price; Game.prices[id]=Math.round(clamp(Game.prices[id]+ (+d.d)*(ITEMS[id].ref>8?5:1), 0.5, ITEMS[id].ref*3)*10)/10; }
-  /* v29.3: precio por hora de las hamacas (paso de 0,5 €, de 0,5 a 12 €/h). */
-  else if(d.hprice){ Game.prices.hamacas=Math.round(clamp((Number.isFinite(Game.prices.hamacas)?Game.prices.hamacas:3)+(+d.d)*0.5, 0.5, 12)*2)/2; }
+  /* v29.4.6: precio por hora de las hamacas. Parseo defensivo: si el valor
+     guardado no es numérico, parte de 3 €/h; siempre respeta 0,5–12 €/h. */
+  else if(d.hprice){
+    const current=Number(Game.prices.hamacas);
+    const base=Number.isFinite(current)&&current>0?current:3;
+    Game.prices.hamacas=Math.round(clamp(base+(Number(d.d)||0)*0.5,0.5,12)*2)/2;
+  }
   else if(d.toggle){ const id=d.toggle; Game.enabled[id]=!Game.enabled[id]; if(!activeItems().length) Game.enabled[id]=true; }
   else if(d.up){ const u=UPGRADES.find(x=>x.id===d.up), l=lvl(u.id), cost=u.levels[l]; const locked=u.req && !lvl(u.req);
     if(cost!=null && !locked && Game.money>=cost){ Game.money-=cost;trackCost(cost,'upgrades',true); Game.upgrades[u.id]=l+1; Audio.good(); toast(u.name,(by?by+' lo ha instalado. ':'Instalado. ')+u.desc,'good'); } }

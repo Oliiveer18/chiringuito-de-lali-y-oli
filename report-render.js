@@ -61,7 +61,7 @@ export function reportStatsHtml(s, m){
     const n=dist[k]||0;
     return `<div class="rep-hist-row" title="${n} reseñas de ${k} estrella${k>1?'s':''}"><span class="rep-hist-k">${k}★</span><span class="rep-hist-track"><i class="rep-hist-fill h${k}" style="width:${Math.round(n/maxD*100)}%"></i></span><span class="rep-hist-n">${n}</span></div>`;
   }).join('');
-  const starBar=avg=>{const w=Math.round(clamp(avg||0,0,5)/5*100);return `<span class="rep-stars"><span class="rep-stars-bg">★★★★★</span><span class="rep-stars-fg" style="width:${w}%">★★★★★</span></span>`;};
+  const starBar=avg=>{const filled=Math.max(0,Math.min(5,Math.round(avg||0)));return `<span class="rep-stars" aria-label="${filled} de 5 estrellas"><b>${'★'.repeat(filled)}</b><span>${'☆'.repeat(5-filled)}</span></span>`;};
   const kpi=(k,v,cls='')=>`<div class="rep-kpi"><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`;
   const tips=(s.tips||0)+(s.tipsP||0);
   const notes=[];
@@ -183,7 +183,7 @@ export function refreshReportUI(){
   const m=Game.revModel;
   if(m && m.day===Game.day && !isGuest() && Game.dayStats) Net.ui.body=reportStatsHtml(Game.dayStats, m);
   showReportUI();
-  rep.scrollTop=st1; if(kid) kid.scrollTop=st2;
+  rep.scrollTop=st1; if(kid)kid.scrollTop=st2;
 }
 export function advanceFromReport(){
   const u=Net.ui||{}; Net.ready={p1:false,p2:false};

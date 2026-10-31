@@ -37,7 +37,7 @@ export {hash32,decide,decideAll,opinionCounts,publicRating} from './opinions-mod
 function hash(text){let h=2166136261;for(const c of String(text))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 const NAMES=['Naira','Aday','Dácil','Jonay','Iballa','Nauzet','Nerea','Airam','Yaiza','Beneharo','Celia','Saúl'];
 const ORIGINS=['Arona','Adeje','Los Cristianos','El Médano','Granadilla','San Isidro','Guía de Isora','La Laguna'];
-const ROLES=[['camarero',55],['cocinero',65],['limpiador',30],['terraza',60]];
+const ROLES=[['camarero',110],['cocinero',130],['limpiador',60],['terraza',120]];
 const AVAILABILITY=['Jornada completa','Fines de semana','Mañanas','Tardes'];
 /* v28.19: sueldos proporcionales a lo que produce cada candidato.
    Ejes con ventajas Y desventajas reales:
