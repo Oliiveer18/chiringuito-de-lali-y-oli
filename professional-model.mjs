@@ -1,4 +1,4 @@
-import {trainEmployee,effMultiplier} from './management-model.mjs?v=29.5.0';
+import {trainEmployee,effMultiplier} from './management-model.mjs?v=29.5.1';
 export function hash(s){let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 export function profile(e){if(!e)return e;const options={camarero:['barra','polivalente','cocina'],cocinero:['complejos','rapidos','general'],limpiador:['terraza','orden','general'],terraza:['general','polivalente','general']};const i=Number(String(e.id).split('-').at(-1))||0;const batch=Number(String(e.id).split('-')[1])||0;return {...e,specialty:e.specialty||(e.id.startsWith('original-')?'general':(options[e.role]||['general'])[(Math.floor(i/4)+batch)%3])};}
 /* v29.5: el ritmo real de cada empleado incluye su nivel, el cansancio del día,

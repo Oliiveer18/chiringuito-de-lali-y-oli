@@ -11,7 +11,10 @@ const ICE_SERVERS = [
       'stun:stun1.l.google.com:19302',
       'stun:stun2.l.google.com:19302',
       'stun:global.stun.twilio.com:3478',
-      'stun:stun.cloudflare.com:3478'
+      'stun:stun.cloudflare.com:3478',
+      // v29.5.1: coturn público de Nextcloud, verificado vivo (responde TURN
+      // Allocate con challenge 401): sexto STUN por si alguno de arriba cae.
+      'stun:stun.nextcloud.com:343'
     ]
   }
 ];

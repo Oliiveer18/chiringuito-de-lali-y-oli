@@ -1,7 +1,7 @@
 /* v29.4.8: service worker de actualización forzada.
    Estrategia network-first: cada apertura de la web-app intenta descargar la
    versión más reciente del juego; solo usa caché si no hay red. */
-const CACHE = 'lalioli-v29.4.8';
+const CACHE = 'lalioli-v29.5.1';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

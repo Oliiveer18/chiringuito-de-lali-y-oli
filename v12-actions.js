@@ -1,17 +1,17 @@
 /* Incidentes, publicaciones y pedidos. Lo importa v12.js. */
-import { trackCost, logIncident, resolvePending } from './bookkeeping.js?v=29.5.0';
-import { capturePhoto } from './management-ui.js?v=29.5.0';
-import { Game, Net, itemUnlocked, setTimeoutGame } from './state.js?v=29.5.0';
-import { ITEMS } from './config.js?v=29.5.0';
-import { rnd, clamp } from './util.js?v=29.5.0';
-import { toast } from './ui.js?v=29.5.0';
-import { netDirty } from './net.js?v=29.5.0';
-import { spawnCustomer } from './sim.js?v=29.5.0';
-import { onGuestAction } from './coopbridge.js?v=29.5.0';
-import { postEffect, influEffect } from './social-model.js?v=29.5.0';
-import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=29.5.0';
-import { addPend } from './v12-day.js?v=29.5.0';
-import { rt } from './v12-state.js?v=29.5.0';
+import { trackCost, logIncident, resolvePending } from './bookkeeping.js?v=29.5.1';
+import { capturePhoto } from './management-ui.js?v=29.5.1';
+import { Game, Net, itemUnlocked, setTimeoutGame } from './state.js?v=29.5.1';
+import { ITEMS } from './config.js?v=29.5.1';
+import { rnd, clamp } from './util.js?v=29.5.1';
+import { toast } from './ui.js?v=29.5.1';
+import { netDirty } from './net.js?v=29.5.1';
+import { spawnCustomer } from './sim.js?v=29.5.1';
+import { onGuestAction } from './coopbridge.js?v=29.5.1';
+import { postEffect, influEffect } from './social-model.js?v=29.5.1';
+import { POSTS, INFLU, FOL, RAT } from './v12-posts.js?v=29.5.1';
+import { addPend } from './v12-day.js?v=29.5.1';
+import { rt } from './v12-state.js?v=29.5.1';
 export function runIncident(){
  const t=Game.upgrades.incidentTipo;delete Game.upgrades.incidentHora;if(!t)return;
  if(t==='batidora'){Game.upgrades.batidoraRota=1;Game.enabled.batido=false;logIncident('Se rompió la batidora',null,'pendiente');toast('Se rompe la batidora','Los batidos quedan bloqueados. Reparadla (120 €) o quitadlos hoy.','bad');}

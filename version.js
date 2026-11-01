@@ -1,5 +1,5 @@
-export const VERSION='v29.5.0';
-export const LABEL='v29.5.0 · plantilla viva: hasta 3 contratos por puesto con vestuarios, niveles y XP, barras de cansancio y ánimo, renuncias si les va mal, sueldos equilibrados por disponibilidad, parejas de clientes que llegan juntas, mesas sucias solo con comida y el personal ya se ve dentro del kiosco';
+export const VERSION='v29.5.1';
+export const LABEL='v29.5.1 · conexión online profesional: PeerJS autoalojado (sin CDN externo), sexto STUN verificado vivo y control de congestión del canal para que la latencia no crezca con señal floja · v29.5.0: plantilla viva: hasta 3 contratos por puesto con vestuarios, niveles y XP, barras de cansancio y ánimo, renuncias si les va mal, sueldos equilibrados por disponibilidad, parejas de clientes que llegan juntas, mesas sucias solo con comida y el personal ya se ve dentro del kiosco';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

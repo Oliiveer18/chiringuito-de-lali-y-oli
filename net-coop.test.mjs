@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=29.5.0';
+} from './net-rtc.js?v=29.5.1';
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {
@@ -19,6 +19,8 @@ check('incluye STUN Google', cfg.iceServers.some(s => String(s.urls).includes('s
 // sin candidatos relay); no deben volver a la lista. Quedan STUN + TURN_CONFIG.
 check('sin TURN muertos', !cfg.iceServers.some(s => String(s.urls).includes('metered.ca')));
 check('pool ICE > 0', cfg.iceCandidatePoolSize >= 4);
+// v29.5.1: sexto STUN verificado vivo (coturn público de Nextcloud)
+check('incluye STUN Nextcloud', cfg.iceServers.some(s => String(s.urls).includes('stun.nextcloud.com')));
 
 console.log('forma del constructor de Peer (regresión v28.16)');
 // La sala se rompió en v28.14.3 al pasar el id DENTRO del objeto de opciones:
@@ -29,6 +31,14 @@ check('makePeer pasa el id como primer argumento', /new Peer\(id \|\| undefined,
 check('ya no usa options.id', !/new Peer\(peerOptions\(id\)\)/.test(netLinkSrc));
 check('peerOptions ya no inyecta id', !/opts\.id = id/.test(netLinkSrc));
 check('hostListen registra con el id de la sala', /makePeer\(hostPeerId\(code\)/.test(netLinkSrc));
+
+console.log('v29.5.1: PeerJS autoalojado + control de congestión');
+const idxHtml = readFileSync('index.html', 'utf8');
+check('index.html carga PeerJS local primero', /src="peer\.min\.js\?v=/.test(idxHtml));
+check('con respaldo a unpkg si falta el local', /unpkg\.com\/peerjs@1\.5\.4/.test(idxHtml));
+check('el local y el respaldo son la misma versión', (idxHtml.match(/peerjs@1\.5\.4/g) || []).length >= 1 && /peer\.min\.js/.test(idxHtml));
+check('netSend salta snapshots si el canal está congestionado', /o\.t === 'state' && dc && dc\.bufferedAmount > 65536/.test(netLinkSrc));
+check('las acciones del jugador nunca se saltan (solo t:state)', /if \(o\.t === 'state' && dc && dc\.bufferedAmount > 65536\) return;/.test(netLinkSrc) && !/bufferedAmount > 65536\) return;[.\s\S]*?t === 'act'/.test(netLinkSrc));
 
 console.log('hostPeerId');
 check('CHAU → id esperado', hostPeerId('CHAU') === 'chiringuito-lali-oli-CHAU');

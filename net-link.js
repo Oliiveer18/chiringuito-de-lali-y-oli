@@ -1,16 +1,16 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=29.5.0';
-import { Audio } from './audio.js?v=29.5.0';
-import { Game, NET_SIM, Net } from './state.js?v=29.5.0';
-import { pendingIdx, slotOf } from './sim.js?v=29.5.0';
-import { showReportUI } from './report.js?v=29.5.0';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.0';
-import { onNet } from './net-sync.js?v=29.5.0';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.0';
+import { $ } from './util.js?v=29.5.1';
+import { Audio } from './audio.js?v=29.5.1';
+import { Game, NET_SIM, Net } from './state.js?v=29.5.1';
+import { pendingIdx, slotOf } from './sim.js?v=29.5.1';
+import { showReportUI } from './report.js?v=29.5.1';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.1';
+import { onNet } from './net-sync.js?v=29.5.1';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.1';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=29.5.0';
+} from './net-rtc.js?v=29.5.1';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -307,7 +307,17 @@ export function netSimDelay(dir){
 export function netSend(o){
   if (o.t === 'create') { hostStart(); return; }
   if (o.t === 'join') { guestJoin(o.code); return; }
-  const fire = () => { if (conn && conn.open) conn.send(o); };
+  const fire = () => {
+    if (!conn || !conn.open) return;
+    /* v29.5.1: control de congestión del canal. Si el enlace va acumulando
+       datos sin poder enviarlos (móvil con señal floja), los snapshots
+       periódicos se saltan en vez de encolarse: el siguiente llega 80 ms
+       después y la latencia no crece en espiral. Las acciones del jugador
+       (act, hello, ready) y el resto de mensajes nunca se saltan. */
+    const dc = conn.raw && conn.raw.dataChannel;
+    if (o.t === 'state' && dc && dc.bufferedAmount > 65536) return;
+    conn.send(o);
+  };
   const d = netSimDelay('up');
   if (d > 0) setTimeout(fire, d); else fire();
 }

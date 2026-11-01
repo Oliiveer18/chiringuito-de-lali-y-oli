@@ -2,10 +2,10 @@
    nav.js
    Navegación A* por cuadrícula: rutas de clientes que no atraviesan mesas.
    ========================================================= */
-import { H, W } from './config.js?v=29.5.0';
-import { clamp, lerp } from './util.js?v=29.5.0';
-import { Game } from './state.js?v=29.5.0';
-import { GEO } from './camera.js?v=29.5.0';
+import { H, W } from './config.js?v=29.5.1';
+import { clamp, lerp } from './util.js?v=29.5.1';
+import { Game } from './state.js?v=29.5.1';
+import { GEO } from './camera.js?v=29.5.1';
 
 /* v29.4.1: margen de despawn de las salidas. La cámara horizontal enmarca el
    mundo con LAND_MARGIN de playa extra a cada lado (x de -64 a W+64): el cliente
