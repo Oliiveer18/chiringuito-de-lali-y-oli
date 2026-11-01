@@ -12,7 +12,7 @@ globalThis.sessionStorage = {
   removeItem: k => { memStore.delete(k); }
 };
 
-const { parseMqtt, RELAY_BROKERS, openRelay } = await import('./net-relay.js?v=29.5.2');
+const { parseMqtt, RELAY_BROKERS, openRelay } = await import('./net-relay.js?v=29.5.3');
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => {
@@ -131,6 +131,11 @@ console.log('cableado en net-link.js / net-sync.js / state.js');
   check('leaveCoop y goSolo apagan el relé', (netLinkSrc.match(/stopRelay\(\);/g) || []).length >= 3);
   check('la directa ganadora cierra el relé', /if \(c !== relayLink\) stopRelay\(\);/.test(netLinkSrc));
   check('el close del enlace directo respeta al relé', /if \(conn !== c\) return;/.test(netLinkSrc));
+  // v29.5.3: la invitada debe ENRUTAR los datos del relé a onNet (sin esto se
+  // conectaba pero nunca recibía los snapshots: se quedaba en "esperando…")
+  check('la invitada enruta los datos del relé a onNet', (netLinkSrc.match(/rl\.on\('data', d => \{ if \(conn === rl\) \{ try \{ onNet\(d\); \} catch \(e\) \{\} \} \}\);/g) || []).length >= 2, 'host y guest deben tenerlo');
+  check('la invitada no reintenta la directa si el relé ya ganó', /if \(relayLink && relayLink\.open\) return;/.test(netLinkSrc));
+  check('conn solo se asigna cuando el enlace directo abre de verdad', !/conn = peer\.connect/.test(netLinkSrc) && !/connection: c => \{\s*\n\s*conn = c;/.test(netLinkSrc));
   check('snapshots por relé a 6,7 Hz en servicio', /Net\.relay\?0\.15:0\.08/.test(netSyncSrc));
   check('state.js marca Net.relay', /relay:false/.test(stateSrc));
 }

@@ -3,7 +3,7 @@
    Constantes del juego: dimensiones, calendario, economía, productos,
 clientes habituales, clima, mejoras y personal.
    ========================================================= */
-import { rnd } from './util.js?v=29.5.2';
+import { rnd } from './util.js?v=29.5.3';
 
 // ---------- Constantes ----------
 export const W = 1280, H = 720;

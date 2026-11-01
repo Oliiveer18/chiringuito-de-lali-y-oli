@@ -1,17 +1,17 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=29.5.2';
-import { Audio } from './audio.js?v=29.5.2';
-import { Game, NET_SIM, Net } from './state.js?v=29.5.2';
-import { pendingIdx, slotOf } from './sim.js?v=29.5.2';
-import { showReportUI } from './report.js?v=29.5.2';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.2';
-import { onNet } from './net-sync.js?v=29.5.2';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.2';
+import { $ } from './util.js?v=29.5.3';
+import { Audio } from './audio.js?v=29.5.3';
+import { Game, NET_SIM, Net } from './state.js?v=29.5.3';
+import { pendingIdx, slotOf } from './sim.js?v=29.5.3';
+import { showReportUI } from './report.js?v=29.5.3';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.3';
+import { onNet } from './net-sync.js?v=29.5.3';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.3';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=29.5.2';
-import { openRelay } from './net-relay.js?v=29.5.2';
+} from './net-rtc.js?v=29.5.3';
+import { openRelay } from './net-relay.js?v=29.5.3';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -166,6 +166,10 @@ function guestRelayStart(code){
     onNet({ t: 'peer', on: true });
   });
   rl.on('failed', () => { if (relayLink === rl) relayLink = null; });
+  /* v29.5.3: SIN ESTO la invitada se conectaba al relé pero nunca recibía los
+     snapshots del anfitrión (quedaba en "esperando a que empiece" para siempre):
+     los mensajes de la pareja hay que enrutarlos a onNet igual que en la directa. */
+  rl.on('data', d => { if (conn === rl) { try { onNet(d); } catch (e) {} } });
   rl.on('close', () => {
     if (relayLink !== rl) return;
     relayLink = null;
@@ -252,9 +256,12 @@ function hostListen(code, attempt = 0){
       lobbyStatus('');
     },
     connection: c => {
-      conn = c;
+      /* v29.5.3: conn solo se asigna cuando el enlace directo ABRE de verdad.
+         Antes se asignaba al llegar el evento connection: si el relé ya había
+         ganado y la directa moría sin abrir (NAT estricto), su objeto muerto
+         pisaba conn y la sesión buena por relé quedaba rota en silencio. */
       attachConn(c, {
-        onOpen: () => { hostRestarts = 0; Net.peer = true; onNet({ t: 'peer', on: true }); },
+        onOpen: () => { conn = c; hostRestarts = 0; Net.peer = true; onNet({ t: 'peer', on: true }); },
         onFail: () => {}
       });
     },
@@ -301,10 +308,15 @@ function guestJoin(code, cloudTry = 0){
   const targetId = hostPeerId(code);
   const connectGuest = () => {
     if (gen !== joinGen || !peer || peer.destroyed) return;
-    conn = peer.connect(targetId, connectOptions());
-    attachConn(conn, {
+    /* v29.5.3: si el relé ya ganó la carrera, no volvemos a martillar la
+       directa: cada reintento pisaba conn con un enlace muerto y rompía la
+       sesión buena (los datos del anfitrión dejaban de llegar). */
+    if (relayLink && relayLink.open) return;
+    const c = peer.connect(targetId, connectOptions());
+    attachConn(c, {
       onOpen: () => {
         if (gen !== joinGen) return;
+        conn = c; // solo al abrir de verdad: un enlace muerto nunca pisa el relé
         stopGuestRetry();
         guestRestarts = 0; // enlace sano: el retroceso vuelve a empezar desde 1.5s
         Net.peer = true;

@@ -8,7 +8,7 @@
 
    Protocolo: MQTT 3.1.1 mínimo (CONNECT/SUBSCRIBE/PUBLISH QoS0/PINGREQ)
    sobre WebSocket binario — implementado a mano, sin dependencias. */
-import { Net } from './state.js?v=29.5.2';
+import { Net } from './state.js?v=29.5.3';
 
 /* ---------- códec MQTT 3.1.1 (probado contra broker.emqx.io en vivo) ---------- */
 const mstr = s => { const b = new TextEncoder().encode(s); const out = new Uint8Array(2 + b.length); out[0] = b.length >> 8; out[1] = b.length & 255; out.set(b, 2); return out; };
