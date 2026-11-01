@@ -218,6 +218,45 @@ export function drawHutBack(c,T,h,nt,wind){
     c.fillStyle='#0f8b8d'; c.beginPath(); c.moveTo(532,284); c.lineTo(532,314); c.lineTo(498,299); c.closePath(); c.fill();
     c.fillStyle='#fff6e6'; c.beginPath(); c.arc(529,268,4,0,7); c.fill();
   }
+  // cocinita exterior para días de evento (Escenario)
+  if(lvl('escenario')){
+    c.strokeStyle=mixColor('#8a6a45','#3d3040',nt*0.7); c.lineWidth=4;
+    c.beginPath(); c.moveTo(166,566); c.lineTo(166,522); c.moveTo(234,566); c.lineTo(234,522); c.stroke();
+    c.fillStyle=mixColor('#e8603c','#5a2c1c',nt*0.5); c.beginPath(); c.moveTo(150,522); c.quadraticCurveTo(200,498,250,522); c.closePath(); c.fill();
+    c.fillStyle=mixColor('#8a5a36','#3d2a26',nt*0.7); rr(c,158,566,84,40,4); c.fill();
+    c.fillStyle=mixColor('#20252b','#101418',nt*0.5); rr(c,164,572,72,12,3); c.fill();
+    if(Game.dayEvent){
+      c.fillStyle='rgba(255,255,255,.35)';
+      for(let i=0;i<3;i++){ c.beginPath(); c.arc(200+Math.sin(T*2+i)*8, 552-((T*26+i*20)%44), 6,0,7); c.fill(); }
+    }
+  }
+  // v30.1: semáforo de saturación de cada cola (verde/ámbar/rojo)
+  const qDot=(x,y,n,cap)=>{ const f=cap?Math.min(1,n/cap):0;
+    c.fillStyle=f>=1?'#c73e2a':f>=0.7?'#e0a000':'#3f8a3a';
+    c.beginPath(); c.arc(x,y,6,0,7); c.fill();
+    c.strokeStyle='rgba(42,33,28,.6)'; c.lineWidth=2; c.stroke(); };
+  if(lvl('terraza')){
+    const rowN=r=>Game.customers.filter(c=>c.spot>=r*4&&c.spot<r*4+4).length;
+    qDot(108,558,rowN(0),4);
+    qDot(108,616,rowN(1),4);
+  }
+  if(lvl('escenario')){
+    qDot(576,565,Game.customers.filter(c=>c.spot>=100).length,2);
+  }
+  /* v30.1: el momento de la reforma — andamio, lona y dos obreros rematando
+     el trabajo durante los primeros segundos de la jornada. */
+  if(Game.pendingReformAnim && Game.mode==='service'){
+    c.strokeStyle=mixColor('#c9a35c','#6b5a3f',nt*0.5); c.lineWidth=5;
+    for(let i=0;i<6;i++){ const x=70+i*80; c.beginPath(); c.moveTo(x,250); c.lineTo(x,520); c.stroke(); }
+    c.beginPath(); c.moveTo(60,300); c.lineTo(520,300); c.moveTo(60,420); c.lineTo(520,420); c.stroke();
+    c.fillStyle='rgba(42,33,28,.85)'; rr(c,140,178,260,64,8); c.fill();
+    c.fillStyle='#f1d9a8'; c.font='700 18px Chillax, sans-serif'; c.textAlign='center'; c.fillText('PINTANDO…',270,214);
+    const bob=Math.sin(T*6)*3;
+    drawPerson(c,180,560,{shirt:'#e8a33c',skin:'#c58a5c',hat:'gorra',look:{hair:{style:'corto',color:'#2a211c'},walk:{},acc:[]},type:'staff',bob});
+    drawPerson(c,380,560,{shirt:'#e8a33c',skin:'#e0a97e',hat:'gorra',look:{hair:{style:'flequillo',color:'#4b3a2e'},walk:{},acc:[]},type:'staff',bob:-bob});
+    c.fillStyle='rgba(210,190,160,.5)';
+    for(let i=0;i<4;i++){ c.beginPath(); c.arc(140+i*90+Math.sin(T*2+i)*10, 516-((T*30+i*25)%56), 7,0,7); c.fill(); }
+  }
 }
 /* v29.5: la parte frontal del kiosco (mostrador y útiles) se dibuja DESPUÉS
    de clientes y personal: quien trabaja dentro del chiringuito queda

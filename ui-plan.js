@@ -114,7 +114,15 @@ export function applyPlanAction(who, d){
   }
   else if(d.toggle){ const id=d.toggle; Game.enabled[id]=!Game.enabled[id]; if(!activeItems().length) Game.enabled[id]=true; }
   else if(d.up){ const u=UPGRADES.find(x=>x.id===d.up), l=lvl(u.id), cost=u.levels[l]; const locked=u.req && !lvl(u.req);
-    if(cost!=null && !locked && Game.money>=cost){ Game.money-=cost;trackCost(cost,'upgrades',true); Game.upgrades[u.id]=l+1; Audio.good(); toast(u.name,(by?by+' lo ha instalado. ':'Instalado. ')+u.desc,'good'); } }
+    if(cost!=null && !locked && Game.money>=cost){
+      Game.money-=cost;trackCost(cost,'upgrades',true); Game.upgrades[u.id]=l+1; Audio.good();
+      /* v30.1: comprar una reforma es un acontecimiento: al abrir el día
+         siguiente, los obreros rematan el trabajo ante tus ojos. */
+      if(['palapa','terraza','escenario'].includes(u.id)){
+        Game.pendingReformAnim={id:u.id,t:16};
+        toast(u.name,(by?by+' la ha comprado. ':'Reforma comprada. ')+'Mañana al abrir, los obreros la rematan delante de ti. '+u.desc,'good');
+      } else toast(u.name,(by?by+' lo ha instalado. ':'Instalado. ')+u.desc,'good');
+    } }
   else if(d.staff){ const id=d.staff; Game.staff[id]=!Game.staff[id]; if(by) toast(STAFF.find(x=>x.id===id).name, `${by} ${Game.staff[id]?'lo ha contratado':'lo ha despedido'}.`, ''); }
   if(Net.ready.p1||Net.ready.p2){ if(d.up||d.staff||d.buy){ /* cambios: se mantiene el listo */ } }
   renderTab(); refreshPlanMoney(); netDirty();

@@ -308,6 +308,17 @@ export const hud={tick:0};
 export function updateAmbient(dt){
   for(const f of Game.floaters) f.t+=dt; Game.floaters=Game.floaters.filter(f=>f.t<1.4);
   for(const p of Game.particles){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=200*dt; } Game.particles=Game.particles.filter(p=>p.t<p.life);
+  /* v30.1: el momento de la reforma — los obreros trabajan los primeros
+     segundos de la jornada y la reforma queda inaugurada con fanfarria. */
+  if(Game.pendingReformAnim && Game.mode==='service'){
+    Game.pendingReformAnim.t-=dt;
+    if(Game.pendingReformAnim.t<=0){
+      const name={palapa:'la Palapa',terraza:'la Terraza techada',escenario:'el Escenario'}[Game.pendingReformAnim.id]||'la reforma';
+      Game.pendingReformAnim=null; Audio.good();
+      Game.floaters.push({x:280,y:330,text:'¡'+name.charAt(0).toUpperCase()+name.slice(1)+' lista!',t:0,color:'#ffd36b'});
+      for(let i=0;i<40;i++) Game.particles.push({x:280+Math.sin(i)*180,y:300,vx:Math.cos(i*1.57)*rand(60,160),vy:-rand(120,260),t:0,life:1.2,color:['#e8603c','#f5b82e','#0f8b8d','#ffd36b'][i%4]});
+    }
+  }
 }
 
 export function beginClosing(){
