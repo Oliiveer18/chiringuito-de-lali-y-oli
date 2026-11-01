@@ -1,11 +1,11 @@
-import {leaguePanel} from './management-ui.js?v=29.4.10';
+import {leaguePanel} from './management-ui.js?v=29.4.11';
 // v23: nombre por carrera y panel de las tres ligas simultáneas.
-import {Game,Net,simProgressDay} from './state.js?v=29.4.10';
-import {Plan} from './ui.js?v=29.4.10';
-import {netDirty} from './net.js?v=29.4.10';
-import {escapeHtml as E,eur} from './util.js?v=29.4.10';
-import {ctx,view} from './canvas.js?v=29.4.10';
-import * as R from './market-model.mjs?v=29.4.10';
+import {Game,Net,simProgressDay} from './state.js?v=29.4.11';
+import {Plan} from './ui.js?v=29.4.11';
+import {netDirty} from './net.js?v=29.4.11';
+import {escapeHtml as E,eur} from './util.js?v=29.4.11';
+import {ctx,view} from './canvas.js?v=29.4.11';
+import * as R from './market-model.mjs?v=29.4.11';
 let draft=null,area=0,tier=0,detail=null;
 const day=()=>simProgressDay();
 const name=()=>R.nameValue(Game.upgrades.kioskName);
@@ -16,7 +16,7 @@ window.addEventListener('click',e=>{const b=e.target.closest?.('button');if(!b)r
 const originalText=new WeakMap();
 function patchNames(){const value=name();for(const root of document.querySelectorAll('.rd,#rep-body,#final-card')){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(node.parentElement?.closest('script,style,input'))continue;let rec=originalText.get(node);if(!rec||node.textContent!==rec.last)rec={source:node.textContent,last:node.textContent};const text=rec.source.replaceAll('El Charco Azul',value);if(text!==node.textContent)node.textContent=text;rec.last=text;originalText.set(node,rec);}}if(document.querySelector('#final-card [data-cr="new"]'))form(document.getElementById('final-card'));}
 
-function state(){const p=Game.upgrades.progression;if(!p)return null;if(!p.rivals&&Net.role!=='guest'){p.rivals=R.migrate(p.seed,p.league||0,p.last||0);p.league=p.rivals.tiers[0];netDirty();}return p;}
+function state(){const p=Game.upgrades.progression;if(!p)return null;if(!p.rivals&&Net.role!=='guest'){p.rivals=R.migrate(p.seed,p.league||0,p.last||0);p.league=p.rivals.tiers[0];netDirty();}else if(p.rivals&&p.rivals.version<2&&Net.role!=='guest'){p.rivals=R.ensureV2(p.rivals);netDirty();}return p;}
 function html(p){const s=p.rivals;if(!s)return '<p>Esperando la clasificación del anfitrión…</p>';
  const rows=R.table(s,area,tier,p.history,name(),day());
  const playerTier=s.tiers[area];
@@ -41,7 +41,7 @@ function html(p){const s=p.rivals;if(!s)return '<p>Esperando la clasificación d
  h+=`<div class="lg-tiers">${R.TIERS.map((tt,i)=>`<button class="lg-tier${i===tier?' on':''}" data-mktier="${i}">${tt}</button>`).join('')}</div>`;
  h+=`<table class="lg-table"><thead><tr><th>#</th><th>Kiosco</th><th>Puntos</th><th>Cambio*</th></tr></thead><tbody>${table}</tbody></table>`;
  h+=`<p class="lg-legend">${t<2?'<span class="lg-sw up"></span>Zona de ascenso':''}${t>0?'<span class="lg-sw down"></span>Zona de descenso':''}<span class="lg-sw own"></span>Vuestro kiosco<span class="lg-note-mv">*Respecto al último cierre semanal</span></p>`;
- h+=`<details class="lg-details"><summary>Cómo se calculan los puntos</summary><p>Misma fórmula para todos: cada jornada suma hasta 100 puntos (servicio 40, valoración 25, margen 20 y comunidad 15). El total semanal empieza en cero; se suman las siete jornadas antes de resolver ascensos y descensos. Los rivales realizan inversiones con caja propia y su demanda no depende de vuestra posición. Revisión cada séptimo día: ascienden los tres primeros de Bronce y Plata e intercambian plaza con los tres últimos de la categoría superior.</p></details>`;
+ h+=`<details class="lg-details"><summary>Cómo se calculan los puntos</summary><p>Misma fórmula para todos: cada jornada suma hasta 100 puntos (servicio 40, valoración 25, margen 20 y comunidad 15). El total semanal empieza en cero; se suman las siete jornadas antes de resolver ascensos y descensos. Los rivales tienen nivel propio (los últimos de Bronce puntúan como últimos de Bronce), invertidores con caja propia, rachas buenas y malas, y contratiempos como averías, bajas o inspecciones — la misma vida que vosotros. Revisión cada séptimo día: ascienden los tres primeros de Bronce y Plata e intercambian plaza con los tres últimos de la categoría superior.</p></details>`;
  const n=s.npcs.find(n=>n.id===detail);
  if(n){const r=n.history.at(-1);
   h+=`<section class="lg-rival"><header><div><h4>${E(n.name)}</h4><p class="lg-rival-sub">${E(n.style)} · ${R.AREAS[n.area]}</p></div><button class="btn sm text" data-mkclose="1">✕ Cerrar</button></header><div class="lg-rival-grid"><div><span>Caja</span><b>${eur(n.cash)}</b></div><div><span>Capacidad</span><b>${n.capacity}</b></div><div><span>Calidad</span><b>${n.quality.toFixed(1)} / 5</b></div><div><span>Seguidores</span><b>${n.followers}</b></div></div><p class="lg-rival-action">Última decisión: <b>${E(n.lastAction)}</b></p>${r?`<p>Último día: ventas ${eur(r.revenue)} · beneficio ${eur(r.profit)} · valoración ${r.rating.toFixed(1)} · clientes ${r.served}.</p>`:'<p>Su primera jornada se simulará en el próximo cierre.</p>'}<h5>Decisiones recientes</h5><ul class="lg-rival-log">${n.actions.map(a=>`<li><span>Día ${a.day}</span>${E(a.action)} · ${eur(a.cost)}</li>`).join('')||'<li>Todavía no hay inversiones.</li>'}</ul></section>`;}

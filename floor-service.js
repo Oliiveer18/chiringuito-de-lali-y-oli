@@ -1,10 +1,10 @@
-import {Game,Net,isCoop,simProgressDay} from './state.js?v=29.4.10';
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=29.4.10';
-import {HUT_BAR_FLOOR_Y} from './world.js?v=29.4.10';
-import {navFind,navFreeAt,navLineFree,navNearestFree,navSetTarget,navStep} from './nav.js?v=29.4.10';
-import {staffOnDuty} from './state.js?v=29.4.10';
-import {factor} from './professional-model.mjs?v=29.4.10';
-import * as M from './service-tasks.mjs?v=29.4.10';
+import {Game,Net,isCoop,simProgressDay} from './state.js?v=29.4.11';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=29.4.11';
+import {HUT_BAR_FLOOR_Y} from './world.js?v=29.4.11';
+import {navFind,navFreeAt,navLineFree,navNearestFree,navSetTarget,navStep} from './nav.js?v=29.4.11';
+import {staffOnDuty} from './state.js?v=29.4.11';
+import {factor} from './professional-model.mjs?v=29.4.11';
+import * as M from './service-tasks.mjs?v=29.4.11';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
 const endpoint=t=>({x:t.x+(t.x>1150?-46:46),y:t.y+34});

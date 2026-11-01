@@ -1,5 +1,5 @@
-export const VERSION='v29.4.10';
-export const LABEL='v29.4.10 · el informe del día explica las tres capas de la valoración (satisfacción por cliente, reseñas públicas y reputación) con los números reales de la jornada';
+export const VERSION='v29.4.11';
+export const LABEL='v29.4.11 · rivales con carácter: cada kiosco tiene estilo propio, racha y contratiempos, puntúa con la misma fórmula que tú y las ligas quedan escalonadas de verdad (Bronce-Plata-Oro por Pueblo, Isla y Nación)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

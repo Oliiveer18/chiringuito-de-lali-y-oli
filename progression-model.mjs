@@ -1,6 +1,6 @@
 // Progreso diario v23. Las tres ligas económicas se calculan en market-model.
-import * as R from './market-model.mjs?v=29.4.10';
-import { dailyPoints } from './management-model.mjs?v=29.4.10';
+import * as R from './market-model.mjs?v=29.4.11';
+import { dailyPoints } from './management-model.mjs?v=29.4.11';
 export const areas=R.AREAS,tiers=R.TIERS;
 export const num=x=>Number.isFinite(x)?x:0;
 export const hash=R.hash;
@@ -19,7 +19,7 @@ export function settle(p,input){if(!Number.isInteger(input.day)||input.day<=p.la
 export function amend(p,input){const h=p.history.at(-1);if(!h||h.day!==input.day)return {p,changed:false};const keys=['served','lost','rating','waste','revenue','sales','profit','cash','cashDelta','followers'];if(keys.every(k=>input[k]===undefined||num(input[k])===h[k]))return {p,changed:false};const next=JSON.parse(JSON.stringify(p)),n=next.history.at(-1);for(const k of keys)if(input[k]!==undefined)n[k]=num(input[k]);n.grade=grade(n);for(const k of ['served','revenue','profit','followers'])next.records[k]=Math.max(0,...next.history.map(r=>num(r[k])));return {p:next,changed:true};}
 export function roster(seed){return R.migrate(seed).npcs;}
 export const score=R.points;
-function ensure(p){if(!p.rivals)p.rivals=R.migrate(p.seed,p.league||0,p.last||0);return p.rivals;}
+function ensure(p){if(!p.rivals)p.rivals=R.migrate(p.seed,p.league||0,p.last||0);else if(p.rivals.version<2)p.rivals=R.ensureV2(p.rivals);return p.rivals;}
 export function table(p,area,tier,day,weather,event){return R.table(ensure(p),area,tier,p.history,p.kioskName||'El Charco Azul');}
 export function review(p,day,weather,event){const next=JSON.parse(JSON.stringify(p));const s=ensure(next);next.rivals=R.review(R.step(s,day,{weather,event}),day,next.history,next.kioskName);next.league=next.rivals.tiers[0];return next;}
 export function readiness(stock,staff,poster,product){return [{label:'20 unidades de '+product,ok:num(stock[product])>=20},{label:'Refuerzo: camarero',ok:!!staff.camarero},{label:'Cartel promocional',ok:!!poster}];}
