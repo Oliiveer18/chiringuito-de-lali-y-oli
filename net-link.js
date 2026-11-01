@@ -1,17 +1,17 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=29.5.3';
-import { Audio } from './audio.js?v=29.5.3';
-import { Game, NET_SIM, Net } from './state.js?v=29.5.3';
-import { pendingIdx, slotOf } from './sim.js?v=29.5.3';
-import { showReportUI } from './report.js?v=29.5.3';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.3';
-import { onNet } from './net-sync.js?v=29.5.3';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.3';
+import { $ } from './util.js?v=29.5.4';
+import { Audio } from './audio.js?v=29.5.4';
+import { Game, NET_SIM, Net } from './state.js?v=29.5.4';
+import { pendingIdx, slotOf } from './sim.js?v=29.5.4';
+import { showReportUI } from './report.js?v=29.5.4';
+import { hideAll, setSpeed, showPlanUI, showServiceUI, toastLocal } from './ui.js?v=29.5.4';
+import { onNet } from './net-sync.js?v=29.5.4';
+import { hideNetMsg, lobbyError, lobbyStatus, netLostInfo, renderLobby } from './net-lobby.js?v=29.5.4';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=29.5.3';
-import { openRelay } from './net-relay.js?v=29.5.3';
+} from './net-rtc.js?v=29.5.4';
+import { openRelay } from './net-relay.js?v=29.5.4';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -117,6 +117,20 @@ function stopRelay(){
   if (relayFallbackTimer) { clearTimeout(relayFallbackTimer); relayFallbackTimer = null; }
   if (relayLink) { const rl = relayLink; relayLink = null; try { rl.close(); } catch (e) {} }
 }
+/* v29.5.4: el relé avisa cuando el flujo se corta en plena partida (evento
+   'stalled' de net-relay.js). Antes el juego quedaba congelado en silencio
+   hasta 75 s; ahora se pausa y avisa igual que cuando cae la directa
+   (reliability.js), y al volver la señal la partida sigue sola. */
+function relayStall(on){
+  if (on) {
+    if (Game.mode === 'service' && Game.speed) { Net.speedBeforeDrop = Game.speed; setSpeed(0); Net.pausedByDrop = true; }
+    netLostInfo('Conexión interrumpida. Reintentando…');
+  } else {
+    hideNetMsg();
+    if (Game.mode === 'service' && Net.pausedByDrop) { Net.pausedByDrop = false; setSpeed(Net.speedBeforeDrop || 1); Net.speedBeforeDrop = null; }
+    toastLocal('Conectado', 'La conexión con tu pareja se ha recuperado.', 'good');
+  }
+}
 function relayWon(rl){
   /* la directa pierde: se cierra DESPUÉS de reasignar conn para que su
      manejador de close (conn !== c) no tire la sesión buena */
@@ -140,6 +154,8 @@ function hostRelayStart(code){
     lobbyStatus('Pareja conectada por relé público: vuestra red no tiene ruta directa, irá un poco más lento pero funciona.');
   });
   rl.on('data', d => { if (conn === rl) { try { onNet(d); } catch (e) {} } });
+  rl.on('stalled', () => { if (conn === rl) relayStall(true); });   // v29.5.4
+  rl.on('recovered', () => { if (conn === rl) relayStall(false); }); // v29.5.4
   rl.on('failed', () => { if (relayLink === rl) relayLink = null; });
   rl.on('close', () => {
     if (relayLink !== rl) return;
@@ -170,6 +186,8 @@ function guestRelayStart(code){
      snapshots del anfitrión (quedaba en "esperando a que empiece" para siempre):
      los mensajes de la pareja hay que enrutarlos a onNet igual que en la directa. */
   rl.on('data', d => { if (conn === rl) { try { onNet(d); } catch (e) {} } });
+  rl.on('stalled', () => { if (conn === rl) relayStall(true); });   // v29.5.4
+  rl.on('recovered', () => { if (conn === rl) relayStall(false); }); // v29.5.4
   rl.on('close', () => {
     if (relayLink !== rl) return;
     relayLink = null;

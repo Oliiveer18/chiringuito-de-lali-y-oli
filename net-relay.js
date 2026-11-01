@@ -8,7 +8,7 @@
 
    Protocolo: MQTT 3.1.1 mínimo (CONNECT/SUBSCRIBE/PUBLISH QoS0/PINGREQ)
    sobre WebSocket binario — implementado a mano, sin dependencias. */
-import { Net } from './state.js?v=29.5.3';
+import { Net } from './state.js?v=29.5.4';
 
 /* ---------- códec MQTT 3.1.1 (probado contra broker.emqx.io en vivo) ---------- */
 const mstr = s => { const b = new TextEncoder().encode(s); const out = new Uint8Array(2 + b.length); out[0] = b.length >> 8; out[1] = b.length & 255; out.set(b, 2); return out; };
@@ -54,6 +54,9 @@ function saveBrokerIdx(i){ try { sessionStorage.setItem(RELAY_KEY, String(i)); }
    send() omite los snapshots periódicos si el canal va saturado. */
 export function openRelay(code, role, opts = {}){
   const Socket = opts.socketFactory || ((u, p) => new globalThis.WebSocket(u, p));
+  /* v29.5.4: umbrales del latido de aplicación configurables para las pruebas */
+  const PING_MS = opts.pingMs ?? 3000;
+  const STALL_MS = opts.stallMs ?? 12000;
   const base = 'chiringuito29/' + String(code || '').toUpperCase();
   const myTopic = role === 'host' ? base + '/h2g' : base + '/g2h';
   const theirTopic = role === 'host' ? base + '/g2h' : base + '/h2g';
@@ -63,8 +66,9 @@ export function openRelay(code, role, opts = {}){
 
   let ws = null, brokerIdx = brokerStartIdx(), opened = false, done = false;
   let heartbeat = null, watchdog = null, helloTimer = null, lastMsg = 0, retryTimer = null, tries = 0;
+  let appPing = null, stallWatch = null, stalled = false;
 
-  const cleanup = () => { clearInterval(heartbeat); clearInterval(watchdog); clearInterval(helloTimer); clearTimeout(retryTimer); };
+  const cleanup = () => { clearInterval(heartbeat); clearInterval(watchdog); clearInterval(helloTimer); clearInterval(appPing); clearInterval(stallWatch); clearTimeout(retryTimer); };
   const close = () => { if (done) return; done = true; cleanup(); try { ws && ws.close(); } catch (e) {} emit('close'); };
   const send = o => {
     if (done) return;
@@ -84,6 +88,22 @@ export function openRelay(code, role, opts = {}){
         if (p.type === 2){ sock.send(enc.SUBSCRIBE(1, theirTopic)); }                    // CONNACK → suscribo
         else if (p.type === 9){                                                          // SUBACK → canal listo
           saveBrokerIdx(brokerIdx); tries = 0;
+          /* v29.5.4: latido de APLICACIÓN cada 3 s con el mismo protocolo
+             {__laliNet} que el enlace directo (reliability.js). Sin esto, si el
+             WebSocket del broker moría en plena partida (móvil que cambia de
+             red o pierde señal), el juego quedaba congelado SIN aviso hasta
+             75 s: solo el vigilante interno del relé se enteraba. Ahora el
+             silencio de 12 s avisa a la capa de juego (evento 'stalled':
+             pausa y "reconectando…") y al volver el flujo de datos la
+             partida sigue sola (evento 'recovered'). */
+          clearInterval(appPing);
+          appPing = setInterval(() => { if (!done) { try { send({ __laliNet: 'ping' }); } catch (e) {} } }, PING_MS);
+          clearInterval(stallWatch);
+          stallWatch = setInterval(() => {
+            if (done || !opened || !lastMsg || Date.now() - lastMsg <= STALL_MS) return;
+            if (!stalled) { stalled = true; emit('stalled'); }
+            scheduleReconnect(); // el socket está muerto o ciego: cerrar y redial
+          }, Math.min(3000, PING_MS));
           /* latidos: los brokers públicos sueltan a los clientes callados;
              PINGREQ cada 25 s y vigilancia de silencio de 75 s */
           clearInterval(heartbeat);
@@ -93,8 +113,14 @@ export function openRelay(code, role, opts = {}){
           if (role === 'guest' && !opened){ helloTimer = setInterval(() => { if (!opened) send({ t: 'hello', name: Net.names.p2 }); }, 2000); send({ t: 'hello', name: Net.names.p2 }); }
         }
         else if (p.type === 'publish' && p.topic === theirTopic && p.payload){            // mensaje de la pareja
-          if (!opened){ opened = true; clearInterval(helloTimer); emit('open'); }
           let m; try { m = JSON.parse(p.payload); } catch (e) { continue; }
+          if (stalled) { stalled = false; emit('recovered'); }
+          /* v29.5.4: latido de aplicación — mismo protocolo que la directa */
+          if (m && m.__laliNet) {
+            if (m.__laliNet === 'ping') { try { send({ __laliNet: 'pong' }); } catch (e) {} }
+            continue; // los pings no abren canal ni llegan al juego
+          }
+          if (!opened){ opened = true; clearInterval(helloTimer); emit('open'); }
           emit('data', m);
         }
       }
@@ -106,6 +132,7 @@ export function openRelay(code, role, opts = {}){
     const old = ws; ws = null;
     try { old && old.close(); } catch (e) {}
     cleanup();
+    if (opened && !stalled) { stalled = true; emit('stalled'); } // v29.5.4: aviso de interrupción
     const next = (brokerIdx + 1) % RELAY_BROKERS.length;
     if (next === brokerStartIdx()){ emit('failed'); done = true; return; } // vuelta completa: ninguno vivo
     brokerIdx = next;
@@ -114,6 +141,7 @@ export function openRelay(code, role, opts = {}){
   const scheduleReconnect = () => {
     cleanup();
     if (done) return;
+    if (opened && !stalled) { stalled = true; emit('stalled'); } // v29.5.4: aviso de interrupción
     tries++;
     const delay = Math.min(8000, 800 * 2 ** Math.min(tries, 4));
     retryTimer = setTimeout(dial, delay);
