@@ -1,16 +1,17 @@
 /* Enlace PeerJS, sala y paso a solitario. Lo importa net.js. */
-import { $ } from './util.js?v=29.5.1';
-import { Audio } from './audio.js?v=29.5.1';
-import { Game, NET_SIM, Net } from './state.js?v=29.5.1';
-import { pendingIdx, slotOf } from './sim.js?v=29.5.1';
-import { showReportUI } from './report.js?v=29.5.1';
-import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.1';
-import { onNet } from './net-sync.js?v=29.5.1';
-import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.1';
+import { $ } from './util.js?v=29.5.2';
+import { Audio } from './audio.js?v=29.5.2';
+import { Game, NET_SIM, Net } from './state.js?v=29.5.2';
+import { pendingIdx, slotOf } from './sim.js?v=29.5.2';
+import { showReportUI } from './report.js?v=29.5.2';
+import { hideAll, setSpeed, showPlanUI, showServiceUI } from './ui.js?v=29.5.2';
+import { onNet } from './net-sync.js?v=29.5.2';
+import { lobbyError, lobbyStatus, renderLobby } from './net-lobby.js?v=29.5.2';
 import {
   peerRtcConfig, peerErrorMessage, hostPeerId, isTransientJoinPeerError, guestSearchStatus,
   GUEST_RETRY, nextGuestRetryMs, visibilityRecovery, restartBackoffMs
-} from './net-rtc.js?v=29.5.1';
+} from './net-rtc.js?v=29.5.2';
+import { openRelay } from './net-relay.js?v=29.5.2';
 export { peerRtcConfig, peerErrorMessage, hostPeerId };
 
 // ---------- Red: PeerJS (WebRTC) ----------
@@ -71,13 +72,19 @@ function attachConn(c, { onOpen, onFail }){
   let opened = false;
   c.on('open', () => {
     opened = true;
+    /* v29.5.2: si la directa abre, el relé público de respaldo se apaga */
+    if (c !== relayLink) stopRelay();
     clearGuestSearch();
     onOpen && onOpen();
   });
   c.on('data', d => { try { onNet(typeof d === 'string' ? JSON.parse(d) : d); } catch (e) {} });
   c.on('close', () => {
+    /* v29.5.2: si este enlace ya no es el activo (la directa perdió contra
+       el relé, o viceversa), su muerte no debe tirar la sesión buena */
+    if (conn !== c) return;
     conn = null;
     Net.peer = false;
+    Net.relay = false;
     onNet({ t: 'peer', on: false });
     // v28.15: si el enlace del invitado muere del todo (la capa de reintentos de
     // reliability.js agotó su ventana de 45 s), se reconstruye con el mismo código:
@@ -95,6 +102,80 @@ function attachConn(c, { onOpen, onFail }){
   c.on('error', () => { if (!opened) onFail && onFail(); });
   c.on('failed', () => {
     if (!opened) onFail && onFail();
+  });
+}
+
+/* ---------- v29.5.2: relé público de respaldo ----------
+   Cuando dos móviles están en redes distintas con NAT estricto, la conexión
+   directa WebRTC no consigue abrirse y los TURN gratuitos ya no existen. El
+   relé entra solo en ese caso: la partida viaja por un broker MQTT público
+   anónimo (sin cuentas, sin coste, sin datos personales: solo estado del
+   juego por un topic con el código de la sala). Si la directa funciona, el
+   relé se apaga; la carrera la gana quien entregue primero. */
+let relayLink = null, relayFallbackTimer = null;
+function stopRelay(){
+  if (relayFallbackTimer) { clearTimeout(relayFallbackTimer); relayFallbackTimer = null; }
+  if (relayLink) { const rl = relayLink; relayLink = null; try { rl.close(); } catch (e) {} }
+}
+function relayWon(rl){
+  /* la directa pierde: se cierra DESPUÉS de reasignar conn para que su
+     manejador de close (conn !== c) no tire la sesión buena */
+  const old = conn;
+  conn = rl; relayLink = rl;
+  Net.relay = true;
+  if (old && old !== rl) { try { old.close(); } catch (e) {} }
+  clearGuestSearch();
+  stopGuestRetry();
+}
+/** Anfitrión: además de la sala directa, escucha el relé con el mismo código. */
+function hostRelayStart(code){
+  stopRelay();
+  const rl = openRelay(code, 'host');
+  relayLink = rl;
+  rl.on('open', () => {
+    if (conn && conn.open && conn !== rl) { stopRelay(); return; } // la directa ganó
+    relayWon(rl);
+    hostRestarts = 0; Net.peer = true;
+    onNet({ t: 'peer', on: true });
+    lobbyStatus('Pareja conectada por relé público: vuestra red no tiene ruta directa, irá un poco más lento pero funciona.');
+  });
+  rl.on('data', d => { if (conn === rl) { try { onNet(d); } catch (e) {} } });
+  rl.on('failed', () => { if (relayLink === rl) relayLink = null; });
+  rl.on('close', () => {
+    if (relayLink !== rl) return;
+    relayLink = null;
+    if (Net.role === 'host' && Net.code === code && conn === rl) {
+      conn = null; Net.peer = false; Net.relay = false; onNet({ t: 'peer', on: false });
+      setTimeout(() => { if (Net.role === 'host' && Net.code === code && !relayLink) hostRelayStart(code); }, 2000);
+    }
+  });
+}
+/** Invitada: si a los 6 s la directa no abrió, el relé entra en la carrera. */
+function guestRelayStart(code){
+  const gen = joinGen;
+  const rl = openRelay(code, 'guest');
+  if (relayLink) { try { rl.close(); } catch (e) {} return; }
+  relayLink = rl;
+  rl.on('open', () => {
+    if (gen !== joinGen || (conn && conn.open && conn !== rl)) { try { rl.close(); } catch (e) {} return; }
+    relayWon(rl);
+    Net.peer = true;
+    renderLobby();
+    lobbyStatus('Conectado por relé público: vuestra red no tiene ruta directa, irá un poco más lento pero funciona.');
+    netSend({ t: 'hello', name: Net.names.p2 });
+    onNet({ t: 'peer', on: true });
+  });
+  rl.on('failed', () => { if (relayLink === rl) relayLink = null; });
+  rl.on('close', () => {
+    if (relayLink !== rl) return;
+    relayLink = null;
+    if (conn === rl) {
+      conn = null; Net.peer = false; Net.relay = false; onNet({ t: 'peer', on: false });
+      if (Net.role === 'guest' && Net.code) {
+        const g2 = joinGen; guestRestarts++;
+        setTimeout(() => { if (g2 === joinGen && Net.role === 'guest' && Net.code && !conn) guestJoin(Net.code); }, restartBackoffMs(guestRestarts));
+      }
+    }
   });
 }
 
@@ -164,6 +245,9 @@ function hostListen(code, attempt = 0){
       Net.signalingReady = true;
       markHostStable();
       saveCloudIdx();
+      /* v29.5.2: la sala directa funciona, y el relé público escucha también
+         por si la red de la pareja no tiene ruta directa hasta aquí */
+      hostRelayStart(code);
       renderLobby();
       lobbyStatus('');
     },
@@ -262,6 +346,12 @@ function guestJoin(code, cloudTry = 0){
       saveCloudIdx();
       startGuestSearch(cloudTry);
       connectGuest();
+      /* v29.5.2: si a los 6 s la directa no abrió (NAT estricto sin TURN
+         posible), el relé público entra en la carrera por su cuenta */
+      if (relayFallbackTimer) clearTimeout(relayFallbackTimer);
+      relayFallbackTimer = setTimeout(() => {
+        if (gen === joinGen && Net.role === 'guest' && Net.code && !(conn && conn.open) && !relayLink) guestRelayStart(Net.code);
+      }, 6000);
     },
     error: e => {
       if (gen !== joinGen) return;
@@ -328,6 +418,7 @@ export function leaveCoop(){
   joinGen++;
   clearGuestSearch();
   stopGuestRetry();
+  stopRelay();
   Net.signalingReady = false;
   if (conn) { try { conn.close(); } catch (e) {} conn = null; }
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
@@ -338,6 +429,7 @@ export function goSolo(){
   joinGen++;
   clearGuestSearch();
   stopGuestRetry();
+  stopRelay();
   if (conn) { try { conn.close(); } catch (e) {} conn = null; }
   if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
   Net.role = 'solo'; Net.me = 'p1'; Net.peer = false;

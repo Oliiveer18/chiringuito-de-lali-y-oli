@@ -1,5 +1,5 @@
-import {tieVector} from './professional-model.mjs?v=29.5.1';
-import {dailyPoints,weeklyPoints} from './management-model.mjs?v=29.5.1';
+import {tieVector} from './professional-model.mjs?v=29.5.2';
+import {dailyPoints,weeklyPoints} from './management-model.mjs?v=29.5.2';
 // v23: tres ligas simultáneas. Simulación económica resumida y determinista por cierre.
 // v29.4.11: rivales con nivel propio y vida real. Cada kiosco rival tiene un nivel
 // intrínseco (0–1) del que salen su capacidad, calidad, caja y seguidores, un
