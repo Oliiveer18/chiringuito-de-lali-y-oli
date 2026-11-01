@@ -112,10 +112,12 @@ const { buildTables } = await import(`./world.js?v=${V}`);
 await import(`./variety-names.js?v=${V}`);
 const { staffOnDuty } = await import(`./state.js?v=${V}`);
 
-async function setupCoopDay() {
+/* v29.5: la plantilla son arrays de empleados por puesto y se fijan ANTES de
+   arrancar el día (los puestos de barra se crean por empleado en startDay). */
+async function setupCoopDay(team = {}) {
   Net.role = 'host'; Net.peer = true; Net.names = { p1: 'A', p2: 'B' }; Net.roles = { p1: 'barra', p2: 'cocina' };
-  Game.upgrades = { mesas: 3, workforce: { team: {} } };
-  Game.staff = { limpiador: 1, cocinero: 1 };
+  Game.upgrades = { mesas: 3, workforce: { team } };
+  Game.staff = { limpiador: team.limpiador?.length ? 1 : 0, cocinero: team.cocinero?.length ? 1 : 0 };
   for (const id of cfg.ITEM_IDS) { Game.stock[id] = 50; Game.prices[id] = cfg.ITEMS[id].ref; Game.enabled[id] = true; }
   buildTables(); Game.forecast = Array.from({ length: 40 }, () => 'sol');
   Game.speed = 1; Game.day = 1;
@@ -137,9 +139,8 @@ test('staffOnDuty respeta medias jornadas y fines de semana', async () => {
 });
 
 test('la cocinera de solo-mañanas no atiende por la tarde', async () => {
-  await setupCoopDay();
-  Game.upgrades.workforce.team.cocinero = { id: 'cv-2-0', availability: 'Mañanas', workMultiplier: 1 };
-  const slot = Game.slots.find(s => s.who === 'carmela');
+  await setupCoopDay({ cocinero: [{ id: 'cv-2-0', name: 'Rosana', availability: 'Mañanas', workMultiplier: 1, level: 1, xp: 0, fatigue: 0, happiness: 0.7 }] });
+  const slot = Game.slots.find(s => s.who === 'cv-2-0');
   // tarde: comanda de comida sin atender
   Game.hour = 17;
   const c1 = { id: 9501, state: 'queue', act: 'order', actT: 5, spot: 0, order: ['papas', 'papas'], itemSt: [0, 0], served: [], missing: 0, inPrep: 0, partT: {}, patience: 100, maxPatience: 100, personality: 'tranquilo', anger: 0, angerT: 0, subs: {}, floorTableId: null, mood: null, moodT: 0, speed: 100, x: 700, y: 690 };
@@ -153,8 +154,7 @@ test('la cocinera de solo-mañanas no atiende por la tarde', async () => {
 });
 
 test('el limpiador de solo-fines-de-semana no limpia entre semana', async () => {
-  await setupCoopDay();
-  Game.upgrades.workforce.team.limpiador = { id: 'cv-2-1', availability: 'Fines de semana', workMultiplier: 1 };
+  await setupCoopDay({ limpiador: [{ id: 'cv-2-1', name: 'Aitor', availability: 'Fines de semana', workMultiplier: 1, level: 1, xp: 0, fatigue: 0, happiness: 0.7 }] });
   Game.day = 1; // lunes
   Game.tables[0].state = 'dirty'; Game.tables[0].dirtyT = 1;
   for (let i = 0; i < 40; i++) sim.update(0.05);

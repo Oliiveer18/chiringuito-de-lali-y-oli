@@ -1,66 +1,66 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { beginLedgerDay } from "../bookkeeping.js?v=29.4.11";
-import { initFloor } from "../floor-service.js?v=29.4.11";
-import { updateFloor } from "../floor-service.js?v=29.4.11";
-import { updateFloorCustomer } from "../floor-service.js?v=29.4.11";
-import { floorHasWork } from "../floor-service.js?v=29.4.11";
-import { staffOnDuty } from "../state.js?v=29.4.11";
-import { stationOf } from "../config.js?v=29.4.11";
-import { abortFloor } from "../floor-service.js?v=29.4.11";
-import { ANGER_MIN_STAGE } from "../config.js?v=29.4.11";
-import { DRINKS } from "../config.js?v=29.4.11";
-import { HOUR_CURVE } from "../config.js?v=29.4.11";
-import { PERSONALITIES } from "../config.js?v=29.4.11";
-import { SEC_PER_HOUR } from "../config.js?v=29.4.11";
-import { SPECIAL_DAYS } from "../config.js?v=29.4.11";
-import { W } from "../config.js?v=29.4.11";
-import { WAIT_TABLE_MAX } from "../config.js?v=29.4.11";
-import { WEATHER } from "../config.js?v=29.4.11";
-import { rand } from "../util.js?v=29.4.11";
-import { rnd } from "../util.js?v=29.4.11";
-import { Audio } from "../audio.js?v=29.4.11";
-import { startBeach } from "../beach.js?v=29.4.11";
-import { updateBeach } from "../beach.js?v=29.4.11";
-import { Game } from "../state.js?v=29.4.11";
-import { Net } from "../state.js?v=29.4.11";
-import { closeHour } from "../state.js?v=29.4.11";
-import { gameTimers } from "../state.js?v=29.4.11";
-import { isCoop } from "../state.js?v=29.4.11";
-import { isWeekend } from "../state.js?v=29.4.11";
-import { lvl } from "../state.js?v=29.4.11";
-import { simProgressDay } from "../state.js?v=29.4.11";
-import { weatherToday } from "../state.js?v=29.4.11";
-import { QUEUE_POS } from "../world.js?v=29.4.11";
-import { buildTables } from "../world.js?v=29.4.11";
-import { EXIT_X_R } from "../world.js?v=29.4.11";
-import { EXIT_X_L } from "../world.js?v=29.4.11";
-import { navSetTarget } from "../nav.js?v=29.4.11";
-import { navStep } from "../nav.js?v=29.4.11";
-import { endDay } from "../report.js?v=29.4.11";
-import { recordVisit } from "../report.js?v=29.4.11";
-import { setSpeed } from "../ui.js?v=29.4.11";
-import { showServiceUI } from "../ui.js?v=29.4.11";
-import { toast } from "../ui.js?v=29.4.11";
-import { updateHud } from "../ui.js?v=29.4.11";
-import { RANDOM_EVENTS } from "./season.js?v=29.4.11";
-import { abandonFloor } from "./service.js?v=29.4.11";
-import { addSat } from "./economy.js?v=29.4.11";
-import { tableStateAfterMeal } from "./lost.js?v=29.4.11";
-import { commitClean } from "./service.js?v=29.4.11";
-import { completeFloorOrder } from "./service.js?v=29.4.11";
-import { difficultyProfile } from "./season.js?v=29.4.11";
-import { difficultyRush } from "./season.js?v=29.4.11";
-import { repArrivalMult } from "./season.js?v=29.4.11";
-import { finishSlot } from "./service.js?v=29.4.11";
-import { giveUpPending } from "./service.js?v=29.4.11";
-import { leaveQueue } from "./customers.js?v=29.4.11";
-import { payAndGo } from "./service.js?v=29.4.11";
-import { payAndSeat } from "./service.js?v=29.4.11";
-import { pendingIdx } from "./orders.js?v=29.4.11";
-import { regularOutcome } from "./customers.js?v=29.4.11";
-import { scheduleRegulars } from "./customers.js?v=29.4.11";
-import { spawnCustomer } from "./customers.js?v=29.4.11";
-import { startPart } from "./service.js?v=29.4.11";
+import { beginLedgerDay } from "../bookkeeping.js?v=29.5.0";
+import { initFloor } from "../floor-service.js?v=29.5.0";
+import { updateFloor } from "../floor-service.js?v=29.5.0";
+import { updateFloorCustomer } from "../floor-service.js?v=29.5.0";
+import { floorHasWork } from "../floor-service.js?v=29.5.0";
+import { staffOnDuty } from "../state.js?v=29.5.0";
+import { stationOf } from "../config.js?v=29.5.0";
+import { abortFloor } from "../floor-service.js?v=29.5.0";
+import { ANGER_MIN_STAGE } from "../config.js?v=29.5.0";
+import { DRINKS } from "../config.js?v=29.5.0";
+import { HOUR_CURVE } from "../config.js?v=29.5.0";
+import { PERSONALITIES } from "../config.js?v=29.5.0";
+import { SEC_PER_HOUR } from "../config.js?v=29.5.0";
+import { SPECIAL_DAYS } from "../config.js?v=29.5.0";
+import { W } from "../config.js?v=29.5.0";
+import { WAIT_TABLE_MAX } from "../config.js?v=29.5.0";
+import { WEATHER } from "../config.js?v=29.5.0";
+import { rand } from "../util.js?v=29.5.0";
+import { rnd } from "../util.js?v=29.5.0";
+import { Audio } from "../audio.js?v=29.5.0";
+import { startBeach } from "../beach.js?v=29.5.0";
+import { updateBeach } from "../beach.js?v=29.5.0";
+import { Game } from "../state.js?v=29.5.0";
+import { Net } from "../state.js?v=29.5.0";
+import { closeHour } from "../state.js?v=29.5.0";
+import { gameTimers } from "../state.js?v=29.5.0";
+import { isCoop } from "../state.js?v=29.5.0";
+import { isWeekend } from "../state.js?v=29.5.0";
+import { lvl } from "../state.js?v=29.5.0";
+import { simProgressDay } from "../state.js?v=29.5.0";
+import { weatherToday } from "../state.js?v=29.5.0";
+import { QUEUE_POS } from "../world.js?v=29.5.0";
+import { buildTables } from "../world.js?v=29.5.0";
+import { EXIT_X_R } from "../world.js?v=29.5.0";
+import { EXIT_X_L } from "../world.js?v=29.5.0";
+import { navSetTarget } from "../nav.js?v=29.5.0";
+import { navStep } from "../nav.js?v=29.5.0";
+import { endDay } from "../report.js?v=29.5.0";
+import { recordVisit } from "../report.js?v=29.5.0";
+import { setSpeed } from "../ui.js?v=29.5.0";
+import { showServiceUI } from "../ui.js?v=29.5.0";
+import { toast } from "../ui.js?v=29.5.0";
+import { updateHud } from "../ui.js?v=29.5.0";
+import { RANDOM_EVENTS } from "./season.js?v=29.5.0";
+import { abandonFloor } from "./service.js?v=29.5.0";
+import { addSat } from "./economy.js?v=29.5.0";
+import { tableStateAfterMeal } from "./lost.js?v=29.5.0";
+import { commitClean } from "./service.js?v=29.5.0";
+import { completeFloorOrder } from "./service.js?v=29.5.0";
+import { difficultyProfile } from "./season.js?v=29.5.0";
+import { difficultyRush } from "./season.js?v=29.5.0";
+import { repArrivalMult } from "./season.js?v=29.5.0";
+import { finishSlot } from "./service.js?v=29.5.0";
+import { giveUpPending } from "./service.js?v=29.5.0";
+import { leaveQueue,coupleAbandon } from "./customers.js?v=29.5.0";
+import { payAndGo } from "./service.js?v=29.5.0";
+import { payAndSeat } from "./service.js?v=29.5.0";
+import { pendingIdx } from "./orders.js?v=29.5.0";
+import { regularOutcome } from "./customers.js?v=29.5.0";
+import { scheduleRegulars } from "./customers.js?v=29.5.0";
+import { spawnCustomer } from "./customers.js?v=29.5.0";
+import { startPart } from "./service.js?v=29.5.0";
 
 export function servable(c){return c&&(['floorWaitEscort','floorMenu','floorReady'].includes(c.state)||(['queue','prep','floorWaitingPrep'].includes(c.state)&&pendingIdx(c).length>0));}
 
@@ -72,9 +72,17 @@ export function startDay(){
   buildTables(); for(const t of Game.tables){ t.state='free'; t.cust=null; }
   const mk=(who,station)=>({who,station,cust:null,items:[],t:0,total:0,think:0});
   Game.slots=[mk('p1', isCoop()?Net.roles.p1:'all')];
+  /* v29.5: un puesto de barra por empleado de plantilla (hasta 3 por puesto). */
   if(isCoop()) Game.slots.push(mk('p2', Net.roles.p2));
-  if(Game.staff.camarero) Game.slots.push(mk('yeray','all'));
-  if(Game.staff.cocinero) Game.slots.push(mk('carmela','cocina')); // v28.18: la cocinera prepara comida de verdad
+  for(const [role,list] of Object.entries(Game.upgrades?.workforce?.team||{})){
+    if(!Game.staff[role])continue;
+    const arr=Array.isArray(list)?list:list?[list]:[];
+    for(const e of arr){
+      const slot=mk(e.id, role==='cocinero'?'cocina':'all');
+      slot.staffRole=role;
+      Game.slots.push(slot);
+    }
+  }
   Game.dayStats={revenue:0,served:0,lost:0,lostPrice:0,lostQueue:0,lostPatience:0,lostStock:0,lostClose:0,partial:0,noTable:0,satSum:0,satN:0,sold:{},stockOuts:{},hamacas:0,fines:0,urgent:0,purchases:0,repStart:Game.rep,cleaned:0,tips:0,combos:0,tipsP:0,regVisits:0,visits:[],usedNames:new Set(),
     /* v29.3: segundos realmente trabajados por cada contratado: el sueldo de fin de
        jornada se paga solo por este tiempo, no por las horas de descanso. */
@@ -134,11 +142,11 @@ export function update(dt){
     if(Game.closeT>4){
       for(const c of Game.customers){
         if(c.state==='eat' && c.table){
-          const t=c.table; t.cust=null; t.state=tableStateAfterMeal(); t.dirtyT=0; c.table=null;
+          const t=c.table; if(t.cust2===c)t.cust2=null; t.cust=null; t.state=tableStateAfterMeal(c); t.dirtyT=0; c.table=null;
           c.state='leave'; c.act=c.sat>0.6?'bye':'walk'; c.actT=0;
           navSetTarget(c, rnd()<0.8?EXIT_X_R:EXIT_X_L, rand(660,700));
         } else if(c.state==='toTable'){
-          if(c.table){ c.table.cust=null; if(c.table.state==='busy') c.table.state=tableStateAfterMeal(); c.table=null; }
+          if(c.table){ c.table.cust=null; if(c.table.cust2===c)c.table.cust2=null; if(c.table.state==='busy') c.table.state=tableStateAfterMeal(c); c.table=null; }
           c.state='leave'; c.act='walk'; c.actT=0;
           navSetTarget(c, rnd()<0.8?EXIT_X_R:EXIT_X_L, rand(660,700));
         }
@@ -156,10 +164,10 @@ export function update(dt){
       s.t+=dt;
       /* v29.3: sueldo por tiempo trabajado: el camarero y la cocinera solo
          cobran los segundos que pasan con un pedido entre manos. */
-      if(s.who==='yeray'||s.who==='carmela'){ const k=s.who==='yeray'?'camarero':'cocinero'; Game.dayStats.staffWork[k]+=dt; }
+      if(s.staffRole)Game.dayStats.staffWork[s.staffRole]+=dt;
       if(s.t>=s.total) finishSlot(s);
     }
-    else if((s.who==='yeray'||s.who==='carmela') && !Game.closing && staffOnDuty(s.who==='yeray'?'camarero':'cocinero')){
+    else if(s.staffRole && !Game.closing && staffOnDuty(s.staffRole)){
       s.think=(s.think||0)+dt;
       if(s.think>0.5){ s.think=0;
         const busy = new Set(Game.slots.filter(o=>o.cust).map(o=>o.cust));
@@ -206,7 +214,7 @@ export function update(dt){
         if(c.patience<=0){
           c.state='leave';c.act='walk';c.tLeave=Game.t;
           leaveQueue(c);Game.dayStats.lostPatience++;Game.dayStats.lost++;
-          recordVisit(c,{lost:'espera'});regularOutcome(c,0);addSat(0);
+          recordVisit(c,{lost:'espera'});regularOutcome(c,0);addSat(0);coupleAbandon(c);
         }
         break;
       }
@@ -221,14 +229,14 @@ export function update(dt){
         if(c.act==='menu' && c.actT>c.menuDur){ c.act='order'; c.actT=0; }
         else if(c.act==='order' && c.actT>0.9){ c.act='wait'; c.actT=0; }
         if(Game.closing){ c.state='leave'; c.act='walk'; leaveQueue(c); Game.dayStats.lostClose=(Game.dayStats.lostClose||0)+1; Game.dayStats.lost++; recordVisit(c,{lost:'cierre'}); regularOutcome(c,0); break; }
-        if(angerUpdate(c,dt,1)){ c.state='leave'; c.act='walk'; c.mood='enfado'; c.moodT=3; c.moodTxt='¡Me largo!'; leaveQueue(c); c.tLeave=Game.t; Game.dayStats.lostPatience++; Game.dayStats.lost++; recordVisit(c,{lost:'espera'}); regularOutcome(c,0); addSat(0); Audio.angry(); }
+        if(angerUpdate(c,dt,1)){ c.state='leave'; c.act='walk'; c.mood='enfado'; c.moodT=3; c.moodTxt='¡Me largo!'; leaveQueue(c); c.tLeave=Game.t; Game.dayStats.lostPatience++; Game.dayStats.lost++; recordVisit(c,{lost:'espera'}); regularOutcome(c,0); addSat(0); Audio.angry(); coupleAbandon(c); }
         break;
       }
       case 'prep':
         navStep(c,dt,1); c.actT+=dt;
         if(c.act!=='wait' && c.act!=='lookAround' && c.act!=='watch' && c.act!=='protest'){ c.act='wait'; c.actT=0; }
         if(c.inPrep===0 && pendingIdx(c).length){
-          if(angerUpdate(c,dt,0.6)){ c.mood='enfado'; c.moodT=2.5; c.moodTxt='¡No espero más!'; giveUpPending(c); }
+          if(angerUpdate(c,dt,0.6)){ c.mood='enfado'; c.moodT=2.5; c.moodTxt='¡No espero más!'; giveUpPending(c); coupleAbandon(c); }
         }
         break;
       case 'toTable': if(navStep(c,dt,1)){ c.state='eat'; c.act = c.served && c.served.some(id=>DRINKS.includes(id)) ? 'drink':'eat'; c.actT=0; } break;
@@ -238,11 +246,31 @@ export function update(dt){
         const hasFood = c.served.some(id=>!DRINKS.includes(id));
         const dur = c.act==='drink'?2.0:3.0;
         if(c.actT>dur){ c.act = c.act==='drink' ? (hasFood?'eat':'drink') : (hasDrink?'drink':'eat'); c.actT=0; }
-        if(c.eatT<=0){ const t=c.table; t.cust=null; /* v29.2: todo cliente que come en mesa deja la mesa sucia */ t.state=tableStateAfterMeal(); t.dirtyT=0; c.table=null; c.state='leave'; c.act = c.sat>0.6?'bye':'walk'; c.actT=0; navSetTarget(c, rnd()<0.8?EXIT_X_R:EXIT_X_L, rand(660,700)); }
+        if(c.eatT<=0){ const t=c.table; const mate=c.partnerId!=null?Game.customers.find(x=>x.id===c.partnerId):null; if(t){t.cust=null; if(t.cust2===c)t.cust2=null; /* v29.5: la mesa solo queda sucia si comieron comida (la pareja junta) */ t.state=tableStateAfterMeal({served:[...c.served,...(mate&&['eat','toTable'].includes(mate.state)?mate.served||[]:[])]}); t.dirtyT=0;} c.table=null; c.state='leave'; c.act = c.sat>0.6?'bye':'walk'; c.actT=0; navSetTarget(c, rnd()<0.8?EXIT_X_R:EXIT_X_L, rand(660,700));
+          if(mate&&['eat','toTable'].includes(mate.state)){ if(mate.table){mate.table.cust2=null;mate.table=null;} mate.state='leave'; mate.act='bye'; mate.actT=0; navSetTarget(mate, rnd()<0.8?EXIT_X_R:EXIT_X_L, rand(660,700)); } }
+        break;
+      }
+      case 'waitPartner': {
+        /* v29.5: ya atendida, espera a su pareja junto a la barra. Si el
+           retrasón agota su paciencia, se van las dos. */
+        c.waitT+=dt; c.actT+=dt;
+        if(!['wait','lookAround','watch'].includes(c.act)){ c.act='wait'; c.actT=0; }
+        if(angerUpdate(c,dt,0.5)){
+          c.state='leave'; c.act='walk'; c.mood='enfado'; c.moodT=3; c.moodTxt='¡No espero más!';
+          leaveQueue(c); Game.dayStats.lostPatience++; Game.dayStats.lost++;
+          recordVisit(c,{lost:'espera'}); regularOutcome(c,0); addSat(0); coupleAbandon(c);
+        }
         break;
       }
       case 'waitTable': {
         c.waitT+=dt; c.actT+=dt;
+        if(c.partnerId!=null){
+          /* v29.5: las parejas comparten mesa: el miembro líder busca mesa y
+             el otro le sigue a la misma. */
+          const mate=Game.customers.find(x=>x.id===c.partnerId);
+          if(mate&&mate.table&&['toTable','eat'].includes(mate.state)){ payAndSeat(c, c.totalDue, c.sat, mate.table); break; }
+          if(!c.coupleLead&&mate&&mate.state==='waitTable'){ break; }
+        }
         const free = Game.tables.find(t=>t.state==='free');
         if(free){ payAndSeat(c, c.totalDue, c.sat, free); }
         else if(c.waitT>WAIT_TABLE_MAX || Game.closing){ payAndGo(c, c.totalDue, c.sat-0.2, true); }

@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=29.4.11';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=29.5.0';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -26,17 +26,24 @@ export const isCoop = ()=> Net.role!=='solo';
 export const isGuest = ()=> Net.role==='guest';
 export const hostLive = ()=> Net.role==='host' && Net.peer;
 /* v28.19: la disponibilidad del currículum es real: media jornada y fines de
-   semana limitan cuándo trabaja cada contratado (y su sueldo ya lo refleja). */
-export function staffOnDuty(role){
-  const e=Game.upgrades.workforce?.team?.[role];
-  if(!e) return true;
+   semana limitan cuándo trabaja cada contratado (y su sueldo ya lo refleja).
+   v29.5: la plantilla admite varios empleados por puesto; la guardia se
+   comprueba por empleado (team[rol] es un array). */
+export function employeeOnDuty(e){
+  if(!e)return true;
   const a=e.availability;
-  if(a==='Fines de semana') return isWeekend(simProgressDay());
-  if(a==='Mañanas') return Game.hour<15;
-  if(a==='Tardes') return Game.hour>=14;
+  if(a==='Fines de semana')return isWeekend(simProgressDay());
+  if(a==='Mañanas')return Game.hour<15;
+  if(a==='Tardes')return Game.hour>=14;
   return true;
 }
-export function whoName(w){ return w==='yeray'?(Game.upgrades.workforce?.team?.camarero?.name||'Yeray') : isCoop()? Net.names[w] : 'Preparando'; }
+export function staffOnDuty(role){
+  const v=Game.upgrades.workforce?.team?.[role];
+  const list=Array.isArray(v)?v:v?[v]:[]; // plantilla sin migrar (objeto suelto) o vacía
+  if(!list.length)return true;
+  return list.some(e=>employeeOnDuty(e));
+}
+export function whoName(w){const t=Game.upgrades.workforce?.team;if(t)for(const list of Object.values(t)){const e=(Array.isArray(list)?list:[list]).find(x=>x&&x.id===w);if(e)return e.name;}return w==='yeray'?'Yeray':isCoop()? Net.names[w] : 'Preparando';}
 export function partner(){ return Net.me==='p1'?'p2':'p1'; }
 
 export function lvl(id){ return Game.upgrades[id]||0; }
@@ -46,7 +53,7 @@ export function activeItems(){ return ITEM_IDS.filter(id=>itemUnlocked(id) && Ga
 // Máximo 10 mesas: es el número de posiciones definidas en world.js (TABLE_POS)
 export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('terraza')); }
 export function hamacaCount(){ return 4*lvl('hamacas'); }
-export function wages(){ return STAFF.reduce((s,st)=> s + (Game.staff[st.id]?(Game.upgrades.workforce?.team?.[st.id]?.wage??st.wage):0), 0); }
+export function wages(){const t=Game.upgrades.workforce?.team;return STAFF.reduce((s,st)=>{if(!Game.staff[st.id])return s;const v=t?.[st.id];const list=Array.isArray(v)?v:v?[v]:[];return s+list.reduce((n,e)=>n+(e?.wage??st.wage),0);},0);}
 /* v29.3: sueldo por tiempo realmente trabajado. La jornada completa (de 10:00 al
    cierre) vale el sueldo íntegro; cada minuto sin tareas en manos lo reduce en
    proporción. Los contratados ya no cobran las horas en que no hacen nada. */

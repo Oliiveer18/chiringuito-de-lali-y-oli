@@ -48,10 +48,18 @@ const { navFreeAt } = await import(`./nav.js?v=${V}`);
 const { applyAct } = await import(`./net.js?v=${V}`);
 const { readyOn } = await import(`./ui.js?v=${V}`);
 
+/* v29.5: la plantilla es una lista de empleados por puesto; los tests usan los
+   ids clásicos (yeray/carmela/acaymo) como los crearía la migración de guardado. */
+const mkEmp = (id, name, role, wage) => ({ id, name, role, wage, workMultiplier: 1, training: 0, hiredDay: 1, level: 1, xp: 0, fatigue: 0, happiness: 0.7, lowDays: 0, availability: 'Jornada completa' });
 async function setupCoopDay(staff = { limpiador: 1, camarero: 1, cocinero: 1, terraza: 1 }) {
   Net.role = 'host'; Net.peer = true; Net.names = { p1: 'A', p2: 'B' }; Net.roles = { p1: 'barra', p2: 'cocina' };
-  Game.upgrades = { mesas: 3, workforce: { team: {} } };
-  Game.staff = staff;
+  Game.upgrades = { mesas: 3, workforce: { team: {
+    camarero: staff.camarero ? [mkEmp('yeray', 'Yeray', 'camarero', 110)] : [],
+    cocinero: staff.cocinero ? [mkEmp('carmela', 'Carmela', 'cocinero', 130)] : [],
+    limpiador: staff.limpiador ? [mkEmp('acaymo', 'Acaymo', 'limpiador', 60)] : [],
+    terraza: staff.terraza ? [mkEmp('original-terraza', 'Terra', 'terraza', 120)] : [],
+  } } };
+  Game.staff = { ...staff };
   for (const id of cfg.ITEM_IDS) { Game.stock[id] = 50; Game.prices[id] = cfg.ITEMS[id].ref; Game.enabled[id] = true; }
   buildTables(); Game.forecast = Array.from({ length: 40 }, () => 'sol');
   Game.speed = 1;

@@ -1,5 +1,5 @@
-export const VERSION='v29.4.11';
-export const LABEL='v29.4.11 · rivales con carácter: cada kiosco tiene estilo propio, racha y contratiempos, puntúa con la misma fórmula que tú y las ligas quedan escalonadas de verdad (Bronce-Plata-Oro por Pueblo, Isla y Nación)';
+export const VERSION='v29.5.0';
+export const LABEL='v29.5.0 · plantilla viva: hasta 3 contratos por puesto con vestuarios, niveles y XP, barras de cansancio y ánimo, renuncias si les va mal, sueldos equilibrados por disponibilidad, parejas de clientes que llegan juntas, mesas sucias solo con comida y el personal ya se ve dentro del kiosco';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

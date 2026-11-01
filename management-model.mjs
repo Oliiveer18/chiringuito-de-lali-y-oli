@@ -48,14 +48,66 @@ const AVAILABILITY=['Jornada completa','Fines de semana','Mañanas','Tardes'];
      misma proporción: media jornada cuesta ~62%, solo fines de semana ~50%.
    El sueldo sale de base x ritmo x presencia (+-5% de regateo), redondeado
    a 5 €: nunca hay fichas desproporcionadas, solo decisiones. */
-export const PRESENCE_PRICE={'Jornada completa':1,'Fines de semana':0.5,'Mañanas':0.62,'Tardes':0.62};
+export const PRESENCE_PRICE={'Jornada completa':1,'Fines de semana':0.55,'Mañanas':0.55,'Tardes':0.55};
+/* v29.5: nivel, cansancio y felicidad del personal.
+   - Nivel 1-10: la experiencia acumulada mejora el ritmo (~3%/nivel) pero el
+     sueldo que el trabajador espera crece con el nivel: mantener talento cuesta.
+   - Cansancio: sube trabajando la jornada (0-1). Penaliza el ritmo hasta -20%
+     en la segunda mitad de una jornada completa; se resetea cada día.
+   - Felicidad (0-1): sueldo justo, carga de trabajo cómoda y eventos del día.
+     Trabajar de más cansa; trabajar de menos aburre ("poco que hacer").
+     Felicidad alta = hasta +10% de ritmo; sostenida muy baja = renuncia.
+   Balance de sueldos: jornada completa produce ~9h frescas por sueldo íntegro;
+     dos medias jornadas producen ~10h por 1,1 sueldos: eficiencia por euro
+     casi idéntica (±1%), sin que ninguna opción domine. */
+export const MAX_LEVEL=10;
+export function xpForLevel(level){return Math.round(25*Math.pow(level,1.5));}
+export function fatiguePenalty(e){const f=e?.fatigue||0;return f>0.5?(f-0.5)*0.4:0;}
+export function happinessBonus(e){const h=e?.happiness==null?0.7:e.happiness;return (h-0.7)*0.33;}
+export function effMultiplier(e){
+  if(!e||!e.workMultiplier)return 1;
+  const level=Math.min(MAX_LEVEL,e.level||1);
+  const levelCut=1-0.03*(level-1);
+  const weekend=e.availability==='Fines de semana'?0.95:1;
+  return Math.max(0.5,Math.min(1.6,e.workMultiplier*levelCut*(1+fatiguePenalty(e))*(1-happinessBonus(e))*weekend));
+}
+export function expectedWage(e,base){
+  const presence=PRESENCE_PRICE[e?.availability]??1;
+  const level=1+0.08*((e?.level||1)-1);
+  return Math.max(5,Math.round(base*presence*level*(2-(e?.workMultiplier||1))));
+}
+/* v29.5: cierre de jornada de un empleado. prod: {items,clean,orders,escort,
+   delivered,load,eventMood}. Devuelve el empleado actualizado y si renuncia. */
+export function dayEndEmployee(e,base,prod){
+  const out={...(e||{})};
+  const xpGain=Math.round((prod.items||0)*3+(prod.clean||0)*2+(prod.orders||0)*2+(prod.escort||0)+(prod.delivered||0)*1.5);
+  out.xp=(out.xp||0)+xpGain;
+  out.fatigue=0;
+  let leveled=false;
+  while((out.level||1)<MAX_LEVEL&&out.xp>=xpForLevel((out.level||1)+1)){out.level=(out.level||1)+1;leveled=true;}
+  out.leveledUp=leveled;
+  let target=0.75;
+  const expected=expectedWage(out,base);
+  if(out.wage>=expected*0.95)target+=0.12;else if(out.wage<expected*0.8)target-=0.3;
+  if(prod.load!=null){
+    if(prod.load<0.35)target-=0.25;
+    else if(prod.load>1.2)target-=0.15;
+    else target+=0.1;
+  }
+  if(prod.eventMood)target+=prod.eventMood;
+  const prev=out.happiness??0.7;
+  out.happiness=Math.max(0,Math.min(1,prev+(target-prev)*0.4));
+  if(out.happiness<0.25)out.lowDays=(out.lowDays||0)+1;
+  else out.lowDays=Math.max(0,(out.lowDays||0)-1);
+  return {employee:out,quit:(out.lowDays||0)>=3,xpGain};
+}
 export function candidates(seed,day){
  if(!Number.isInteger(day)||day<1)throw new Error('Invalid recruitment day');
  const batch=Math.floor((day-1)/3),h0=hash(seed+':'+batch+':count');
  const min=day<=3?0:day<=7?1:2,max=day<=1?1:day<=4?2:day<=10?3:4;
  const count=min+(h0%Math.max(1,max-min+1)),out=[];
  for(let i=0;i<count;i++){
-  const h=hash(seed+':'+batch+':'+i),[role,base]=ROLES[i%ROLES.length];
+  const h=hash(seed+':'+batch+':'+i),[role,base]=ROLES[(h>>>16)%ROLES.length];
   const level=h%3,experience=[0,2,5][level];
   const age=Math.max(18+((h>>>3)%23),18+experience),origin=ORIGINS[(h>>>6)%ORIGINS.length];
   const availability=AVAILABILITY[(h>>>9)%AVAILABILITY.length];
@@ -67,15 +119,20 @@ export function candidates(seed,day){
   const presRole={camarero:'barra',cocinero:'cocina',limpiador:'limpieza',terraza:'terraza'}[role];
   const presAvail={'Jornada completa':'Puedo hacer jornada completa.','Fines de semana':'Solo puedo trabajar fines de semana: el precio lo refleja.','Mañanas':'Solo doy mañanas (hasta las 15:00): el precio lo refleja.','Tardes':'Solo doy tardes (desde las 14:00): el precio lo refleja.'}[availability];
   const presentation=(experience?'Busco trabajo de temporada en '+presRole+'. Tengo experiencia en el puesto. ':'Busco mi primera oportunidad en '+presRole+' y tengo disposición para aprender. ')+presAvail;
-  out.push({id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],age,origin,experience,experienceLabel,availability,presentation,wage,workMultiplier:slowness,received:batch*3+1,expires:batch*3+3,training:0});
+  out.push({id:'cv-'+batch+'-'+i,role,name:NAMES[(h+i)%NAMES.length],age,origin,experience,experienceLabel,availability,presentation,wage,workMultiplier:slowness,received:batch*3+1,expires:batch*3+3,training:0,level:1,xp:0,fatigue:0,happiness:0.7,lowDays:0});
  }
  return out;
 }
-export function hireCandidate(team,applicants,id,day){
+/* v29.5: la plantilla admite hasta 3 empleados por puesto (huecos extra
+   desbloqueados con la mejora de vestuarios). team[rol] es un array. */
+export function teamOf(team,role){const v=team?.[role];return Array.isArray(v)?v:v?[v]:[];}
+export function hireCandidate(team,applicants,id,day,openSlots=1){
  const c=applicants.find(c=>c.id===id);
  if(!c||day<c.received||day>c.expires)throw new Error('Unavailable candidate');
- if(Object.values(team||{}).some(e=>e.id===id))throw new Error('Already hired');
- return {team:{...team,[c.role]:{...c,hiredDay:day}},applicants:applicants.filter(a=>a.id!==id)};
+ if(Object.values(team||{}).some(v=>(Array.isArray(v)?v:[v]).some(e=>e&&e.id===id)))throw new Error('Already hired');
+ const list=teamOf(team,c.role);
+ if(list.length>=Math.min(3,Math.max(1,openSlots)))throw new Error('No queda hueco para ese puesto');
+ return {team:{...team,[c.role]:[...list,{...c,hiredDay:day}]},applicants:applicants.filter(a=>a.id!==id)};
 }
 export function trainEmployee(employee,cash){
  if(!employee||!Number.isInteger(employee.training)||employee.training<0||employee.training>=2||!Number.isFinite(employee.workMultiplier)||employee.workMultiplier<=0)throw new Error('Training limit');

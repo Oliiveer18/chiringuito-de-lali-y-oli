@@ -3,7 +3,7 @@
    Constantes del juego: dimensiones, calendario, economía, productos,
 clientes habituales, clima, mejoras y personal.
    ========================================================= */
-import { rnd } from './util.js?v=29.4.11';
+import { rnd } from './util.js?v=29.5.0';
 
 // ---------- Constantes ----------
 export const W = 1280, H = 720;
@@ -87,7 +87,8 @@ export const UPGRADES = [
   {id:'hamacas',   name:'Hamacas',              desc:'+4 hamacas de alquiler por nivel. Ingresos pasivos con buen tiempo.', levels:[400,650]},
   {id:'redes',     name:'Redes sociales',       desc:'Una cuenta de Instagram con buenas fotos: +15% de clientes.', levels:[450]},
   {id:'cocina',    name:'Cocina con freidora',  desc:'Desbloquea el pescado fresco del día, el plato más rentable.', levels:[1100], req:'plancha'},
-  {id:'luces',     name:'Guirnaldas y luces',   desc:'Abre hasta las 22:00 y aprovecha la puesta de sol.', levels:[800]},
+  {id:'luces',     name:'Guirnaldas y luces',  desc:'Abre hasta las 22:00 y aprovecha la puesta de sol.', levels:[800]},
+  {id:'vestuarios',name:'Vestuarios',          desc:'Un hueco más de plantilla por puesto y nivel: hasta 3 trabajadores por puesto.', levels:[350,700]},
 ];
 
 export const STAFF = [

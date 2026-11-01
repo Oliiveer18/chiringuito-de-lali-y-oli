@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.4.11';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.4.11';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.4.11';
-import { rr } from './icons.js?v=29.4.11';
-import { Audio } from './audio.js?v=29.4.11';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=29.4.11';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.4.11';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.4.11';
-import { netAct, netDirty } from './net.js?v=29.4.11';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.4.11';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=29.5.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=29.5.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=29.5.0';
+import { rr } from './icons.js?v=29.5.0';
+import { Audio } from './audio.js?v=29.5.0';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=29.5.0';
+import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=29.5.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=29.5.0';
+import { netAct, netDirty } from './net.js?v=29.5.0';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=29.5.0';
 
 export function endDay(){
   Game.mode='report';
@@ -231,19 +231,27 @@ export function showReportUI(){
 const STAFF_WHO={camarero:'yeray',cocinero:'carmela',limpiador:'acaymo',terraza:'terraza'};
 const STAFF_LABEL={camarero:'Atención de cola',cocinero:'Preparación',limpiador:'Limpieza',terraza:'Servicio de terraza'};
 const STAFF_COLOR={camarero:'#0f8b8d',cocinero:'#e8603c',limpiador:'#6b7f8e',terraza:'#b07a1e'};
+/* v29.5: hasta 3 empleados por puesto, cada uno con su nivel, cansancio y ánimo. */
+const barHtml=(v,label,color)=>`<span class="wf-bar" title="${label}"><i style="width:${Math.round(Math.max(0,Math.min(1,v))*100)}%;background:${color}"></i></span>`;
 export function staffRowsHtml(s){
   const team=(Game.upgrades.workforce&&Game.upgrades.workforce.team)||{};
   let h='';
-  for(const [role,e] of Object.entries(team)){
+  for(const [role,list] of Object.entries(team)){
     if(!Game.staff[role])continue;
-    const b=(s.by&&s.by[STAFF_WHO[role]])||{};
-    const name=(e&&e.name)||STAFF_WHO[role];
-    const wH=((s.staffWork&&s.staffWork[role])||0)/SEC_PER_HOUR;
-    let stats;
-    if(role==='terraza') stats=`<span><b>${b.escort||0}</b> acompañados</span><span><b>${b.orders||0}</b> comandas</span><span><b>${b.delivered||0}</b> servidos</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>`;
-    else if(role==='limpiador') stats=`<span><b>${b.clean||0}</b> mesas limpiadas</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>`;
-    else stats=`<span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>${role==='camarero'?`<span><b>${s.staffClients||0}</b> clientes</span>`:''}`;
-    h+=`<div class="mate"><div class="mate-h"><span class="dot" style="background:${STAFF_COLOR[role]}"></span><b>${escapeHtml(name)}</b><span class="tag">${STAFF_LABEL[role]}</span></div><div class="mate-s">${stats}</div></div>`;
+    const arr=Array.isArray(list)?list:list?[list]:[];
+    for(const e of arr){
+      const b=(s.by&&s.by[e.id||STAFF_WHO[role]])||{}; // CVs nuevos: por id; plantilla sin migrar: rol clásico
+      const name=(e&&e.name)||STAFF_WHO[role];
+      const wH=((s.staffWork&&s.staffWork[role])||0)/SEC_PER_HOUR;
+      let stats;
+      if(role==='terraza') stats=`<span><b>${b.escort||0}</b> acompañados</span><span><b>${b.orders||0}</b> comandas</span><span><b>${b.delivered||0}</b> servidos</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>`;
+      else if(role==='limpiador') stats=`<span><b>${b.clean||0}</b> mesas limpiadas</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>`;
+      else stats=`<span><b>${b.items||0}</b> preparados</span><span><b>${eur(b.rev||0)}</b> vendidos</span><span><b>${wH.toFixed(1).replace('.',',')} h</b> trabajadas</span>${role==='camarero'?`<span><b>${s.staffClients||0}</b> clientes</span>`:''}`;
+      const lvl=e?.level||1;
+      const mood=e?.happiness==null?0.7:e.happiness;
+      const moodTxt=mood<0.35?'descontento':mood>0.75?'contento':'normal';
+      h+=`<div class="mate"><div class="mate-h"><span class="dot" style="background:${STAFF_COLOR[role]}"></span><b>${escapeHtml(name)}</b><span class="tag">${STAFF_LABEL[role]}</span><span class="tag">Nv ${lvl}</span>${barHtml(mood,'Ánimo','#e8a03c')}<span class="tag">${moodTxt}</span></div><div class="mate-s">${stats}</div></div>`;
+    }
   }
   return h;
 }

@@ -1,37 +1,38 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { releaseFloorCustomer } from "../floor-service.js?v=29.4.11";
-import { ITEMS } from "../config.js?v=29.4.11";
-import { PKEYS } from "../config.js?v=29.4.11";
-import { QUEUE_SPOTS } from "../config.js?v=29.4.11";
-import { REGULARS } from "../config.js?v=29.4.11";
-import { SEC_PER_HOUR } from "../config.js?v=29.4.11";
-import { TYPES } from "../config.js?v=29.4.11";
-import { W } from "../config.js?v=29.4.11";
-import { WEATHER } from "../config.js?v=29.4.11";
-import { stationOf } from "../config.js?v=29.4.11";
-import { who } from "../config.js?v=29.4.11";
-import { clamp } from "../util.js?v=29.4.11";
-import { pickW } from "../util.js?v=29.4.11";
-import { rand } from "../util.js?v=29.4.11";
-import { rnd } from "../util.js?v=29.4.11";
-import { Game } from "../state.js?v=29.4.11";
-import { activeItems } from "../state.js?v=29.4.11";
-import { closeHour } from "../state.js?v=29.4.11";
-import { isCoop } from "../state.js?v=29.4.11";
-import { isWeekend } from "../state.js?v=29.4.11";
-import { itemUnlocked } from "../state.js?v=29.4.11";
-import { lvl } from "../state.js?v=29.4.11";
-import { simProgressDay } from "../state.js?v=29.4.11";
-import { setTimeoutGame } from "../state.js?v=29.4.11";
-import { weatherToday } from "../state.js?v=29.4.11";
-import { QUEUE_POS } from "../world.js?v=29.4.11";
-import { custSeq } from "../world.js?v=29.4.11";
-import { genLook } from "../world.js?v=29.4.11";
-import { EXIT_X_R } from "../world.js?v=29.4.11";
-import { EXIT_X_L } from "../world.js?v=29.4.11";
-import { navSetTarget } from "../nav.js?v=29.4.11";
-import { recordVisit } from "../report.js?v=29.4.11";
-import { difficultyProfile } from "./season.js?v=29.4.11";
+import { releaseFloorCustomer } from "../floor-service.js?v=29.5.0";
+import { ITEMS } from "../config.js?v=29.5.0";
+import { PKEYS } from "../config.js?v=29.5.0";
+import { QUEUE_SPOTS } from "../config.js?v=29.5.0";
+import { REGULARS } from "../config.js?v=29.5.0";
+import { SEC_PER_HOUR } from "../config.js?v=29.5.0";
+import { TYPES } from "../config.js?v=29.5.0";
+import { W } from "../config.js?v=29.5.0";
+import { WEATHER } from "../config.js?v=29.5.0";
+import { stationOf } from "../config.js?v=29.5.0";
+import { who } from "../config.js?v=29.5.0";
+import { clamp } from "../util.js?v=29.5.0";
+import { pickW } from "../util.js?v=29.5.0";
+import { rand } from "../util.js?v=29.5.0";
+import { rnd } from "../util.js?v=29.5.0";
+import { Game } from "../state.js?v=29.5.0";
+import { activeItems } from "../state.js?v=29.5.0";
+import { closeHour } from "../state.js?v=29.5.0";
+import { isCoop } from "../state.js?v=29.5.0";
+import { isWeekend } from "../state.js?v=29.5.0";
+import { itemUnlocked } from "../state.js?v=29.5.0";
+import { lvl } from "../state.js?v=29.5.0";
+import { simProgressDay } from "../state.js?v=29.5.0";
+import { setTimeoutGame } from "../state.js?v=29.5.0";
+import { weatherToday } from "../state.js?v=29.5.0";
+import { QUEUE_POS } from "../world.js?v=29.5.0";
+import { custSeq } from "../world.js?v=29.5.0";
+import { genLook } from "../world.js?v=29.5.0";
+import { EXIT_X_R } from "../world.js?v=29.5.0";
+import { EXIT_X_L } from "../world.js?v=29.5.0";
+import { navSetTarget } from "../nav.js?v=29.5.0";
+import { recordVisit } from "../report.js?v=29.5.0";
+import { addSat } from "./economy.js?v=29.5.0";
+import { difficultyProfile } from "./season.js?v=29.5.0";
 
 export function spawnCustomer(forceType, opts){
   const difficulty=difficultyProfile();
@@ -103,17 +104,56 @@ export function spawnCustomer(forceType, opts){
     if(Object.keys(remaining).length) c.order.push(pickW(remaining));
   }
   c.itemSt = c.order.map(()=>0); c.served=[]; c.missing=0; c.inPrep=0; c.partT={}; c.menuDur=rand(1.4,2.4); c.asked=c.order.slice();
+  /* v29.5: parejas. Llegan juntas, piden por separado y solo van a la mesa si
+     atienden a las dos; si una pierde la paciencia, se marchan las dos. */
+  let mate=null;
+  if(!regular && !forceType && simProgressDay()>=4 && rnd()<0.16){ /* parejas solo en llegadas normales, no en eventos forzados */
+    const n2=rnd()<0.55?1:2;
+    const pool2={...weights};
+    if(regular&&itemUnlocked(regular.fav))delete pool2[regular.fav];
+    const order2=[];
+    for(let i=0;i<n2&&Object.keys(pool2).length;i++){const k=pickW(pool2);order2.push(k);delete pool2[k];}
+    if(order2.length){
+      mate={...c};
+      mate.id=++custSeq.id;
+      mate.personality=PKEYS[Math.floor(rnd()*PKEYS.length)];
+      mate.look=genLook(type); mate.shirt=mate.look.shirt; mate.skin=mate.look.skin; mate.hat=mate.look.hat||null;
+      mate.bob=rnd()*6; mate.walkPhase=0; mate.stridePh=0; mate.speed=c.speed*rand(0.95,1.05);
+      mate.order=order2; mate.asked=order2.slice(); mate.itemSt=order2.map(()=>0); mate.served=[]; mate.missing=0;
+      mate.inPrep=0; mate.partT={}; mate.menuDur=rand(1.4,2.4);
+      mate.revName=null;
+      if(Game.dayStats){let nm=who(type),tries=0;while(Game.dayStats.usedNames.has(nm)&&tries++<4)nm=who(type);Game.dayStats.usedNames.add(nm);mate.revName=nm;}
+      mate.partnerId=c.id; mate.coupleLead=false;
+      c.partnerId=mate.id; c.coupleLead=true;
+      Game.customers.push(mate);
+    }
+  }
   const taken = new Set(Game.customers.filter(o=>o.spot>=0).map(o=>o.spot));
-  let spot=-1; for(let i=0;i<QUEUE_SPOTS;i++) if(!taken.has(i)){ spot=i; break; }
+  let spot=-1;
+  if(mate){
+    for(let i=0;i+1<QUEUE_SPOTS;i++) if(!taken.has(i)&&!taken.has(i+1)){spot=i;break;}
+  }else{
+    for(let i=0;i<QUEUE_SPOTS;i++) if(!taken.has(i)){ spot=i; break; }
+  }
   if(spot<0){
     c.state='walkby'; c.mood='lleno'; c.moodT=3; navSetTarget(c, fromRight? EXIT_X_L : EXIT_X_R, 690); c.y=rand(684,700);
     Game.dayStats.lostQueue++; Game.dayStats.lost++; recordVisit(c,{lost:'lleno'}); if(regular) regularOutcome(c,0);
+    if(mate){ // sin dos puestos contiguos no hay sitio para la pareja: se van las dos
+      mate.state='walkby'; mate.mood='lleno'; mate.moodT=3; navSetTarget(mate, fromRight? EXIT_X_L : EXIT_X_R, 690); mate.y=rand(684,700);
+      Game.dayStats.lostQueue++; Game.dayStats.lost++; recordVisit(mate,{lost:'lleno'});
+    }
     Game.customers.push(c); return c;
   }
   c.spot=spot; navSetTarget(c, QUEUE_POS[spot].x, QUEUE_POS[spot].y, {x:QUEUE_POS[spot].x, y:QUEUE_POS[spot].y+46});
   const dirty = Game.tables.filter(t=>t.state==='dirty').length;
   c.maxPatience = T.patience * difficulty.patience * (c.order.length>2?1.12:1) * (lvl('altavoz')?1.25:1) * (1 - Math.min(0.3,dirty*0.06)) * rand(0.85,1.15);
   c.patience = c.maxPatience;
+  if(mate){
+    mate.spot=spot+1; navSetTarget(mate, QUEUE_POS[spot+1].x, QUEUE_POS[spot+1].y, {x:QUEUE_POS[spot+1].x, y:QUEUE_POS[spot+1].y+46});
+    const Tm=TYPES[type];
+    mate.maxPatience = Tm.patience * difficulty.patience * (mate.order.length>2?1.12:1) * (lvl('altavoz')?1.25:1) * (1 - Math.min(0.3,dirty*0.06)) * rand(0.85,1.15);
+    mate.patience = mate.maxPatience;
+  }
   Game.customers.push(c); return c;
 }
 
@@ -144,3 +184,20 @@ export function scheduleRegulars(){
 }
 
 export function leaveQueue(c){if(c.floorTableId!=null)releaseFloorCustomer(c); c.spot=-1; navSetTarget(c, c.x<W/2 && rnd()<0.3 ? EXIT_X_L : EXIT_X_R, rand(660,700)); }
+
+/* v29.5: si una pareja no recibe atención y una se cansa, se van las dos. */
+export function coupleAbandon(c){
+  if(!c||!c.partnerId)return false;
+  const mate=Game.customers.find(x=>x.id===c.partnerId);
+  if(!mate||mate.coupleGone)return false;
+  if(['eat','toTable','leave','walkby','gone'].includes(mate.state))return false;
+  mate.coupleGone=true;
+  if(mate.floorTableId!=null)releaseFloorCustomer(mate);
+  for(const s of Game.slots)if(s.cust===mate){s.cust=null;s.items=[];}
+  mate.inPrep=0; mate.spot=-1;
+  leaveQueue(mate);
+  mate.state='leave'; mate.act='walk'; mate.mood='triste'; mate.moodT=3; mate.moodTxt='¡Nos vamos, vida!';
+  if(Game.dayStats){Game.dayStats.lost++;Game.dayStats.lostPatience++;}
+  recordVisit(mate,{lost:'espera'}); regularOutcome(mate,0); addSat(0);
+  return true;
+}

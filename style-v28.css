@@ -222,3 +222,12 @@ body:has(.overlay.show:not(#title):not(#final)) #btn-full-page{display:none}
 .up-row-details summary::-webkit-details-marker{display:none}
 .up-row-details p{margin:6px 0 0;font-size:12px;line-height:1.4}
 .up-req-tag{font-size:11px}
+/* v29.5: plantilla múltiple — barras de cansancio y ánimo por empleado */
+.wf-emp{border-top:1px dashed #d8cfc2;margin-top:6px;padding-top:6px}
+.wf-emp-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wf-xp{font-size:12px;color:#7c7160}
+.wf-bars{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.wf-bar{display:inline-block;width:64px;height:8px;border-radius:5px;background:#e7e0d3;overflow:hidden;vertical-align:middle}
+.wf-bar i{display:block;height:100%;border-radius:5px}
+.wf-bad{color:#b3402f}
+.wf-warning{color:#b3402f;font-weight:600}

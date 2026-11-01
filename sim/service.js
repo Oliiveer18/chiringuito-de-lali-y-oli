@@ -1,37 +1,38 @@
 /* Mechanical extraction from sim.js; declaration bodies are unchanged. */
-import { requestFloorClean } from "../floor-service.js?v=29.4.11";
-import { requestFloorCustomer } from "../floor-service.js?v=29.4.11";
-import { floorAway } from "../floor-service.js?v=29.4.11";
-import { releaseFloorCustomer } from "../floor-service.js?v=29.4.11";
-import { factor } from "../professional-model.mjs?v=29.4.11";
-import { ITEMS } from "../config.js?v=29.4.11";
-import { PERSONALITIES } from "../config.js?v=29.4.11";
-import { TYPES } from "../config.js?v=29.4.11";
-import { stationOf } from "../config.js?v=29.4.11";
-import { clamp } from "../util.js?v=29.4.11";
-import { eur2 } from "../util.js?v=29.4.11";
-import { rand } from "../util.js?v=29.4.11";
-import { rnd } from "../util.js?v=29.4.11";
-import { Audio } from "../audio.js?v=29.4.11";
-import { satisfaction } from "../ratings-model.mjs?v=29.4.11";
-import { Game } from "../state.js?v=29.4.11";
-import { Net } from "../state.js?v=29.4.11";
-import { hostLive, staffOnDuty } from "../state.js?v=29.4.11";
-import { isCoop } from "../state.js?v=29.4.11";
-import { lvl } from "../state.js?v=29.4.11";
-import { navSetTarget } from "../nav.js?v=29.4.11";
-import { recordVisit } from "../report.js?v=29.4.11";
-import { updateStockbar } from "../ui.js?v=29.4.11";
-import { addSat } from "./economy.js?v=29.4.11";
-import { charge } from "./economy.js?v=29.4.11";
-import { leaveQueue } from "./customers.js?v=29.4.11";
-import { pendingIdx } from "./orders.js?v=29.4.11";
-import { regularOutcome } from "./customers.js?v=29.4.11";
-import { servable } from "./day.js?v=29.4.11";
+import { requestFloorClean } from "../floor-service.js?v=29.5.0";
+import { requestFloorCustomer } from "../floor-service.js?v=29.5.0";
+import { floorAway } from "../floor-service.js?v=29.5.0";
+import { releaseFloorCustomer } from "../floor-service.js?v=29.5.0";
+import { factor } from "../professional-model.mjs?v=29.5.0";
+import { teamOf } from "../management-model.mjs?v=29.5.0";
+import { ITEMS } from "../config.js?v=29.5.0";
+import { PERSONALITIES } from "../config.js?v=29.5.0";
+import { TYPES } from "../config.js?v=29.5.0";
+import { stationOf } from "../config.js?v=29.5.0";
+import { clamp } from "../util.js?v=29.5.0";
+import { eur2 } from "../util.js?v=29.5.0";
+import { rand } from "../util.js?v=29.5.0";
+import { rnd } from "../util.js?v=29.5.0";
+import { Audio } from "../audio.js?v=29.5.0";
+import { satisfaction } from "../ratings-model.mjs?v=29.5.0";
+import { Game } from "../state.js?v=29.5.0";
+import { Net } from "../state.js?v=29.5.0";
+import { hostLive, staffOnDuty } from "../state.js?v=29.5.0";
+import { isCoop } from "../state.js?v=29.5.0";
+import { lvl } from "../state.js?v=29.5.0";
+import { navSetTarget } from "../nav.js?v=29.5.0";
+import { recordVisit } from "../report.js?v=29.5.0";
+import { updateStockbar } from "../ui.js?v=29.5.0";
+import { addSat } from "./economy.js?v=29.5.0";
+import { charge } from "./economy.js?v=29.5.0";
+import { leaveQueue,coupleAbandon } from "./customers.js?v=29.5.0";
+import { pendingIdx } from "./orders.js?v=29.5.0";
+import { regularOutcome } from "./customers.js?v=29.5.0";
+import { servable } from "./day.js?v=29.5.0";
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
-  if(lvl('plancha')) t*=0.8; if(Game.staff.cocinero&&!floorAway('carmela')&&staffOnDuty('cocinero')) t*=0.6*factor(Game.upgrades.workforce?.team?.cocinero,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
+  if(lvl('plancha')) t*=0.8; const cook=teamOf(Game.upgrades.workforce?.team,'cocinero')[0];if(Game.staff.cocinero&&cook&&staffOnDuty('cocinero')) t*=0.6*factor(cook,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
   return t;
 }
 
@@ -55,9 +56,10 @@ export function startPart(c, slot){if(!slot||floorAway(slot.who))return false;
      Un puesto cuesta ~50 €/día y podía producir hasta ~250 €/día: demasiado
      rentable y la partida se jugaba sola. Duplicando su tiempo por pedido,
      cada contratado produce aproximadamente la mitad que antes (~125 €/día). */
-  const staffSlow = (slot.who==='yeray'||slot.who==='carmela') ? 2 : 1;
-  slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * staffSlow * (slot.who==='yeray'?1.15*factor(Game.upgrades.workforce?.team?.camarero,avail.map(i=>({station:stationOf(c.order[i]),complex:ITEMS[c.order[i]].prep>=2}))):1);
-  slot.chefHelp=!!Game.staff.cocinero&&!floorAway('carmela');slot.cover = penalty>1;
+  const staffSlow = slot.staffRole ? 2 : 1;
+  const slotEmp=slot.staffRole?teamOf(Game.upgrades.workforce?.team,slot.staffRole).find(e=>e.id===slot.who):null;
+  slot.total = prepTime(avail.map(i=>c.order[i])) * penalty * staffSlow * (slot.staffRole==='camarero'?1.15*factor(slotEmp,avail.map(i=>({station:stationOf(c.order[i]),complex:ITEMS[c.order[i]].prep>=2}))):1);
+  const cooks=Game.floor?.actors.filter(a=>a.role==='cocinero')||[];slot.chefHelp=!!Game.staff.cocinero&&(cooks.length?cooks.some(a=>!floorAway(a.id)):true);slot.cover = penalty>1;
   if(avail.some(i=>stationOf(c.order[i])==='cocina')) Audio.sizzle(); else Audio.start();
   updateStockbar();
   return true;
@@ -80,6 +82,7 @@ export function checkComplete(c){
     Game.dayStats.lostStock++; Game.dayStats.lost++;
     recordVisit(c,{lost:'sinStock'});
     regularOutcome(c,0);
+    coupleAbandon(c);
     addSat(0.1); Audio.angry(); return;
   }
   if(c.floorTableId!=null){c.state='floorReady';return;}if(c.missing) Game.dayStats.partial++;
@@ -90,13 +93,24 @@ export function payAndSeat(c, total, s, t){
   c.sat=clamp(s,0,1); addSat(c.sat);
   charge(c,total, c.syncTip);
   c.tResolve=Game.t; recordVisit(c,{table:true,total});
-  t.state='busy'; t.cust=c; c.table=t; c.state='toTable'; c.act='walk'; c.actT=0;
-  const side = rnd()<0.5?-1:1;
+  const mateAtTable=t.cust&&t.cust.partnerId===c.id; /* v29.5: pareja en la misma mesa */
+  if(mateAtTable){ t.cust2=c; } else { t.state='busy'; t.cust=c; }
+  if(t.cust===c) t.coupleSide=undefined;
+  c.table=t; c.state='toTable'; c.act='walk'; c.actT=0;
+  const side = mateAtTable ? -(t.coupleSide??1) : (rnd()<0.5?-1:1);
+  if(!mateAtTable) t.coupleSide=side;
   c.exemptTable=t;
   navSetTarget(c, t.x+side*38, t.y+8, {x:t.x+side*38, y:t.y+46});
   c.eatT=rand(9,15);
   if(c.sat>0.8){ c.mood='feliz'; c.moodT=2; c.moodTxt=null; }
   else if(c.sat<0.45){ c.mood='meh'; c.moodT=2.5; c.moodTxt=null; }
+  /* v29.5: al sentarse un miembro de la pareja, el otro deja de esperar. */
+  if(c.partnerId!=null){
+    const mate=Game.customers.find(x=>x.id===c.partnerId);
+    if(mate&&(mate.state==='waitPartner'||(mate.state==='waitTable'&&!mate.coupleLead&&mate.table!==t))){
+      payAndSeat(mate, mate.totalDue||0, mate.sat??0.5, t);
+    }
+  }
 }
 
 export function payAndGo(c, total, s, upset){
@@ -109,6 +123,11 @@ export function payAndGo(c, total, s, upset){
   const P=PERSONALITIES[c.personality]||PERSONALITIES.tranquilo;
   c.moodTxt = P.takeaway==='prefiere' ? '¡Para llevar, genial!' : upset ? '¡Ni mesa! Para llevar…' : 'Para llevar, gracias';
   leaveQueue(c);
+  /* v29.5: si se va sin mesa, su pareja le sigue. */
+  if(c.partnerId!=null){
+    const mate=Game.customers.find(x=>x.id===c.partnerId);
+    if(mate&&(mate.state==='waitPartner'||mate.state==='waitTable')) payAndGo(mate, mate.totalDue||0, (mate.sat??0.5)-0.1, true);
+  }
 }
 
 export function completeOrder(c){
@@ -132,10 +151,21 @@ export function completeOrder(c){
   if(c.personality==='exigente' && s>0.85) pTip=total*P.tipP;
   if(pTip>0.01){ total+=pTip; Game.dayStats.tipsP=(Game.dayStats.tipsP||0)+pTip; Game.floaters.push({x:c.x,y:c.y-190,text:'Propina +'+eur2(pTip),t:0,color:'#ffd36b'}); }
   c.syncTip=sync; c.tipped = sync || pTip>0.01; c.tipAmt = syncTip + Math.max(0,pTip);
+  /* v29.5: las parejas solo van a la mesa cuando las atienden a las dos. */
+  if(c.partnerId!=null){
+    const mate=Game.customers.find(x=>x.id===c.partnerId);
+    const mateReady=mate&&(mate.state==='waitPartner'||mate.state==='waitTable'||['toTable','eat'].includes(mate.state));
+    if(mate&&!mateReady){
+      c.totalDue=total; c.sat=clamp(s,0,1);
+      c.state='waitPartner'; c.act='wait'; c.actT=0; c.mood='mesa'; c.moodT=3;
+      c.moodTxt='Esperando a mi pareja…';
+      return;
+    }
+  }
   const freeTables = Game.tables.filter(t=>t.state==='free');
   const free = c.floorTableId!=null?Game.tables[c.floorTableId]:(freeTables.length ? freeTables[Math.floor(rnd()*freeTables.length)] : null);
   if(free){payAndSeat(c,total,s,free);if(c.floorTableId!=null){c.state='eat';c.path=null;c.x=free.x+(free.x>1150?-38:38);c.y=free.y+8;c.tx=c.x;c.ty=c.y;}return;}
-  if(P.takeaway==='mesa'){
+  if(c.partnerId!=null||P.takeaway==='mesa'){
     c.totalDue=total; c.sat=clamp(s,0,1); c.state='waitTable'; c.waitT=0;
     c.mood='mesa'; c.moodT=2.5;
     c.moodTxt='¿Mesa libre, por favor?';
@@ -168,4 +198,4 @@ export function tryServe(c, who='p1'){if(c&&['floorWaitEscort','floorMenu','floo
 
 export function completeFloorOrder(c){if(!c||c.floorPaid||c.state!=='floorReady')return;c.floorPaid=true;if(c.missing)Game.dayStats.partial++;completeOrder(c);}
 
-export function abandonFloor(c){if(c.floorAbandoned||c.floorPaid)return;c.floorAbandoned=true;releaseFloorCustomer(c);c.state='leave';leaveQueue(c);Game.dayStats.lost++;Game.dayStats.lostPatience++;recordVisit(c,{lost:'espera'});addSat(0);}
+export function abandonFloor(c){if(c.floorAbandoned||c.floorPaid)return;c.floorAbandoned=true;releaseFloorCustomer(c);c.state='leave';leaveQueue(c);Game.dayStats.lost++;Game.dayStats.lostPatience++;recordVisit(c,{lost:'espera'});addSat(0);coupleAbandon(c);}

@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {tableStateAfterMeal} from './sim/lost.js?v=29.4.11';
-import {createService,requestTask,couldTake,assignTasks} from './service-tasks.mjs?v=29.4.11';
+import {tableStateAfterMeal} from './sim/lost.js?v=29.5.0';
+import {createService,requestTask,couldTake,assignTasks} from './service-tasks.mjs?v=29.5.0';
 
 /* ============================================================
    v29.2 — reglas de jornada.
@@ -11,8 +11,17 @@ import {createService,requestTask,couldTake,assignTasks} from './service-tasks.m
    aquí sin navegador.
    ============================================================ */
 
-test('todo cliente que come en mesa deja la mesa sucia (sin lotería del 75%)',()=>{
-  for(let i=0;i<25;i++) assert.equal(tableStateAfterMeal(),'dirty');
+test('v29.5: solo la comida ensucia la mesa (las bebidas no dejan restos)',()=>{
+  for(let i=0;i<25;i++){
+    assert.equal(tableStateAfterMeal({served:['papas']}),'dirty');
+    assert.equal(tableStateAfterMeal({served:['cerveza']}),'free');
+    assert.equal(tableStateAfterMeal({served:['barraquito']}),'free');
+    assert.equal(tableStateAfterMeal({served:['batido']}),'free');
+    assert.equal(tableStateAfterMeal({served:['cerveza','papas']}),'dirty');
+    assert.equal(tableStateAfterMeal({served:['queso','pescado']}),'dirty');
+    assert.equal(tableStateAfterMeal({served:[]}),'free');
+    assert.equal(tableStateAfterMeal(null),'free');
+  }
 });
 
 /* ============================================================

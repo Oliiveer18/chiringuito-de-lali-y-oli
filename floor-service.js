@@ -1,10 +1,12 @@
-import {Game,Net,isCoop,simProgressDay} from './state.js?v=29.4.11';
-import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=29.4.11';
-import {HUT_BAR_FLOOR_Y} from './world.js?v=29.4.11';
-import {navFind,navFreeAt,navLineFree,navNearestFree,navSetTarget,navStep} from './nav.js?v=29.4.11';
-import {staffOnDuty} from './state.js?v=29.4.11';
-import {factor} from './professional-model.mjs?v=29.4.11';
-import * as M from './service-tasks.mjs?v=29.4.11';
+import {Game,Net,isCoop,simProgressDay} from './state.js?v=29.5.0';
+import {STAFF,ITEMS,PERSONALITIES} from './config.js?v=29.5.0';
+import {HUT_BAR_FLOOR_Y} from './world.js?v=29.5.0';
+import {navFind,navFreeAt,navLineFree,navNearestFree,navSetTarget,navStep} from './nav.js?v=29.5.0';
+import {staffOnDuty,employeeOnDuty} from './state.js?v=29.5.0';
+import {factor} from './professional-model.mjs?v=29.5.0';
+import {effMultiplier,teamOf} from './management-model.mjs?v=29.5.0';
+import {tableStateAfterMeal} from './sim/lost.js?v=29.5.0';
+import * as M from './service-tasks.mjs?v=29.5.0';
 let hooks=null;const active=t=>['queued','walking','working','blocked'].includes(t.state);const dirty=()=>{Net.sendT=1e9;Net.revDirty=true;};
 const actor=id=>Game.floor?.actors.find(a=>a.id===id);const job=id=>Game.floor?.tasks.find(t=>t.id===id);
 const endpoint=t=>({x:t.x+(t.x>1150?-46:46),y:t.y+34});
@@ -15,8 +17,11 @@ const endpoint=t=>({x:t.x+(t.x>1150?-46:46),y:t.y+34});
    nadie podía limpiarlas. El chequeo arranca ahora desde la celda libre más
    cercana y el personaje se recoloca al quedar libre (unstick). */
 const unstick=a=>{if(a&&!navFreeAt(a.x,a.y)){const n=navNearestFree(a.x,a.y);a.x=n.x;a.y=n.y;}};
+/* v29.5: cada actor de sala corresponde a un empleado concreto de la plantilla
+   (hasta 3 por puesto). Se busca por id dentro del array del rol. */
+const empOf=a=>{const list=Game.upgrades.workforce?.team?.[a.role];const arr=Array.isArray(list)?list:list?[list]:[];return arr.find(e=>e.id===a.id)||arr[0]||null;};
 /* v28.19: auto-tareas del personal según su rol, especialidad y turno real. */
-const autoOf=a=>{const e=Game.upgrades.workforce?.team?.[a.role];if(a.role==='limpiador'){const support=Game.upgrades.floorCleanerSupport&&!Game.tables.some(t=>t.state==='dirty');return support?['clean','escort','takeOrder','deliver']:['clean'];}if(a.role==='terraza')return e?.specialty==='polivalente'?['clean','escort','takeOrder','deliver']:['escort','takeOrder','deliver'];if(a.role==='camarero'&&e?.specialty==='polivalente')return ['escort','takeOrder','deliver'];return [];};
+const autoOf=a=>{const e=empOf(a);if(a.role==='limpiador'){const support=Game.upgrades.floorCleanerSupport&&!Game.tables.some(t=>t.state==='dirty');return support?['clean','escort','takeOrder','deliver']:['clean'];}if(a.role==='terraza')return e?.specialty==='polivalente'?['clean','escort','takeOrder','deliver']:['escort','takeOrder','deliver'];if(a.role==='camarero'&&e?.specialty==='polivalente')return ['escort','takeOrder','deliver'];return [];};
 function route(a,p){
   /* v29.2: la lógica de puerta/pasillo vale para cualquier actor, no solo
      jugadores: el camarero y la cocinera ahora viven dentro del kiosco. */
@@ -36,10 +41,16 @@ const path=navFind(a.x,a.y,p.x,p.y);let x=a.x,y=a.y;if(!navFreeAt(x,y)){const n=
 function syncTables(){const s=Game.floor;if(!s)return;for(let i=0;i<Game.tables.length;i++){const a=s.tables[i],b=Game.tables[i];if(a)a.state=b.state;}}
 export function floorActive(id){return Game.mode==='service'&&!!actor(id);}
 export function floorAway(id){const a=actor(id);return !!a&&(!!a.task||!!a.returning||Math.hypot(a.x-a.home.x,a.y-a.home.y)>5);}
-export function initFloor(api){hooks=api;const list=[];/* v29.2: camarero y cocinera viven DENTRO del kiosco (y=450, junto a la barra,
-   como los dibuja la escena); limpiador y terraza trabajan fuera. */const add=(id,role,x,player=false)=>{const e=Game.upgrades.workforce?.team?.[role];const homeY=player||role==='camarero'||role==='cocinero'?HUT_BAR_FLOOR_Y:role==='limpiador'?578:560;list.push({id,role,player,name:player?(isCoop()?Net.names[id]:'Tu personaje'):(e?.name||STAFF.find(s=>s.id===role)?.name||role),x,y:homeY,home:{x,y:homeY},speed:110/Math.max(.7,e?.workMultiplier||1),can:role==='cocinero'?['clean']:player?['clean','takeOrder','deliver']:['clean','escort','takeOrder','deliver'],auto:player?[]:autoOf({role}),returning:false,phase:0,dir:1});};add('p1','player',isCoop()&&Net.roles.p1==='barra'?435:265,true);if(isCoop())add('p2','player',Net.roles.p2==='barra'?435:265,true);for(const [role,id,x] of [['camarero','yeray',380],['cocinero','carmela',95],['limpiador','acaymo',880],['terraza','terraza',550]])if(Game.staff[role])add(id,role,x);Game.floor=M.createService('floor:'+crypto.randomUUID(),list,Game.tables.map((t,i)=>({id:'table'+i,state:t.state})));dirty();}
+export function initFloor(api){hooks=api;const list=[];/* v29.2: camarero y cocineras viven DENTRO del kiosco (y=450, junto a la barra,
+   como los dibuja la escena); limpiador y terraza trabajan fuera. v29.5: un
+   actor por empleado de la plantilla (hasta 3 por puesto, cada uno con su
+   ritmo real: nivel, cansancio y felicidad del día). */const POS={camarero:[380,330,285],cocinero:[95,140,185],limpiador:[880,830,930],terraza:[550,590,510]};
+const add=(id,role,x,player=false,e=null)=>{const homeY=player||role==='camarero'||role==='cocinero'?HUT_BAR_FLOOR_Y:role==='limpiador'?578:560;list.push({id,role,player,name:player?(isCoop()?Net.names[id]:'Tu personaje'):(e?.name||STAFF.find(s=>s.id===role)?.name||role),x,y:homeY,home:{x,y:homeY},speed:110/Math.max(.7,player?1:effMultiplier(e)),can:role==='cocinero'?['clean']:player?['clean','takeOrder','deliver']:['clean','escort','takeOrder','deliver'],auto:player?[]:[],returning:false,phase:0,dir:1});};
+add('p1','player',isCoop()&&Net.roles.p1==='barra'?435:265,true);if(isCoop())add('p2','player',Net.roles.p2==='barra'?435:265,true);
+for(const [role,plist] of Object.entries(Game.upgrades.workforce?.team||{})){if(!Game.staff[role])continue;const arr=Array.isArray(plist)?plist:plist?[plist]:[];arr.forEach((e,i)=>add(e.id,role,POS[role]?.[i]??550,false,e));}
+Game.floor=M.createService('floor:'+crypto.randomUUID(),list,Game.tables.map((t,i)=>({id:'table'+i,state:t.state})));dirty();}
 function task(kind,target,legs,who=null,customer=null,priority=0){syncTables();const id=M.requestTask(Game.floor,{kind,target,legs,requestedBy:who,priority});if(id&&customer)job(id).customer=customer.id;dirty();return !!id;}
-export function requestFloorClean(t,who='p1',automatic=false){if(Game.mode!=='service'||!Game.floor||!t||t.state!=='dirty')return false;const e=Game.upgrades.workforce?.team?.limpiador;return task('clean','table'+Game.tables.indexOf(t),[{...endpoint(t),duration:1.8*factor(e,[{complex:Game.tables.filter(t=>t.state==='dirty').length>2}])}],automatic?null:who,null,30);}
+export function requestFloorClean(t,who='p1',automatic=false){if(Game.mode!=='service'||!Game.floor||!t||t.state!=='dirty')return false;const e=teamOf(Game.upgrades.workforce?.team,'limpiador')[0];return task('clean','table'+Game.tables.indexOf(t),[{...endpoint(t),duration:1.8*factor(e,[{complex:Game.tables.filter(t=>t.state==='dirty').length>2}])}],automatic?null:who,null,30);}
 export function requestFloorCustomer(c,who=null){if(!c||!Game.floor)return false;const t=Game.tables[c.floorTableId];if(!t)return false;const p=endpoint(t);
   /* v29.3: cuando la comanda la lleva el personal (tarea automática) tarda el
      doble: mismo criterio que en la barra, el puesto no juega por la jugadora. */
@@ -55,15 +66,18 @@ function reserve(c){
 const i=Game.tables.findIndex(t=>t.state==='free');if(i<0)return;const t=Game.tables[i];c.floorTableId=i;c.state='floorWaitEscort';c.spot=-1;c.table=t;const bonus=12+Math.abs(t.x-520)/110;c.patience+=bonus;c.maxPatience+=bonus;const id=task('escort','table'+i,[{x:c.x,y:c.y+12,duration:.2},{...endpoint(t),duration:.3}],null,c,10);if(!id){delete c.floorTableId;c.state='queue';return;}t.state='reserved';t.cust=c;}
 function ticket(c){return Game.floor.tickets.find(t=>t.id===c.floorTicket);}
 function events(){const s=Game.floor;for(const e of s.events.splice(0)){const t=job(e.task);if(!t)continue;const a=actor(t.actor),c=Game.customers.find(c=>c.id===t.customer),table=Game.tables[Number(String(t.target).replace('table',''))];if(e.type==='leg-completed'&&e.leg===0&&c){if(t.kind==='escort'){const seat=Game.tables[c.floorTableId],p=endpoint(seat);c.state='floorFollowing';c.exemptTable=seat;navSetTarget(c,seat.x+(seat.x>1150?-38:38),seat.y+8,p);}if(t.kind==='takeOrder'){c.floorPrices={...Game.prices};c.floorTicket=s.id+':order:'+c.id;M.openTicket(s,{id:c.floorTicket,customer:String(c.id),table:'table'+c.floorTableId,lines:c.order,prices:c.floorPrices});}if(t.kind==='deliver'){a.carry=true;a.carryItems=[...(c.order||[])];}}if(e.type==='completed'){if(!a.player&&Game.dayStats){const b=Game.dayStats.by[t.actor]||(Game.dayStats.by[t.actor]={items:0,rev:0,clean:0});b.escort=(b.escort||0)+(t.kind==='escort'?1:0);b.orders=(b.orders||0)+(t.kind==='takeOrder'?1:0);b.delivered=(b.delivered||0)+(t.kind==='deliver'?1:0);}if(t.kind==='clean'&&table)hooks.clean(table,!t.requestedBy,t.actor);if(t.kind==='escort'&&c){Game.tables[c.floorTableId].state='busy';c.state='floorWalkingSeat';}if(t.kind==='takeOrder'&&c)c.state='floorWaitingPrep';if(t.kind==='deliver'&&c&&c.state==='floorReady'){const r=ticket(c);if(r){r.items.forEach((l,i)=>{l.item=c.order[i];l.price=c.floorPrices?.[l.item]??Game.prices[l.item];l.state=c.itemSt[i]===3?'omitted':c.itemSt[i]===2?'ready':'pending';});if(M.deliverTicket(s,r.id))hooks.deliver(c);}}if(a)returnHome(a);}if(e.type==='cancelled'){if(t.kind==='escort'&&table&&table.state==='reserved'){table.state='free';table.cust=null;}if(a)returnHome(a);}}}
-export function releaseFloorCustomer(c){if(c.floorTableId==null||!Game.floor)return;for(const t of Game.floor.tasks)if(t.customer===c.id&&active(t))M.cancelTask(Game.floor,t.id);if(c.floorTicket)M.cancelTicket(Game.floor,c.floorTicket);const table=Game.tables[c.floorTableId];if(table?.cust===c){table.cust=null;table.state=c.served?.length?'dirty':'free';table.dirtyT=0;}for(const s of Game.slots)if(s.cust===c){s.cust=null;s.items=[];}c.inPrep=0;events();}
+export function releaseFloorCustomer(c){if(c.floorTableId==null||!Game.floor)return;for(const t of Game.floor.tasks)if(t.customer===c.id&&active(t))M.cancelTask(Game.floor,t.id);if(c.floorTicket)M.cancelTicket(Game.floor,c.floorTicket);const table=Game.tables[c.floorTableId];if(table?.cust===c){table.cust=null;table.state=tableStateAfterMeal(c);table.dirtyT=0;}for(const s of Game.slots)if(s.cust===c){s.cust=null;s.items=[];}c.inPrep=0;events();}
 export function updateFloorCustomer(c,dt){if(c.state==='floorFollowing'||c.state==='floorWalkingSeat'){if(navStep(c,dt,1)&&c.state==='floorWalkingSeat'){c.state='floorMenu';c.act='menu';c.path=null;}}c.waited=(c.waited||0)+dt;const rate=c.inPrep>0?.25:c.state==='floorReady'?.5:.7;c.patience-=dt*rate*(PERSONALITIES[c.personality]?.patMul||1);if(c.patience<=0&&!c.floorPaid)hooks.abandon(c);}
 /* v29.3: rol contable de cada actor de sala (para pagar solo el tiempo trabajado). */
-const PAY_ROLE={yeray:'camarero',carmela:'cocinero',acaymo:'limpiador',terraza:'terraza'};
 export function updateFloor(dt){if(!Game.floor||dt<=0)return;const s=Game.floor;syncTables();for(const a of s.actors){a.oldX=a.x;a.oldY=a.y;
   /* v29.3: sueldo por tiempo trabajado: cuenta los segundos con una tarea en mano
      (yendo a ella o ejecutándola). El regreso a casa no se cobra. */
-  if(a.task&&!a.player&&Game.dayStats?.staffWork&&PAY_ROLE[a.id])Game.dayStats.staffWork[PAY_ROLE[a.id]]+=dt;/* v29.2: el relevo al volver ya no es solo para jugador@: cualquier actor
-     que esté regresando y pueda quedarse una tarea en cola corta el regreso. */if(a.returning&&s.tasks.some(t=>M.couldTake(a,t))){a.returning=false;a.returnPath=[];unstick(a);}if(a.returning&&a.finishedAt<s.time)moveHome(a,dt);const slot=Game.slots.find(q=>q.who===a.id);a.busy=!!slot?.cust||a.returning||(a.role==='cocinero'&&Game.slots.some(q=>q.cust));if(!a.player){const on=staffOnDuty(a.role);a.offDuty=!on;a.auto=on?autoOf(a):[];}}if(!Game.closing){for(const c of Game.customers)if(c.state==='queue'&&c.spot>=0&&c.floorTableId==null&&PERSONALITIES[c.personality]?.takeaway!=='prefiere'&&c.id%(simProgressDay()<=2?3:3)!==(simProgressDay()<=2?1:0))reserve(c);}for(const t of Game.tables)if(t.state==='dirty'&&Game.staff.limpiador&&staffOnDuty('limpiador'))requestFloorClean(t,'p1',true);for(const c of Game.customers)if(c.floorTableId!=null&&['floorMenu','floorReady'].includes(c.state))requestFloorCustomer(c,null);/* v28.18: al cerrar, las tareas de sala (limpiar, entregar, acompañar) van al
+  if(a.task&&!a.player&&Game.dayStats?.staffWork&&a.role)Game.dayStats.staffWork[a.role]+=dt;/* v29.2: el relevo al volver ya no es solo para jugador@: cualquier actor
+     que esté regresando y pueda quedarse una tarea en cola corta el regreso. */if(a.returning&&s.tasks.some(t=>M.couldTake(a,t))){a.returning=false;a.returnPath=[];unstick(a);}if(a.returning&&a.finishedAt<s.time)moveHome(a,dt);const slot=Game.slots.find(q=>q.who===a.id);a.busy=!!slot?.cust||a.returning||(a.role==='cocinero'&&Game.slots.some(q=>q.cust));if(!a.player){const e=empOf(a);const on=employeeOnDuty(e);a.offDuty=!on;a.auto=on?autoOf(a):[];
+    /* v29.5: cansancio en vivo: trabajar la jornada acumula fatiga (más rápido
+       con la sala llena) y el ritmo del actor sigue su nivel y ánimo del día. */
+    if(on&&!Game.closing&&e){const rush=Game.customers.length>4?1.35:1;e.fatigue=Math.min(1,(e.fatigue||0)+dt*rush/(9*3600));}
+    a.speed=110/Math.max(.7,effMultiplier(e));}}if(!Game.closing){for(const c of Game.customers)if(c.state==='queue'&&c.spot>=0&&c.floorTableId==null&&c.partnerId==null&&PERSONALITIES[c.personality]?.takeaway!=='prefiere'&&c.id%(simProgressDay()<=2?3:3)!==(simProgressDay()<=2?1:0))reserve(c);}for(const t of Game.tables)if(t.state==='dirty'&&Game.staff.limpiador&&staffOnDuty('limpiador'))requestFloorClean(t,'p1',true);for(const c of Game.customers)if(c.floorTableId!=null&&['floorMenu','floorReady'].includes(c.state))requestFloorCustomer(c,null);/* v28.18: al cerrar, las tareas de sala (limpiar, entregar, acompañar) van al
    doble de velocidad: los procesos terminan, no se omite ninguna escena y la
    jornada no se eterniza esperando al personal. */
 M.stepTasks(s,dt*(Game.closing?2:1),route);events();for(const a of s.actors){a.dir=a.x<a.oldX?-1:a.x>a.oldX?1:a.dir;const wt=a.task&&job(a.task);if(wt&&wt.kind==='clean'&&wt.state==='working'){const tb=Game.tables[Number(String(wt.target).replace('table',''))];if(tb)a.dir=tb.x<a.x?-1:tb.x>a.x?1:a.dir;}a.phase+=Math.hypot(a.x-a.oldX,a.y-a.oldY)*.12;}for(const q of Game.slots)q.floorBusy=floorAway(q.who);for(const c of Game.customers.filter(c=>c.floorTableId!=null&&['floorWaitingPrep','prep'].includes(c.state)).sort((a,b)=>a.id-b.id)){for(const q of Game.slots)if(!q.cust&&!q.floorBusy&&c.itemSt?.some(v=>v===0))hooks.prepare(c,q);}s.tasks=s.tasks.filter(t=>active(t)||s.time-t.created<30);}

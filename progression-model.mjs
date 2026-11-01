@@ -1,6 +1,6 @@
 // Progreso diario v23. Las tres ligas económicas se calculan en market-model.
-import * as R from './market-model.mjs?v=29.4.11';
-import { dailyPoints } from './management-model.mjs?v=29.4.11';
+import * as R from './market-model.mjs?v=29.5.0';
+import { dailyPoints } from './management-model.mjs?v=29.5.0';
 export const areas=R.AREAS,tiers=R.TIERS;
 export const num=x=>Number.isFinite(x)?x:0;
 export const hash=R.hash;

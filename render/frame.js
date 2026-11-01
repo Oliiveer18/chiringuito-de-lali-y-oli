@@ -1,38 +1,38 @@
 /* Mechanical extraction from render.js; declaration bodies are unchanged. */
-import { H } from "../config.js?v=29.4.11";
-import { W } from "../config.js?v=29.4.11";
-import { WHO_COLOR } from "../config.js?v=29.4.11";
-import { clamp } from "../util.js?v=29.4.11";
-import { lerp } from "../util.js?v=29.4.11";
-import { mixColor } from "../util.js?v=29.4.11";
-import { rr } from "../icons.js?v=29.4.11";
-import { Game } from "../state.js?v=29.4.11";
-import { closeHour } from "../state.js?v=29.4.11";
-import { hamacaCount } from "../state.js?v=29.4.11";
-import { lvl } from "../state.js?v=29.4.11";
-import { weatherToday } from "../state.js?v=29.4.11";
-import { whoName } from "../state.js?v=29.4.11";
-import { HAMACA_POS } from "../world.js?v=29.4.11";
-import { canvas } from "../canvas.js?v=29.4.11";
-import { ctx } from "../canvas.js?v=29.4.11";
-import { view } from "../canvas.js?v=29.4.11";
-import { drawPurchasedProps } from "../scene-extras.js?v=29.4.11";
-import { drawBubble } from "./identity.js?v=29.4.11";
-import { drawClouds } from "./scene.js?v=29.4.11";
-import { drawCustomer } from "./characters.js?v=29.4.11";
-import { drawFloorWorker } from "./characters.js?v=29.4.11";
-import { drawHamaca } from "./tables.js?v=29.4.11";
-import { drawHut } from "./scene.js?v=29.4.11";
-import { drawLights } from "./effects.js?v=29.4.11";
-import { drawNetStatus } from "./hud.js?v=29.4.11";
-import { drawPalm } from "./scene.js?v=29.4.11";
-import { drawPendingBadges } from "./hud.js?v=29.4.11";
-import { drawSea } from "./scene.js?v=29.4.11";
-import { drawStationLabels } from "./identity.js?v=29.4.11";
-import { drawTable } from "./tables.js?v=29.4.11";
-import { drawTeide } from "./scene.js?v=29.4.11";
-import { nightness } from "./scene.js?v=29.4.11";
-import { skyAt } from "./scene.js?v=29.4.11";
+import { H } from "../config.js?v=29.5.0";
+import { W } from "../config.js?v=29.5.0";
+import { WHO_COLOR } from "../config.js?v=29.5.0";
+import { clamp } from "../util.js?v=29.5.0";
+import { lerp } from "../util.js?v=29.5.0";
+import { mixColor } from "../util.js?v=29.5.0";
+import { rr } from "../icons.js?v=29.5.0";
+import { Game } from "../state.js?v=29.5.0";
+import { closeHour } from "../state.js?v=29.5.0";
+import { hamacaCount } from "../state.js?v=29.5.0";
+import { lvl } from "../state.js?v=29.5.0";
+import { weatherToday } from "../state.js?v=29.5.0";
+import { whoName } from "../state.js?v=29.5.0";
+import { HAMACA_POS } from "../world.js?v=29.5.0";
+import { canvas } from "../canvas.js?v=29.5.0";
+import { ctx } from "../canvas.js?v=29.5.0";
+import { view } from "../canvas.js?v=29.5.0";
+import { drawPurchasedProps } from "../scene-extras.js?v=29.5.0";
+import { drawBubble } from "./identity.js?v=29.5.0";
+import { drawClouds } from "./scene.js?v=29.5.0";
+import { drawCustomer } from "./characters.js?v=29.5.0";
+import { drawFloorWorker } from "./characters.js?v=29.5.0";
+import { drawHamaca } from "./tables.js?v=29.5.0";
+import { drawHutBack,drawHutFront } from "./scene.js?v=29.5.0";
+import { drawLights } from "./effects.js?v=29.5.0";
+import { drawNetStatus } from "./hud.js?v=29.5.0";
+import { drawPalm } from "./scene.js?v=29.5.0";
+import { drawPendingBadges } from "./hud.js?v=29.5.0";
+import { drawSea } from "./scene.js?v=29.5.0";
+import { drawStationLabels } from "./identity.js?v=29.5.0";
+import { drawTable } from "./tables.js?v=29.5.0";
+import { drawTeide } from "./scene.js?v=29.5.0";
+import { nightness } from "./scene.js?v=29.5.0";
+import { skyAt } from "./scene.js?v=29.5.0";
 
 /* v28.15: fondo lejano prerrenderizado. Estrellas, sol, La Gomera y el Teide solo
    dependen de la hora (y de si hay calima), así que se dibujan en un canvas
@@ -120,15 +120,19 @@ export function render(){
   // hamacas
   const ham=hamacaCount();
   for(let i=0;i<ham;i++) drawHamaca(c,HAMACA_POS[i].x,HAMACA_POS[i].y,i,T,weather,nt);
-  // chiringuito
-  drawHut(c,T,h,nt,wind);
+  // chiringuito: parte trasera, entidades, parte frontal (mostrador)
+  /* v29.5: el kiosco se dibuja en dos capas. El personal de dentro (camarero,
+     cocineras y jugadora en la barra) queda DETRÁS del mostrador, realmente
+     dentro, igual que ella; antes se les dibujaba por delante del chiringuito. */
+  drawHutBack(c,T,h,nt,wind);
   drawPurchasedProps(c,T,nt);
   // entidades ordenadas por y
   const ents=[];
   for(const t of Game.tables) ents.push({y:t.y,draw:()=>drawTable(c,t,T)});
   if(Game.mode==='service') for(const cu of Game.customers) ents.push({y:cu.y,draw:()=>drawCustomer(c,cu,T)});
-  if(Game.mode==='service'&&Game.floor)for(const a of Game.floor.actors)if(!(a.player&&!a.task&&!a.returning&&Math.hypot(a.x-a.home.x,a.y-a.home.y)<5)&&!(a.offDuty&&!a.task&&!a.returning))ents.push({y:a.y,draw:()=>drawFloorWorker(c,a,T)});
+  if(Game.mode==='service'&&Game.floor)for(const a of Game.floor.actors){ if(a.offDuty&&!a.task&&!a.returning)continue; ents.push({y:a.y,draw:()=>drawFloorWorker(c,a,T)}); }
   ents.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
+  drawHutFront(c,T,h,nt,wind);
   // indicadores de cola por encima
   if(Game.mode==='service') for(const cu of Game.customers) drawBubble(c,cu,T);
   if(Game.mode==='service')for(const cu of Game.customers){
