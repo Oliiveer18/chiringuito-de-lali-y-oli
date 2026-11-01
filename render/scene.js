@@ -145,6 +145,10 @@ export function drawHutBack(c,T,h,nt,wind){
    de clientes y personal: quien trabaja dentro del chiringuito queda
    visualmente detrás de la barra, realmente "dentro", como la jugadora. */
 export function drawHutFront(c,T,h,nt,wind){
+  const coop = isCoop();
+  const wslot = w => Game.slots.find(s=>s.who===w);
+  const cookingNow = s => s && s.cust && (s.items||[]).some(i=>stationOf(s.cust.order[i])==='cocina');
+  const actOf = s => (s && s.cust) ? (cookingNow(s) ? 'cocina' : 'barra') : null;
   const wood=mixColor('#8a5a36','#3d2a26',nt*0.7), woodD=mixColor('#6b4226','#2d1f1c',nt*0.7);
   // barra
   c.fillStyle=mixColor('#0f8b8d','#123b44',nt*0.7); c.fillRect(COUNTER.x,COUNTER.y,COUNTER.w,COUNTER.h);
