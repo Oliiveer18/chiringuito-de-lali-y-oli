@@ -22,7 +22,7 @@ import { drawClouds } from "./scene.js?v=30.0.0";
 import { drawCustomer } from "./characters.js?v=30.0.0";
 import { drawFloorWorker } from "./characters.js?v=30.0.0";
 import { drawHamaca } from "./tables.js?v=30.0.0";
-import { drawHutBack,drawHutFront } from "./scene.js?v=30.0.0";
+import { drawHutBack,drawHutFront,drawPergola } from "./scene.js?v=30.0.0";
 import { drawLights } from "./effects.js?v=30.0.0";
 import { drawNetStatus } from "./hud.js?v=30.0.0";
 import { drawPalm } from "./scene.js?v=30.0.0";
@@ -188,6 +188,8 @@ export function render(){
   if(weather==='calima'){ c.fillStyle='rgba(222,160,90,.28)'; c.fillRect(0,0,canvas.width,canvas.height); }
   if(weather==='panza'){ c.fillStyle='rgba(120,130,140,.18)'; c.fillRect(0,0,canvas.width,canvas.height); }
   if(nt>0){ c.fillStyle=`rgba(20,16,50,${nt*0.45})`; c.fillRect(0,0,canvas.width,canvas.height); }
+  // v30: pérgola de la terraza techada (capa tardía, por encima de cabezas)
+  if(lvl('terraza')){ c.setTransform(view.s,0,0,view.s,view.ox,view.oy); drawPergola(c,T,h,nt); }
   // luces nocturnas (aditivas)
   if(lvl('luces') && h>18.8){ c.setTransform(view.s,0,0,view.s,view.ox,view.oy); drawLights(c,T,clamp((h-18.8)/1.2,0,1)); }
 }

@@ -12,6 +12,7 @@ import { rr } from "../icons.js?v=30.0.0";
 import { Game } from "../state.js?v=30.0.0";
 import { Net } from "../state.js?v=30.0.0";
 import { isCoop } from "../state.js?v=30.0.0";
+import { lvl } from "../state.js?v=30.0.0";
 import { COUNTER, HUT_BAR_FLOOR_Y } from "../world.js?v=30.0.0";
 import { STATION_ZONE } from "./identity.js?v=30.0.0";
 import { drawPerson } from "./characters.js?v=30.0.0";
@@ -97,23 +98,56 @@ export function drawHutBack(c,T,h,nt,wind){
   c.fillStyle=woodD; c.fillRect(80,300,240,8); c.fillRect(80,350,240,8);
   for(let i=0;i<10;i++){ const bx=90+i*23; c.fillStyle=['#3f8a3a','#7a3b1f','#f5b82e','#e9e1d2','#2a6b8a'][i%5]; rr(c,bx,272,12,28,3); c.fill(); rr(c,bx+3,264,6,10,2); c.fill(); }
   for(let i=0;i<8;i++){ const bx=94+i*28; c.fillStyle=['#f5b82e','#d9633f','#fff6e6'][i%3]; rr(c,bx,326,18,24,4); c.fill(); }
-  // ventana con plátanos y cafetera
-  c.fillStyle=mixColor('#2a211c','#141012',nt); c.fillRect(340,270,120,80);
-  c.fillStyle='#c0c4c8'; rr(c,355,300,40,48,6); c.fill(); c.fillStyle='#2a211c'; c.fillRect(366,318,18,6);
-  c.fillStyle='#f4d03f'; for(let i=0;i<4;i++){ c.beginPath(); c.ellipse(420+i*7,320,4,14,0.4,0,7); c.fill(); }
+  // ventana con plátanos y cafetera — con la Palapa: cocina abierta con la cocinera visible
+  if(lvl('palapa')){
+    c.fillStyle=mixColor('#3a2b22','#1a1310',nt); c.fillRect(335,265,130,90);
+    c.fillStyle=mixColor('#f7e9c9','#8a7258',nt*0.4); c.fillRect(343,273,114,74);
+    // cocinera: gorro de chef, cara y delantal blanco
+    c.fillStyle='#ffffff'; c.beginPath(); c.arc(400,297,10,0,7); c.fill();
+    c.fillStyle='#e0a97e'; c.beginPath(); c.arc(400,307,8,0,7); c.fill();
+    c.fillStyle='#ffffff'; rr(c,387,314,26,30,5); c.fill();
+    c.fillStyle='#f4efe6'; rr(c,392,320,16,22,3); c.fill();
+    // vapor de la faena cuando hay pedidos en marcha
+    if(Game.mode==='service'&&Game.slots&&Game.slots.some(s=>s.cust)){
+      c.fillStyle='rgba(255,255,255,.4)';
+      for(let i=0;i<3;i++){ c.beginPath(); c.arc(432+i*10+Math.sin(T*3+i)*5, 290-((T*22+i*18)%40), 5,0,7); c.fill(); }
+    }
+    c.strokeStyle=mixColor('#8a5a36','#3d2a26',nt*0.7); c.lineWidth=6; c.strokeRect(335,265,130,90);
+  } else {
+    c.fillStyle=mixColor('#2a211c','#141012',nt); c.fillRect(340,270,120,80);
+    c.fillStyle='#c0c4c8'; rr(c,355,300,40,48,6); c.fill(); c.fillStyle='#2a211c'; c.fillRect(366,318,18,6);
+    c.fillStyle='#f4d03f'; for(let i=0;i<4;i++){ c.beginPath(); c.ellipse(420+i*7,320,4,14,0.4,0,7); c.fill(); }
+  }
   // postes
   c.fillStyle=wood; c.fillRect(56,220,16,320); c.fillRect(470,220,16,320);
-  // tejado de palma
+  // tejado de palma — con la Palapa: más ancho (toda la parcela), misma altura máxima
   const sway=Math.sin(T*1.5*wind)*1.5*wind;
-  c.fillStyle=mixColor('#c79a55','#5a4535',nt*0.7);
-  c.beginPath(); c.moveTo(20,250); c.lineTo(270,150); c.lineTo(520,250); c.closePath(); c.fill();
-  c.strokeStyle=mixColor('#a77b3c','#45362c',nt*0.7); c.lineWidth=3;
-  for(let i=0;i<34;i++){ const x=24+i*14.5; c.beginPath(); c.moveTo(x,248); c.lineTo(x+sway+(i%2?4:-2),268+(i%3)*4); c.stroke(); }
-  c.fillStyle=mixColor('#b2864a','#4b3a2e',nt*0.7); for(let i=0;i<34;i++){ const x=22+i*14.5; c.beginPath(); c.moveTo(x,246); c.lineTo(x+7+sway,266+(i%3)*5); c.lineTo(x+14,246); c.fill(); }
+  if(lvl('palapa')){
+    c.fillStyle=mixColor('#c79a55','#5a4535',nt*0.7);
+    c.beginPath(); c.moveTo(40,250); c.lineTo(290,150); c.lineTo(540,250); c.closePath(); c.fill();
+    c.strokeStyle=mixColor('#a77b3c','#45362c',nt*0.7); c.lineWidth=3;
+    for(let i=0;i<38;i++){ const x=44+i*13; c.beginPath(); c.moveTo(x,248); c.lineTo(x+sway+(i%2?4:-2),268+(i%3)*4); c.stroke(); }
+    c.fillStyle=mixColor('#b2864a','#4b3a2e',nt*0.7);
+    for(let i=0;i<38;i++){ const x=42+i*13; c.beginPath(); c.moveTo(x,246); c.lineTo(x+7+sway,266+(i%3)*5); c.lineTo(x+14,246); c.fill(); }
+  } else {
+    c.fillStyle=mixColor('#c79a55','#5a4535',nt*0.7);
+    c.beginPath(); c.moveTo(20,250); c.lineTo(270,150); c.lineTo(520,250); c.closePath(); c.fill();
+    c.strokeStyle=mixColor('#a77b3c','#45362c',nt*0.7); c.lineWidth=3;
+    for(let i=0;i<34;i++){ const x=24+i*14.5; c.beginPath(); c.moveTo(x,248); c.lineTo(x+sway+(i%2?4:-2),268+(i%3)*4); c.stroke(); }
+    c.fillStyle=mixColor('#b2864a','#4b3a2e',nt*0.7); for(let i=0;i<34;i++){ const x=22+i*14.5; c.beginPath(); c.moveTo(x,246); c.lineTo(x+7+sway,266+(i%3)*5); c.lineTo(x+14,246); c.fill(); }
+  }
+  /* v30: sombra real del tejado de la palapa sobre la arena (a la derecha,
+     donde se ponen las mesas). Se dibuja antes de clientes y mesas. */
+  if(lvl('palapa')){
+    c.fillStyle='rgba(60,40,20,.10)';
+    c.beginPath(); c.ellipse(600,614,130,32,0,0,7); c.fill();
+  }
   // cartel: la fuente se ajusta al ancho del tablero con margen interior
   c.fillStyle=woodD; rr(c,150,186,240,48,8); c.fill(); c.fillStyle=mixColor('#f1d9a8','#806a56',nt*0.5); rr(c,156,192,228,36,6); c.fill();
   c.fillStyle='#2a211c'; c.textAlign='center';
-  { const txt='EL CHARCO AZUL', maxW=196; // 228 - 2·16 de margen interior
+  /* v30: al comprar la Palapa, el rótulo se repinta con el nombre de la concesión:
+     la promesa de los textos de temporada ("tu nombre en el cartel") por fin se ve. */
+  { const txt=lvl('palapa')?'DE LALI Y OLI':'EL CHARCO AZUL', maxW=196; // 228 - 2·16 de margen interior
     let fs=26; c.font='700 '+fs+'px Chillax, sans-serif';
     const wTxt=c.measureText(txt).width;
     if(wTxt>maxW){ fs=Math.max(14,Math.floor(fs*maxW/wTxt)); c.font='700 '+fs+'px Chillax, sans-serif'; }
@@ -140,6 +174,50 @@ export function drawHutBack(c,T,h,nt,wind){
                (drawStationLabels) para que clientes y burbujas no las tapen */ }
   if(Game.staff.camarero&&!Game.floor?.actors.some(a=>a.role==='camarero')){ const s=Game.slots.find(s=>s.staffRole==='camarero'); const b=s&&s.cust; drawPerson(c, b?360+Math.sin(T*8)*24:380, HUT_BAR_FLOOR_Y, {shirt:'#0f8b8d',skin:'#c58a5c',look:{hair:{style:'rastas',color:'#2a211c'},walk:{},acc:[]},type:'staff',bob:b?Math.sin(T*16)*2:0}); }
   if(Game.staff.cocinero&&!Game.floor?.actors.some(a=>a.role==='cocinero')){ drawPerson(c,95+Math.sin(T*2)*8,HUT_BAR_FLOOR_Y,{shirt:'#ffffff',skin:'#e0a97e',hat:'chef',type:'staff'}); if(Game.mode==='service'&&Game.slots.some(s=>s.cust)){ c.fillStyle='rgba(255,255,255,.4)'; for(let i=0;i<3;i++){ c.beginPath(); c.arc(130+i*10+Math.sin(T*3+i)*6, 380-((T*30+i*20)%50), 6,0,7); c.fill(); } } }
+  /* ---- v30: extras de las reformas (dibujados detrás de clientes y mesas) ---- */
+  // plantas en macetas junto a los postes (Palapa)
+  if(lvl('palapa')){
+    for(const [px,py] of [[72,566],[508,566]]){
+      c.fillStyle=mixColor('#b3552e','#5a2c1c',nt*0.7); rr(c,px-12,py,24,20,4); c.fill();
+      c.fillStyle=mixColor('#2f7a3a','#1d3a32',nt*0.7);
+      for(let i=0;i<5;i++){ const a=(i-2)*0.5; c.beginPath(); c.moveTo(px,py+2);
+        c.quadraticCurveTo(px+Math.sin(a)*16,py-16,px+Math.sin(a)*24,py-26);
+        c.quadraticCurveTo(px+Math.sin(a)*8,py-12,px,py+2); c.fill(); }
+    }
+  }
+  // carteles de las dos colas por intención (Terraza)
+  if(lvl('terraza')){
+    const sign=(x,y,txt)=>{ c.fillStyle=mixColor('#6b4226','#2d1f1c',nt*0.7); rr(c,x-33,y,66,20,6); c.fill();
+      c.fillStyle=mixColor('#f1d9a8','#806a56',nt*0.5); rr(c,x-29,y+3,58,14,4); c.fill();
+      c.fillStyle='#2a211c'; c.font='700 11px Satoshi, sans-serif'; c.textAlign='center'; c.fillText(txt,x,y+14); };
+    sign(160,548,'BARRA');
+    sign(160,606,'TERRAZA');
+  }
+  // ventanilla express (Escenario): rótulo junto al extremo derecho del mostrador
+  if(lvl('escenario')){
+    c.fillStyle=mixColor('#6b4226','#2d1f1c',nt*0.7); rr(c,496,556,64,18,4); c.fill();
+    c.fillStyle=mixColor('#f1d9a8','#806a56',nt*0.5); c.font='700 10px Satoshi, sans-serif'; c.textAlign='center'; c.fillText('EXPRESS',528,569);
+  }
+  // escenario con música en directo + estandarte con la bandera (Escenario)
+  if(lvl('escenario')){
+    c.fillStyle=mixColor('#8a5a36','#3d2a26',nt*0.7); c.fillRect(44,566,100,52);
+    c.fillStyle=mixColor('#6b4226','#2d1f1c',nt*0.7); for(let i=0;i<5;i++) c.fillRect(48+i*19,570,15,44);
+    if(Game.mode==='service'){
+      c.fillStyle='#e0a97e'; c.beginPath(); c.arc(80,585,7,0,7); c.fill();
+      c.fillStyle='#d94f8a'; rr(c,70,592,20,24,4); c.fill();
+      c.fillStyle='#8a5a36'; c.beginPath(); c.ellipse(100,600,10,7,-0.5,0,7); c.fill();
+      if(Game.dayEvent&&Game.dayEvent.title==='Concierto en el chiringo'){
+        c.fillStyle='#ffd36b'; c.font='700 14px Satoshi, sans-serif'; c.textAlign='left';
+        c.fillText('♪', 118+Math.sin(T*2)*4, 578+Math.sin(T*1.7)*4);
+        c.fillText('♫', 130+Math.sin(T*1.5+2)*4, 568+Math.sin(T*2.2)*4);
+      }
+    }
+    c.strokeStyle=mixColor('#8a6a45','#3d3040',nt*0.7); c.lineWidth=5;
+    c.beginPath(); c.moveTo(532,250); c.lineTo(532,560); c.stroke();
+    c.fillStyle='#e8603c'; c.beginPath(); c.moveTo(532,252); c.lineTo(532,282); c.lineTo(498,267); c.closePath(); c.fill();
+    c.fillStyle='#0f8b8d'; c.beginPath(); c.moveTo(532,284); c.lineTo(532,314); c.lineTo(498,299); c.closePath(); c.fill();
+    c.fillStyle='#fff6e6'; c.beginPath(); c.arc(529,268,4,0,7); c.fill();
+  }
 }
 /* v29.5: la parte frontal del kiosco (mostrador y útiles) se dibuja DESPUÉS
    de clientes y personal: quien trabaja dentro del chiringuito queda
@@ -157,6 +235,13 @@ export function drawHutFront(c,T,h,nt,wind){
   // cosas en la barra
   if(Game.stock.papas>0) drawIcon(c,'papas',70,COUNTER.y-6,24);
   if(Game.stock.cerveza>0){ drawIcon(c,'cerveza',102,COUNTER.y-22,28); drawIcon(c,'cerveza',130,COUNTER.y-22,28); }
+  /* v30: segunda tiradora de cerveza en el extremo derecho de la barra (Palapa) */
+  if(lvl('palapa')){
+    const tx=COUNTER.x+COUNTER.w-52;
+    c.fillStyle=mixColor('#20252b','#101418',nt*0.5); rr(c,tx-14,COUNTER.y-32,28,28,4); c.fill();
+    c.fillStyle='#c73e2a'; c.fillRect(tx-3,COUNTER.y-40,6,10);
+    c.fillStyle='#f5f0e6'; c.beginPath(); c.arc(tx,COUNTER.y-40,5,0,7); c.fill();
+  }
   // utillaje y faena: la zona es del puesto asignado, el tipo sigue la actividad real
   // (en solitario, ambas zonas comparten la banda M, junto al jugador)
   if(coop){
@@ -227,4 +312,33 @@ export function drawAngerCue(c,x,y,stage,T){
   if(stage===1){ c.fillStyle='#e0a000'; for(let i=0;i<3;i++){ c.globalAlpha=0.4+0.6*Math.abs(Math.sin(T*2+i*0.7)); c.beginPath(); c.arc(x+i*6,y,2.2,0,7); c.fill(); } c.globalAlpha=1; }
   else if(stage===2){ c.strokeStyle='#d9633f'; c.lineWidth=1.8; c.beginPath(); c.arc(x+3,y-1,6,0,7); c.stroke(); c.beginPath(); c.moveTo(x+3,y-1); c.lineTo(x+3,y-5.5); c.moveTo(x+3,y-1); c.lineTo(x+6.5,y); c.stroke(); }
   else { c.fillStyle=Math.sin(T*10)>0?'#e8473c':'#a3322a'; c.font='700 13px Satoshi, sans-serif'; c.textAlign='left'; c.fillText('!',x,y+5); c.textAlign='center'; }
+}
+
+/* v30: pérgola de la Terraza techada. Se dibuja en una capa tardía (por encima
+   de mesas y clientes, como drawLights) pero el plano del tejado queda por
+   encima de las cabezas (y 428–462) y las listones son semi-transparentes:
+   organiza el espacio sin tapar a nadie. Las guirnaldas se encienden al
+   atardecer (h>18.5), junto con las propinas de atardecer de completeOrder. */
+export function drawPergola(c,T,h,nt){
+  const woodD=mixColor('#6b4226','#2d1f1c',nt*0.7);
+  // postes
+  c.fillStyle=woodD; c.fillRect(568,462,10,178); c.fillRect(1240,462,10,178);
+  // plano del tejado (listones semi-transparentes)
+  c.globalAlpha=0.85;
+  c.fillStyle=mixColor('#c79a55','#5a4535',nt*0.7); c.fillRect(556,428,706,34);
+  c.fillStyle=mixColor('#b2864a','#4b3a2e',nt*0.7);
+  for(let i=0;i<12;i++) c.fillRect(560+i*59,432,38,26);
+  c.globalAlpha=1;
+  // guirnaldas colgando del borde del tejado
+  const lit = h>18.5;
+  c.strokeStyle='rgba(60,40,20,.5)'; c.lineWidth=1.5;
+  c.beginPath();
+  for(let x=566;x<=1240;x+=8){ const y=462+Math.sin((x-566)*0.045+T*0.8)*4; x===566?c.moveTo(x,y):c.lineTo(x,y); }
+  c.stroke();
+  for(let x=574;x<=1236;x+=18){
+    const y=462+Math.sin((x-566)*0.045+T*0.8)*4;
+    c.fillStyle=lit? (Math.sin(T*3+x)>-0.9?'#ffd36b':'#8a6a45') : mixColor('#8a6a45','#4b3a2e',nt);
+    c.beginPath(); c.arc(x,y+4,3.2,0,7); c.fill();
+    if(lit){ c.fillStyle='rgba(255,211,107,.22)'; c.beginPath(); c.arc(x,y+4,7,0,7); c.fill(); }
+  }
 }

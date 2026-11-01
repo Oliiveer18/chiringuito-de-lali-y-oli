@@ -2,7 +2,7 @@
    world.js
    Geometría de la escena (mesas, hamacas, cola, mostrador) y aspecto de los clientes.
    ========================================================= */
-import { QUEUE_SPOTS, W } from './config.js?v=30.0.0';
+import { W } from './config.js?v=30.0.0';
 import { rand, rnd } from './util.js?v=30.0.0';
 import { Game, tableCount } from './state.js?v=30.0.0';
 import { navRebuild } from './nav.js?v=30.0.0';
@@ -20,7 +20,17 @@ export const EXIT_X_L = -150;
 export const TABLE_POS = [];
 for(let r=0;r<2;r++) for(let c=0;c<5;c++) TABLE_POS.push({x:600+c*148+(r?40:0), y:528+r*112});
 export const HAMACA_POS = []; for(let i=0;i<8;i++) HAMACA_POS.push({x:560+i*88, y:452});
-export const QUEUE_POS = []; for(let i=0;i<QUEUE_SPOTS;i++) QUEUE_POS.push({x:434-i*80, y:600}); // margen para que el último no se corte con sombreros/mochilas
+/* v30: la cola vive en dos filas cortas de 4 (fila del mostrador y fila de
+   detrás). Sin reformas se usan 6 puestos (los 4 de delante + 2 de atrás);
+   con la Palapa se usan los 8. Con la Terraza, la fila de delante es la cola
+   de Barra y la de atrás la de Terraza (por intención). */
+export const QUEUE_POS = [
+  {x:434,y:598},{x:354,y:598},{x:274,y:598},{x:194,y:598},
+  {x:434,y:652},{x:354,y:652},{x:274,y:652},{x:194,y:652},
+];
+/* v30 (Escenario): ventanilla express junto al extremo derecho del mostrador,
+   para pedidos de solo bebida. Índices altos para no chocar con la cola normal. */
+export const EXPRESS_POS = [{x:508,y:598},{x:508,y:652}];
 export const COUNTER = {x:50,y:440,w:440,h:70};
 /** Suelo interior del quiosco: fillRect(60,250,420,200) → borde inferior y=450. drawPerson ancla los pies en y. */
 export const HUT_BAR_FLOOR_Y = 450;

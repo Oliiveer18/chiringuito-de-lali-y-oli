@@ -118,6 +118,8 @@ export function estimateCustomers(){
   for(let h=10;h<closeHour();h++) tot+=8*(HOUR_CURVE[h]||0.6)*((difficultyRush(h+0.25)+difficultyRush(h+0.75))/2);
   tot*= w.arr*repArrivalMult()*(lvl('redes')?1.15:1)*(isWeekend(simProgressDay())?1.25:1)*(SPECIAL_DAYS[Game.day]?SPECIAL_DAYS[Game.day].arr:1)*difficultyProfile().arrivals;
   if(lvl('sombrillas') && (weatherToday()==='sol'||weatherToday()==='calima')) tot*=1.15;
+  /* v30: sombra de la palapa */
+  if(lvl('palapa') && (weatherToday()==='sol'||weatherToday()==='calima')) tot*=1.10;
   if(isCoop()) tot*=1.4;
   return tot;
 }

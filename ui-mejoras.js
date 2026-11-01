@@ -4,11 +4,12 @@ import { escapeHtml, eur } from './util.js?v=30.0.0';
 import { Game, lvl } from './state.js?v=30.0.0';
 
 const MEJORAS_SECTIONS = [
-  { title: 'Sala y mesas', ids: ['mesas', 'altavoz', 'luces', 'terraza'] },
+  { title: 'Reformas del chiringuito', ids: ['palapa', 'terraza', 'escenario'] },
+  { title: 'Sala y mesas', ids: ['mesas', 'altavoz', 'luces'] },
   { title: 'Cocina y carta', ids: ['nevera', 'plancha', 'cocina', 'refrescos', 'heladera', 'gofrera', 'coctelera', 'churrera', 'algodonera'] },
   { title: 'Playa', ids: ['sombrillas', 'hamacas'] },
   { title: 'Clientes y red', ids: ['redes'] },
-  { title: 'Premium y eventos', ids: ['escenario'] },
+  { title: 'Premium y eventos', ids: [] },
 ];
 
 const BENEFIT_SHORT = {
@@ -22,8 +23,9 @@ const BENEFIT_SHORT = {
   cocina: 'Pescado del día, plato más rentable',
   luces: 'Cierra hasta las 22:00',
   algodonera: 'Algodón de azúcar automático',
-  escenario: 'Contrata música, magia o baile',
-  terraza: '+2 mesas y +10% afluencia',
+  escenario: 'Conciertos con pico de clientela y ventanilla express',
+  terraza: '+2 mesas, dos colas organizadas y guirnaldas',
+  palapa: 'Cola de 8, +clientela con sol/calima, rótulo a vuestro nombre',
   refrescos: 'Agua y refrescos rápidos',
   heladera: 'Helados (se derriten si tardáis)',
   gofrera: 'Gofres dulces y rentables',
@@ -76,11 +78,16 @@ function renderUpgradeRow(u) {
 export function renderMejorasTab() {
   const ownedLevels = UPGRADES.reduce((a, u) => a + Math.min(lvl(u.id), u.levels.length), 0);
   const maxLevels = UPGRADES.reduce((a, u) => a + u.levels.length, 0);
+  /* v30: nivel visual del kiosco con las reformas compradas (1-4) */
+  const reforms = Math.min(3, lvl('palapa') + lvl('terraza') + lvl('escenario'));
+  const reformNames = ['Chiringo de madera', 'Palapa', 'Terraza techada', 'Chiringo de referencia'];
   let h = `<div class="up-summary" role="status">
     <span class="up-summary-cash">En caja <b>${eur(Game.money)}</b></span>
     <span class="up-summary-owned">${ownedLevels} de ${maxLevels} niveles instalados</span>
+    <span class="up-summary-owned">Kiosco nivel ${1 + reforms}/4 · ${reformNames[reforms]}</span>
   </div>`;
   for (const sec of MEJORAS_SECTIONS) {
+    if (!sec.ids.some(id => upgradeById(id))) continue;
     h += `<section class="up-section"><h3 class="up-section-k">${escapeHtml(sec.title)}</h3><div class="up-grid up-grid-compact">`;
     for (const id of sec.ids) {
       const u = upgradeById(id);

@@ -1,6 +1,6 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
 import { trackCost } from './bookkeeping.js?v=30.0.0';
-import { GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER } from './config.js?v=30.0.0';
+import { CONCERT_EVENT, GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER, concertDay } from './config.js?v=30.0.0';
 import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=30.0.0';
 import { ICON_URL } from './icons.js?v=30.0.0';
 import { Audio } from './audio.js?v=30.0.0';
@@ -31,6 +31,8 @@ export function renderForecast(){
   const ev=SPECIAL_DAYS[Game.day];
   let html = `<div class="fc today"><div class="k">Hoy</div><div class="v">${iconFor(w)}<span>${WEATHER[w].label}</span></div><div class="d">${WEATHER[w].desc}${isWeekend(simProgressDay())?' Fin de semana: más gente del pueblo.':''}</div></div>`;
   if(ev) html += `<div class="fc event"><div class="k">Evento</div><div class="v">${ev.title}</div><div class="d">${ev.desc}</div></div>`;
+  /* v30: día de concierto (Escenario), anunciado en el pronóstico del plan */
+  else if(concertDay(simProgressDay(), !!lvl('escenario'))) html += `<div class="fc event"><div class="k">Evento</div><div class="v">${CONCERT_EVENT.title}</div><div class="d">${CONCERT_EVENT.desc} ¡Prepara stock!</div></div>`;
   if(Game.day<SEASON_DAYS) html += `<div class="fc"><div class="k">Mañana</div><div class="v">${WEATHER[tw].label}</div><div class="d">${SPECIAL_DAYS[Game.day+1]?SPECIAL_DAYS[Game.day+1].title:dayName(Game.day+1)}</div></div>`;
   html += `<div class="fc"><div class="k">Objetivo</div><div class="v">${eur(GOAL)}</div><div class="d">Quedan ${SEASON_DAYS-Game.day+1} días · valoración ${Game.rep.toFixed(1)}/5</div></div>`;
   const difficulty=difficultyProfile();

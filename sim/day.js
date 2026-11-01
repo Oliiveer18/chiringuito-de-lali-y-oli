@@ -13,6 +13,8 @@ import { HOUR_CURVE } from "../config.js?v=30.0.0";
 import { PERSONALITIES } from "../config.js?v=30.0.0";
 import { SEC_PER_HOUR } from "../config.js?v=30.0.0";
 import { SPECIAL_DAYS } from "../config.js?v=30.0.0";
+import { CONCERT_EVENT } from "../config.js?v=30.0.0";
+import { concertDay } from "../config.js?v=30.0.0";
 import { W } from "../config.js?v=30.0.0";
 import { WAIT_TABLE_MAX } from "../config.js?v=30.0.0";
 import { WEATHER } from "../config.js?v=30.0.0";
@@ -28,6 +30,7 @@ import { gameTimers } from "../state.js?v=30.0.0";
 import { isCoop } from "../state.js?v=30.0.0";
 import { isWeekend } from "../state.js?v=30.0.0";
 import { lvl } from "../state.js?v=30.0.0";
+import { queueSpots } from "../state.js?v=30.0.0";
 import { simProgressDay } from "../state.js?v=30.0.0";
 import { weatherToday } from "../state.js?v=30.0.0";
 import { QUEUE_POS } from "../world.js?v=30.0.0";
@@ -68,6 +71,8 @@ export function startDay(){
   Game.mode='service'; Game.hour=10; Game.closing=false; Game.closeT=0; Game.spawnAcc=0; Game.spawnThrottleUntil=0;
   Game.customers=[]; Game.floaters=[]; Game.mods={arr:1};
   Game.dayEvent = SPECIAL_DAYS[Game.day]||null;
+  /* v30: día de concierto (Escenario). Determinista: coincide con el pronóstico. */
+  if(!Game.dayEvent && concertDay(simProgressDay(), !!lvl('escenario'))) Game.dayEvent = CONCERT_EVENT;
   Game.eventDone = rnd()>0.45; Game.eventHour = rand(11.5,17.5);
   buildTables(); for(const t of Game.tables){ t.state='free'; t.cust=null; }
   const mk=(who,station)=>({who,station,cust:null,items:[],t:0,total:0,think:0});
@@ -113,6 +118,8 @@ export function update(dt){
     const w=WEATHER[weatherToday()];
     let mult = w.arr*repArrivalMult()*Game.mods.arr;
     if(lvl('sombrillas')&&(weatherToday()==='sol'||weatherToday()==='calima')) mult*=1.15;
+    /* v30: la sombra real de la palapa atrae gente con sol y calima */
+    if(lvl('palapa')&&(weatherToday()==='sol'||weatherToday()==='calima')) mult*=1.10;
     if(lvl('redes')) mult*=1.15;
     if(isWeekend(simProgressDay())) mult*=1.25;
     if(Game.dayEvent) mult*=Game.dayEvent.arr;
@@ -178,8 +185,19 @@ export function update(dt){
       }
     }
   });
-  const inLine = Game.customers.filter(c=>c.spot>=0).sort((a,b)=>a.spot-b.spot);
-  inLine.forEach((c,i)=>{ if(c.spot!==i){ c.spot=i; navSetTarget(c, QUEUE_POS[i].x, QUEUE_POS[i].y, {x:QUEUE_POS[i].x, y:QUEUE_POS[i].y+46}); } });
+  /* v30: compactación de la cola. Sin Terraza es una cola única en orden.
+     Con Terraza son dos colas por intención (qRow): cada fila se compacta por
+     separado para que la fila de Barra y la de Terraza no se mezclen.
+     Los puestos de la ventanilla express (>=100) nunca se reindexan. */
+  if(lvl('terraza')){
+    for(const row of [0,1]){
+      const line = Game.customers.filter(c=>c.spot>=0&&c.spot<100&&(c.qRow||0)===row).sort((a,b)=>a.spot-b.spot);
+      line.forEach((c,i)=>{ const s=row*4+i; if(s<QUEUE_POS.length&&c.spot!==s){ c.spot=s; navSetTarget(c, QUEUE_POS[s].x, QUEUE_POS[s].y, {x:QUEUE_POS[s].x, y:QUEUE_POS[s].y+46}); } });
+    }
+  } else {
+    const inLine = Game.customers.filter(c=>c.spot>=0&&c.spot<100).sort((a,b)=>a.spot-b.spot);
+    inLine.forEach((c,i)=>{ const s=Math.min(i,queueSpots()-1); if(c.spot!==s){ c.spot=s; navSetTarget(c, QUEUE_POS[s].x, QUEUE_POS[s].y, {x:QUEUE_POS[s].x, y:QUEUE_POS[s].y+46}); } });
+  }
   function angerUpdate(c, dt, drainMul){
     const P=PERSONALITIES[c.personality]||PERSONALITIES.tranquilo;
     c.patience -= dt*drainMul*P.patMul;

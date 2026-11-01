@@ -52,6 +52,11 @@ export function itemUnlocked(id){ const u=ITEMS[id].unlock; return !u || lvl(u)>
 export function activeItems(){ return ITEM_IDS.filter(id=>itemUnlocked(id) && Game.enabled[id]); }
 // Máximo 10 mesas: es el número de posiciones definidas en world.js (TABLE_POS)
 export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('terraza')); }
+/* v30: reformas del chiringuito. La cola base tiene 6 puestos; la Palapa la
+   amplía a 8 (dos filas cortas de 4, geometría ya definida en world.js). */
+export function queueSpots(){ return 6 + 2*lvl('palapa'); }
+/* Nivel visual del kiosco: 1 base + una por reforma comprada (1-4). */
+export function reformLevel(){ return 1 + lvl('palapa') + lvl('terraza') + lvl('escenario'); }
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){const t=Game.upgrades.workforce?.team;return STAFF.reduce((s,st)=>{if(!Game.staff[st.id])return s;const v=t?.[st.id];const list=Array.isArray(v)?v:v?[v]:[];return s+list.reduce((n,e)=>n+(e?.wage??st.wage),0);},0);}
 /* v29.3: sueldo por tiempo realmente trabajado. La jornada completa (de 10:00 al

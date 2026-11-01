@@ -13,7 +13,10 @@ export const GOAL = 10000;
 export const START_MONEY = 400;
 export const RENT = 45;
 export const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-export const QUEUE_SPOTS = 6;
+/* v30: geometría máxima de la cola. La base del juego usa 6 puestos (los 4 de la
+   fila del mostrador + los 2 primeros de la fila de atrás); con la reforma Palapa
+   se usan los 8 (dos filas cortas de 4). La capacidad activa la da queueSpots(). */
+export const QUEUE_SPOTS = 8;
 
 export const ITEMS = {
   cerveza:   {name:'Cerveza Dorada',     cost:0.7, ref:2.8,  prep:0.7, spoil:0,    spoilF:0,    unlock:null},
@@ -78,6 +81,15 @@ export const SPECIAL_DAYS = {
   30:{title:'Último día de temporada', desc:'Todo el mundo quiere despedir el verano.', mix:{}, arr:1.25},
 };
 
+/* v30: día de concierto (reforma Escenario). Determinista a partir del número
+   de día: el pronóstico del plan y la jornada abierta siempre coinciden. */
+export const CONCERT_EVENT = {title:'Concierto en el chiringo', desc:'Música en directo en el escenario: la playa entera se acerca.', arr:1.5, mix:{local:1.3, turista:1.2}};
+export function concertDay(day, hasStage){
+  if(!hasStage) return false;
+  const h=(((day*2654435761)>>>0)%1000)/1000;
+  return h<0.12;
+}
+
 export const UPGRADES = [
   {id:'mesas',     name:'Más mesas',            desc:'+2 mesas por nivel. Más clientes sentados, más contentos.', levels:[250,450,700]},
   {id:'sombrillas',name:'Sombrillas',           desc:'+15% de clientela los días de sol o calima.', levels:[300]},
@@ -89,6 +101,11 @@ export const UPGRADES = [
   {id:'cocina',    name:'Cocina con freidora',  desc:'Desbloquea el pescado fresco del día, el plato más rentable.', levels:[1100], req:'plancha'},
   {id:'luces',     name:'Guirnaldas y luces',  desc:'Abre hasta las 22:00 y aprovecha la puesta de sol.', levels:[800]},
   {id:'vestuarios',name:'Vestuarios',          desc:'Un hueco más de plantilla por puesto y nivel: hasta 3 trabajadores por puesto.', levels:[350,700]},
+  /* --- v30: Reformas del chiringuito. El edificio crece por niveles, solo con
+     dinero (sin candado de temporada); cada reforma exige la anterior. --- */
+  {id:'palapa',   name:'Reforma: Palapa',        desc:'Tejado de palma más alto y ancho, ventana de cocina con la cocinera visible, segunda tiradora de cerveza, rótulo pintado a nombre de Lali y Oli, plantas y sombra real. La cola pasa de 6 a 8 puestos en dos filas, sube la clientela con sol y calima y la cocina va más rápida.', levels:[3000]},
+  {id:'terraza',  name:'Reforma: Terraza techada',desc:'Pérgola sobre las mesas con guirnaldas que se encienden al atardecer, hasta 10 mesas y segunda cola organizada por intención (Barra para llevar / Terraza para mesa). Las mesas bajo techo no pierden satisfacción con lluvia o calima y hay propinas extra al atardecer.', levels:[12000], req:'palapa'},
+  {id:'escenario',name:'Reforma: Escenario',     desc:'Escenario con música en directo, estandarte con la bandera y ventanilla express para pedidos de bebida: menos gente acumulada en la barra. Días de concierto con pico de clientela.', levels:[30000], req:'terraza'},
 ];
 
 export const STAFF = [

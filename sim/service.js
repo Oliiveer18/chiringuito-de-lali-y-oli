@@ -20,6 +20,7 @@ import { Net } from "../state.js?v=30.0.0";
 import { hostLive, staffOnDuty } from "../state.js?v=30.0.0";
 import { isCoop } from "../state.js?v=30.0.0";
 import { lvl } from "../state.js?v=30.0.0";
+import { weatherToday } from "../state.js?v=30.0.0";
 import { navSetTarget } from "../nav.js?v=30.0.0";
 import { recordVisit } from "../report.js?v=30.0.0";
 import { updateStockbar } from "../ui.js?v=30.0.0";
@@ -32,7 +33,10 @@ import { servable } from "./day.js?v=30.0.0";
 
 export function prepTime(order){
   let t = order.reduce((s,id)=>s+ITEMS[id].prep,0);
-  if(lvl('plancha')) t*=0.8; const cook=teamOf(Game.upgrades.workforce?.team,'cocinero')[0];if(Game.staff.cocinero&&cook&&staffOnDuty('cocinero')) t*=0.6*factor(cook,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
+  if(lvl('plancha')) t*=0.8;
+  /* v30: la cocina de la palapa (visible desde la ventana) trabaja más rápido */
+  if(lvl('palapa')) t*=0.92;
+  const cook=teamOf(Game.upgrades.workforce?.team,'cocinero')[0];if(Game.staff.cocinero&&cook&&staffOnDuty('cocinero')) t*=0.6*factor(cook,order.map(id=>({station:stationOf(id),complex:ITEMS[id].prep>=2})));
   return t;
 }
 
@@ -143,6 +147,10 @@ export function completeOrder(c){
   const cheap = c.served.reduce((a,id)=>a+Math.max(0,1-Game.prices[id]/ITEMS[id].ref),0)/c.served.length;
   const dirty = Game.tables.filter(t=>t.state==='dirty').length;
   let s=satisfaction({wait:waitFrac,price:priceF,missing:!!c.missing,dirty,cheap,music:!!lvl('altavoz'),sync});
+  /* v30: la terraza techada protege del temporal; sin ella, la lluvia (panza)
+     o la calima enfrían la experiencia de la jornada. */
+  const wt=weatherToday();
+  if(wt==='panza'||wt==='calima') s = lvl('terraza') ? Math.min(1,s+0.02) : s*0.93;
   c.dirtySeen=dirty;
   c.priceF=priceF;
   const P=PERSONALITIES[c.personality]||PERSONALITIES.tranquilo;
@@ -150,7 +158,13 @@ export function completeOrder(c){
   if(c.personality==='generoso') pTip=total*P.tipP;
   if(c.personality==='exigente' && s>0.85) pTip=total*P.tipP;
   if(pTip>0.01){ total+=pTip; Game.dayStats.tipsP=(Game.dayStats.tipsP||0)+pTip; Game.floaters.push({x:c.x,y:c.y-190,text:'Propina +'+eur2(pTip),t:0,color:'#ffd36b'}); }
-  c.syncTip=sync; c.tipped = sync || pTip>0.01; c.tipAmt = syncTip + Math.max(0,pTip);
+  /* v30: propina de atardecer con las guirnaldas de la terraza encendidas */
+  let gTip=0;
+  if(lvl('terraza') && Game.hour>18.5){
+    gTip=total*0.05; total+=gTip; Game.dayStats.tips+=gTip;
+    Game.floaters.push({x:c.x,y:c.y-205,text:'Guirnaldas +'+eur2(gTip),t:0,color:'#ffd36b'});
+  }
+  c.syncTip=sync; c.tipped = sync || pTip>0.01 || gTip>0; c.tipAmt = syncTip + Math.max(0,pTip) + gTip;
   /* v29.5: las parejas solo van a la mesa cuando las atienden a las dos. */
   if(c.partnerId!=null){
     const mate=Game.customers.find(x=>x.id===c.partnerId);

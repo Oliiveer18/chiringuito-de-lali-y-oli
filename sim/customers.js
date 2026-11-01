@@ -2,6 +2,7 @@
 import { releaseFloorCustomer } from "../floor-service.js?v=30.0.0";
 import { ITEMS } from "../config.js?v=30.0.0";
 import { PKEYS } from "../config.js?v=30.0.0";
+import { PERSONALITIES } from "../config.js?v=30.0.0";
 import { QUEUE_SPOTS } from "../config.js?v=30.0.0";
 import { REGULARS } from "../config.js?v=30.0.0";
 import { SEC_PER_HOUR } from "../config.js?v=30.0.0";
@@ -24,7 +25,9 @@ import { lvl } from "../state.js?v=30.0.0";
 import { simProgressDay } from "../state.js?v=30.0.0";
 import { setTimeoutGame } from "../state.js?v=30.0.0";
 import { weatherToday } from "../state.js?v=30.0.0";
+import { queueSpots } from "../state.js?v=30.0.0";
 import { QUEUE_POS } from "../world.js?v=30.0.0";
+import { EXPRESS_POS } from "../world.js?v=30.0.0";
 import { custSeq } from "../world.js?v=30.0.0";
 import { genLook } from "../world.js?v=30.0.0";
 import { EXIT_X_R } from "../world.js?v=30.0.0";
@@ -128,12 +131,36 @@ export function spawnCustomer(forceType, opts){
       Game.customers.push(mate);
     }
   }
+  /* v30: la cola crece con las reformas. Capacidad activa: 6 base, 8 con Palapa.
+     Con Terraza son DOS colas por intención (fila 0 Barra, fila 1 Terraza);
+     con Escenario, los pedidos de solo bebida van a la ventanilla express. */
+  const QN = queueSpots();
   const taken = new Set(Game.customers.filter(o=>o.spot>=0).map(o=>o.spot));
   let spot=-1;
-  if(mate){
-    for(let i=0;i+1<QUEUE_SPOTS;i++) if(!taken.has(i)&&!taken.has(i+1)){spot=i;break;}
-  }else{
-    for(let i=0;i<QUEUE_SPOTS;i++) if(!taken.has(i)){ spot=i; break; }
+  const P = PERSONALITIES[c.personality] || PERSONALITIES.tranquilo;
+  const soloBebida = c.order.length>0 && c.order.every(id=>stationOf(id)!=='cocina');
+  const express = !mate && lvl('escenario') && soloBebida && P.takeaway!=='mesa';
+  if(express){
+    if(!taken.has(100)) spot=100;
+    else if(!taken.has(101)) spot=101;
+  }
+  if(spot<0){
+    if(mate){
+      /* pareja: dos puestos contiguos en la misma fila */
+      for(let i=0;i+1<QN;i++) if((i%4)<3 && !taken.has(i)&&!taken.has(i+1)){spot=i;break;}
+    }else if(!lvl('terraza')){
+      /* una sola cola: se llena en orden */
+      for(let i=0;i<QN;i++) if(!taken.has(i)){ spot=i; break; }
+    }else{
+      /* dos colas por intención: Barra (fila 0) o Terraza (fila 1); si la tuya
+         está llena, prueba la otra antes de irse */
+      const wantsTable = P.takeaway==='mesa' || (P.takeaway!=='prefiere' && c.order.some(id=>stationOf(id)==='cocina'));
+      for(const r of (wantsTable?[1,0]:[0,1])){
+        for(let i=r*4;i<r*4+4;i++) if(!taken.has(i)){ spot=i; break; }
+        if(spot>=0) break;
+      }
+      c.qRow = wantsTable?1:0;
+    }
   }
   if(spot<0){
     c.state='walkby'; c.mood='lleno'; c.moodT=3; navSetTarget(c, fromRight? EXIT_X_L : EXIT_X_R, 690); c.y=rand(684,700);
@@ -144,7 +171,8 @@ export function spawnCustomer(forceType, opts){
     }
     Game.customers.push(c); return c;
   }
-  c.spot=spot; navSetTarget(c, QUEUE_POS[spot].x, QUEUE_POS[spot].y, {x:QUEUE_POS[spot].x, y:QUEUE_POS[spot].y+46});
+  const pos = spot>=100 ? EXPRESS_POS[spot-100] : QUEUE_POS[spot];
+  c.spot=spot; navSetTarget(c, pos.x, pos.y, {x:pos.x, y:pos.y+46});
   const dirty = Game.tables.filter(t=>t.state==='dirty').length;
   c.maxPatience = T.patience * difficulty.patience * (c.order.length>2?1.12:1) * (lvl('altavoz')?1.25:1) * (1 - Math.min(0.3,dirty*0.06)) * rand(0.85,1.15);
   c.patience = c.maxPatience;
