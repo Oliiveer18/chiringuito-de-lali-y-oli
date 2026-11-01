@@ -4,13 +4,13 @@ import { CONCERT_EVENT, GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SP
 import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=30.0.0';
 import { ICON_URL } from './icons.js?v=30.0.0';
 import { Audio } from './audio.js?v=30.0.0';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, partner, simProgressDay, wages, weatherAt, weatherToday } from './state.js?v=30.0.0';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, openHours, partner, queueSpots, simProgressDay, tableCount, wages, weatherAt, weatherToday } from './state.js?v=30.0.0';
 import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=30.0.0';
 import { advanceFromReport } from './report.js?v=30.0.0';
 import { netAct, netDirty } from './net.js?v=30.0.0';
 import { drawPerson } from './render.js?v=30.0.0';
 import { iconFor } from './ui-polish.js?v=30.0.0';
-import { renderTab, toast } from './ui.js?v=30.0.0';
+import { estimateCustomers, renderTab, toast } from './ui.js?v=30.0.0';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};
@@ -26,6 +26,18 @@ export function showPlanUI(){
   $('#plan-title').textContent = simProgressDay()===1 ? 'Tu primer día' : greet[Game.day%greet.length];
   renderForecast(); renderTab(); refreshPlanMoney(); updateReadyUI();
 }
+/* v30.2: capacidad de servicio visible. El jugador ve, ANTES de abrir, si su
+   estructura puede con la demanda esperada del día — y entiende qué compra
+   la resuelve (reformas = más cola/mesas, plantilla = más puestos). */
+export function serviceCapacity(){
+  const team = Game.upgrades?.workforce?.team || {};
+  let workers = 0; for(const list of Object.values(team)) workers += (Array.isArray(list)?list:list?[list]:[]).length;
+  const slots = 1 + (isCoop()?1:0) + workers;
+  const rate = slots * 14; // clientes/hora que puede atender en marcha
+  const seats = tableCount()*2 + queueSpots() + (lvl('escenario')?2:0);
+  const hours = openHours();
+  return {slots, rate, seats, hours, capacity: Math.round(rate*hours)};
+}
 export function renderForecast(){
   const w=weatherToday(), tw=weatherAt(Game.day+1);
   const ev=SPECIAL_DAYS[Game.day];
@@ -39,6 +51,14 @@ export function renderForecast(){
   const prog=simProgressDay();
   const softOpen=prog<=2?' Días 1–2 de carrera: apertura suave (~55–60% de afluencia, sin picos de mediodía ni eventos sorpresa).':'';
   html += `<div class="fc"><div class="k">Dificultad progresiva</div><div class="v">${difficulty.label}</div><div class="d">Afluencia ${Math.round(difficulty.arrivals*100)}% · paciencia ${Math.round(difficulty.patience*100)}%. ${difficulty.peak>0?'Pico gradual de 12:00 a 15:00'+(closeHour()>20?' y de 19:30 a 21:30':'')+'.':'Inicio suave para organizaros.'}${softOpen}${prog>=9?' Pueden llegar pedidos de tres productos.':''}</div></div>`;
+  /* v30.2: capacidad del día, a la vista: demanda esperada vs lo que puedes
+     atender. Rojo = perderás clientes por estructura; verde = holgura. */
+  const cap = serviceCapacity();
+  const demand = estimateCustomers();
+  const ratio = cap.capacity ? demand/cap.capacity : 0;
+  const capLabel = ratio>1.15?'No daréis abasto':ratio>0.9?'Al límite':'Con holgura';
+  const capTag = ratio>1.15?'bad':ratio>0.9?'mid':'good';
+  html += `<div class="fc"><div class="k">Capacidad</div><div class="v"><span class="tag ${capTag}">${capLabel}</span></div><div class="d">Hoy esperas ~${Math.round(demand)} clientes y puedes atender ~${cap.capacity} (${cap.rate}/h con ${cap.slots} puesto${cap.slots>1?'s':''}, ${cap.seats} sitios entre cola y mesas). ${ratio>1.15?'Se te escapará gente: reforma o plantilla.':ratio>0.9?'Aguanta, pero sin margen para errores.':'La estructura responde.'}</div></div>`;
   if(Game.buzz>0.03) html += `<div class="fc"><div class="k">Boca a boca</div><div class="v">+${Math.round(Game.buzz*12)}%</div><div class="d">Recomendaciones de habituales contentos: más afluencia hoy.</div></div>`;
   $('#forecast').innerHTML=html;
 }
