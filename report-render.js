@@ -1,14 +1,14 @@
 /* Render del informe de fin de día. Lo importa report.js. */
-import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=30.0.0';
-import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=30.0.0';
-import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=30.0.0';
-import { rr } from './icons.js?v=30.0.0';
-import { Audio } from './audio.js?v=30.0.0';
-import { experienceSummary, reputation } from './ratings-model.mjs?v=30.0.0';
-import { Game, Net, closeHour, dayName, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=30.0.0';
-import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=30.0.0';
-import { netAct, netDirty } from './net.js?v=30.0.0';
-import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=30.0.0';
+import {operatingResult,ledgerHtml,capitalNote} from './bookkeeping.js?v=31.0.0';
+import { ITEMS, ITEM_IDS, REGULARS, REG_TOWN, RENT, SEASON_DAYS, SEC_PER_HOUR, STATION_COLOR, STATION_LABEL, TYPES } from './config.js?v=31.0.0';
+import { $, clamp, escapeHtml, eur, rnd, stars } from './util.js?v=31.0.0';
+import { rr } from './icons.js?v=31.0.0';
+import { Audio } from './audio.js?v=31.0.0';
+import { experienceSummary, reputation } from './ratings-model.mjs?v=31.0.0';
+import { Game, Net, closeHour, dayName, empireIncome, isCoop, isGuest, lvl, wages, workedWages, openHours, staffOnDuty } from './state.js?v=31.0.0';
+import { hideAll, showFinal, showPlan, toast, updateReadyUI } from './ui.js?v=31.0.0';
+import { netAct, netDirty } from './net.js?v=31.0.0';
+import { dayStarsSummary, buildRevModel, Rev, REV_RESP_MAX, REV_INVITE_COST, REV_INVITE_REP, REV_APOLOGY_REP } from './report-model.js?v=31.0.0';
 
 export function endDay(){
   Game.mode='report';
@@ -23,6 +23,10 @@ export function endDay(){
     if(lost>0){ Game.stock[id]-=lost; spoilVal+=lost*ITEMS[id].cost; spoilLines.push(`${lost} × ${ITEMS[id].name.toLowerCase()}`); }
   }
   Game.money -= wage + rent;
+  /* v31: los locales del imperio ingresan cada noche según la reputación de
+     la marca. Se cobran al cierre y tienen su línea propia en el informe. */
+  const venues = empireIncome();
+  if(venues.total>0){ Game.money += venues.total; Game.season.revenue += venues.total; }
   const net = operatingResult(s,{wage,rent});
   Game.season.revenue+=s.revenue; Game.season.served+=s.served; Game.season.lost+=s.lost;
   if(s.revenue>Game.season.bestDay){ Game.season.bestDay=s.revenue; Game.season.bestDayN=Game.day; }
@@ -37,7 +41,7 @@ export function endDay(){
   $('#rep-title').textContent = net>=0 ? (net>600?'¡Día redondo!':'Buen día de playa') : 'Día flojo';
   const soldStr = Object.entries(s.sold).sort((a,b)=>b[1]-a[1]).map(([id,n])=>`<span class="tag">${n} ${ITEMS[id].name.toLowerCase()}</span>`).join(' ');
   Game.revModel = buildRevModel(s, dayStars);
-  Game.revModel.acc = { wage, rent, spoilVal, spoilLines, soldStr, repStart:s.repStart };
+  Game.revModel.acc = { wage, rent, spoilVal, spoilLines, soldStr, repStart:s.repStart, venues };
   Rev.expanded = false; Rev.shownDay = Game.day;
   const last = Game.day>=SEASON_DAYS;
   const bankrupt = Game.money < -300;
@@ -126,6 +130,7 @@ export function reportStatsHtml(s, m){
       ${s.tips>0.5?`<span>Propinas sincronizadas (${s.combos})</span><span class="pos">+${eur(s.tips)}</span>`:''}
       ${s.tipsP>0.05?`<span>Propinas de agradecimiento</span><span class="pos">+${eur(s.tipsP)}</span>`:''}
       ${s.hamacas>0.5?`<span>Alquiler de hamacas</span><span class="pos">+${eur(s.hamacas)}</span>`:''}
+      ${acc.venues&&acc.venues.total>0?`<span>Locales del imperio (${acc.venues.owned.length})</span><span class="pos">+${eur(acc.venues.total)}</span>`:''}
       <span>Compras de género (mañana)</span><span class="neg">−${eur(s.purchases)}</span>
       ${s.urgent?`<span>Pedidos urgentes</span><span class="neg">−${eur(s.urgent)}</span>`:''}
       ${wageLine(s,acc)}

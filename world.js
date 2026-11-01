@@ -2,10 +2,10 @@
    world.js
    Geometría de la escena (mesas, hamacas, cola, mostrador) y aspecto de los clientes.
    ========================================================= */
-import { W } from './config.js?v=30.0.0';
-import { rand, rnd } from './util.js?v=30.0.0';
-import { Game, tableCount } from './state.js?v=30.0.0';
-import { navRebuild } from './nav.js?v=30.0.0';
+import { W } from './config.js?v=31.0.0';
+import { rand, rnd } from './util.js?v=31.0.0';
+import { Game, tableCount } from './state.js?v=31.0.0';
+import { navRebuild } from './nav.js?v=31.0.0';
 
 /* v29.4.1: puntos de salida de los clientes. Antes apuntaban a W+60/-60: dentro
    de la playa que la cámara horizontal puede mostrar (hasta W+64 con margen).

@@ -1,5 +1,5 @@
-export const VERSION='v30.0.0';
-export const LABEL='v30.0.0 · reformas del chiringuito: el edificio crece por niveles comprables solo con dinero (Palapa, Terraza techada con pérgola y guirnaldas, Escenario con conciertos), cola ampliada a 8 en dos filas y segunda cola por intención (Barra/Terraza), rótulo repintado a nombre de Lali y Oli';
+export const VERSION='v31.0.0';
+export const LABEL='v31.0.0 · el imperio: locales de marca fuera de la playa (El Médano, Los Cristianos) que ingresan cada noche según tu reputación, con su línea en el informe y su sección en el plan · más allá: momento de reforma con obreros, semáforos de cola y capacidad visible (v30.1–v30.2)';
 document.documentElement.dataset.version=VERSION;
 const old=document.getElementById('version-badge');if(old)old.remove();
 const title=document.getElementById('ver-title');if(title)title.textContent=LABEL;

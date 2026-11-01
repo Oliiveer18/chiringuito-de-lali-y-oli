@@ -6,10 +6,10 @@ globalThis.window = globalThis;
 const store = {};
 globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
 
-const { Game } = await import('./state.js?v=30.0.0');
-const S = await import('./state.js?v=30.0.0');
-const cfg = await import('./config.js?v=30.0.0');
-const world = await import('./world.js?v=30.0.0');
+const { Game } = await import('./state.js?v=31.0.0');
+const S = await import('./state.js?v=31.0.0');
+const cfg = await import('./config.js?v=31.0.0');
+const world = await import('./world.js?v=31.0.0');
 
 let ok = 0, ko = 0;
 const check = (name, cond, extra) => { if (cond) { ok++; console.log('  ok  ' + name); } else { ko++; console.log('  FALLO  ' + name + (extra !== undefined ? ' → ' + JSON.stringify(extra) : '')); } };
@@ -55,6 +55,23 @@ const days = []; for (let d = 1; d <= 60; d++) if (cfg.concertDay(d, true)) days
 check('con escenario hay días de concierto (≈12%)', days.length >= 4 && days.length <= 12, days.length);
 check('el concierto es determinista (mismo día, mismo resultado)', cfg.concertDay(17, true) === cfg.concertDay(17, true));
 check('el evento de concierto sube la afluencia', cfg.CONCERT_EVENT.arr > 1);
+
+console.log('Imperio (v31)');
+fresh();
+check('sin locales, el imperio no ingresa', S.empireIncome().total === 0 && S.empireIncome().owned.length === 0);
+Game.rep = 3;
+check('existen los dos locales del imperio', !!byId('elmedano') && !!byId('loscristianos'));
+check('El Médano exige el Escenario', byId('elmedano').req === 'escenario');
+check('Los Cristianos exige El Médano', byId('loscristianos').req === 'elmedano');
+Game.upgrades.elmedano = 1;
+const e1 = S.empireIncome();
+check('un local ingresa cada noche (400+150·rep)', e1.total === 400 + 150 * 3 && e1.owned.length === 1, e1);
+Game.rep = 4.5;
+const e1b = S.empireIncome();
+check('mejor reputación = más ingreso por local', e1b.total === Math.round(400 + 150 * 4.5), e1b);
+Game.upgrades.loscristianos = 1;
+const e2 = S.empireIncome();
+check('dos locales = doble ingreso', e2.total === 2 * Math.round(400 + 150 * 4.5) && e2.owned.length === 2, e2);
 
 console.log(ok + ' ok · ' + ko + ' fallos');
 if (ko) process.exit(1);

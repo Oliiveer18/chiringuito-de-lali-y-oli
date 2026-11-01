@@ -3,7 +3,7 @@
    Constantes del juego: dimensiones, calendario, economía, productos,
 clientes habituales, clima, mejoras y personal.
    ========================================================= */
-import { rnd } from './util.js?v=30.0.0';
+import { rnd } from './util.js?v=31.0.0';
 
 // ---------- Constantes ----------
 export const W = 1280, H = 720;
@@ -106,6 +106,11 @@ export const UPGRADES = [
   {id:'palapa',   name:'Reforma: Palapa',        desc:'Tejado de palma más alto y ancho, ventana de cocina con la cocinera visible, segunda tiradora de cerveza, rótulo pintado a nombre de Lali y Oli, plantas y sombra real. La cola pasa de 6 a 8 puestos en dos filas, sube la clientela con sol y calima y la cocina va más rápida.', levels:[3000]},
   {id:'terraza',  name:'Reforma: Terraza techada',desc:'Pérgola sobre las mesas con guirnaldas que se encienden al atardecer, hasta 10 mesas y segunda cola organizada por intención (Barra para llevar / Terraza para mesa). Las mesas bajo techo no pierden satisfacción con lluvia o calima y hay propinas extra al atardecer.', levels:[12000], req:'palapa'},
   {id:'escenario',name:'Reforma: Escenario',     desc:'Escenario con música en directo, estandarte con la bandera y ventanilla express para pedidos de bebida: menos gente acumulada en la barra. Días de concierto con pico de clientela.', levels:[30000], req:'terraza'},
+  /* --- v31: el imperio. Locales fuera de la playa que gestiona tu marca y
+     generan ingresos diarios según tu reputación. Se compran como todo lo
+     demás: solo dinero, en cadena. --- */
+  {id:'elmedano',      name:'Imperio: Local en El Médano',      desc:'Un segundo chiringuito que lleva tu marca en la playa de El Médano. Lo gestiona tu equipo y te ingresa dinero cada noche según tu reputación: cuanto mejor valorado estás, más gente lo visita.', levels:[25000], req:'escenario'},
+  {id:'loscristianos', name:'Imperio: Kiosco en Los Cristianos',desc:'Tercer local del imperio, en el paseo de Los Cristianos. Más ingresos nocturnos ligados a tu reputación de marca.', levels:[60000], req:'elmedano'},
 ];
 
 export const STAFF = [

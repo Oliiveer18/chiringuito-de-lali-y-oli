@@ -2,7 +2,7 @@
    state.js
    Estado global: objetos Game y Net, derivados de progreso y temporizadores del día.
    ========================================================= */
-import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=30.0.0';
+import { DAY_NAMES, ITEMS, ITEM_IDS, SEASON_DAYS, SEC_PER_HOUR, STAFF, START_MONEY, WEATHER } from './config.js?v=31.0.0';
 
 // ---------- Estado del juego ----------
 export const Game = {
@@ -57,6 +57,16 @@ export function tableCount(){ return Math.min(10, 3 + 2*lvl('mesas') + 2*lvl('te
 export function queueSpots(){ return 6 + 2*lvl('palapa'); }
 /* Nivel visual del kiosco: 1 base + una por reforma comprada (1-4). */
 export function reformLevel(){ return 1 + lvl('palapa') + lvl('terraza') + lvl('escenario'); }
+/* v31: el imperio. Los locales fuera de la playa generan ingresos cada noche
+   según la reputación de la marca: mejor valoración = más visitas en los
+   locales. Fórmula por local: 400 € + 150 € por punto de reputación. */
+export function empireIncome(){
+  let total=0; const owned=[];
+  for(const id of ['elmedano','loscristianos']){
+    if(lvl(id)){ total += Math.round(400 + 150*Game.rep); owned.push(id); }
+  }
+  return {total, owned};
+}
 export function hamacaCount(){ return 4*lvl('hamacas'); }
 export function wages(){const t=Game.upgrades.workforce?.team;return STAFF.reduce((s,st)=>{if(!Game.staff[st.id])return s;const v=t?.[st.id];const list=Array.isArray(v)?v:v?[v]:[];return s+list.reduce((n,e)=>n+(e?.wage??st.wage),0);},0);}
 /* v29.3: sueldo por tiempo realmente trabajado. La jornada completa (de 10:00 al

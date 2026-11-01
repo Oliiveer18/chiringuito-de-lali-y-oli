@@ -1,16 +1,16 @@
 /* Plan de apertura: compras, carta, mejoras y listo. Lo importa ui.js. */
-import { trackCost } from './bookkeeping.js?v=30.0.0';
-import { CONCERT_EVENT, GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER, concertDay } from './config.js?v=30.0.0';
-import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=30.0.0';
-import { ICON_URL } from './icons.js?v=30.0.0';
-import { Audio } from './audio.js?v=30.0.0';
-import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, openHours, partner, queueSpots, simProgressDay, tableCount, wages, weatherAt, weatherToday } from './state.js?v=30.0.0';
-import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=30.0.0';
-import { advanceFromReport } from './report.js?v=30.0.0';
-import { netAct, netDirty } from './net.js?v=30.0.0';
-import { drawPerson } from './render.js?v=30.0.0';
-import { iconFor } from './ui-polish.js?v=30.0.0';
-import { estimateCustomers, renderTab, toast } from './ui.js?v=30.0.0';
+import { trackCost } from './bookkeeping.js?v=31.0.0';
+import { CONCERT_EVENT, GOAL, HOUR_CURVE, ITEMS, ITEM_IDS, RENT, SEASON_DAYS, SPECIAL_DAYS, STAFF, UPGRADES, WEATHER, concertDay } from './config.js?v=31.0.0';
+import { $, clamp, escapeHtml, eur, eur2 } from './util.js?v=31.0.0';
+import { ICON_URL } from './icons.js?v=31.0.0';
+import { Audio } from './audio.js?v=31.0.0';
+import { Game, Net, activeItems, closeHour, dayName, isCoop, isGuest, isWeekend, itemUnlocked, lvl, openHours, partner, queueSpots, simProgressDay, tableCount, wages, weatherAt, weatherToday } from './state.js?v=31.0.0';
+import { buyStock, difficultyProfile, difficultyRush, newSeason, startDay } from './sim.js?v=31.0.0';
+import { advanceFromReport } from './report.js?v=31.0.0';
+import { netAct, netDirty } from './net.js?v=31.0.0';
+import { drawPerson } from './render.js?v=31.0.0';
+import { iconFor } from './ui-polish.js?v=31.0.0';
+import { estimateCustomers, renderTab, toast } from './ui.js?v=31.0.0';
 // ---------- Pantallas ----------
 export function hideAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 export const Plan={tab:'compras'};

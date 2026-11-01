@@ -2,8 +2,8 @@
    camera-beta · entrega 2
    Sensación de juego: respuesta inmediata en servir, cobrar, limpiar y avisos.
    ========================================================= */
-import { Game } from './state.js?v=30.0.0';
-import { Audio } from './audio.js?v=30.0.0';
+import { Game } from './state.js?v=31.0.0';
+import { Audio } from './audio.js?v=31.0.0';
 
 const FX = [];
 function push(x, y, kind) { FX.push({ x, y, kind, t: 0, life: 0.45 }); }

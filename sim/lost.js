@@ -1,7 +1,7 @@
 /* v29.2: reglas de jornada extraídas a módulo sin dependencias para poder
    probarlas en Node sin navegador. Sin información extra en el informe:
    lo que no pasó en el servicio no se cuenta dos veces. */
-import { DRINKS } from '../config.js?v=30.0.0';
+import { DRINKS } from '../config.js?v=31.0.0';
 
 /* v29.5: solo ensucia la mesa quien ha comido comida (papas, queso, pescado):
    las consumiciones de bebida no dejan restos; si pidieron comida y bebida,
